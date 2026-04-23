@@ -36,4 +36,35 @@ docs/       Architecture, decisions
 
 ## Getting started
 
-Setup instructions land in Phase 0 (monorepo scaffold). Not ready yet.
+Two terminals. Backend on :8000, frontend on :3000 (proxies `/api/*` to backend).
+
+### Backend
+
+```bash
+cd backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn app.main:app --reload --port 8000
+```
+
+Health check: `curl http://localhost:8000/api/health` → `{"status":"ok","version":"0.1.0"}`.
+
+Tests: `pytest`
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. The sidebar routes to every placeholder page.
+
+Typecheck + lint: `npm run typecheck` and `npm run lint`.
+
+## Current status
+
+Phase 0 complete: monorepo scaffold, health endpoint, dark UI shell, empty pages.
+Next up: Phase 1 — backtest engine (see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §7, §12).
