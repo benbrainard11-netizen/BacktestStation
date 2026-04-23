@@ -25,6 +25,8 @@ from app.services.import_types import (
 def import_backtest_payload(db: Session, payload: BacktestImportPayload) -> ImportResult:
     config_payload = load_optional_json(payload.config_file)
     metrics_payload = load_optional_json(payload.metrics_file)
+    if config_payload is not None and not isinstance(config_payload, dict):
+        raise ImportValidationError("config.json must contain a JSON object")
     config = config_payload if isinstance(config_payload, dict) else {}
 
     trades = parse_trades(payload.trades_file)

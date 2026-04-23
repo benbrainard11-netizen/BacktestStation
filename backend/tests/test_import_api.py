@@ -118,3 +118,26 @@ def test_import_backtest_validation_error(client: TestClient) -> None:
 
     assert response.status_code == 422
     assert "Invalid datetime value" in response.json()["detail"]
+
+
+def test_import_backtest_rejects_non_object_config(client: TestClient) -> None:
+    response = client.post(
+        "/api/import/backtest",
+        files={
+            "trades_file": (
+                "trades.csv",
+                "entry_time,symbol,side,entry_price,size\n"
+                "2026-01-02T15:00:00,NQ,long,21000,1",
+                "text/csv",
+            ),
+            "equity_file": (
+                "equity.csv",
+                "timestamp,equity\n2026-01-02T15:00:00,100000",
+                "text/csv",
+            ),
+            "config_file": ("config.json", '["not", "an", "object"]', "application/json"),
+        },
+    )
+
+    assert response.status_code == 422
+    assert "config.json must contain a JSON object" in response.json()["detail"]
