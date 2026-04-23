@@ -1,5 +1,16 @@
 # BacktestStation — Architecture
 
+> **⚠ Roadmap override (current).** This document was written assuming an **engine-first** Phase 1 (build the MBP-1 backtester before anything else). That ordering has been **superseded**.
+>
+> For current Phase 1 work, the source of truth is:
+> - [`AGENTS.md`](../AGENTS.md) — agent rules and current build order
+> - [`docs/PHASE_1_SCOPE.md`](PHASE_1_SCOPE.md) — explicit Phase 1 scope and done-criteria
+> - [`docs/PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) — project context
+>
+> **Phase 1 is now "Imported Results Command Center"**: import existing backtest/live result files (CSV/JSON) and surface them through the dashboard. The Databento ingestion pipeline and the event-driven MBP-1 engine described below are deferred until that vertical slice is working.
+>
+> Sections 4–7 (database schema, Databento ingestion, engine design) and the §12 phase ordering still describe the eventual end-state — useful as long-term reference, not as the next step.
+
 ## Context
 
 Solo beginner (using AI tools) building a futures-trading research/control center. Porting a real live-running strategy that uses **stop-loss + take-profit brackets**, ingesting **MBP-1 tick data** from Databento from day one, **monorepo** layout, full 12-item MVP on a stretched ~14-week timeline. Design prioritizes backtest correctness over UI polish.
