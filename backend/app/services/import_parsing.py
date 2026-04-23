@@ -53,7 +53,7 @@ def parse_trades(file: UploadedTextFile) -> list[dict[str, Any]]:
             {
                 "entry_ts": _trade_datetime(row, "entry_ts", file.filename, index),
                 "exit_ts": _optional_trade_datetime(row, "exit_ts"),
-                "symbol": _required_text(row, "symbol", file.filename, index).upper(),
+                "symbol": _optional_symbol(row),
                 "side": _normalize_side(
                     _required_text(row, "side", file.filename, index)
                 ),
@@ -181,6 +181,11 @@ def _required_datetime(
     if value is None:
         raise ImportValidationError(f"{filename}:{line_number} missing {field}")
     return value
+
+
+def _optional_symbol(row: dict[str, str]) -> str | None:
+    value = optional_text(_pick(row, "symbol"))
+    return None if value is None else value.upper()
 
 
 def _trade_datetime(

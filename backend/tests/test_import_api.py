@@ -181,6 +181,7 @@ def test_import_backtest_accepts_fractal_multiyear_shape(client: TestClient) -> 
                 ),
                 "text/csv",
             ),
+            "config_file": ("config.json", '{"symbol": "NQ"}', "application/json"),
             "equity_file": (
                 "equity.csv",
                 "timestamp,equity\n2024-01-02T13:51:00,0.7478",
@@ -216,6 +217,7 @@ def test_import_backtest_accepts_fractal_date_plus_time_shape(
                 ),
                 "text/csv",
             ),
+            "config_file": ("config.json", '{"symbol": "NQ"}', "application/json"),
             "equity_file": (
                 "equity.csv",
                 "timestamp,equity\n2024-01-02T10:21:00,-1.0",
@@ -229,5 +231,36 @@ def test_import_backtest_accepts_fractal_date_plus_time_shape(
     trades = client.get(f"/api/backtests/{run_id}/trades").json()
     assert trades[0]["entry_ts"] == "2024-01-02T10:21:00"
     assert trades[0]["exit_ts"] == "2024-01-02T10:21:00"
+    assert trades[0]["symbol"] == "NQ"
     assert trades[0]["side"] == "short"
     assert trades[0]["r_multiple"] == -1.0
+
+
+def test_import_backtest_requires_symbol_when_trade_file_lacks_it(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/api/import/backtest",
+        files={
+            "trades_file": (
+                "live_engine_2yr__pre_real.csv",
+                "\n".join(
+                    [
+                        "date,direction,entry_time,entry_price,stop,target,risk,"
+                        "exit_time,exit_price,exit_reason,pnl_r",
+                        "2024-01-02,BEARISH,10:21,16738.0,16749.0,16705.0,"
+                        "10:21,16749.0,SL,-1.0",
+                    ]
+                ),
+                "text/csv",
+            ),
+            "equity_file": (
+                "equity.csv",
+                "timestamp,equity\n2024-01-02T10:21:00,-1.0",
+                "text/csv",
+            ),
+        },
+    )
+
+    assert response.status_code == 422
+    assert "Symbol is required" in response.json()["detail"]

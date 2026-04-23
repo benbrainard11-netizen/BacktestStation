@@ -45,6 +45,8 @@ def import_backtest_payload(db: Session, payload: BacktestImportPayload) -> Impo
 
     strategy = _get_or_create_strategy(db, strategy_name, strategy_slug)
     strategy_version = _get_or_create_strategy_version(db, strategy, version_name)
+    symbol = _infer_symbol(payload, config, trades)
+    _stamp_trade_symbols(trades, symbol)
     run = _build_run(payload, config, strategy_version, trades, equity_points)
 
     run.trades.extend(models.Trade(**trade) for trade in trades)
@@ -148,7 +150,16 @@ def _infer_symbol(
     symbol = first_text(payload.symbol, config.get("symbol"))
     if symbol:
         return symbol.upper()
-    return str(trades[0]["symbol"]).upper()
+    for trade in trades:
+        trade_symbol = trade.get("symbol")
+        if trade_symbol:
+            return str(trade_symbol).upper()
+    raise ImportValidationError("Symbol is required when trades.csv has no symbol column")
+
+
+def _stamp_trade_symbols(trades: list[dict[str, Any]], symbol: str) -> None:
+    for trade in trades:
+        trade["symbol"] = trade.get("symbol") or symbol
 
 
 def _infer_start_ts(
