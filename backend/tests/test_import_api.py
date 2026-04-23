@@ -162,3 +162,72 @@ def test_import_backtest_rejects_ambiguous_entry_column(client: TestClient) -> N
 
     assert response.status_code == 422
     assert "missing entry_ts" in response.json()["detail"]
+
+
+def test_import_backtest_accepts_fractal_multiyear_shape(client: TestClient) -> None:
+    response = client.post(
+        "/api/import/backtest",
+        files={
+            "trades_file": (
+                "trusted_multiyear_trades.csv",
+                "\n".join(
+                    [
+                        "entry_time,entry_price,exit_time,exit_price,stop,tp,risk,"
+                        "direction,exit_reason,pnl_r,fvg_high,fvg_low,quarter,month,hour",
+                        "2024-01-02 11:51,16779.75,2024-01-02 13:51,16716.0,"
+                        "16865.0,16524.0,85.25,BEARISH,timeout,0.7478,"
+                        "16860.0,16782.0,2024Q1,2024-01,11",
+                    ]
+                ),
+                "text/csv",
+            ),
+            "equity_file": (
+                "equity.csv",
+                "timestamp,equity\n2024-01-02T13:51:00,0.7478",
+                "text/csv",
+            ),
+        },
+    )
+
+    assert response.status_code == 201
+    run_id = response.json()["backtest_id"]
+    trades = client.get(f"/api/backtests/{run_id}/trades").json()
+    assert trades[0]["side"] == "short"
+    assert trades[0]["size"] == 1.0
+    assert trades[0]["target_price"] == 16524.0
+    assert trades[0]["r_multiple"] == 0.7478
+
+
+def test_import_backtest_accepts_fractal_date_plus_time_shape(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/api/import/backtest",
+        files={
+            "trades_file": (
+                "live_engine_2yr__pre_real.csv",
+                "\n".join(
+                    [
+                        "date,direction,entry_time,entry_price,stop,target,risk,"
+                        "rof_score,exit_time,exit_price,exit_reason,pnl_r,htf_tf,ltf_tf",
+                        "2024-01-02,BEARISH,10:21,16738.0,16749.0,16705.0,"
+                        "11.0,0,10:21,16749.0,SL,-1.0,1H,5m",
+                    ]
+                ),
+                "text/csv",
+            ),
+            "equity_file": (
+                "equity.csv",
+                "timestamp,equity\n2024-01-02T10:21:00,-1.0",
+                "text/csv",
+            ),
+        },
+    )
+
+    assert response.status_code == 201
+    run_id = response.json()["backtest_id"]
+    trades = client.get(f"/api/backtests/{run_id}/trades").json()
+    assert trades[0]["entry_ts"] == "2024-01-02T10:21:00"
+    assert trades[0]["exit_ts"] == "2024-01-02T10:21:00"
+    assert trades[0]["side"] == "short"
+    assert trades[0]["r_multiple"] == -1.0

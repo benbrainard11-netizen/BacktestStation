@@ -21,7 +21,7 @@ FIELD_ALIASES = {
     "target_price": ["target_price", "target", "take_profit", "tp"],
     "size": ["size", "qty", "quantity", "contracts"],
     "pnl": ["pnl", "profit_loss", "profit", "net_pnl"],
-    "r_multiple": ["r_multiple", "r", "r_mult", "rmultiple"],
+    "r_multiple": ["r_multiple", "r", "r_mult", "rmultiple", "pnl_r", "y_pnl_r"],
     "exit_reason": ["exit_reason", "reason", "outcome"],
     # Phase 1 stores per-trade setup/session labels as tags.
     "tags": ["tags", "tag", "setup", "session"],
@@ -51,17 +51,19 @@ def parse_trades(file: UploadedTextFile) -> list[dict[str, Any]]:
     for index, row in enumerate(rows, start=2):
         normalized.append(
             {
-                "entry_ts": _required_datetime(row, "entry_ts", file.filename, index),
-                "exit_ts": _optional_datetime(_pick(row, "exit_ts")),
+                "entry_ts": _trade_datetime(row, "entry_ts", file.filename, index),
+                "exit_ts": _optional_trade_datetime(row, "exit_ts"),
                 "symbol": _required_text(row, "symbol", file.filename, index).upper(),
-                "side": _required_text(row, "side", file.filename, index).lower(),
+                "side": _normalize_side(
+                    _required_text(row, "side", file.filename, index)
+                ),
                 "entry_price": _required_float(
                     row, "entry_price", file.filename, index
                 ),
                 "exit_price": _optional_float(_pick(row, "exit_price")),
                 "stop_price": _optional_float(_pick(row, "stop_price")),
                 "target_price": _optional_float(_pick(row, "target_price")),
-                "size": _required_float(row, "size", file.filename, index),
+                "size": _size_or_default(row),
                 "pnl": _optional_float(_pick(row, "pnl")),
                 "r_multiple": _optional_float(_pick(row, "r_multiple")),
                 "exit_reason": optional_text(_pick(row, "exit_reason")),
@@ -181,6 +183,24 @@ def _required_datetime(
     return value
 
 
+def _trade_datetime(
+    row: dict[str, str], field: str, filename: str, line_number: int
+) -> datetime:
+    value = _optional_trade_datetime(row, field)
+    if value is None:
+        raise ImportValidationError(f"{filename}:{line_number} missing {field}")
+    return value
+
+
+def _optional_trade_datetime(row: dict[str, str], field: str) -> datetime | None:
+    raw = _pick(row, field)
+    date = optional_text(row.get("date"))
+    text = optional_text(raw)
+    if text is not None and date is not None and re.fullmatch(r"\d{1,2}:\d{2}(:\d{2})?", text):
+        return _optional_datetime(f"{date}T{text}")
+    return _optional_datetime(raw)
+
+
 def _optional_float(value: Any) -> float | None:
     text = optional_text(value)
     if text is None:
@@ -189,6 +209,11 @@ def _optional_float(value: Any) -> float | None:
         return float(text.replace(",", ""))
     except ValueError as exc:
         raise ImportValidationError(f"Invalid numeric value: {text}") from exc
+
+
+def _size_or_default(row: dict[str, str]) -> float:
+    value = _optional_float(_pick(row, "size"))
+    return 1.0 if value is None else value
 
 
 def _optional_datetime(value: Any) -> datetime | None:
@@ -219,6 +244,15 @@ def _parse_tags(value: Any) -> list[str] | None:
             raise ImportValidationError("tags JSON must be an array")
         return [str(item).strip() for item in parsed if str(item).strip()]
     return [part.strip() for part in re.split(r"[|;,]", text) if part.strip()]
+
+
+def _normalize_side(value: str) -> str:
+    side = value.strip().lower()
+    if side in {"bullish", "buy", "long"}:
+        return "long"
+    if side in {"bearish", "sell", "short"}:
+        return "short"
+    return side
 
 
 def _pick(row: dict[str, str], field: str) -> str | None:
