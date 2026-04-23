@@ -94,3 +94,13 @@ class ConfigSnapshotRead(OrmModel):
     backtest_run_id: int
     payload: dict[str, Any]
     created_at: datetime
+
+
+class ImportBacktestResponse(OrmModel):
+    backtest_id: int
+    strategy_id: int
+    strategy_version_id: int
+    trades_imported: int
+    equity_points_imported: int
+    metrics_imported: bool
+    config_imported: bool
