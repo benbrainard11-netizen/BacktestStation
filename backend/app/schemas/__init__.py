@@ -1,5 +1,6 @@
 """Pydantic schemas exposed by the API."""
 
+from app.schemas.monitor import LiveMonitorStatus
 from app.schemas.results import (
     BacktestRunRead,
     ConfigSnapshotRead,
@@ -16,6 +17,7 @@ __all__ = [
     "ConfigSnapshotRead",
     "EquityPointRead",
     "ImportBacktestResponse",
+    "LiveMonitorStatus",
     "RunMetricsRead",
     "StrategyRead",
     "StrategyVersionRead",

@@ -13,6 +13,7 @@ REPO_ROOT: Path = Path(__file__).resolve().parents[3]
 
 DATA_DIR: Path = REPO_ROOT / "data"
 META_DB_PATH: Path = DATA_DIR / "meta.sqlite"
+LIVE_STATUS_PATH: Path = DATA_DIR / "live_status.json"
 
 
 def ensure_data_dir() -> Path:
