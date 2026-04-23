@@ -10,8 +10,8 @@ from typing import Any
 from app.services.import_types import ImportValidationError, UploadedTextFile
 
 FIELD_ALIASES = {
-    "entry_ts": ["entry_ts", "entry_time", "entry_datetime", "entry"],
-    "exit_ts": ["exit_ts", "exit_time", "exit_datetime", "exit"],
+    "entry_ts": ["entry_ts", "entry_time", "entry_datetime"],
+    "exit_ts": ["exit_ts", "exit_time", "exit_datetime"],
     "ts": ["ts", "timestamp", "time", "datetime", "date"],
     "symbol": ["symbol", "ticker", "instrument"],
     "side": ["side", "direction", "trade_side"],
@@ -23,6 +23,7 @@ FIELD_ALIASES = {
     "pnl": ["pnl", "profit_loss", "profit", "net_pnl"],
     "r_multiple": ["r_multiple", "r", "r_mult", "rmultiple"],
     "exit_reason": ["exit_reason", "reason", "outcome"],
+    # Phase 1 stores per-trade setup/session labels as tags.
     "tags": ["tags", "tag", "setup", "session"],
     "equity": ["equity", "balance", "account_equity"],
     "drawdown": ["drawdown", "dd"],

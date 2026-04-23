@@ -1,6 +1,7 @@
 """Read and normalize the local live-status JSON file."""
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -81,7 +82,7 @@ def _datetime(payload: dict[str, Any], *keys: str) -> datetime | None:
     if value in (None, ""):
         return None
     text = str(value).strip()
-    if text.isdigit():
+    if re.fullmatch(r"-?\d+(\.\d+)?", text):
         timestamp = float(text)
         if timestamp > 1_000_000_000_000:
             timestamp = timestamp / 1000

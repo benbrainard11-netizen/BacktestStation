@@ -141,3 +141,24 @@ def test_import_backtest_rejects_non_object_config(client: TestClient) -> None:
 
     assert response.status_code == 422
     assert "config.json must contain a JSON object" in response.json()["detail"]
+
+
+def test_import_backtest_rejects_ambiguous_entry_column(client: TestClient) -> None:
+    response = client.post(
+        "/api/import/backtest",
+        files={
+            "trades_file": (
+                "trades.csv",
+                "entry,symbol,side,size\n21000,NQ,long,1",
+                "text/csv",
+            ),
+            "equity_file": (
+                "equity.csv",
+                "timestamp,equity\n2026-01-02T15:00:00,100000",
+                "text/csv",
+            ),
+        },
+    )
+
+    assert response.status_code == 422
+    assert "missing entry_ts" in response.json()["detail"]
