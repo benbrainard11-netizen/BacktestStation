@@ -55,6 +55,7 @@ def get_session() -> Generator[Session, None, None]:
     global _engine, _session_factory
     if _session_factory is None:
         _engine = make_engine()
+        create_all(_engine)
         _session_factory = make_session_factory(_engine)
     db = _session_factory()
     try:

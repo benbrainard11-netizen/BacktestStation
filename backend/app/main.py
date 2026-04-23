@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api import health
+from app.api import backtests, health, strategies
 
 app = FastAPI(
     title="BacktestStation",
@@ -19,3 +19,5 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/api", tags=["health"])
+app.include_router(strategies.router, prefix="/api")
+app.include_router(backtests.router, prefix="/api")
