@@ -6,6 +6,7 @@ own engine with `make_engine("sqlite:///<tmp>/test.sqlite")` and call
 `create_all(engine)` so they never touch the real DB.
 """
 
+import threading
 from collections.abc import Generator
 
 from sqlalchemy import Engine, create_engine
@@ -111,15 +112,22 @@ def _run_data_migrations(engine: Engine) -> None:
 # Lazily-initialised module globals for the running FastAPI app.
 _engine: Engine | None = None
 _session_factory: sessionmaker[Session] | None = None
+# Guards the lazy init — FastAPI serves sync endpoints on a thread pool,
+# so parallel requests on first load could race through `create_all` and
+# collide on CREATE TABLE. A single lock keeps init atomic.
+_init_lock = threading.Lock()
 
 
 def get_session() -> Generator[Session, None, None]:
     """FastAPI dependency that yields a Session bound to the default DB."""
     global _engine, _session_factory
     if _session_factory is None:
-        _engine = make_engine()
-        create_all(_engine)
-        _session_factory = make_session_factory(_engine)
+        with _init_lock:
+            if _session_factory is None:
+                _engine = make_engine()
+                create_all(_engine)
+                _session_factory = make_session_factory(_engine)
+    assert _session_factory is not None  # narrow for type checker
     db = _session_factory()
     try:
         yield db
