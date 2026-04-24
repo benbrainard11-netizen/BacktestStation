@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import ArchiveStrategyButton from "@/components/strategies/ArchiveStrategyButton";
+import ArchiveVersionButton from "@/components/strategies/ArchiveVersionButton";
+import MetricsGrid from "@/components/backtests/MetricsGrid";
 import NewVersionButton from "@/components/strategies/NewVersionButton";
+import StrategyEditor from "@/components/strategies/StrategyEditor";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
+import StatusPill from "@/components/StatusPill";
 import { ApiError, apiGet } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 import type { components } from "@/lib/api/generated";
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Strategy = components["schemas"]["StrategyRead"];
 type StrategyVersion = components["schemas"]["StrategyVersionRead"];
 
@@ -35,45 +42,104 @@ export default async function StrategyDetailPage({ params }: PageProps) {
     runsByVersion.set(run.strategy_version_id, list);
   }
 
-  const sortedVersions = [...strategy.versions].sort(
-    (a, b) => b.id - a.id,
-  );
+  const versionIds = new Set(strategy.versions.map((v) => v.id));
+  const strategyRuns = runs
+    .filter((r) => versionIds.has(r.strategy_version_id))
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  const latestRun = strategyRuns[0] ?? null;
+  const latestMetrics = latestRun
+    ? await apiGet<RunMetrics>(
+        `/api/backtests/${latestRun.id}/metrics`,
+      ).catch((error) => {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      })
+    : null;
+
+  const sortedVersions = [...strategy.versions].sort((a, b) => b.id - a.id);
+  const isArchived = strategy.status === "archived";
 
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
+      <div className="flex items-center justify-between gap-3 px-6 pt-4">
         <Link
           href="/strategies"
           className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
         >
           ← All strategies
         </Link>
+        <div className="flex items-center gap-2">
+          <ArchiveStrategyButton
+            strategyId={strategy.id}
+            archived={isArchived}
+          />
+          <StrategyEditor
+            strategyId={strategy.id}
+            initialName={strategy.name}
+            initialDescription={strategy.description}
+            initialTags={strategy.tags}
+          />
+        </div>
       </div>
       <PageHeader
         title={strategy.name}
-        description={`${strategy.slug} · ${strategy.versions.length} version${strategy.versions.length === 1 ? "" : "s"} · status ${strategy.status}`}
+        description={`${strategy.slug} · ${strategy.versions.length} version${strategy.versions.length === 1 ? "" : "s"}`}
         meta={formatDate(strategy.created_at)}
       />
 
       <div className="flex flex-col gap-4 px-6">
-        {strategy.tags && strategy.tags.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {strategy.tags.map((tag) => (
-              <span
-                key={tag}
-                className="border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill
+            label="Stage"
+            value={strategy.status}
+            dot={stageTone(strategy.status)}
+          />
+          {strategy.tags && strategy.tags.length > 0
+            ? strategy.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400"
+                >
+                  {tag}
+                </span>
+              ))
+            : null}
+        </div>
 
         {strategy.description ? (
           <Panel title="Description">
             <p className="text-sm text-zinc-300">{strategy.description}</p>
           </Panel>
         ) : null}
+
+        {latestMetrics ? (
+          <Panel
+            title="Latest run metrics"
+            meta={
+              latestRun
+                ? `${latestRun.name ?? `BT-${latestRun.id}`} · ${formatDate(latestRun.created_at)}`
+                : undefined
+            }
+          >
+            <MetricsGrid metrics={latestMetrics} />
+          </Panel>
+        ) : null}
+
+        {/*
+          TODO (research workspace, not built yet):
+            - Research notes attached to strategy + version (markdown, timestamped)
+            - Experiment ledger (parameter sweeps, hypotheses, results)
+            - Research prompt generator (question → LLM-ready prompt w/ context)
+            - Future in-app strategy engine hook
+        */}
+        <Panel title="Research workspace">
+          <p className="font-mono text-xs text-zinc-500">
+            Notes, experiment ledger, and prompt generator will live here.
+          </p>
+        </Panel>
 
         <div className="flex items-center justify-between">
           <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
@@ -110,12 +176,28 @@ function VersionPanel({
   version: StrategyVersion;
   runs: BacktestRun[];
 }) {
+  const archived = version.archived_at != null;
   return (
     <Panel
-      title={`Version ${version.version}`}
+      title={`Version ${version.version}${archived ? " (archived)" : ""}`}
       meta={`${runs.length} run${runs.length === 1 ? "" : "s"}`}
     >
-      <div className="flex flex-col gap-3">
+      <div
+        className={cn(
+          "flex flex-col gap-3",
+          archived && "opacity-60",
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          {archived ? (
+            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+              archived · {formatDate(version.archived_at ?? null)}
+            </span>
+          ) : (
+            <span />
+          )}
+          <ArchiveVersionButton versionId={version.id} archived={archived} />
+        </div>
         <VersionMeta version={version} />
         {runs.length === 0 ? (
           <p className="font-mono text-xs text-zinc-500">
@@ -206,6 +288,27 @@ function RunsList({ runs }: { runs: BacktestRun[] }) {
       </table>
     </div>
   );
+}
+
+function stageTone(
+  status: string,
+): "live" | "idle" | "warn" | "off" | null {
+  switch (status) {
+    case "live":
+    case "backtest_validated":
+    case "forward_test":
+      return "live";
+    case "research":
+    case "building":
+      return "warn";
+    case "idea":
+      return "idle";
+    case "retired":
+    case "archived":
+      return "off";
+    default:
+      return null;
+  }
 }
 
 function formatDate(iso: string | null): string {

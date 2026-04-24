@@ -1,13 +1,21 @@
 import Link from "next/link";
 
 import NewStrategyButton from "@/components/strategies/NewStrategyButton";
-import StrategyPipelineBoard from "@/components/strategies/StrategyPipelineBoard";
+import StrategiesView from "@/components/strategies/StrategiesView";
 import PageHeader from "@/components/PageHeader";
 import { apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
 type Strategy = components["schemas"]["StrategyRead"];
+type BacktestRun = components["schemas"]["BacktestRunRead"];
 type Stages = components["schemas"]["StrategyStagesRead"];
+
+export interface StrategySummary {
+  run_count: number;
+  latest_run_created_at: string | null;
+  latest_run_id: number | null;
+  latest_run_name: string | null;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -23,18 +31,38 @@ const FALLBACK_STAGES: string[] = [
 ];
 
 export default async function StrategiesPage() {
-  const [strategies, stagesResponse] = await Promise.all([
+  const [strategies, stagesResponse, allRuns] = await Promise.all([
     apiGet<Strategy[]>("/api/strategies"),
     apiGet<Stages>("/api/strategies/stages").catch(
       () => ({ stages: FALLBACK_STAGES } as Stages),
     ),
+    apiGet<BacktestRun[]>("/api/backtests").catch(() => [] as BacktestRun[]),
   ]);
+
+  // Aggregate per-strategy run summaries client-side. A dedicated backend
+  // endpoint can replace this once the run count grows past a few hundred.
+  const summaries = new Map<number, StrategySummary>();
+  for (const strategy of strategies) {
+    const versionIds = new Set(strategy.versions.map((v) => v.id));
+    const runs = allRuns
+      .filter((r) => versionIds.has(r.strategy_version_id))
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+    summaries.set(strategy.id, {
+      run_count: runs.length,
+      latest_run_created_at: runs[0]?.created_at ?? null,
+      latest_run_id: runs[0]?.id ?? null,
+      latest_run_name: runs[0]?.name ?? null,
+    });
+  }
 
   return (
     <div>
       <PageHeader
         title="Strategies"
-        description="Pipeline board. Move ideas toward live via the stage buttons on each card."
+        description="Pipeline board or table view. Move ideas toward live via the stage buttons on each card."
       />
       <div className="flex flex-col gap-4 px-6 pb-10">
         <div className="flex items-center justify-between gap-3">
@@ -62,9 +90,10 @@ export default async function StrategiesPage() {
             </Link>
           </div>
         ) : (
-          <StrategyPipelineBoard
+          <StrategiesView
             strategies={strategies}
             stages={stagesResponse.stages ?? FALLBACK_STAGES}
+            summaries={Object.fromEntries(summaries)}
           />
         )}
       </div>
