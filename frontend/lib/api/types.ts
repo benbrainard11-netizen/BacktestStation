@@ -87,6 +87,20 @@ export interface EquityPoint {
   drawdown: number | null;
 }
 
+export interface Note {
+  id: number;
+  backtest_run_id: number | null;
+  trade_id: number | null;
+  body: string;
+  created_at: string;
+}
+
+export interface NoteCreate {
+  body: string;
+  backtest_run_id?: number | null;
+  trade_id?: number | null;
+}
+
 export interface BackendErrorBody {
   detail?: string;
 }

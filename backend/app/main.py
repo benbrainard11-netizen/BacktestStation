@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api import backtests, health, imports, monitor, strategies
+from app.api import backtests, health, imports, monitor, notes, strategies
 
 app = FastAPI(
     title="BacktestStation",
@@ -23,3 +23,4 @@ app.include_router(imports.router, prefix="/api")
 app.include_router(monitor.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(backtests.router, prefix="/api")
+app.include_router(notes.router, prefix="/api")
