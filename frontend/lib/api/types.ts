@@ -22,6 +22,28 @@ export interface BacktestRun {
   created_at: string;
 }
 
+export interface StrategyVersion {
+  id: number;
+  strategy_id: number;
+  version: string;
+  entry_md: string | null;
+  exit_md: string | null;
+  risk_md: string | null;
+  git_commit_sha: string | null;
+  created_at: string;
+}
+
+export interface Strategy {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  status: string;
+  tags: string[] | null;
+  created_at: string;
+  versions: StrategyVersion[];
+}
+
 export interface RunMetrics {
   id: number;
   backtest_run_id: number;
