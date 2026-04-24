@@ -9,7 +9,7 @@ interface PanelProps {
 
 export default function Panel({ title, meta, className, children }: PanelProps) {
   return (
-    <section className={cn("border border-zinc-800 bg-zinc-950", className)}>
+    <section className={cn("rounded-md border border-zinc-800 bg-zinc-950", className)}>
       <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
         <h3 className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
           {title}

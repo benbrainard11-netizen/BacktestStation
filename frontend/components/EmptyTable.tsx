@@ -10,7 +10,7 @@ export default function EmptyTable({
   emptyDetail,
 }: EmptyTableProps) {
   return (
-    <div className="border border-zinc-800">
+    <div className="rounded-md border border-zinc-800">
       <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-zinc-800 bg-zinc-900/40">

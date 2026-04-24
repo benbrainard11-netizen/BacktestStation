@@ -32,7 +32,7 @@ export default function MetricCard({
   deltaTone = "neutral",
 }: MetricCardProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 border border-zinc-800 bg-zinc-950 px-4 py-3">
+    <div className="flex min-w-0 flex-col gap-3 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3">
       <div className="flex items-center gap-1.5 text-zinc-500">
         <span className="font-mono text-[10px] uppercase tracking-widest">
           {label}
