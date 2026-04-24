@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import ArchiveStrategyButton from "@/components/strategies/ArchiveStrategyButton";
 import ArchiveVersionButton from "@/components/strategies/ArchiveVersionButton";
+import ExperimentsPanel from "@/components/strategies/ExperimentsPanel";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import NewVersionButton from "@/components/strategies/NewVersionButton";
 import NotesPanel from "@/components/strategies/NotesPanel";
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 import type { components } from "@/lib/api/generated";
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type ExperimentDecisions = components["schemas"]["ExperimentDecisionsRead"];
 type NoteTypes = components["schemas"]["NoteTypesRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Strategy = components["schemas"]["StrategyRead"];
@@ -36,12 +38,16 @@ export default async function StrategyDetailPage({ params }: PageProps) {
     },
   );
 
-  const [runs, noteTypesResponse] = await Promise.all([
-    apiGet<BacktestRun[]>("/api/backtests"),
-    apiGet<NoteTypes>("/api/notes/types").catch(
-      () => ({ types: [] }) as NoteTypes,
-    ),
-  ]);
+  const [runs, noteTypesResponse, experimentDecisionsResponse] =
+    await Promise.all([
+      apiGet<BacktestRun[]>("/api/backtests"),
+      apiGet<NoteTypes>("/api/notes/types").catch(
+        () => ({ types: [] }) as NoteTypes,
+      ),
+      apiGet<ExperimentDecisions>("/api/experiments/decisions").catch(
+        () => ({ decisions: [] }) as ExperimentDecisions,
+      ),
+    ]);
   const runsByVersion = new Map<number, BacktestRun[]>();
   for (const run of runs) {
     const list = runsByVersion.get(run.strategy_version_id) ?? [];
@@ -136,15 +142,23 @@ export default async function StrategyDetailPage({ params }: PageProps) {
         ) : null}
 
         {/*
-          TODO (research workspace, future pieces):
-            - Experiment ledger (parameter sweeps, hypotheses, results)
+          TODO (workstation, future pieces):
             - Research prompt generator (question → LLM-ready prompt w/ context)
             - Future in-app strategy engine hook
+            - Forward/live drift monitor
+            - Risk profile manager
         */}
         <NotesPanel
           strategyId={strategy.id}
           versions={strategy.versions}
           noteTypes={noteTypesResponse.types ?? []}
+        />
+
+        <ExperimentsPanel
+          strategyId={strategy.id}
+          versions={strategy.versions}
+          runs={strategyRuns}
+          decisions={experimentDecisionsResponse.decisions ?? []}
         />
 
         <div className="flex items-center justify-between">
