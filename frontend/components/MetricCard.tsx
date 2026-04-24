@@ -1,7 +1,8 @@
 import { Info } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { Tone } from "@/lib/mocks/commandCenter";
+
+export type Tone = "positive" | "negative" | "neutral";
 
 interface MetricCardProps {
   label: string;

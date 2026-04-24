@@ -4,10 +4,12 @@ import { LogOut, SunMedium } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import Sparkline from "@/components/Sparkline";
 import { cn } from "@/lib/utils";
-import { MOCK_SYSTEM_SPARKLINES } from "@/lib/mocks/commandCenter";
 import { NAV_GROUPS, NAV_ITEMS, type NavItem } from "@/lib/navigation";
+
+// App build info. Hardcoded until a build-time injection is wired (Phase 3+).
+const APP_VERSION = "0.1.0";
+const APP_BUILD_DATE = "2026-04-24";
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -39,34 +41,8 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-function SystemStat({
-  label,
-  value,
-  series,
-}: {
-  label: string;
-  value: string;
-  series: number[];
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-10 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        {label}
-      </span>
-      <span className="w-10 font-mono text-[11px] text-zinc-200">{value}</span>
-      <Sparkline
-        data={series}
-        width={60}
-        height={16}
-        strokeClassName="stroke-zinc-600"
-      />
-    </div>
-  );
-}
-
 export default function Sidebar() {
   const pathname = usePathname();
-  const { cpu, mem, disk, version, buildDate } = MOCK_SYSTEM_SPARKLINES;
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
@@ -75,7 +51,7 @@ export default function Sidebar() {
           BACKTESTSTATION
         </h1>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-          v{version}
+          v{APP_VERSION}
         </p>
       </div>
 
@@ -100,21 +76,15 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="space-y-2 border-t border-zinc-800 px-4 py-3">
-        <SystemStat label="CPU" value={cpu.value} series={cpu.series} />
-        <SystemStat label="MEM" value={mem.value} series={mem.series} />
-        <SystemStat label="DISK" value={disk.value} series={disk.series} />
-      </div>
-
       <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-zinc-600">Version</span>
-            <span className="text-zinc-300">v{version}</span>
+            <span className="text-zinc-300">v{APP_VERSION}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-zinc-600">Build</span>
-            <span className="text-zinc-300">{buildDate}</span>
+            <span className="text-zinc-300">{APP_BUILD_DATE}</span>
           </div>
         </div>
       </div>

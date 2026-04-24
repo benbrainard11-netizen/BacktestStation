@@ -1,8 +1,6 @@
 import ConnectionStatus from "@/components/ConnectionStatus";
 import LocalClock from "@/components/LocalClock";
-import StatusPill from "@/components/StatusPill";
 import WindowControls from "@/components/WindowControls";
-import { MOCK_TOP_BAR } from "@/lib/mocks/commandCenter";
 
 interface TopBarProps {
   pageLabel?: string;
@@ -35,11 +33,6 @@ export default function TopBar({ pageLabel = "Command Center" }: TopBarProps) {
       >
         <LocalClock />
         <ConnectionStatus />
-        <StatusPill
-          label={MOCK_TOP_BAR.dbLabel}
-          value={MOCK_TOP_BAR.dbValue}
-          dot="live"
-        />
       </div>
       <WindowControls />
     </header>
