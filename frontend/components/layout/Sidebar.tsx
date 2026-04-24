@@ -11,9 +11,17 @@ import { NAV_GROUPS, NAV_ITEMS, type NavItem } from "@/lib/navigation";
 // Build-time injection (git SHA + commit date) lands with Phase 3+ tooling.
 const APP_VERSION = "0.1.0";
 
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
+function pickActiveHref(pathname: string, items: NavItem[]): string | null {
+  if (pathname === "/") return "/";
+  let best: { href: string; length: number } | null = null;
+  for (const item of items) {
+    if (item.href === "/") continue;
+    if (pathname !== item.href && !pathname.startsWith(`${item.href}/`)) continue;
+    if (best === null || item.href.length > best.length) {
+      best = { href: item.href, length: item.href.length };
+    }
+  }
+  return best?.href ?? null;
 }
 
 function NavRow({ item, active }: { item: NavItem; active: boolean }) {
@@ -43,6 +51,7 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const activeHref = pickActiveHref(pathname, NAV_ITEMS);
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
@@ -67,7 +76,7 @@ export default function Sidebar() {
               <ul className="space-y-px">
                 {items.map((item) => (
                   <li key={item.href}>
-                    <NavRow item={item} active={isActive(pathname, item.href)} />
+                    <NavRow item={item} active={item.href === activeHref} />
                   </li>
                 ))}
               </ul>
