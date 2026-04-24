@@ -57,6 +57,7 @@ class StrategyVersion(Base):
     risk_md: Mapped[str | None] = mapped_column(Text)
     git_commit_sha: Mapped[str | None] = mapped_column(String(40))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
     strategy: Mapped[Strategy] = relationship(back_populates="versions")
     runs: Mapped[list["BacktestRun"]] = relationship(

@@ -5,12 +5,14 @@ frontend pipeline board can manage strategies without going through the
 importer.
 """
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.db.models import Strategy, StrategyVersion
+from app.db.models import BacktestRun, Strategy, StrategyVersion
 from app.db.session import get_session
 from app.schemas import (
     StrategyCreate,
@@ -130,13 +132,26 @@ def update_strategy(
 def delete_strategy(
     strategy_id: int, db: Session = Depends(get_session)
 ) -> None:
-    """Delete a strategy and all its versions + runs + children.
+    """Delete a strategy — only allowed when it has zero versions.
 
-    Relationships are declared with cascade=\"all, delete-orphan\", so the
-    whole subtree goes in one shot. Free-floating notes that were attached
-    to deleted runs survive with a dangling FK.
+    This is the "I created the wrong slug, clean it up" path. It will NOT
+    cascade to delete imported runs + trades + equity + metrics — if a
+    strategy has versions, we force the user to either delete each
+    version + its runs explicitly, or archive the strategy instead
+    (PATCH status="archived").
+
+    Returns 409 if the strategy still has versions attached.
     """
     strategy = _require_strategy(db, strategy_id)
+    if len(strategy.versions) > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Strategy {strategy.slug!r} has {len(strategy.versions)} "
+                "version(s) with imported data. Archive instead "
+                "(PATCH status=\"archived\") or delete each version first."
+            ),
+        )
     db.delete(strategy)
     db.commit()
     return None
@@ -216,7 +231,56 @@ def update_strategy_version(
 def delete_strategy_version(
     version_id: int, db: Session = Depends(get_session)
 ) -> None:
+    """Delete a version — only allowed when it has zero attached runs.
+
+    Before this change, SQLAlchemy's cascade="all, delete-orphan" on
+    StrategyVersion.runs would silently nuke every imported run, trade,
+    equity point, and metric with the version. Now the endpoint refuses
+    with 409 when runs exist and points the caller at the archive flow.
+    """
     version = _require_version(db, version_id)
+    run_count = db.scalar(
+        select(func.count())
+        .select_from(BacktestRun)
+        .where(BacktestRun.strategy_version_id == version.id)
+    )
+    if run_count and run_count > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Strategy version {version.version!r} has {run_count} "
+                "attached run(s). Archive it instead "
+                f"(PATCH /api/strategy-versions/{version.id}/archive) or "
+                "delete each run first."
+            ),
+        )
     db.delete(version)
     db.commit()
     return None
+
+
+@versions_router.patch("/{version_id}/archive", response_model=StrategyVersionRead)
+def archive_strategy_version(
+    version_id: int, db: Session = Depends(get_session)
+) -> StrategyVersion:
+    """Mark a version archived. Non-destructive — runs/trades/metrics untouched."""
+    version = _require_version(db, version_id)
+    if version.archived_at is None:
+        version.archived_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(version)
+    return version
+
+
+@versions_router.patch(
+    "/{version_id}/unarchive", response_model=StrategyVersionRead
+)
+def unarchive_strategy_version(
+    version_id: int, db: Session = Depends(get_session)
+) -> StrategyVersion:
+    version = _require_version(db, version_id)
+    if version.archived_at is not None:
+        version.archived_at = None
+        db.commit()
+        db.refresh(version)
+    return version

@@ -375,11 +375,15 @@ export interface paths {
         post?: never;
         /**
          * Delete Strategy
-         * @description Delete a strategy and all its versions + runs + children.
+         * @description Delete a strategy — only allowed when it has zero versions.
          *
-         *     Relationships are declared with cascade="all, delete-orphan", so the
-         *     whole subtree goes in one shot. Free-floating notes that were attached
-         *     to deleted runs survive with a dangling FK.
+         *     This is the "I created the wrong slug, clean it up" path. It will NOT
+         *     cascade to delete imported runs + trades + equity + metrics — if a
+         *     strategy has versions, we force the user to either delete each
+         *     version + its runs explicitly, or archive the strategy instead
+         *     (PATCH status="archived").
+         *
+         *     Returns 409 if the strategy still has versions attached.
          */
         delete: operations["delete_strategy_api_strategies__strategy_id__delete"];
         options?: never;
@@ -415,12 +419,57 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Strategy Version */
+        /**
+         * Delete Strategy Version
+         * @description Delete a version — only allowed when it has zero attached runs.
+         *
+         *     Before this change, SQLAlchemy's cascade="all, delete-orphan" on
+         *     StrategyVersion.runs would silently nuke every imported run, trade,
+         *     equity point, and metric with the version. Now the endpoint refuses
+         *     with 409 when runs exist and points the caller at the archive flow.
+         */
         delete: operations["delete_strategy_version_api_strategy_versions__version_id__delete"];
         options?: never;
         head?: never;
         /** Update Strategy Version */
         patch: operations["update_strategy_version_api_strategy_versions__version_id__patch"];
+        trace?: never;
+    };
+    "/api/strategy-versions/{version_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Archive Strategy Version
+         * @description Mark a version archived. Non-destructive — runs/trades/metrics untouched.
+         */
+        patch: operations["archive_strategy_version_api_strategy_versions__version_id__archive_patch"];
+        trace?: never;
+    };
+    "/api/strategy-versions/{version_id}/unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Unarchive Strategy Version */
+        patch: operations["unarchive_strategy_version_api_strategy_versions__version_id__unarchive_patch"];
         trace?: never;
     };
 }
@@ -905,6 +954,8 @@ export interface components {
         };
         /** StrategyVersionRead */
         StrategyVersionRead: {
+            /** Archived At */
+            archived_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1867,6 +1918,68 @@ export interface operations {
                 "application/json": components["schemas"]["StrategyVersionUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyVersionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_strategy_version_api_strategy_versions__version_id__archive_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyVersionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unarchive_strategy_version_api_strategy_versions__version_id__unarchive_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

@@ -128,9 +128,30 @@ def test_patch_strategy_rejects_invalid_status(
     assert response.status_code == 422
 
 
-def test_delete_strategy_cascades(
+def test_delete_strategy_without_versions(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:
+    """Deleting a brand-new strategy with no versions is fine."""
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        session.add(strategy)
+        session.commit()
+        sid = strategy.id
+
+    response = client.delete(f"/api/strategies/{sid}")
+    assert response.status_code == 204
+    assert client.get(f"/api/strategies/{sid}").status_code == 404
+
+
+def test_delete_strategy_with_versions_blocked(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Deleting a strategy with imported versions is rejected.
+
+    This protects against wiping out hundreds/thousands of imported trades
+    through one accidental click. Users must archive (PATCH status) or
+    delete each version explicitly.
+    """
     with session_factory() as session:
         strategy = models.Strategy(name="X", slug="x")
         version = models.StrategyVersion(strategy=strategy, version="v1")
@@ -140,10 +161,31 @@ def test_delete_strategy_cascades(
         vid = version.id
 
     response = client.delete(f"/api/strategies/{sid}")
-    assert response.status_code == 204
-    assert client.get(f"/api/strategies/{sid}").status_code == 404
+    assert response.status_code == 409
+    assert "version" in response.json()["detail"].lower()
+
+    # Strategy and its version must still exist.
+    assert client.get(f"/api/strategies/{sid}").status_code == 200
     with session_factory() as session:
-        assert session.get(models.StrategyVersion, vid) is None
+        assert session.get(models.StrategyVersion, vid) is not None
+
+
+def test_archive_path_works_for_strategies_with_versions(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """The supported destructive path: PATCH status='archived'."""
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x", status="live")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        sid = strategy.id
+
+    response = client.patch(
+        f"/api/strategies/{sid}", json={"status": "archived"}
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "archived"
 
 
 def test_create_strategy_version_success(client: TestClient) -> None:
@@ -222,6 +264,106 @@ def test_delete_strategy_version(
         ).status_code
         == 404
     )
+
+
+def test_delete_strategy_version_with_runs_is_blocked(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Deleting a version with attached runs must 409, not cascade-delete.
+
+    Previously SQLAlchemy's delete-orphan cascade would wipe every run,
+    trade, equity point, and metric row with the version in one call.
+    The archive path now owns that intent.
+    """
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        run = models.BacktestRun(
+            strategy_version_id=version.id, symbol="NQ"
+        )
+        session.add(run)
+        session.commit()
+        vid = version.id
+        rid = run.id
+
+    response = client.delete(f"/api/strategy-versions/{vid}")
+    assert response.status_code == 409
+    assert "archive" in response.json()["detail"].lower()
+
+    # Version and run must both survive.
+    with session_factory() as session:
+        assert session.get(models.StrategyVersion, vid) is not None
+        assert session.get(models.BacktestRun, rid) is not None
+
+
+def test_archive_strategy_version_sets_timestamp(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        vid = version.id
+
+    response = client.patch(f"/api/strategy-versions/{vid}/archive")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["archived_at"] is not None
+
+    # Calling archive a second time is a no-op (idempotent).
+    second = client.patch(f"/api/strategy-versions/{vid}/archive")
+    assert second.status_code == 200
+    assert second.json()["archived_at"] == body["archived_at"]
+
+
+def test_unarchive_strategy_version_clears_timestamp(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        vid = version.id
+
+    client.patch(f"/api/strategy-versions/{vid}/archive")
+    response = client.patch(f"/api/strategy-versions/{vid}/unarchive")
+    assert response.status_code == 200
+    assert response.json()["archived_at"] is None
+
+
+def test_archive_strategy_version_preserves_runs(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Archive must NOT touch attached runs, trades, equity, or metrics.
+
+    This is the whole reason archive exists as a separate action — the
+    prior cascade-delete path destroyed imported data.
+    """
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        run = models.BacktestRun(
+            strategy_version_id=version.id, symbol="NQ"
+        )
+        session.add(run)
+        session.commit()
+        vid = version.id
+        rid = run.id
+
+    response = client.patch(f"/api/strategy-versions/{vid}/archive")
+    assert response.status_code == 200
+
+    with session_factory() as session:
+        surviving = session.get(models.StrategyVersion, vid)
+        assert surviving is not None
+        assert surviving.archived_at is not None
+        assert session.get(models.BacktestRun, rid) is not None
 
 
 def test_missing_strategy_returns_404(client: TestClient) -> None:

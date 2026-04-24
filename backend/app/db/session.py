@@ -43,6 +43,40 @@ def create_all(engine: Engine) -> None:
     from app.db import models  # noqa: F401
 
     Base.metadata.create_all(engine)
+    _run_data_migrations(engine)
+
+
+def _run_data_migrations(engine: Engine) -> None:
+    """Idempotent data migrations that run every time the app starts.
+
+    Kept tiny and explicit — when there are more than a few, we'll switch
+    to Alembic. For now each migration is a guarded UPDATE.
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    with engine.begin() as connection:
+        # 2026-04-24: "testing" was the legacy auto-registered status for
+        # imported strategies before the lifecycle vocabulary shipped. Map
+        # any leftover rows to "building" so they show up in the right
+        # pipeline column. Safe to re-run: the UPDATE is a no-op once
+        # nothing matches.
+        connection.execute(
+            text(
+                "UPDATE strategies SET status = 'building' "
+                "WHERE status = 'testing'"
+            )
+        )
+
+        # 2026-04-24: StrategyVersion.archived_at added so versions can be
+        # archived instead of cascade-deleting their runs/trades/metrics.
+        # SQLite's create_all() won't add columns to existing tables, so
+        # check and ALTER explicitly. Guard is idempotent.
+        sv_columns = {c["name"] for c in inspector.get_columns("strategy_versions")}
+        if "archived_at" not in sv_columns:
+            connection.execute(
+                text("ALTER TABLE strategy_versions ADD COLUMN archived_at DATETIME")
+            )
 
 
 # Lazily-initialised module globals for the running FastAPI app.

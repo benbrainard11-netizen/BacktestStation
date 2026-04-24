@@ -19,6 +19,7 @@ class StrategyVersionRead(OrmModel):
     risk_md: str | None
     git_commit_sha: str | None
     created_at: datetime
+    archived_at: datetime | None = None
 
 
 class StrategyRead(OrmModel):

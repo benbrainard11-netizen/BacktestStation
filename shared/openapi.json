@@ -1618,6 +1618,18 @@
       },
       "StrategyVersionRead": {
         "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -2889,7 +2901,7 @@
     },
     "/api/strategies/{strategy_id}": {
       "delete": {
-        "description": "Delete a strategy and all its versions + runs + children.\n\nRelationships are declared with cascade=\"all, delete-orphan\", so the\nwhole subtree goes in one shot. Free-floating notes that were attached\nto deleted runs survive with a dangling FK.",
+        "description": "Delete a strategy \u2014 only allowed when it has zero versions.\n\nThis is the \"I created the wrong slug, clean it up\" path. It will NOT\ncascade to delete imported runs + trades + equity + metrics \u2014 if a\nstrategy has versions, we force the user to either delete each\nversion + its runs explicitly, or archive the strategy instead\n(PATCH status=\"archived\").\n\nReturns 409 if the strategy still has versions attached.",
         "operationId": "delete_strategy_api_strategies__strategy_id__delete",
         "parameters": [
           {
@@ -3067,6 +3079,7 @@
     },
     "/api/strategy-versions/{version_id}": {
       "delete": {
+        "description": "Delete a version \u2014 only allowed when it has zero attached runs.\n\nBefore this change, SQLAlchemy's cascade=\"all, delete-orphan\" on\nStrategyVersion.runs would silently nuke every imported run, trade,\nequity point, and metric with the version. Now the endpoint refuses\nwith 409 when runs exist and points the caller at the archive flow.",
         "operationId": "delete_strategy_version_api_strategy_versions__version_id__delete",
         "parameters": [
           {
@@ -3145,6 +3158,91 @@
           }
         },
         "summary": "Update Strategy Version",
+        "tags": [
+          "strategies"
+        ]
+      }
+    },
+    "/api/strategy-versions/{version_id}/archive": {
+      "patch": {
+        "description": "Mark a version archived. Non-destructive \u2014 runs/trades/metrics untouched.",
+        "operationId": "archive_strategy_version_api_strategy_versions__version_id__archive_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyVersionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Strategy Version",
+        "tags": [
+          "strategies"
+        ]
+      }
+    },
+    "/api/strategy-versions/{version_id}/unarchive": {
+      "patch": {
+        "operationId": "unarchive_strategy_version_api_strategy_versions__version_id__unarchive_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyVersionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unarchive Strategy Version",
         "tags": [
           "strategies"
         ]
