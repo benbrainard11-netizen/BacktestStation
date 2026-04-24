@@ -25,3 +25,18 @@ export interface BacktestRun {
 export interface BackendErrorBody {
   detail?: string;
 }
+
+export interface LiveMonitorStatus {
+  source_path: string;
+  source_exists: boolean;
+  strategy_status: string;
+  last_heartbeat: string | null;
+  current_symbol: string | null;
+  current_session: string | null;
+  today_pnl: number | null;
+  today_r: number | null;
+  trades_today: number | null;
+  last_signal: Record<string, unknown> | string | null;
+  last_error: string | null;
+  raw: Record<string, unknown> | null;
+}
