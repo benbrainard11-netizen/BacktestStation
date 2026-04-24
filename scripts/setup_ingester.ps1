@@ -33,7 +33,7 @@ Write-Host "  using: $root"
 
 Write-Host ""
 Write-Host "Paste your Databento Live API key. The cursor will NOT move and"
-Write-Host "nothing will be displayed when you paste — that's intentional."
+Write-Host "nothing will be displayed when you paste -- that's intentional."
 Write-Host "After pasting, press Enter."
 Write-Host ""
 
@@ -49,7 +49,7 @@ if (-not $plainKey -or $plainKey.Length -lt 10) {
 }
 if (-not $plainKey.StartsWith("db-")) {
     Write-Host ""
-    Write-Host "ERROR: that doesn't look like a Databento key — should start with 'db-'." -ForegroundColor Red
+    Write-Host "ERROR: that doesn't look like a Databento key -- should start with 'db-'." -ForegroundColor Red
     Write-Host "If you copied with extra whitespace, try again." -ForegroundColor Red
     exit 1
 }
@@ -112,7 +112,7 @@ if (Test-Path $venvPython) {
     Write-Host "  using backend venv: $py"
 } else {
     $py = "python"
-    Write-Host "  no backend\.venv found — using system 'python' on PATH"
+    Write-Host "  no backend\.venv found -- using system 'python' on PATH"
     Write-Host "  (for the documented setup, run in another window:" -ForegroundColor DarkGray
     Write-Host "     cd ..\backend; py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -e .[dev]" -ForegroundColor DarkGray
     Write-Host "   then re-run this script.)" -ForegroundColor DarkGray
@@ -121,7 +121,7 @@ if (Test-Path $venvPython) {
 # If databento isn't importable, install it into whichever python we picked
 & $py -c "import databento" 2>$null
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "  databento not importable in this python — installing now..." -ForegroundColor Yellow
+    Write-Host "  databento not importable in this python -- installing now..." -ForegroundColor Yellow
     & $py -m pip install --quiet databento
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
@@ -131,8 +131,18 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 
-& $py -c $pyTest
-if ($LASTEXITCODE -ne 0) {
+# Windows PowerShell mangles multi-line strings passed to 'python -c' (embedded
+# double quotes get treated as argv boundaries). Write the test to a temp file
+# and run 'python <file>' instead, which has no such quoting issues.
+$tmpPy = Join-Path $env:TEMP ("bs_setup_test_" + [guid]::NewGuid().ToString() + ".py")
+$pyTest | Out-File $tmpPy -Encoding ascii
+try {
+    & $py $tmpPy
+    $pyExit = $LASTEXITCODE
+} finally {
+    Remove-Item $tmpPy -Force -ErrorAction SilentlyContinue
+}
+if ($pyExit -ne 0) {
     Write-Host ""
     Write-Host "Setup test failed. Review the error above." -ForegroundColor Red
     exit 1
