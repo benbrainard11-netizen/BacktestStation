@@ -3,7 +3,7 @@
 > Source of truth for **product direction**. Update when a decision changes.
 > Paired with [`AGENTS.md`](../AGENTS.md) (agent rules), [`PHASE_1_SCOPE.md`](PHASE_1_SCOPE.md) (frozen Phase 1 spec), and [`ARCHITECTURE.md`](ARCHITECTURE.md) (system design / eventual end-state).
 >
-> Last updated: 2026-04-23
+> Last updated: 2026-04-24
 
 ---
 
@@ -21,7 +21,7 @@ Personal tool first. Productization is a possible future — not a committed pat
 
 1. **Any strategy plugs in.** Same dashboard, same import workflow, same analytics — whether the strategy is Fractal AMD, ORB, VWAP mean-reversion, or a future ML-based thing.
 2. **Live and backtest live on the same surface.** Imported backtest results and live-bot output flow into the same tables, charts, and pages. Divergence between the two is obvious because they're compared in the same UI.
-3. **Correctness second, speed first.** Import and compare first, then build the deterministic engine to validate. "Is my strategy actually doing what the backtest said?" is the question the whole app exists to answer.
+3. **Engine perfection later, imported-data correctness now.** The first priority is correctly importing, storing, displaying, and comparing existing strategy outputs. Do not fake data or hide mock behavior. The deterministic engine answers "is my strategy actually doing what the backtest said?" — but it's built *after* the imported-results loop feels solid, not before.
 
 ---
 
@@ -37,7 +37,7 @@ Personal tool first. Productization is a possible future — not a committed pat
 ### Frontend
 - Next.js 15 + React 19 + TypeScript + Tailwind + Tauri 2.
 - Real data on: `/import`, `/backtests`, `/backtests/[id]`, `/backtests/[id]/replay`, `/backtests/compare`, `/monitor`, `/strategies`, `/strategies/[id]`.
-- Placeholder still on: `/`, `/journal`, `/data-health`, `/settings`, `/replay` (root — distinct from `/backtests/[id]/replay`).
+- Placeholder still on: `/`, `/journal`, `/data-health`, `/settings`. (`/replay` at root exists as a leftover placeholder file — slated for deletion, see §11.)
 - Built-in charts: equity curve, drawdown curve, R-multiple histogram, overlaid two-run equity comparison. Replay chart intentionally absent until Databento ticks land.
 
 ### Data
@@ -104,14 +104,35 @@ The actual correctness goal. Per [`ARCHITECTURE.md §7 and §14`](ARCHITECTURE.m
 - Pure Python engine under `backend/app/engine/`. No I/O dependencies. No imports from `api/`, `db/`, `storage/`, `ingest/`.
 - Event types: `TickEvent`, `BarEvent`, `SignalEvent`, `OrderEvent`, `FillEvent`.
 - Strategy base with `on_tick` / `on_bar` and `emit_bracket(side, size, stop, target)` as the primary API.
-- Broker with OCO bracket handling. MBP-1 stop-vs-target race resolved using the actual trade sequence — never the more-favorable outcome.
+- **Conservative-fill broker** with OCO bracket handling (see rules below).
 - **Fractal AMD port** as the first concrete strategy. One real strategy validates the abstraction exists because it has something to abstract over.
+
+### Stop-vs-target fill rules
+The backtester must not pretend it knows something it doesn't.
+
+1. **If trade-level sequence is available** (e.g., MBP-1 trades print in exact order within the window) — use it. The side that printed first wins.
+2. **If the data is ambiguous** (both stop and target are reachable in the same window but trade order can't be determined, e.g., OHLC bars only) — resolve conservatively.
+3. **Default conservative rule: stop wins.** Never pick the more-favorable outcome when it's not supported by the data.
+
+Every trade must store a `fill_confidence` field:
+- `exact` — trade-level sequence used, unambiguous resolution.
+- `conservative` — ambiguous window, default-stop rule applied.
+- `ambiguous` — flagged for review, stop used.
+
+Every run summary records `ambiguous_fill_count` so runs with a lot of ambiguous fills are visible without digging into trades.
+
+### Schema changes this introduces
+- **`backtest_runs.source_type`** — `imported | internal_engine | live_replay`. One table serves all three so the dashboard is unified. Imported runs (Phase 1) use `imported`; engine runs use `internal_engine`; live-bot replay comparisons use `live_replay`.
+- **`trades.fill_confidence`** — `exact | conservative | ambiguous`. Imported trades from Phase 1 source files get `exact` (we trust what the source produced). Engine-produced trades get whichever the broker determined.
+- **`run_metrics.ambiguous_fill_count`** — integer count of `ambiguous` fills in the run.
 
 ### Correctness tests (all blocking)
 - **Known-result fixture** — synthetic 200-tick dataset, hand-calculated expected trades.
 - **Lookahead harness** — strategy that tries to peek ahead → engine raises.
 - **Determinism** — run same backtest twice → byte-identical `equity.parquet` + `trades.parquet`.
-- **MBP-1 stop-vs-target race** — both levels in range within the same tick window → actual trade sequence wins.
+- **Stop-vs-target fill decisions** —
+  - Trade-level sequence available → `fill_confidence=exact`, correct side wins.
+  - Ambiguous OHLC-only window with both levels reachable → `fill_confidence=conservative`, stop wins by default.
 - **EOD flatten** — open position at session close → forced exit.
 
 ### What this resolves
@@ -186,11 +207,11 @@ Husky fills in parallel frontend work on his own task branches and hands them ba
 Decisions that aren't made yet. Capture them here instead of letting them drift between sessions.
 
 1. **Embedded LLM — Phase 6 commitment or "someday"?** Until this is answered, skip it entirely.
-2. **Engine runs vs imported runs.** When Phase 4 lands, should engine-produced results flow through the *same* `/api/import/backtest` endpoint (writing in-process), or get their own `engine_runs` table and endpoints? The former keeps the `/backtests` list unified; the latter keeps concerns separated.
+2. ~~**Engine runs vs imported runs.**~~ **Resolved 2026-04-24:** one `backtest_runs` table for everything, with a `source_type` column (`imported | internal_engine | live_replay`). Same dashboard, same list, same detail page. See Phase 4 schema changes.
 3. **Productization.** If Ben ever decides to sell it, what's the first step — marketing site, auth system, hosted-vs-desktop decision? Until that's answered, skip anything that only matters for paying customers.
 4. **Sunday live test truth arbiter.** If Sunday's live Fractal bot diverges from the `live_match_2022_2026` backtest, which one is the source of truth for next iteration? Current best answer: live is truth; backtest is the parallel estimate.
-5. **Replay route structure.** Keep `/backtests/[id]/replay`, `/replay` (root — meaning unclear), and future `/backtests/[id]/validation` as separate routes, or consolidate into one "trade explorer" route?
-6. **Default branch.** Renamed to `main` tonight. Anything else drifted from the old branch name? (Check CI, deploy configs, README links once we add any.)
+5. ~~**Replay route structure.**~~ **Resolved 2026-04-24:** `/backtests/[id]/replay` is the only replay surface. The root `/replay` page is a leftover placeholder — do not build it, and delete the file next time it's touched. A future `/backtests/[id]/validation` stays a separate route (different purpose: live-vs-backtest diff, not trade replay).
+6. **Default branch.** Renamed to `main` on 2026-04-23. Anything else drifted from the old branch name? (Check CI, deploy configs, README links once we add any.)
 
 ---
 
@@ -205,3 +226,5 @@ What we will **not** build, and why. Mirrors [`ARCHITECTURE.md §13`](ARCHITECTU
 - **No premature abstractions.** Don't build a plugin framework until ≥3 concrete strategies exist. Don't build a generic "connector" layer for non-Fractal files until at least two strategies are imported.
 - **No hand-written frontend API clients** once [`scripts/generate-types.sh`](../scripts/generate-types.sh) exists (Phase 3+).
 - **No websockets** for Phase 1-3. Polling is fine. Upgrade to websockets only when we can name a user-facing reason.
+- **No root `/replay` page.** `/backtests/[id]/replay` is the only replay surface. The leftover `frontend/app/replay/page.tsx` should be deleted the next time someone is in that directory.
+- **No favorable-outcome assumptions in the backtester.** If the data can't resolve a stop-vs-target race, the fill is conservative (stop wins). See Phase 4 stop-vs-target fill rules. Every trade records `fill_confidence`; every run summary records `ambiguous_fill_count`. Never let the backtester silently pick the better of two outcomes.
