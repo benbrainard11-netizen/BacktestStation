@@ -66,7 +66,16 @@ def load_ohlcv_1m(symbol: str, start: datetime, end: datetime) -> pd.DataFrame:
 
 
 def _normalize_tz(df: pd.DataFrame) -> pd.DataFrame:
-    """Ensure the index is tz-aware in America/New_York."""
+    """Ensure the index is a tz-aware DatetimeIndex in America/New_York.
+
+    After concat() across files with mismatched tz info, pandas sometimes
+    returns a plain Index (object dtype). Normalize in two steps: ensure
+    DatetimeIndex, then ensure ET tz.
+    """
+    idx = df.index
+    if not isinstance(idx, pd.DatetimeIndex):
+        idx = pd.to_datetime(idx, utc=True, errors="coerce")
+        df.index = idx
     if df.index.tz is None:
         # Older files may be naive-local or naive-utc. Safest assumption:
         # UTC, then convert.
