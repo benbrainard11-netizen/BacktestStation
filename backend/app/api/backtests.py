@@ -86,3 +86,20 @@ def update_backtest(
     db.commit()
     db.refresh(run)
     return run
+
+
+@router.delete("/{backtest_id}", status_code=204)
+def delete_backtest(
+    backtest_id: int, db: Session = Depends(get_session)
+) -> None:
+    """Delete a run and all its children.
+
+    ORM relationships are declared with cascade="all, delete-orphan", so
+    trades, equity_points, run_metrics, and config_snapshot go with it.
+    Notes keep a nullable FK and are not cascade-deleted — they survive
+    as floating research notes.
+    """
+    run = _require_run(db, backtest_id)
+    db.delete(run)
+    db.commit()
+    return None

@@ -1239,6 +1239,40 @@
       }
     },
     "/api/backtests/{backtest_id}": {
+      "delete": {
+        "description": "Delete a run and all its children.\n\nORM relationships are declared with cascade=\"all, delete-orphan\", so\ntrades, equity_points, run_metrics, and config_snapshot go with it.\nNotes keep a nullable FK and are not cascade-deleted \u2014 they survive\nas floating research notes.",
+        "operationId": "delete_backtest_api_backtests__backtest_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "backtest_id",
+            "required": true,
+            "schema": {
+              "title": "Backtest Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Backtest",
+        "tags": [
+          "backtests"
+        ]
+      },
       "get": {
         "operationId": "get_backtest_api_backtests__backtest_id__get",
         "parameters": [

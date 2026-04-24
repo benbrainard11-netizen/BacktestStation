@@ -32,7 +32,16 @@ export interface paths {
         get: operations["get_backtest_api_backtests__backtest_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Backtest
+         * @description Delete a run and all its children.
+         *
+         *     ORM relationships are declared with cascade="all, delete-orphan", so
+         *     trades, equity_points, run_metrics, and config_snapshot go with it.
+         *     Notes keep a nullable FK and are not cascade-deleted — they survive
+         *     as floating research notes.
+         */
+        delete: operations["delete_backtest_api_backtests__backtest_id__delete"];
         options?: never;
         head?: never;
         /** Update Backtest */
@@ -595,6 +604,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["BacktestRunRead"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_backtest_api_backtests__backtest_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

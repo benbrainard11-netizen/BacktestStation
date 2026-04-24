@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import DataQualityPanel from "@/components/backtests/DataQualityPanel";
+import DeleteRunButton from "@/components/backtests/DeleteRunButton";
 import EquityChart from "@/components/backtests/EquityChart";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
@@ -62,11 +63,17 @@ export default async function BacktestDetailPage({
         >
           ← All runs
         </Link>
-        <RenameRunButton
-          runId={run.id}
-          initialName={run.name}
-          fallbackLabel={`Backtest ${run.id}`}
-        />
+        <div className="flex items-center gap-2">
+          <RenameRunButton
+            runId={run.id}
+            initialName={run.name}
+            fallbackLabel={`Backtest ${run.id}`}
+          />
+          <DeleteRunButton
+            runId={run.id}
+            confirmPhrase={run.name ?? `BT-${run.id}`}
+          />
+        </div>
       </div>
       <PageHeader
         title={run.name ?? `Backtest ${run.id}`}
