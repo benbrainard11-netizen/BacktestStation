@@ -1,0 +1,59 @@
+import { Info } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import type { Tone } from "@/lib/mocks/commandCenter";
+
+interface MetricCardProps {
+  label: string;
+  value: string;
+  valueTone?: Tone;
+  delta?: string;
+  deltaTone?: Tone;
+}
+
+const VALUE_TONE: Record<Tone, string> = {
+  positive: "text-emerald-400",
+  negative: "text-rose-400",
+  neutral: "text-zinc-100",
+};
+
+const DELTA_TONE: Record<Tone, string> = {
+  positive: "text-emerald-400",
+  negative: "text-rose-400",
+  neutral: "text-zinc-500",
+};
+
+export default function MetricCard({
+  label,
+  value,
+  valueTone = "neutral",
+  delta,
+  deltaTone = "neutral",
+}: MetricCardProps) {
+  return (
+    <div className="flex min-w-0 flex-col gap-3 border border-zinc-800 bg-zinc-950 px-4 py-3">
+      <div className="flex items-center gap-1.5 text-zinc-500">
+        <span className="font-mono text-[10px] uppercase tracking-widest">
+          {label}
+        </span>
+        <Info className="h-3 w-3 shrink-0 text-zinc-700" strokeWidth={1.5} aria-hidden="true" />
+      </div>
+      <p
+        className={cn(
+          "font-mono text-2xl leading-none tracking-tight",
+          VALUE_TONE[valueTone],
+        )}
+      >
+        {value}
+      </p>
+      {delta ? (
+        <p className="font-mono text-[11px] leading-none">
+          <span className={DELTA_TONE[deltaTone]}>{delta.split(" ")[0]}</span>
+          <span className="ml-1 text-zinc-600">
+            {delta.split(" ").slice(1).join(" ")}
+          </span>
+        </p>
+      ) : null}
+    </div>
+  );
+}

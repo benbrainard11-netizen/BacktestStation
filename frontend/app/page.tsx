@@ -1,33 +1,48 @@
+import EquitySnapshotPanel from "@/components/command-center/EquitySnapshotPanel";
+import KpiRow from "@/components/command-center/KpiRow";
+import PhaseProgressStrip from "@/components/command-center/PhaseProgressStrip";
+import QuickAccessGrid from "@/components/command-center/QuickAccessGrid";
+import RecentActivityPanel from "@/components/command-center/RecentActivityPanel";
+import RecentBacktestsTable from "@/components/command-center/RecentBacktestsTable";
+import SystemStatusPanel from "@/components/command-center/SystemStatusPanel";
 import PageHeader from "@/components/PageHeader";
-
-const CARDS: { label: string; hint: string }[] = [
-  { label: "Data Health", hint: "No datasets yet" },
-  { label: "Latest Signal", hint: "No live monitor yet" },
-  { label: "Latest Run", hint: "No backtests yet" },
-  { label: "Today P&L", hint: "No live trades yet" },
-];
 
 export default function CommandCenter() {
   return (
-    <div>
+    <div className="flex flex-col gap-4 pb-6">
       <PageHeader
         title="Command Center"
-        description="Overview of data health, signals, runs, and performance"
+        description="System overview, latest research activity, and import status"
       />
-      <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 lg:grid-cols-4">
-        {CARDS.map((card) => (
-          <div
-            key={card.label}
-            className="rounded border border-zinc-800 bg-zinc-950 p-4"
-          >
-            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-              {card.label}
-            </p>
-            <p className="mt-2 font-mono text-2xl text-zinc-100">—</p>
-            <p className="mt-1 text-xs text-zinc-500">{card.hint}</p>
-          </div>
-        ))}
-      </div>
+
+      <section className="px-6">
+        <KpiRow />
+      </section>
+
+      <section className="px-6">
+        <PhaseProgressStrip />
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 px-6 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <RecentBacktestsTable />
+        </div>
+        <div className="lg:col-span-4">
+          <SystemStatusPanel />
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 px-6 lg:grid-cols-12">
+        <div className="lg:col-span-3">
+          <QuickAccessGrid />
+        </div>
+        <div className="lg:col-span-5">
+          <EquitySnapshotPanel />
+        </div>
+        <div className="lg:col-span-4">
+          <RecentActivityPanel />
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,0 +1,8 @@
+# Cargo build artifacts
+target/
+
+# Tauri-generated schemas / bindings
+gen/
+
+# WiX build output (Windows installer)
+WixTools/

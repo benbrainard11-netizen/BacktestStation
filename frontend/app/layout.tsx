@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 
 import Sidebar from "@/components/layout/Sidebar";
+import TopBar from "@/components/layout/TopBar";
 
 import "./globals.css";
 
@@ -12,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BacktestStation",
+  title: "InSyncAlgo",
   description: "Futures strategy research terminal",
 };
 
@@ -21,10 +22,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="min-h-screen">
+      <body className="min-h-screen bg-zinc-950 text-zinc-100">
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 overflow-auto">{children}</main>
+          <div className="flex min-h-screen flex-1 flex-col overflow-hidden">
+            <TopBar />
+            <main className="flex-1 overflow-auto">{children}</main>
+          </div>
         </div>
       </body>
     </html>

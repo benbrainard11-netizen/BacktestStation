@@ -21,6 +21,11 @@ out/
 .turbo/
 *.tsbuildinfo
 
+# Tauri (Rust) build artifacts
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
+frontend/src-tauri/WixTools/
+
 # Env / secrets
 .env
 .env.local

@@ -1,6 +1,13 @@
 import PageHeader from "@/components/PageHeader";
 import Placeholder from "@/components/Placeholder";
 
+// Static export needs known IDs at build time. One placeholder route is
+// enough for now; real run IDs will be plugged in once the importer lands.
+export const dynamicParams = false;
+export async function generateStaticParams() {
+  return [{ id: "demo" }];
+}
+
 interface BacktestDetailPageProps {
   params: Promise<{ id: string }>;
 }

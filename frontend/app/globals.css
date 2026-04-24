@@ -12,13 +12,60 @@ body {
   color: rgb(244 244 245);
 }
 
+html {
+  font-size: 15px;
+}
+
 body {
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family:
+    var(--font-inter),
+    "Inter",
+    "Segoe UI Variable Text",
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
 }
 
 ::selection {
   background: rgb(39 39 42);
   color: rgb(244 244 245);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgb(9 9 11);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgb(39 39 42);
+  border: 2px solid rgb(9 9 11);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(63 63 70);
+}
+
+.font-mono {
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: 0;
+}
+
+.bg-stripes {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    rgba(255, 255, 255, 0.015) 6px,
+    rgba(255, 255, 255, 0.015) 12px
+  );
 }
