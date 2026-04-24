@@ -10,6 +10,7 @@ from app.api import (
     imports,
     monitor,
     notes,
+    prop_firm,
     strategies,
 )
 
@@ -35,3 +36,5 @@ app.include_router(backtests.router, prefix="/api")
 app.include_router(backtest_export.router, prefix="/api")
 app.include_router(data_quality.router, prefix="/api")
 app.include_router(notes.router, prefix="/api")
+app.include_router(prop_firm.router, prefix="/api")
+app.include_router(prop_firm.backtest_router, prefix="/api")

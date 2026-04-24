@@ -6,6 +6,7 @@ import DeleteRunButton from "@/components/backtests/DeleteRunButton";
 import EquityChart from "@/components/backtests/EquityChart";
 import ExportButtons from "@/components/backtests/ExportButtons";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
+import PropFirmSimulator from "@/components/backtests/PropFirmSimulator";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
 import RenameRunButton from "@/components/backtests/RenameRunButton";
 import TradeTable from "@/components/backtests/TradeTable";
@@ -107,6 +108,10 @@ export default async function BacktestDetailPage({
 
         <Panel title="R-multiple distribution" meta={`${trades.length} trades`}>
           <RMultipleHistogram trades={trades} />
+        </Panel>
+
+        <Panel title="Prop firm simulator" meta="deterministic">
+          <PropFirmSimulator runId={run.id} />
         </Panel>
 
         <Panel title="Trades" meta={`${trades.length} total`}>

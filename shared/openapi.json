@@ -712,6 +712,320 @@
         "title": "NoteRead",
         "type": "object"
       },
+      "PropFirmConfigIn": {
+        "additionalProperties": false,
+        "description": "POST body. Either pass `preset_key` (with optional overrides) or fully\nspecify every field.",
+        "properties": {
+          "consistency_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Pct"
+          },
+          "daily_loss_limit": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Limit"
+          },
+          "max_drawdown": {
+            "exclusiveMinimum": 0.0,
+            "title": "Max Drawdown",
+            "type": "number"
+          },
+          "max_trades_per_day": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Day"
+          },
+          "profit_target": {
+            "exclusiveMinimum": 0.0,
+            "title": "Profit Target",
+            "type": "number"
+          },
+          "risk_per_trade_dollars": {
+            "exclusiveMinimum": 0.0,
+            "title": "Risk Per Trade Dollars",
+            "type": "number"
+          },
+          "starting_balance": {
+            "exclusiveMinimum": 0.0,
+            "title": "Starting Balance",
+            "type": "number"
+          },
+          "trailing_drawdown": {
+            "default": true,
+            "title": "Trailing Drawdown",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "starting_balance",
+          "profit_target",
+          "max_drawdown",
+          "risk_per_trade_dollars"
+        ],
+        "title": "PropFirmConfigIn",
+        "type": "object"
+      },
+      "PropFirmDayRow": {
+        "properties": {
+          "balance_at_eod": {
+            "title": "Balance At Eod",
+            "type": "number"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "pnl": {
+            "title": "Pnl",
+            "type": "number"
+          },
+          "trades": {
+            "title": "Trades",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "pnl",
+          "trades",
+          "balance_at_eod"
+        ],
+        "title": "PropFirmDayRow",
+        "type": "object"
+      },
+      "PropFirmPresetRead": {
+        "properties": {
+          "consistency_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Pct"
+          },
+          "daily_loss_limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Limit"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "max_drawdown": {
+            "title": "Max Drawdown",
+            "type": "number"
+          },
+          "max_trades_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Day"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "profit_target": {
+            "title": "Profit Target",
+            "type": "number"
+          },
+          "risk_per_trade_dollars": {
+            "title": "Risk Per Trade Dollars",
+            "type": "number"
+          },
+          "starting_balance": {
+            "title": "Starting Balance",
+            "type": "number"
+          },
+          "trailing_drawdown": {
+            "title": "Trailing Drawdown",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "notes",
+          "starting_balance",
+          "profit_target",
+          "max_drawdown",
+          "trailing_drawdown",
+          "daily_loss_limit",
+          "consistency_pct",
+          "max_trades_per_day",
+          "risk_per_trade_dollars"
+        ],
+        "title": "PropFirmPresetRead",
+        "type": "object"
+      },
+      "PropFirmResultRead": {
+        "properties": {
+          "best_day": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PropFirmDayRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "best_day_share_of_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Day Share Of Profit"
+          },
+          "consistency_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Ok"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/PropFirmDayRow"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "days_simulated": {
+            "title": "Days Simulated",
+            "type": "integer"
+          },
+          "days_to_pass": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days To Pass"
+          },
+          "fail_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fail Reason"
+          },
+          "final_balance": {
+            "title": "Final Balance",
+            "type": "number"
+          },
+          "max_drawdown_reached": {
+            "title": "Max Drawdown Reached",
+            "type": "number"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "peak_balance": {
+            "title": "Peak Balance",
+            "type": "number"
+          },
+          "skipped_trades_no_r": {
+            "title": "Skipped Trades No R",
+            "type": "integer"
+          },
+          "total_profit": {
+            "title": "Total Profit",
+            "type": "number"
+          },
+          "total_trades": {
+            "title": "Total Trades",
+            "type": "integer"
+          },
+          "worst_day": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PropFirmDayRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "passed",
+          "fail_reason",
+          "days_simulated",
+          "days_to_pass",
+          "max_drawdown_reached",
+          "peak_balance",
+          "final_balance",
+          "total_profit",
+          "best_day",
+          "worst_day",
+          "consistency_ok",
+          "best_day_share_of_profit",
+          "total_trades",
+          "skipped_trades_no_r",
+          "days"
+        ],
+        "title": "PropFirmResultRead",
+        "type": "object"
+      },
       "RunMetricsRead": {
         "properties": {
           "avg_loss": {
@@ -1574,6 +1888,58 @@
         ]
       }
     },
+    "/api/backtests/{backtest_id}/prop-firm-sim": {
+      "post": {
+        "operationId": "simulate_prop_firm_api_backtests__backtest_id__prop_firm_sim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "backtest_id",
+            "required": true,
+            "schema": {
+              "title": "Backtest Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropFirmConfigIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropFirmResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Simulate Prop Firm",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
     "/api/backtests/{backtest_id}/trades": {
       "get": {
         "operationId": "list_backtest_trades_api_backtests__backtest_id__trades_get",
@@ -1848,6 +2214,31 @@
         "summary": "Create Note",
         "tags": [
           "notes"
+        ]
+      }
+    },
+    "/api/prop-firm/presets": {
+      "get": {
+        "operationId": "list_presets_api_prop_firm_presets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PropFirmPresetRead"
+                  },
+                  "title": "Response List Presets Api Prop Firm Presets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Presets",
+        "tags": [
+          "prop-firm"
         ]
       }
     },

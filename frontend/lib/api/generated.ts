@@ -133,6 +133,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/{backtest_id}/prop-firm-sim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Simulate Prop Firm */
+        post: operations["simulate_prop_firm_api_backtests__backtest_id__prop_firm_sim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}/trades": {
         parameters: {
             query?: never;
@@ -230,6 +247,23 @@ export interface paths {
         put?: never;
         /** Create Note */
         post: operations["create_note_api_notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/prop-firm/presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Presets */
+        get: operations["list_presets_api_prop_firm_presets_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -479,6 +513,99 @@ export interface components {
             id: number;
             /** Trade Id */
             trade_id: number | null;
+        };
+        /**
+         * PropFirmConfigIn
+         * @description POST body. Either pass `preset_key` (with optional overrides) or fully
+         *     specify every field.
+         */
+        PropFirmConfigIn: {
+            /** Consistency Pct */
+            consistency_pct?: number | null;
+            /** Daily Loss Limit */
+            daily_loss_limit?: number | null;
+            /** Max Drawdown */
+            max_drawdown: number;
+            /** Max Trades Per Day */
+            max_trades_per_day?: number | null;
+            /** Profit Target */
+            profit_target: number;
+            /** Risk Per Trade Dollars */
+            risk_per_trade_dollars: number;
+            /** Starting Balance */
+            starting_balance: number;
+            /**
+             * Trailing Drawdown
+             * @default true
+             */
+            trailing_drawdown: boolean;
+        };
+        /** PropFirmDayRow */
+        PropFirmDayRow: {
+            /** Balance At Eod */
+            balance_at_eod: number;
+            /** Date */
+            date: string;
+            /** Pnl */
+            pnl: number;
+            /** Trades */
+            trades: number;
+        };
+        /** PropFirmPresetRead */
+        PropFirmPresetRead: {
+            /** Consistency Pct */
+            consistency_pct: number | null;
+            /** Daily Loss Limit */
+            daily_loss_limit: number | null;
+            /** Key */
+            key: string;
+            /** Max Drawdown */
+            max_drawdown: number;
+            /** Max Trades Per Day */
+            max_trades_per_day: number | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes: string;
+            /** Profit Target */
+            profit_target: number;
+            /** Risk Per Trade Dollars */
+            risk_per_trade_dollars: number;
+            /** Starting Balance */
+            starting_balance: number;
+            /** Trailing Drawdown */
+            trailing_drawdown: boolean;
+        };
+        /** PropFirmResultRead */
+        PropFirmResultRead: {
+            best_day: components["schemas"]["PropFirmDayRow"] | null;
+            /** Best Day Share Of Profit */
+            best_day_share_of_profit: number | null;
+            /** Consistency Ok */
+            consistency_ok: boolean | null;
+            /** Days */
+            days: components["schemas"]["PropFirmDayRow"][];
+            /** Days Simulated */
+            days_simulated: number;
+            /** Days To Pass */
+            days_to_pass: number | null;
+            /** Fail Reason */
+            fail_reason: string | null;
+            /** Final Balance */
+            final_balance: number;
+            /** Max Drawdown Reached */
+            max_drawdown_reached: number;
+            /** Passed */
+            passed: boolean;
+            /** Peak Balance */
+            peak_balance: number;
+            /** Skipped Trades No R */
+            skipped_trades_no_r: number;
+            /** Total Profit */
+            total_profit: number;
+            /** Total Trades */
+            total_trades: number;
+            worst_day: components["schemas"]["PropFirmDayRow"] | null;
         };
         /** RunMetricsRead */
         RunMetricsRead: {
@@ -886,6 +1013,41 @@ export interface operations {
             };
         };
     };
+    simulate_prop_firm_api_backtests__backtest_id__prop_firm_sim_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropFirmConfigIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropFirmResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_backtest_trades_api_backtests__backtest_id__trades_get: {
         parameters: {
             query?: never;
@@ -1082,6 +1244,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_presets_api_prop_firm_presets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropFirmPresetRead"][];
                 };
             };
         };
