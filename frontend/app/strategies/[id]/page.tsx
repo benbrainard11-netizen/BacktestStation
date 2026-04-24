@@ -7,6 +7,7 @@ import ExperimentsPanel from "@/components/strategies/ExperimentsPanel";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import NewVersionButton from "@/components/strategies/NewVersionButton";
 import NotesPanel from "@/components/strategies/NotesPanel";
+import PromptGeneratorPanel from "@/components/strategies/PromptGeneratorPanel";
 import StrategyEditor from "@/components/strategies/StrategyEditor";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
@@ -18,6 +19,7 @@ import type { components } from "@/lib/api/generated";
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type ExperimentDecisions = components["schemas"]["ExperimentDecisionsRead"];
 type NoteTypes = components["schemas"]["NoteTypesRead"];
+type PromptModes = components["schemas"]["PromptModesRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Strategy = components["schemas"]["StrategyRead"];
 type StrategyVersion = components["schemas"]["StrategyVersionRead"];
@@ -38,16 +40,23 @@ export default async function StrategyDetailPage({ params }: PageProps) {
     },
   );
 
-  const [runs, noteTypesResponse, experimentDecisionsResponse] =
-    await Promise.all([
-      apiGet<BacktestRun[]>("/api/backtests"),
-      apiGet<NoteTypes>("/api/notes/types").catch(
-        () => ({ types: [] }) as NoteTypes,
-      ),
-      apiGet<ExperimentDecisions>("/api/experiments/decisions").catch(
-        () => ({ decisions: [] }) as ExperimentDecisions,
-      ),
-    ]);
+  const [
+    runs,
+    noteTypesResponse,
+    experimentDecisionsResponse,
+    promptModesResponse,
+  ] = await Promise.all([
+    apiGet<BacktestRun[]>("/api/backtests"),
+    apiGet<NoteTypes>("/api/notes/types").catch(
+      () => ({ types: [] }) as NoteTypes,
+    ),
+    apiGet<ExperimentDecisions>("/api/experiments/decisions").catch(
+      () => ({ decisions: [] }) as ExperimentDecisions,
+    ),
+    apiGet<PromptModes>("/api/prompts/modes").catch(
+      () => ({ modes: [] }) as PromptModes,
+    ),
+  ]);
   const runsByVersion = new Map<number, BacktestRun[]>();
   for (const run of runs) {
     const list = runsByVersion.get(run.strategy_version_id) ?? [];
@@ -159,6 +168,11 @@ export default async function StrategyDetailPage({ params }: PageProps) {
           versions={strategy.versions}
           runs={strategyRuns}
           decisions={experimentDecisionsResponse.decisions ?? []}
+        />
+
+        <PromptGeneratorPanel
+          strategyId={strategy.id}
+          modes={promptModesResponse.modes ?? []}
         />
 
         <div className="flex items-center justify-between">
