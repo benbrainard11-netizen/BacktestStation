@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import EquityChart from "@/components/backtests/EquityChart";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
+import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
 import TradeTable from "@/components/backtests/TradeTable";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
@@ -62,6 +63,10 @@ export default async function BacktestDetailPage({
 
         <Panel title="Equity · Drawdown" meta={`${equity.length} points`}>
           <EquityChart points={equity} />
+        </Panel>
+
+        <Panel title="R-multiple distribution" meta={`${trades.length} trades`}>
+          <RMultipleHistogram trades={trades} />
         </Panel>
 
         <Panel title="Trades" meta={`${trades.length} total`}>
