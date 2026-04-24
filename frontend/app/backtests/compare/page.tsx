@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import CompareMetricsTable from "@/components/backtests/CompareMetricsTable";
 import OverlaidEquityChart from "@/components/backtests/OverlaidEquityChart";
+import OverlaidRHistogram from "@/components/backtests/OverlaidRHistogram";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
@@ -10,6 +11,7 @@ import type { components } from "@/lib/api/generated";
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type EquityPoint = components["schemas"]["EquityPointRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
+type Trade = components["schemas"]["TradeRead"];
 
 export const dynamic = "force-dynamic";
 
@@ -33,11 +35,13 @@ export default async function CompareBacktestsPage({ searchParams }: PageProps) 
     return <MissingRuns a={a} b={b} foundA={runA !== null} foundB={runB !== null} />;
   }
 
-  const [metricsA, metricsB, equityA, equityB] = await Promise.all([
+  const [metricsA, metricsB, equityA, equityB, tradesA, tradesB] = await Promise.all([
     fetchOrNull<RunMetrics>(`/api/backtests/${a}/metrics`),
     fetchOrNull<RunMetrics>(`/api/backtests/${b}/metrics`),
     apiGet<EquityPoint[]>(`/api/backtests/${a}/equity`),
     apiGet<EquityPoint[]>(`/api/backtests/${b}/equity`),
+    apiGet<Trade[]>(`/api/backtests/${a}/trades`),
+    apiGet<Trade[]>(`/api/backtests/${b}/trades`),
   ]);
 
   const aLabel = runLabel(runA);
@@ -63,6 +67,12 @@ export default async function CompareBacktestsPage({ searchParams }: PageProps) 
           <OverlaidEquityChart
             a={{ label: aLabel, points: equityA }}
             b={{ label: bLabel, points: equityB }}
+          />
+        </Panel>
+        <Panel title="R-multiple distribution" meta="overlaid">
+          <OverlaidRHistogram
+            a={{ label: aLabel, trades: tradesA }}
+            b={{ label: bLabel, trades: tradesB }}
           />
         </Panel>
         <Panel title="Metrics" meta="Δ is better when green">
