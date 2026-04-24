@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class OrmModel(BaseModel):
@@ -104,3 +104,19 @@ class ImportBacktestResponse(OrmModel):
     equity_points_imported: int
     metrics_imported: bool
     config_imported: bool
+
+
+class BacktestRunUpdate(BaseModel):
+    """PATCH /api/backtests/{id} body. Send `null` to clear the name."""
+
+    name: str | None = Field(default=None)
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def _trim_or_reject_empty(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        if trimmed == "":
+            raise ValueError("name must be non-empty after trimming, or null to clear")
+        return trimmed

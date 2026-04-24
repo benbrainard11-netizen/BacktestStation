@@ -4,6 +4,7 @@ from app.schemas.monitor import LiveMonitorStatus
 from app.schemas.notes import NoteCreate, NoteRead
 from app.schemas.results import (
     BacktestRunRead,
+    BacktestRunUpdate,
     ConfigSnapshotRead,
     EquityPointRead,
     ImportBacktestResponse,
@@ -15,6 +16,7 @@ from app.schemas.results import (
 
 __all__ = [
     "BacktestRunRead",
+    "BacktestRunUpdate",
     "ConfigSnapshotRead",
     "EquityPointRead",
     "ImportBacktestResponse",

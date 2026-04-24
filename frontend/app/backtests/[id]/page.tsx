@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import EquityChart from "@/components/backtests/EquityChart";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
+import RenameRunButton from "@/components/backtests/RenameRunButton";
 import TradeTable from "@/components/backtests/TradeTable";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
@@ -44,13 +45,18 @@ export default async function BacktestDetailPage({
 
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
+      <div className="flex items-center justify-between gap-3 px-6 pt-4">
         <Link
           href="/backtests"
           className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
         >
           ← All runs
         </Link>
+        <RenameRunButton
+          runId={run.id}
+          initialName={run.name}
+          fallbackLabel={`Backtest ${run.id}`}
+        />
       </div>
       <PageHeader
         title={run.name ?? `Backtest ${run.id}`}

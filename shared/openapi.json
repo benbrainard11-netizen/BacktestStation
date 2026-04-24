@@ -109,6 +109,24 @@
         "title": "BacktestRunRead",
         "type": "object"
       },
+      "BacktestRunUpdate": {
+        "description": "PATCH /api/backtests/{id} body. Send `null` to clear the name.",
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "BacktestRunUpdate",
+        "type": "object"
+      },
       "Body_import_backtest_api_import_backtest_post": {
         "properties": {
           "config_file": {
@@ -1140,6 +1158,56 @@
           }
         },
         "summary": "Get Backtest",
+        "tags": [
+          "backtests"
+        ]
+      },
+      "patch": {
+        "operationId": "update_backtest_api_backtests__backtest_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "backtest_id",
+            "required": true,
+            "schema": {
+              "title": "Backtest Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BacktestRunUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BacktestRunRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Backtest",
         "tags": [
           "backtests"
         ]

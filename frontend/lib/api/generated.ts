@@ -35,7 +35,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Backtest */
+        patch: operations["update_backtest_api_backtests__backtest_id__patch"];
         trace?: never;
     };
     "/api/backtests/{backtest_id}/equity": {
@@ -223,6 +224,14 @@ export interface components {
             symbol: string;
             /** Timeframe */
             timeframe: string | null;
+        };
+        /**
+         * BacktestRunUpdate
+         * @description PATCH /api/backtests/{id} body. Send `null` to clear the name.
+         */
+        BacktestRunUpdate: {
+            /** Name */
+            name?: string | null;
         };
         /** Body_import_backtest_api_import_backtest_post */
         Body_import_backtest_api_import_backtest_post: {
@@ -518,6 +527,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BacktestRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_backtest_api_backtests__backtest_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BacktestRunUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

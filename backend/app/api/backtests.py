@@ -1,4 +1,4 @@
-"""Backtest run read endpoints for imported results."""
+"""Backtest run endpoints: read + light mutations (rename)."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 
 from app.db.models import BacktestRun, EquityPoint, RunMetrics, Trade
 from app.db.session import get_session
-from app.schemas import BacktestRunRead, EquityPointRead, RunMetricsRead, TradeRead
+from app.schemas import (
+    BacktestRunRead,
+    BacktestRunUpdate,
+    EquityPointRead,
+    RunMetricsRead,
+    TradeRead,
+)
 
 router = APIRouter(prefix="/backtests", tags=["backtests"])
 
@@ -67,3 +73,16 @@ def get_backtest_metrics(
     if metrics is None:
         raise HTTPException(status_code=404, detail="Backtest metrics not found")
     return metrics
+
+
+@router.patch("/{backtest_id}", response_model=BacktestRunRead)
+def update_backtest(
+    backtest_id: int,
+    payload: BacktestRunUpdate,
+    db: Session = Depends(get_session),
+) -> BacktestRun:
+    run = _require_run(db, backtest_id)
+    run.name = payload.name
+    db.commit()
+    db.refresh(run)
+    return run
