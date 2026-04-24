@@ -9,6 +9,9 @@ dependencies = [
     "pydantic>=2.9",
     "sqlalchemy>=2.0",
     "python-multipart>=0.0.20",
+    # Parquet / dataframes for reading local candle + TBBO files.
+    "pandas>=2.2",
+    "pyarrow>=17",
 ]
 
 [project.optional-dependencies]

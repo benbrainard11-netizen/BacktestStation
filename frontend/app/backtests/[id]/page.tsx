@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import DataQualityPanel from "@/components/backtests/DataQualityPanel";
 import EquityChart from "@/components/backtests/EquityChart";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
@@ -12,6 +13,7 @@ import { ApiError, apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type DataQualityReport = components["schemas"]["DataQualityReportRead"];
 type EquityPoint = components["schemas"]["EquityPointRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Trade = components["schemas"]["TradeRead"];
@@ -34,13 +36,21 @@ export default async function BacktestDetailPage({
     },
   );
 
-  const [metrics, trades, equity] = await Promise.all([
+  const [metrics, trades, equity, dataQuality] = await Promise.all([
     apiGet<RunMetrics>(`/api/backtests/${id}/metrics`).catch((error) => {
       if (error instanceof ApiError && error.status === 404) return null;
       throw error;
     }),
     apiGet<Trade[]>(`/api/backtests/${id}/trades`),
     apiGet<EquityPoint[]>(`/api/backtests/${id}/equity`),
+    apiGet<DataQualityReport>(`/api/backtests/${id}/data-quality`)
+      .then<
+        { report: DataQualityReport; error: null } | { report: null; error: string }
+      >((report) => ({ report, error: null }))
+      .catch((error) => ({
+        report: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      })),
   ]);
 
   return (
@@ -66,6 +76,20 @@ export default async function BacktestDetailPage({
 
       <div className="flex flex-col gap-4 px-6">
         <MetricsGrid metrics={metrics} />
+
+        <Panel
+          title="Data quality"
+          meta={
+            dataQuality.report
+              ? `score ${dataQuality.report.reliability_score}/100`
+              : "unavailable"
+          }
+        >
+          <DataQualityPanel
+            report={dataQuality.report}
+            loadError={dataQuality.error}
+          />
+        </Panel>
 
         <Panel title="Equity · Drawdown" meta={`${equity.length} points`}>
           <EquityChart points={equity} />

@@ -39,6 +39,23 @@ export interface paths {
         patch: operations["update_backtest_api_backtests__backtest_id__patch"];
         trace?: never;
     };
+    "/api/backtests/{backtest_id}/data-quality": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Data Quality */
+        get: operations["get_data_quality_api_backtests__backtest_id__data_quality_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}/equity": {
         parameters: {
             query?: never;
@@ -259,6 +276,48 @@ export interface components {
             trades_file: string;
             /** Version */
             version?: string | null;
+        };
+        /** DataQualityIssue */
+        DataQualityIssue: {
+            /** Affected Range */
+            affected_range?: string | null;
+            /** Category */
+            category: string;
+            /**
+             * Count
+             * @default 0
+             */
+            count: number;
+            /**
+             * Distort Backtest
+             * @default unknown
+             */
+            distort_backtest: string;
+            /** Message */
+            message: string;
+            /** Severity */
+            severity: string;
+        };
+        /** DataQualityReportRead */
+        DataQualityReportRead: {
+            /** Backtest Run Id */
+            backtest_run_id: number;
+            /** Dataset Status */
+            dataset_status: string;
+            /** Deferred Checks */
+            deferred_checks: string[];
+            /** First Bar Ts */
+            first_bar_ts: string | null;
+            /** Issues */
+            issues: components["schemas"]["DataQualityIssue"][];
+            /** Last Bar Ts */
+            last_bar_ts: string | null;
+            /** Reliability Score */
+            reliability_score: number;
+            /** Symbol */
+            symbol: string;
+            /** Total Bars */
+            total_bars: number;
         };
         /** EquityPointRead */
         EquityPointRead: {
@@ -570,6 +629,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BacktestRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_data_quality_api_backtests__backtest_id__data_quality_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataQualityReportRead"];
                 };
             };
             /** @description Validation Error */

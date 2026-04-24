@@ -259,6 +259,123 @@
         "title": "Body_import_backtest_api_import_backtest_post",
         "type": "object"
       },
+      "DataQualityIssue": {
+        "properties": {
+          "affected_range": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Range"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "distort_backtest": {
+            "default": "unknown",
+            "title": "Distort Backtest",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "severity",
+          "message"
+        ],
+        "title": "DataQualityIssue",
+        "type": "object"
+      },
+      "DataQualityReportRead": {
+        "properties": {
+          "backtest_run_id": {
+            "title": "Backtest Run Id",
+            "type": "integer"
+          },
+          "dataset_status": {
+            "title": "Dataset Status",
+            "type": "string"
+          },
+          "deferred_checks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Deferred Checks",
+            "type": "array"
+          },
+          "first_bar_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Bar Ts"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/DataQualityIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "last_bar_ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Bar Ts"
+          },
+          "reliability_score": {
+            "title": "Reliability Score",
+            "type": "integer"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "total_bars": {
+            "title": "Total Bars",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "backtest_run_id",
+          "symbol",
+          "dataset_status",
+          "total_bars",
+          "first_bar_ts",
+          "last_bar_ts",
+          "reliability_score",
+          "issues",
+          "deferred_checks"
+        ],
+        "title": "DataQualityReportRead",
+        "type": "object"
+      },
       "EquityPointRead": {
         "properties": {
           "backtest_run_id": {
@@ -1210,6 +1327,48 @@
         "summary": "Update Backtest",
         "tags": [
           "backtests"
+        ]
+      }
+    },
+    "/api/backtests/{backtest_id}/data-quality": {
+      "get": {
+        "operationId": "get_data_quality_api_backtests__backtest_id__data_quality_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "backtest_id",
+            "required": true,
+            "schema": {
+              "title": "Backtest Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataQualityReportRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Data Quality",
+        "tags": [
+          "data-quality"
         ]
       }
     },
