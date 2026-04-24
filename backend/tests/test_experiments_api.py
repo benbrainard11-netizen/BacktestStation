@@ -349,3 +349,74 @@ def test_missing_experiment_returns_404(client: TestClient) -> None:
     assert client.get("/api/experiments/9999").status_code == 404
     assert client.patch("/api/experiments/9999", json={"notes": "x"}).status_code == 404
     assert client.delete("/api/experiments/9999").status_code == 404
+
+
+def _seed_second_strategy_with_run(
+    factory: sessionmaker[Session],
+) -> tuple[int, int]:
+    """Insert a second strategy + version + run. Returns (version_id, run_id)."""
+    with factory() as session:
+        strategy = models.Strategy(name="Other", slug="other")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        run = models.BacktestRun(
+            strategy_version_id=version.id, symbol="ES"
+        )
+        session.add(run)
+        session.commit()
+        return version.id, run.id
+
+
+def test_create_experiment_rejects_cross_strategy_baseline(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """An experiment on strategy A must not link a run from strategy B."""
+    _, version_id, _ = _seed(session_factory, with_runs=0)
+    _, other_run_id = _seed_second_strategy_with_run(session_factory)
+
+    response = client.post(
+        "/api/experiments",
+        json={
+            "strategy_version_id": version_id,
+            "hypothesis": "cross-strategy check",
+            "baseline_run_id": other_run_id,
+        },
+    )
+    assert response.status_code == 422
+    assert "different strategy" in response.json()["detail"]
+
+
+def test_create_experiment_rejects_cross_strategy_variant(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    _, version_id, _ = _seed(session_factory, with_runs=0)
+    _, other_run_id = _seed_second_strategy_with_run(session_factory)
+
+    response = client.post(
+        "/api/experiments",
+        json={
+            "strategy_version_id": version_id,
+            "hypothesis": "cross-strategy variant",
+            "variant_run_id": other_run_id,
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_patch_experiment_rejects_cross_strategy_run(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    _, version_id, _ = _seed(session_factory, with_runs=0)
+    created = client.post(
+        "/api/experiments",
+        json={"strategy_version_id": version_id, "hypothesis": "x"},
+    ).json()
+    _, other_run_id = _seed_second_strategy_with_run(session_factory)
+
+    response = client.patch(
+        f"/api/experiments/{created['id']}",
+        json={"baseline_run_id": other_run_id},
+    )
+    assert response.status_code == 422
+    assert "different strategy" in response.json()["detail"]

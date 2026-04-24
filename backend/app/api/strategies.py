@@ -8,11 +8,11 @@ importer.
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.db.models import BacktestRun, Strategy, StrategyVersion
+from app.db.models import BacktestRun, Experiment, Note, Strategy, StrategyVersion
 from app.db.session import get_session
 from app.schemas import (
     StrategyCreate,
@@ -152,6 +152,10 @@ def delete_strategy(
                 "(PATCH status=\"archived\") or delete each version first."
             ),
         )
+    # Clean up orphan notes attached at the strategy level. There are no
+    # versions at this point (409 above), so no version-scoped rows to
+    # worry about.
+    db.execute(delete(Note).where(Note.strategy_id == strategy.id))
     db.delete(strategy)
     db.commit()
     return None
@@ -254,6 +258,12 @@ def delete_strategy_version(
                 "delete each run first."
             ),
         )
+    # Clean up orphan research artifacts scoped to this version. No runs
+    # are attached (409 above), so nothing downstream to touch.
+    db.execute(delete(Note).where(Note.strategy_version_id == version.id))
+    db.execute(
+        delete(Experiment).where(Experiment.strategy_version_id == version.id)
+    )
     db.delete(version)
     db.commit()
     return None

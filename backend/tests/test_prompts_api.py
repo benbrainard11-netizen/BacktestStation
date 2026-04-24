@@ -246,9 +246,9 @@ def test_generate_includes_autopsy_when_enough_trades(
     sid, vid = _seed_strategy(session_factory)
     assert vid is not None
     run_id = _seed_run_with_metrics(session_factory, vid)
-    # autopsy requires at least 5 trades — seed 6 with mixed outcomes
+    # autopsy requires at least 20 trades — seed 20 with mixed outcomes
     with session_factory() as session:
-        for i in range(6):
+        for i in range(20):
             t = models.Trade(
                 backtest_run_id=run_id,
                 entry_ts=datetime(2026, 1, 5 + i, 10, 0),
@@ -339,3 +339,22 @@ def test_generate_skips_archived_versions(
     text = response.json()["prompt_text"]
     # Versions section should not appear since the only version is archived
     assert "## Versions" not in text
+
+
+def test_generate_truncates_oversized_description(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """A strategy description over FIELD_CAP_CHARS must be soft-capped in the
+    prompt with a visible truncation marker, not dumped verbatim."""
+    sid, _ = _seed_strategy(
+        session_factory, description="X" * 5000
+    )
+    response = client.post(
+        "/api/prompts/generate",
+        json={"strategy_id": sid, "mode": "researcher"},
+    )
+    text = response.json()["prompt_text"]
+    assert "truncated" in text
+    assert "chars omitted" in text
+    # Full 5000-char field should not be present verbatim.
+    assert "X" * 5000 not in text

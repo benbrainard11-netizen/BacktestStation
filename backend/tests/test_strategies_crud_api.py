@@ -375,3 +375,68 @@ def test_missing_strategy_returns_404(client: TestClient) -> None:
         ).status_code
         == 404
     )
+
+
+def test_delete_strategy_cleans_up_attached_notes(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """A strategy with no versions but with notes must clean the notes up
+    on delete — otherwise they orphan with a dangling strategy_id."""
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        session.add(strategy)
+        session.commit()
+        sid = strategy.id
+
+    client.post(
+        "/api/notes",
+        json={"body": "attached", "strategy_id": sid, "note_type": "observation"},
+    )
+
+    assert client.delete(f"/api/strategies/{sid}").status_code == 204
+
+    # The note should be gone, not orphaned.
+    remaining = client.get(
+        "/api/notes", params={"strategy_id": sid}
+    ).json()
+    assert remaining == []
+
+
+def test_delete_strategy_version_cleans_up_attached_notes_and_experiments(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """A version with no runs but with notes/experiments must clean them up."""
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        sid = strategy.id
+        vid = version.id
+
+    client.post(
+        "/api/notes",
+        json={
+            "body": "version note",
+            "strategy_version_id": vid,
+            "note_type": "observation",
+        },
+    )
+    client.post(
+        "/api/experiments",
+        json={"strategy_version_id": vid, "hypothesis": "check"},
+    )
+
+    assert client.delete(f"/api/strategy-versions/{vid}").status_code == 204
+
+    # Notes and experiments scoped to the deleted version should be gone.
+    remaining_notes = client.get(
+        "/api/notes", params={"strategy_version_id": vid}
+    ).json()
+    assert remaining_notes == []
+    remaining_experiments = client.get(
+        "/api/experiments", params={"strategy_version_id": vid}
+    ).json()
+    assert remaining_experiments == []
+    # Strategy itself untouched
+    assert client.get(f"/api/strategies/{sid}").status_code == 200

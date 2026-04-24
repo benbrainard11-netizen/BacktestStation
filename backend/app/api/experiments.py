@@ -40,6 +40,40 @@ def _require_run_or_422(db: Session, run_id: int, label: str) -> None:
         )
 
 
+def _require_run_in_strategy(
+    db: Session, run_id: int, experiment_version_id: int, label: str
+) -> None:
+    """Reject runs that don't belong to the same Strategy as the experiment.
+
+    An experiment links to a StrategyVersion, which belongs to a Strategy.
+    A baseline/variant run must share that Strategy — otherwise the
+    experiment would be comparing runs from unrelated strategies, which
+    is never what the user intended.
+    """
+    run = db.get(BacktestRun, run_id)
+    if run is None:
+        raise HTTPException(
+            status_code=422, detail=f"{label} {run_id} not found"
+        )
+    experiment_version = db.get(StrategyVersion, experiment_version_id)
+    if experiment_version is None:
+        # Shouldn't happen at this call site (the version is validated first)
+        # but fail closed rather than assume.
+        raise HTTPException(
+            status_code=422,
+            detail=f"strategy_version_id {experiment_version_id} not found",
+        )
+    run_version = db.get(StrategyVersion, run.strategy_version_id)
+    if run_version is None or run_version.strategy_id != experiment_version.strategy_id:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"{label} {run_id} belongs to a different strategy than "
+                "this experiment's strategy version"
+            ),
+        )
+
+
 @router.get("/decisions", response_model=ExperimentDecisionsRead)
 def list_decisions() -> dict:
     """Decision vocabulary, mirrors STRATEGY_STAGES pattern."""
@@ -58,9 +92,13 @@ def create_experiment(
             ),
         )
     if payload.baseline_run_id is not None:
-        _require_run_or_422(db, payload.baseline_run_id, "baseline_run_id")
+        _require_run_in_strategy(
+            db, payload.baseline_run_id, payload.strategy_version_id, "baseline_run_id"
+        )
     if payload.variant_run_id is not None:
-        _require_run_or_422(db, payload.variant_run_id, "variant_run_id")
+        _require_run_in_strategy(
+            db, payload.variant_run_id, payload.strategy_version_id, "variant_run_id"
+        )
 
     experiment = Experiment(
         strategy_version_id=payload.strategy_version_id,
@@ -137,11 +175,21 @@ def update_experiment(
         experiment.hypothesis = payload.hypothesis
     if "baseline_run_id" in touched:
         if payload.baseline_run_id is not None:
-            _require_run_or_422(db, payload.baseline_run_id, "baseline_run_id")
+            _require_run_in_strategy(
+                db,
+                payload.baseline_run_id,
+                experiment.strategy_version_id,
+                "baseline_run_id",
+            )
         experiment.baseline_run_id = payload.baseline_run_id
     if "variant_run_id" in touched:
         if payload.variant_run_id is not None:
-            _require_run_or_422(db, payload.variant_run_id, "variant_run_id")
+            _require_run_in_strategy(
+                db,
+                payload.variant_run_id,
+                experiment.strategy_version_id,
+                "variant_run_id",
+            )
         experiment.variant_run_id = payload.variant_run_id
     if "change_description" in touched:
         experiment.change_description = payload.change_description

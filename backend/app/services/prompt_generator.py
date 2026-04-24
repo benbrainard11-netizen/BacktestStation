@@ -32,6 +32,14 @@ from app.services import autopsy as autopsy_service
 
 NOTE_LIMIT = 20
 EXPERIMENT_LIMIT = 10
+# Per-field soft cap — applied to any user-supplied markdown (strategy
+# description, version rules, note bodies, experiment change descriptions).
+# Prevents a single ballooning field from dominating the prompt.
+FIELD_CAP_CHARS = 2000
+# Hard cap on the total prompt text. If exceeded, the Notes section is
+# trimmed first, then Experiments. The preamble + strategy + versions
+# + task sections always land intact.
+TOTAL_CAP_CHARS = 40_000
 
 MODE_PREAMBLES: dict[str, str] = {
     "researcher": (
@@ -73,6 +81,16 @@ MODE_PREAMBLES: dict[str, str] = {
 class PromptBundle:
     text: str
     summary: list[str] = field(default_factory=list)
+
+
+def _cap(text: str | None, limit: int = FIELD_CAP_CHARS) -> str | None:
+    """Soft-cap a markdown field with a visible truncation marker."""
+    if text is None:
+        return None
+    if len(text) <= limit:
+        return text
+    omitted = len(text) - limit
+    return f"{text[:limit]}\n\n…[truncated, {omitted} chars omitted]"
 
 
 def build_prompt(
@@ -128,9 +146,38 @@ def build_prompt(
             sections.append(autopsy_section)
             summary.append("autopsy")
 
-    sections.append(_task_section(mode, focus_question))
+    task_section = _task_section(mode, focus_question)
+    sections.append(task_section)
 
-    return PromptBundle(text="\n\n".join(sections), summary=summary)
+    text = "\n\n".join(sections)
+    if len(text) > TOTAL_CAP_CHARS:
+        # Sections are appended in order: preamble, focus?, strategy,
+        # versions, notes, experiments, run, autopsy, task. Drop from the
+        # end-but-before-task side (notes first, then experiments) since
+        # those are the most expendable truncatable chunks. Preamble,
+        # strategy, versions, and the closing task section stay intact.
+        trimmed: list[str] = []
+        dropped: list[str] = []
+        for s in sections:
+            if s is task_section:
+                continue
+            header = s.split("\n", 1)[0]
+            if header.startswith("## Recent notes") or header.startswith(
+                "## Recent experiments"
+            ):
+                dropped.append(header.replace("## ", "").lower())
+                continue
+            trimmed.append(s)
+        trimmed.append(
+            "## Context trimmed\n\n"
+            f"Dropped sections to fit the {TOTAL_CAP_CHARS}-char cap: "
+            f"{', '.join(dropped) or 'none'}."
+        )
+        trimmed.append(task_section)
+        text = "\n\n".join(trimmed)
+        summary.append(f"trimmed to {TOTAL_CAP_CHARS}-char cap")
+
+    return PromptBundle(text=text, summary=summary)
 
 
 # --- section builders ---
@@ -153,7 +200,7 @@ def _strategy_section(strategy: Strategy) -> str:
     if strategy.description:
         lines.append("")
         lines.append("Description:")
-        lines.append(strategy.description)
+        lines.append(_cap(strategy.description) or "")
     return "\n".join(lines)
 
 
@@ -164,11 +211,11 @@ def _versions_section(versions: list[StrategyVersion]) -> str:
         if v.git_commit_sha:
             parts.append(f"Git SHA: `{v.git_commit_sha}`")
         if v.entry_md:
-            parts.append(f"\n**Entry rules**\n\n{v.entry_md}")
+            parts.append(f"\n**Entry rules**\n\n{_cap(v.entry_md)}")
         if v.exit_md:
-            parts.append(f"\n**Exit rules**\n\n{v.exit_md}")
+            parts.append(f"\n**Exit rules**\n\n{_cap(v.exit_md)}")
         if v.risk_md:
-            parts.append(f"\n**Risk rules**\n\n{v.risk_md}")
+            parts.append(f"\n**Risk rules**\n\n{_cap(v.risk_md)}")
     return "\n".join(parts)
 
 
@@ -201,7 +248,7 @@ def _notes_section(notes: list[Note]) -> str:
         tags_str = f" [{', '.join(n.tags)}]" if n.tags else ""
         ts = n.created_at.isoformat(timespec="minutes") if n.created_at else "?"
         parts.append(
-            f"- **{n.note_type}** · {target} · {ts}{tags_str}\n  {n.body}"
+            f"- **{n.note_type}** · {target} · {ts}{tags_str}\n  {_cap(n.body)}"
         )
     return "\n".join(parts)
 
@@ -231,9 +278,9 @@ def _experiments_section(experiments: list[Experiment]) -> str:
         if e.variant_run_id is not None:
             parts.append(f"Variant run: BT-{e.variant_run_id}")
         if e.change_description:
-            parts.append(f"\nChange:\n{e.change_description}")
+            parts.append(f"\nChange:\n{_cap(e.change_description)}")
         if e.notes:
-            parts.append(f"\nNotes:\n{e.notes}")
+            parts.append(f"\nNotes:\n{_cap(e.notes)}")
     return "\n".join(parts)
 
 
@@ -301,7 +348,10 @@ def _autopsy_section(db: Session, run: BacktestRun) -> str | None:
     trades = list(
         db.scalars(select(Trade).where(Trade.backtest_run_id == run.id))
     )
-    if len(trades) < 5:
+    # Autopsy on <20 trades is noise — rule-based scoring needs volume to
+    # separate signal from variance. Raise this if your strategies are
+    # typically low-frequency.
+    if len(trades) < 20:
         return None
     metrics = db.scalars(
         select(RunMetrics).where(RunMetrics.backtest_run_id == run.id)
