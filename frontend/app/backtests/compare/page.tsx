@@ -5,7 +5,11 @@ import OverlaidEquityChart from "@/components/backtests/OverlaidEquityChart";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
-import type { BacktestRun, EquityPoint, RunMetrics } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type BacktestRun = components["schemas"]["BacktestRunRead"];
+type EquityPoint = components["schemas"]["EquityPointRead"];
+type RunMetrics = components["schemas"]["RunMetricsRead"];
 
 export const dynamic = "force-dynamic";
 

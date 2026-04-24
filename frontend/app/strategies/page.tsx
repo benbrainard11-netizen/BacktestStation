@@ -2,7 +2,9 @@ import Link from "next/link";
 
 import PageHeader from "@/components/PageHeader";
 import { apiGet } from "@/lib/api/client";
-import type { Strategy } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type Strategy = components["schemas"]["StrategyRead"];
 
 export const dynamic = "force-dynamic";
 

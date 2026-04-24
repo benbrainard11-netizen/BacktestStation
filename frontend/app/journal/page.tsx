@@ -5,7 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
-import type { BackendErrorBody, Note, NoteCreate } from "@/lib/api/types";
+import type { BackendErrorBody } from "@/lib/api/client";
+import type { components } from "@/lib/api/generated";
+
+type Note = components["schemas"]["NoteRead"];
+type NoteCreate = components["schemas"]["NoteCreate"];
 import { cn } from "@/lib/utils";
 
 type LoadState =

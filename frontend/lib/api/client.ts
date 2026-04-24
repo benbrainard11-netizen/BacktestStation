@@ -12,6 +12,16 @@ export function apiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL?.trim() || DEFAULT_BACKEND_URL;
 }
 
+/**
+ * Shape of the FastAPI error body when `HTTPException(status_code=..., detail="...")`
+ * is raised. FastAPI doesn't model this in OpenAPI (the schema only describes
+ * successful responses + its own `HTTPValidationError` for 422 Pydantic errors),
+ * so it stays hand-declared here alongside `ApiError` which consumes it.
+ */
+export interface BackendErrorBody {
+  detail?: string;
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly detail: string | null;

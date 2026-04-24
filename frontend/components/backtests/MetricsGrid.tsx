@@ -1,4 +1,6 @@
-import type { RunMetrics } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type RunMetrics = components["schemas"]["RunMetricsRead"];
 import { cn } from "@/lib/utils";
 
 type Tone = "positive" | "negative" | "neutral";

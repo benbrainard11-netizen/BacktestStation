@@ -3,12 +3,12 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
-import type {
-  BacktestRun,
-  LiveMonitorStatus,
-  Note,
-  RunMetrics,
-} from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type BacktestRun = components["schemas"]["BacktestRunRead"];
+type LiveMonitorStatus = components["schemas"]["LiveMonitorStatus"];
+type Note = components["schemas"]["NoteRead"];
+type RunMetrics = components["schemas"]["RunMetricsRead"];
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";

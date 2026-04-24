@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 
 import PageHeader from "@/components/PageHeader";
-import type {
-  BackendErrorBody,
-  ImportBacktestResponse,
-} from "@/lib/api/types";
+import type { BackendErrorBody } from "@/lib/api/client";
+import type { components } from "@/lib/api/generated";
+
+type ImportBacktestResponse = components["schemas"]["ImportBacktestResponse"];
 import { cn } from "@/lib/utils";
 
 type SubmitState =

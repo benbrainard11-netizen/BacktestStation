@@ -1,4 +1,6 @@
-import type { Trade } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type Trade = components["schemas"]["TradeRead"];
 
 interface RMultipleHistogramProps {
   trades: Trade[];

@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
-import type { BacktestRun, Strategy, StrategyVersion } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type BacktestRun = components["schemas"]["BacktestRunRead"];
+type Strategy = components["schemas"]["StrategyRead"];
+type StrategyVersion = components["schemas"]["StrategyVersionRead"];
 
 export const dynamic = "force-dynamic";
 

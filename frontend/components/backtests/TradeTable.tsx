@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import type { Trade } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type Trade = components["schemas"]["TradeRead"];
 import { cn } from "@/lib/utils";
 
 interface TradeTableProps {

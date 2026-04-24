@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import type { BacktestRun } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type BacktestRun = components["schemas"]["BacktestRunRead"];
 import { cn } from "@/lib/utils";
 
 interface RunsExplorerProps {

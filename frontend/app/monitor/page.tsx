@@ -8,10 +8,10 @@ import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import StatusDot, { type StatusTone } from "@/components/StatusDot";
 import { formatSigned, formatUSD, toneFor } from "@/lib/format";
-import type {
-  BackendErrorBody,
-  LiveMonitorStatus,
-} from "@/lib/api/types";
+import type { BackendErrorBody } from "@/lib/api/client";
+import type { components } from "@/lib/api/generated";
+
+type LiveMonitorStatus = components["schemas"]["LiveMonitorStatus"];
 
 const POLL_INTERVAL_MS = 5_000;
 const ENDPOINT = "/api/monitor/live";

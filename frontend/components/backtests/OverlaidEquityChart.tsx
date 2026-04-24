@@ -1,4 +1,6 @@
-import type { EquityPoint } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type EquityPoint = components["schemas"]["EquityPointRead"];
 
 interface OverlaidEquityChartProps {
   a: { label: string; points: EquityPoint[] };

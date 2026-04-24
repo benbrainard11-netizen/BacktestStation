@@ -3,7 +3,9 @@ import Link from "next/link";
 import RunsExplorer from "@/components/backtests/RunsExplorer";
 import PageHeader from "@/components/PageHeader";
 import { apiGet } from "@/lib/api/client";
-import type { BacktestRun } from "@/lib/api/types";
+import type { components } from "@/lib/api/generated";
+
+type BacktestRun = components["schemas"]["BacktestRunRead"];
 
 export const dynamic = "force-dynamic";
 
