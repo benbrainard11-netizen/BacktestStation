@@ -1,0 +1,13 @@
+{
+  "_placeholder": true,
+  "_note": "SYNTHETIC PLACEHOLDER. This file does not reflect a real live bot session. Replace with real live_status.json emitted by the Fractal live runner before using for monitor validation.",
+  "strategy_status": "stopped",
+  "last_heartbeat": null,
+  "current_symbol": "NQ",
+  "current_session": "RTH",
+  "today_pnl": null,
+  "today_r": null,
+  "trades_today": null,
+  "last_signal": null,
+  "last_error": null
+}

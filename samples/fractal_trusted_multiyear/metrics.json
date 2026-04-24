@@ -1,0 +1,14 @@
+{
+  "net_pnl": 5432.5,
+  "net_r": 274.3647,
+  "win_rate": 0.4078,
+  "profit_factor": 1.8338,
+  "max_drawdown": -20.1253,
+  "avg_r": 0.4682,
+  "avg_win": 2.5247,
+  "avg_loss": -0.9483,
+  "trade_count": 586,
+  "longest_losing_streak": 14,
+  "best_trade": 276.75,
+  "worst_trade": -123.25
+}

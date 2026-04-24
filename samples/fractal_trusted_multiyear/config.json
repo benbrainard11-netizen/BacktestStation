@@ -1,0 +1,20 @@
+{
+  "strategy_name": "Fractal AMD",
+  "strategy_slug": "fractal-amd",
+  "version": "trusted_multiyear",
+  "symbol": "NQ",
+  "timeframe": "5m",
+  "session_label": "RTH",
+  "source_path": "C:/Fractal-AMD/outputs/trusted_multiyear_trades.csv",
+  "import_assumptions": {
+    "unit": "R-multiples",
+    "pnl_r_is_risk_multiple": true,
+    "dollar_pnl_derivation": "pnl_r * risk (per-trade dollar risk from the 'risk' column)",
+    "equity_unit": "cumulative pnl_r (R)",
+    "equity_start": 0.0,
+    "equity_sampled_at": "trade exit_time",
+    "drawdown_sign": "negative (equity minus running peak)",
+    "direction_normalization": "BULLISH -> long, BEARISH -> short"
+  },
+  "notes": "Real output from the Fractal AMD multi-year trusted run. See samples/fractal_trusted_multiyear/README.md."
+}
