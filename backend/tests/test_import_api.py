@@ -249,7 +249,7 @@ def test_import_backtest_requires_symbol_when_trade_file_lacks_it(
                         "date,direction,entry_time,entry_price,stop,target,risk,"
                         "exit_time,exit_price,exit_reason,pnl_r",
                         "2024-01-02,BEARISH,10:21,16738.0,16749.0,16705.0,"
-                        "10:21,16749.0,SL,-1.0",
+                        "11.0,10:21,16749.0,SL,-1.0",
                     ]
                 ),
                 "text/csv",
