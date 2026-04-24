@@ -367,6 +367,7 @@ function NoteItem({
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   async function save() {
     setSaving(true);
@@ -400,11 +401,7 @@ function NoteItem({
   }
 
   async function remove() {
-    if (
-      !window.confirm(`Delete this note? "${note.body.slice(0, 60)}…"`)
-    ) {
-      return;
-    }
+    setError(null);
     try {
       const response = await fetch(`/api/notes/${note.id}`, {
         method: "DELETE",
@@ -526,13 +523,32 @@ function NoteItem({
           >
             edit
           </button>
-          <button
-            type="button"
-            onClick={remove}
-            className="border border-zinc-900 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-rose-400 hover:bg-rose-950/40"
-          >
-            delete
-          </button>
+          {confirmingDelete ? (
+            <span className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={remove}
+                className="border border-rose-900 bg-rose-950/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-rose-300 hover:bg-rose-950/60"
+              >
+                confirm
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
+              >
+                cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="border border-zinc-900 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-rose-400 hover:bg-rose-950/40"
+            >
+              delete
+            </button>
+          )}
         </div>
       </div>
     </li>

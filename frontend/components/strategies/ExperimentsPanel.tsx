@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 type Experiment = components["schemas"]["ExperimentRead"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type RunMetrics = components["schemas"]["RunMetricsRead"];
 type StrategyVersion = components["schemas"]["StrategyVersionRead"];
 
 interface ExperimentsPanelProps {
@@ -356,6 +357,13 @@ function ExperimentItem({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [hypothesis, setHypothesis] = useState(experiment.hypothesis);
+  const [changeDescription, setChangeDescription] = useState(
+    experiment.change_description ?? "",
+  );
+  const [notes, setNotes] = useState(experiment.notes ?? "");
 
   async function changeDecision(next: string) {
     if (next === experiment.decision) return;
@@ -380,14 +388,43 @@ function ExperimentItem({
     }
   }
 
-  async function remove() {
-    if (
-      !window.confirm(
-        `Delete this experiment? "${experiment.hypothesis.slice(0, 80)}…"`,
-      )
-    ) {
-      return;
+  async function saveEdits() {
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/experiments/${experiment.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hypothesis: hypothesis.trim(),
+          change_description: changeDescription.trim() || null,
+          notes: notes.trim() || null,
+        }),
+      });
+      if (!response.ok) {
+        setError(await describe(response));
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+      setEditing(false);
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+      setSaving(false);
     }
+  }
+
+  function cancelEdits() {
+    setHypothesis(experiment.hypothesis);
+    setChangeDescription(experiment.change_description ?? "");
+    setNotes(experiment.notes ?? "");
+    setEditing(false);
+    setError(null);
+  }
+
+  async function remove() {
+    setError(null);
     try {
       const response = await fetch(`/api/experiments/${experiment.id}`, {
         method: "DELETE",
@@ -400,6 +437,70 @@ function ExperimentItem({
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
     }
+  }
+
+  if (editing) {
+    return (
+      <li className="border border-zinc-700 bg-zinc-950 p-3">
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            Hypothesis
+            <textarea
+              value={hypothesis}
+              onChange={(e) => setHypothesis(e.target.value)}
+              rows={2}
+              className="resize-y border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            Change (markdown)
+            <textarea
+              value={changeDescription}
+              onChange={(e) => setChangeDescription(e.target.value)}
+              rows={2}
+              className="resize-y border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            Notes
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="resize-y border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none"
+            />
+          </label>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={saveEdits}
+              disabled={saving || hypothesis.trim() === ""}
+              className={cn(
+                "border border-emerald-900 bg-emerald-950/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest",
+                saving || hypothesis.trim() === ""
+                  ? "cursor-not-allowed text-zinc-600"
+                  : "text-emerald-200 hover:bg-emerald-950/60",
+              )}
+            >
+              {saving ? "saving…" : "save"}
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdits}
+              disabled={saving}
+              className="border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900 disabled:opacity-50"
+            >
+              cancel
+            </button>
+            {error !== null ? (
+              <span className="font-mono text-[11px] text-rose-400">
+                {error}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </li>
+    );
   }
 
   return (
@@ -431,6 +532,13 @@ function ExperimentItem({
             <RunRef label="baseline" run={baseline} fallbackId={experiment.baseline_run_id} />
             <RunRef label="variant" run={variant} fallbackId={experiment.variant_run_id} />
           </div>
+          {experiment.baseline_run_id !== null &&
+          experiment.variant_run_id !== null ? (
+            <BaselineVsVariant
+              baselineId={experiment.baseline_run_id}
+              variantId={experiment.variant_run_id}
+            />
+          ) : null}
           {experiment.change_description ? (
             <p className="whitespace-pre-wrap font-mono text-xs text-zinc-400">
               {experiment.change_description}
@@ -460,15 +568,168 @@ function ExperimentItem({
           </select>
           <button
             type="button"
-            onClick={remove}
-            className="border border-zinc-900 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-rose-400 hover:bg-rose-950/40"
+            onClick={() => setEditing(true)}
+            className="border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
           >
-            delete
+            edit
           </button>
+          {confirmingDelete ? (
+            <span className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={remove}
+                className="border border-rose-900 bg-rose-950/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-rose-300 hover:bg-rose-950/60"
+              >
+                confirm
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
+              >
+                cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="border border-zinc-900 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-rose-400 hover:bg-rose-950/40"
+            >
+              delete
+            </button>
+          )}
         </div>
       </div>
     </li>
   );
+}
+
+function BaselineVsVariant({
+  baselineId,
+  variantId,
+}: {
+  baselineId: number;
+  variantId: number;
+}) {
+  const [baseline, setBaseline] = useState<RunMetrics | null>(null);
+  const [variant, setVariant] = useState<RunMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [b, v] = await Promise.all([
+          fetch(`/api/backtests/${baselineId}/metrics`).then((r) =>
+            r.ok ? (r.json() as Promise<RunMetrics>) : null,
+          ),
+          fetch(`/api/backtests/${variantId}/metrics`).then((r) =>
+            r.ok ? (r.json() as Promise<RunMetrics>) : null,
+          ),
+        ]);
+        if (!cancelled) {
+          setBaseline(b);
+          setVariant(v);
+        }
+      } catch {
+        // Metrics may legitimately not exist for a run; render nothing.
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [baselineId, variantId]);
+
+  if (loading) {
+    return (
+      <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+        loading metrics…
+      </p>
+    );
+  }
+  if (baseline === null && variant === null) return null;
+
+  const rows: { label: string; b: number | null; v: number | null; fmt: (n: number) => string }[] = [
+    { label: "Net R", b: baseline?.net_r ?? null, v: variant?.net_r ?? null, fmt: formatR },
+    { label: "Win rate", b: baseline?.win_rate ?? null, v: variant?.win_rate ?? null, fmt: formatPct },
+    { label: "Profit factor", b: baseline?.profit_factor ?? null, v: variant?.profit_factor ?? null, fmt: (n) => n.toFixed(2) },
+    { label: "Max DD", b: baseline?.max_drawdown ?? null, v: variant?.max_drawdown ?? null, fmt: formatR },
+    { label: "Trades", b: baseline?.trade_count ?? null, v: variant?.trade_count ?? null, fmt: (n) => n.toFixed(0) },
+  ];
+
+  return (
+    <div className="border border-zinc-800 bg-zinc-950/60">
+      <table className="w-full font-mono text-[11px]">
+        <thead>
+          <tr className="border-b border-zinc-800">
+            <th className="px-2 py-1 text-left text-[9px] uppercase tracking-widest text-zinc-500">
+              Metric
+            </th>
+            <th className="px-2 py-1 text-right text-[9px] uppercase tracking-widest text-zinc-500">
+              Baseline
+            </th>
+            <th className="px-2 py-1 text-right text-[9px] uppercase tracking-widest text-zinc-500">
+              Variant
+            </th>
+            <th className="px-2 py-1 text-right text-[9px] uppercase tracking-widest text-zinc-500">
+              Δ
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const delta =
+              row.b !== null && row.v !== null ? row.v - row.b : null;
+            return (
+              <tr key={row.label} className="border-b border-zinc-900 last:border-b-0">
+                <td className="px-2 py-1 text-zinc-400">{row.label}</td>
+                <td className="px-2 py-1 text-right text-zinc-300">
+                  {row.b !== null ? row.fmt(row.b) : "—"}
+                </td>
+                <td className="px-2 py-1 text-right text-zinc-300">
+                  {row.v !== null ? row.fmt(row.v) : "—"}
+                </td>
+                <td
+                  className={cn(
+                    "px-2 py-1 text-right",
+                    delta === null
+                      ? "text-zinc-600"
+                      : delta > 0
+                        ? "text-emerald-400"
+                        : delta < 0
+                          ? "text-rose-400"
+                          : "text-zinc-500",
+                  )}
+                >
+                  {delta !== null ? formatDelta(delta, row.fmt) : "—"}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function formatR(value: number): string {
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}R`;
+}
+
+function formatPct(value: number): string {
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function formatDelta(value: number, fmt: (n: number) => string): string {
+  // Some formatters (formatR) already prefix "+" for positives. Strip
+  // any leading "+" then re-prefix consistently so we get a single sign.
+  const formatted = fmt(value).replace(/^\+/, "");
+  if (value > 0) return `+${formatted}`;
+  return formatted;
 }
 
 function RunRef({
