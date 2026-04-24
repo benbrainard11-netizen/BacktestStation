@@ -14,6 +14,7 @@ from app.db.models import (
 from app.db.session import get_session
 from app.schemas import (
     BacktestRunRead,
+    BacktestRunTagsUpdate,
     BacktestRunUpdate,
     ConfigSnapshotRead,
     EquityPointRead,
@@ -125,3 +126,17 @@ def delete_backtest(
     db.delete(run)
     db.commit()
     return None
+
+
+@router.put("/{backtest_id}/tags", response_model=BacktestRunRead)
+def set_backtest_tags(
+    backtest_id: int,
+    payload: BacktestRunTagsUpdate,
+    db: Session = Depends(get_session),
+) -> BacktestRun:
+    """Replace the full tag list on a run. Empty list clears all tags."""
+    run = _require_run(db, backtest_id)
+    run.tags = payload.tags or None
+    db.commit()
+    db.refresh(run)
+    return run

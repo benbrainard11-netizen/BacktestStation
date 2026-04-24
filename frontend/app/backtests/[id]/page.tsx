@@ -11,6 +11,7 @@ import MetricsGrid from "@/components/backtests/MetricsGrid";
 import PropFirmSimulator from "@/components/backtests/PropFirmSimulator";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
 import RenameRunButton from "@/components/backtests/RenameRunButton";
+import TagEditor from "@/components/backtests/TagEditor";
 import TradeTable from "@/components/backtests/TradeTable";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
@@ -109,6 +110,10 @@ export default async function BacktestDetailPage({
         description={`${run.symbol} · ${run.timeframe ?? "—"} · ${run.session_label ?? "—"} · ${formatDateRange(run.start_ts, run.end_ts)}`}
         meta={`status ${run.status}`}
       />
+
+      <div className="px-6 pb-2">
+        <TagEditor runId={run.id} initialTags={run.tags ?? null} />
+      </div>
 
       <div className="flex flex-col gap-4 px-6">
         <ExportButtons runId={run.id} hasMetrics={metrics !== null} />

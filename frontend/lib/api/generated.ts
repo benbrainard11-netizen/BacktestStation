@@ -184,6 +184,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/{backtest_id}/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Backtest Tags
+         * @description Replace the full tag list on a run. Empty list clears all tags.
+         */
+        put: operations["set_backtest_tags_api_backtests__backtest_id__tags_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}/trades": {
         parameters: {
             query?: never;
@@ -403,8 +423,18 @@ export interface components {
             strategy_version_id: number;
             /** Symbol */
             symbol: string;
+            /** Tags */
+            tags?: string[] | null;
             /** Timeframe */
             timeframe: string | null;
+        };
+        /**
+         * BacktestRunTagsUpdate
+         * @description PUT /api/backtests/{id}/tags body. Replaces the full tag list.
+         */
+        BacktestRunTagsUpdate: {
+            /** Tags */
+            tags?: string[];
         };
         /**
          * BacktestRunUpdate
@@ -1183,6 +1213,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PropFirmResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_backtest_tags_api_backtests__backtest_id__tags_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BacktestRunTagsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BacktestRunRead"];
                 };
             };
             /** @description Validation Error */

@@ -197,6 +197,20 @@
             "title": "Symbol",
             "type": "string"
           },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
           "timeframe": {
             "anyOf": [
               {
@@ -223,6 +237,20 @@
           "created_at"
         ],
         "title": "BacktestRunRead",
+        "type": "object"
+      },
+      "BacktestRunTagsUpdate": {
+        "description": "PUT /api/backtests/{id}/tags body. Replaces the full tag list.",
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "title": "BacktestRunTagsUpdate",
         "type": "object"
       },
       "BacktestRunUpdate": {
@@ -2167,6 +2195,59 @@
         "summary": "Simulate Prop Firm",
         "tags": [
           "prop-firm"
+        ]
+      }
+    },
+    "/api/backtests/{backtest_id}/tags": {
+      "put": {
+        "description": "Replace the full tag list on a run. Empty list clears all tags.",
+        "operationId": "set_backtest_tags_api_backtests__backtest_id__tags_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "backtest_id",
+            "required": true,
+            "schema": {
+              "title": "Backtest Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BacktestRunTagsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BacktestRunRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Backtest Tags",
+        "tags": [
+          "backtests"
         ]
       }
     },

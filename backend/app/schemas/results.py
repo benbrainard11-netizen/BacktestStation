@@ -43,6 +43,7 @@ class BacktestRunRead(OrmModel):
     end_ts: datetime | None
     import_source: str | None
     status: str
+    tags: list[str] | None = None
     created_at: datetime
 
 
@@ -120,3 +121,24 @@ class BacktestRunUpdate(BaseModel):
         if trimmed == "":
             raise ValueError("name must be non-empty after trimming, or null to clear")
         return trimmed
+
+
+class BacktestRunTagsUpdate(BaseModel):
+    """PUT /api/backtests/{id}/tags body. Replaces the full tag list."""
+
+    tags: list[str] = Field(default_factory=list)
+
+    @field_validator("tags", mode="after")
+    @classmethod
+    def _clean_tags(cls, value: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for raw in value:
+            trimmed = raw.strip()
+            if trimmed == "":
+                continue
+            if trimmed in seen:
+                continue
+            seen.add(trimmed)
+            cleaned.append(trimmed)
+        return cleaned
