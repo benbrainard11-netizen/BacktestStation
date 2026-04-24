@@ -10,6 +10,11 @@ from app.schemas.experiments import (
 )
 from app.schemas.monitor import LiveMonitorStatus
 from app.schemas.notes import NoteCreate, NoteRead, NoteTypesRead, NoteUpdate
+from app.schemas.prompts import (
+    PromptGenerateRequest,
+    PromptGenerateResponse,
+    PromptModesRead,
+)
 from app.schemas.prop_firm import (
     PropFirmConfigIn,
     PropFirmDayRow,
@@ -54,6 +59,9 @@ __all__ = [
     "NoteRead",
     "NoteTypesRead",
     "NoteUpdate",
+    "PromptGenerateRequest",
+    "PromptGenerateResponse",
+    "PromptModesRead",
     "PropFirmConfigIn",
     "PropFirmDayRow",
     "PropFirmPresetRead",

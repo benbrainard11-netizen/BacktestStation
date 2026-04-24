@@ -415,6 +415,43 @@ export interface paths {
         patch: operations["update_note_api_notes__note_id__patch"];
         trace?: never;
     };
+    "/api/prompts/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Prompt */
+        post: operations["generate_prompt_api_prompts_generate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/prompts/modes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Modes
+         * @description Vocabulary endpoint for the mode picker. Mirrors STRATEGY_STAGES.
+         */
+        get: operations["list_modes_api_prompts_modes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/prop-firm/presets": {
         parameters: {
             query?: never;
@@ -967,6 +1004,50 @@ export interface components {
             note_type?: string | null;
             /** Tags */
             tags?: string[] | null;
+        };
+        /**
+         * PromptGenerateRequest
+         * @description POST /api/prompts/generate body.
+         */
+        PromptGenerateRequest: {
+            /** Focus Question */
+            focus_question?: string | null;
+            /**
+             * Mode
+             * @default researcher
+             */
+            mode: string;
+            /** Strategy Id */
+            strategy_id: number;
+        };
+        /**
+         * PromptGenerateResponse
+         * @description POST /api/prompts/generate response.
+         *
+         *     `prompt_text` is the full markdown blob ready to paste.
+         *     `bundled_context_summary` lists which sections were included so the
+         *     UI can show the user what got packaged (e.g., "3 versions, 12 notes,
+         *     2 experiments, latest run, autopsy"). It's diagnostic, not load-bearing.
+         */
+        PromptGenerateResponse: {
+            /** Bundled Context Summary */
+            bundled_context_summary: string[];
+            /** Char Count */
+            char_count: number;
+            /** Mode */
+            mode: string;
+            /** Prompt Text */
+            prompt_text: string;
+            /** Strategy Id */
+            strategy_id: number;
+        };
+        /**
+         * PromptModesRead
+         * @description GET /api/prompts/modes body.
+         */
+        PromptModesRead: {
+            /** Modes */
+            modes?: string[];
         };
         /**
          * PropFirmConfigIn
@@ -2141,6 +2222,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_prompt_api_prompts_generate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromptGenerateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptGenerateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_modes_api_prompts_modes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptModesRead"];
                 };
             };
         };

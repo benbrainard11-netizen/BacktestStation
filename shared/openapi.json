@@ -1295,6 +1295,88 @@
         "title": "NoteUpdate",
         "type": "object"
       },
+      "PromptGenerateRequest": {
+        "additionalProperties": false,
+        "description": "POST /api/prompts/generate body.",
+        "properties": {
+          "focus_question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focus Question"
+          },
+          "mode": {
+            "default": "researcher",
+            "title": "Mode",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "strategy_id"
+        ],
+        "title": "PromptGenerateRequest",
+        "type": "object"
+      },
+      "PromptGenerateResponse": {
+        "description": "POST /api/prompts/generate response.\n\n`prompt_text` is the full markdown blob ready to paste.\n`bundled_context_summary` lists which sections were included so the\nUI can show the user what got packaged (e.g., \"3 versions, 12 notes,\n2 experiments, latest run, autopsy\"). It's diagnostic, not load-bearing.",
+        "properties": {
+          "bundled_context_summary": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Bundled Context Summary",
+            "type": "array"
+          },
+          "char_count": {
+            "title": "Char Count",
+            "type": "integer"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "prompt_text": {
+            "title": "Prompt Text",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prompt_text",
+          "mode",
+          "strategy_id",
+          "bundled_context_summary",
+          "char_count"
+        ],
+        "title": "PromptGenerateResponse",
+        "type": "object"
+      },
+      "PromptModesRead": {
+        "description": "GET /api/prompts/modes body.",
+        "properties": {
+          "modes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Modes",
+            "type": "array"
+          }
+        },
+        "title": "PromptModesRead",
+        "type": "object"
+      },
       "PropFirmConfigIn": {
         "additionalProperties": false,
         "description": "POST body. Either pass `preset_key` (with optional overrides) or fully\nspecify every field.",
@@ -3638,6 +3720,69 @@
         "summary": "Update Note",
         "tags": [
           "notes"
+        ]
+      }
+    },
+    "/api/prompts/generate": {
+      "post": {
+        "operationId": "generate_prompt_api_prompts_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptGenerateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate Prompt",
+        "tags": [
+          "prompts"
+        ]
+      }
+    },
+    "/api/prompts/modes": {
+      "get": {
+        "description": "Vocabulary endpoint for the mode picker. Mirrors STRATEGY_STAGES.",
+        "operationId": "list_modes_api_prompts_modes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptModesRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Modes",
+        "tags": [
+          "prompts"
         ]
       }
     },
