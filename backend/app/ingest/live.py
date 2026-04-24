@@ -114,7 +114,12 @@ class IngesterState:
         self.current_date: dt.date | None = None
         self.last_error: str | None = None
         self.reconnect_count = 0
-        self._lock = threading.Lock()
+        # RLock (not Lock) because status_json() acquires the lock and then
+        # calls ticks_last_60s() which tries to acquire it again. A regular
+        # Lock would deadlock the heartbeat thread on its first write -- it
+        # would hang silently with no log entry, and the heartbeat file
+        # would never be created.
+        self._lock = threading.RLock()
         self._tick_window: list[float] = []  # epoch seconds of recent ticks
 
     def record_tick(self) -> None:
