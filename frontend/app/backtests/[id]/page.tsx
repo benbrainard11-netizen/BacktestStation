@@ -11,6 +11,7 @@ import MetricsGrid from "@/components/backtests/MetricsGrid";
 import PropFirmSimulator from "@/components/backtests/PropFirmSimulator";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
 import RenameRunButton from "@/components/backtests/RenameRunButton";
+import RunNotesSection from "@/components/backtests/RunNotesSection";
 import TagEditor from "@/components/backtests/TagEditor";
 import TradeTable from "@/components/backtests/TradeTable";
 import PageHeader from "@/components/PageHeader";
@@ -23,6 +24,7 @@ type BacktestRun = components["schemas"]["BacktestRunRead"];
 type ConfigSnapshot = components["schemas"]["ConfigSnapshotRead"];
 type DataQualityReport = components["schemas"]["DataQualityReportRead"];
 type EquityPoint = components["schemas"]["EquityPointRead"];
+type NoteTypes = components["schemas"]["NoteTypesRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Trade = components["schemas"]["TradeRead"];
 
@@ -83,6 +85,10 @@ export default async function BacktestDetailPage({
         };
       }),
   ]);
+
+  const noteTypesResponse = await apiGet<NoteTypes>("/api/notes/types").catch(
+    () => ({ types: [] }) as NoteTypes,
+  );
 
   return (
     <div className="pb-10">
@@ -166,6 +172,13 @@ export default async function BacktestDetailPage({
 
         <Panel title="Trades" meta={`${trades.length} total`}>
           <TradeTable trades={trades} runId={run.id} />
+        </Panel>
+
+        <Panel title="Notes" meta="research workspace">
+          <RunNotesSection
+            runId={run.id}
+            noteTypes={noteTypesResponse.types ?? []}
+          />
         </Panel>
       </div>
     </div>
