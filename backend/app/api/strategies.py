@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.db.models import BacktestRun, Experiment, Note, Strategy, StrategyVersion
 from app.db.session import get_session
 from app.schemas import (
+    BacktestRunRead,
     StrategyCreate,
     StrategyRead,
     StrategyStagesRead,
@@ -102,6 +103,26 @@ def get_strategy(
     strategy_id: int, db: Session = Depends(get_session)
 ) -> Strategy:
     return _require_strategy(db, strategy_id)
+
+
+@router.get("/{strategy_id}/runs", response_model=list[BacktestRunRead])
+def list_strategy_runs(
+    strategy_id: int, db: Session = Depends(get_session)
+) -> list[BacktestRun]:
+    """All backtest runs across every version of this strategy.
+
+    Replaces the frontend pattern of fetching /api/backtests and
+    filtering client-side — that approach is O(all runs in the system)
+    which grows poorly.
+    """
+    _require_strategy(db, strategy_id)
+    statement = (
+        select(BacktestRun)
+        .join(StrategyVersion, BacktestRun.strategy_version_id == StrategyVersion.id)
+        .where(StrategyVersion.strategy_id == strategy_id)
+        .order_by(BacktestRun.created_at.desc(), BacktestRun.id.desc())
+    )
+    return list(db.scalars(statement).all())
 
 
 @router.patch("/{strategy_id}", response_model=StrategyRead)
