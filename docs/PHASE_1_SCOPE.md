@@ -1,5 +1,9 @@
 # Phase 1 Scope
 
+> **Status (2026-04-24):** Phase 1 (Imported Results Command Center) is largely complete on `main`. Strategy lifecycle, archive-not-delete, dossier polish, Research Workspace, and the Experiment Ledger backend are all in flight on feature branches.
+>
+> Current direction is the **Strategy Workstation** scope expansion documented in [`ARCHITECTURE.md`](ARCHITECTURE.md) §0 (Vision). Read that section for the current build order; this file remains the source of truth for original Phase 1 done-criteria and import contracts.
+
 ## Phase 1 Name
 
 Imported Results Command Center

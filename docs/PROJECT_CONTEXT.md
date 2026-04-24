@@ -1,5 +1,7 @@
 # BacktestStation Project Context
 
+> **Direction update (2026-04-24):** BacktestStation is evolving into a **Strategy Workstation** — see [`ARCHITECTURE.md`](ARCHITECTURE.md) §0 (Vision) for the current loop (idea → thesis → rules → version → experiment → backtest → analysis → decision → forward/live monitor → refine), pillar list, and build order. This document remains useful for foundational user/product context.
+
 BacktestStation is a local-first futures trading research and monitoring app.
 
 The user is building this with AI coding agents and wants a clean, understandable codebase.
@@ -63,8 +65,9 @@ Initial entities:
 - ConfigSnapshot
 - LiveSignal
 - LiveHeartbeat
-- Note
+- Note (now extended for Research Workspace — typed, tagged, attaches to strategy/version/run/trade)
 - TradeTag
+- Experiment (Experiment Ledger — strategy_version + hypothesis + baseline/variant runs + decision)
 
 Later entities:
 
