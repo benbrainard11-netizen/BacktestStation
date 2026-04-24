@@ -14,7 +14,7 @@ interface SimulationCompareTableProps {
 
 function HighlightBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="ml-2 border border-emerald-900 bg-emerald-950/30 px-1 py-[1px] text-[9px] uppercase tracking-widest text-emerald-300">
+    <span className="ml-2 whitespace-nowrap border border-emerald-900 bg-emerald-950/30 px-1 py-[1px] text-[9px] uppercase tracking-widest text-emerald-300">
       {children}
     </span>
   );
@@ -49,19 +49,19 @@ export default function SimulationCompareTable({
       <table className="w-full border-collapse text-left font-mono text-xs">
         <thead>
           <tr className="border-b border-zinc-800 bg-zinc-900/40 text-[10px] uppercase tracking-widest text-zinc-500">
-            <th className="px-3 py-2">Setup</th>
-            <th className="px-3 py-2">Firm</th>
-            <th className="px-3 py-2 text-right">Account</th>
-            <th className="px-3 py-2">Risk</th>
-            <th className="px-3 py-2">Mode</th>
-            <th className="px-3 py-2 text-right">Pass</th>
-            <th className="px-3 py-2 text-right">Payout</th>
-            <th className="px-3 py-2 text-right">Fail</th>
-            <th className="px-3 py-2 text-right">Avg days</th>
-            <th className="px-3 py-2 text-right">DD usage</th>
-            <th className="px-3 py-2 text-right">EV after fees</th>
-            <th className="px-3 py-2 text-right">Confidence</th>
-            <th className="px-3 py-2">Main fail</th>
+            <th className="whitespace-nowrap px-3 py-2">Setup</th>
+            <th className="whitespace-nowrap px-3 py-2">Firm</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">Account</th>
+            <th className="whitespace-nowrap px-3 py-2">Risk</th>
+            <th className="whitespace-nowrap px-3 py-2">Mode</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">Pass</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">Payout</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">Fail</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">Avg days</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">DD usage</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">EV after fees</th>
+            <th className="whitespace-nowrap px-3 py-2 text-right">Confidence</th>
+            <th className="whitespace-nowrap px-3 py-2">Main fail</th>
           </tr>
         </thead>
         <tbody>
@@ -78,42 +78,50 @@ export default function SimulationCompareTable({
                 key={row.setup_id}
                 className="border-b border-zinc-900/80 text-zinc-300 last:border-b-0 hover:bg-zinc-900/40"
               >
-                <td className="px-3 py-2 text-zinc-100">
-                  {row.setup_label}
-                  {highlights.length > 0 ? (
-                    <span className="ml-1 inline-flex flex-wrap gap-1">
-                      {highlights.map((h) => (
-                        <HighlightBadge key={h}>{h}</HighlightBadge>
-                      ))}
+                <td className="max-w-[260px] px-3 py-2 text-zinc-100">
+                  <div className="flex min-w-0 items-center gap-1">
+                    <span title={row.setup_label} className="truncate">
+                      {row.setup_label}
                     </span>
-                  ) : null}
+                    {highlights.length > 0 ? (
+                      <span className="inline-flex flex-none flex-wrap gap-1">
+                        {highlights.map((h) => (
+                          <HighlightBadge key={h}>{h}</HighlightBadge>
+                        ))}
+                      </span>
+                    ) : null}
+                  </div>
                 </td>
-                <td className="px-3 py-2 text-zinc-400">{row.firm_name}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-zinc-400">
+                  {row.firm_name}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                   ${row.account_size.toLocaleString()}
                 </td>
-                <td className="px-3 py-2 text-zinc-400">{row.risk_label}</td>
-                <td className="px-3 py-2 text-zinc-400">
+                <td className="whitespace-nowrap px-3 py-2 text-zinc-400">
+                  {row.risk_label}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2 text-zinc-400">
                   {samplingModeLabel(row.sampling_mode)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                   {formatPercent(row.pass_rate)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                   {formatPercent(row.payout_rate)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                   {formatPercent(row.fail_rate)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                   {formatDays(row.avg_days_to_pass)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                   {formatPercent(row.average_dd_usage_percent)}
                 </td>
                 <td
                   className={cn(
-                    "px-3 py-2 text-right tabular-nums",
+                    "whitespace-nowrap px-3 py-2 text-right tabular-nums",
                     row.ev_after_fees > 0
                       ? "text-emerald-400"
                       : row.ev_after_fees < 0
@@ -123,10 +131,10 @@ export default function SimulationCompareTable({
                 >
                   {formatCurrencySigned(row.ev_after_fees)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
                   {row.confidence}
                 </td>
-                <td className="px-3 py-2 text-zinc-400">
+                <td className="whitespace-nowrap px-3 py-2 text-zinc-400">
                   {failureReasonLabel(row.main_failure_reason)}
                 </td>
               </tr>
