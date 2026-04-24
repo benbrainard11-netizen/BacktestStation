@@ -41,12 +41,12 @@ export default async function StrategyDetailPage({ params }: PageProps) {
   );
 
   const [
-    runs,
+    strategyRuns,
     noteTypesResponse,
     experimentDecisionsResponse,
     promptModesResponse,
   ] = await Promise.all([
-    apiGet<BacktestRun[]>("/api/backtests"),
+    apiGet<BacktestRun[]>(`/api/strategies/${id}/runs`),
     apiGet<NoteTypes>("/api/notes/types").catch(
       () => ({ types: [] }) as NoteTypes,
     ),
@@ -57,20 +57,13 @@ export default async function StrategyDetailPage({ params }: PageProps) {
       () => ({ modes: [] }) as PromptModes,
     ),
   ]);
+  // Endpoint already returns this strategy's runs ordered by created_at desc.
   const runsByVersion = new Map<number, BacktestRun[]>();
-  for (const run of runs) {
+  for (const run of strategyRuns) {
     const list = runsByVersion.get(run.strategy_version_id) ?? [];
     list.push(run);
     runsByVersion.set(run.strategy_version_id, list);
   }
-
-  const versionIds = new Set(strategy.versions.map((v) => v.id));
-  const strategyRuns = runs
-    .filter((r) => versionIds.has(r.strategy_version_id))
-    .sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
   const latestRun = strategyRuns[0] ?? null;
   const latestMetrics = latestRun
     ? await apiGet<RunMetrics>(

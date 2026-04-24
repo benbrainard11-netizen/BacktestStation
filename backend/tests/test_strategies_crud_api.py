@@ -366,6 +366,44 @@ def test_archive_strategy_version_preserves_runs(
         assert session.get(models.BacktestRun, rid) is not None
 
 
+def test_list_strategy_runs_returns_only_this_strategy(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """GET /api/strategies/{id}/runs must not leak runs from other strategies."""
+    with session_factory() as session:
+        strategy_a = models.Strategy(name="A", slug="a")
+        version_a = models.StrategyVersion(strategy=strategy_a, version="v1")
+        strategy_b = models.Strategy(name="B", slug="b")
+        version_b = models.StrategyVersion(strategy=strategy_b, version="v1")
+        session.add_all([strategy_a, strategy_b])
+        session.commit()
+
+        session.add_all(
+            [
+                models.BacktestRun(strategy_version_id=version_a.id, symbol="NQ"),
+                models.BacktestRun(strategy_version_id=version_a.id, symbol="ES"),
+                models.BacktestRun(strategy_version_id=version_b.id, symbol="YM"),
+            ]
+        )
+        session.commit()
+        a_id = strategy_a.id
+        b_id = strategy_b.id
+
+    a_runs = client.get(f"/api/strategies/{a_id}/runs").json()
+    assert len(a_runs) == 2
+    assert {r["symbol"] for r in a_runs} == {"NQ", "ES"}
+
+    b_runs = client.get(f"/api/strategies/{b_id}/runs").json()
+    assert len(b_runs) == 1
+    assert b_runs[0]["symbol"] == "YM"
+
+
+def test_list_strategy_runs_missing_strategy_returns_404(
+    client: TestClient,
+) -> None:
+    assert client.get("/api/strategies/9999/runs").status_code == 404
+
+
 def test_missing_strategy_returns_404(client: TestClient) -> None:
     assert client.patch("/api/strategies/9999", json={"name": "x"}).status_code == 404
     assert client.delete("/api/strategies/9999").status_code == 404

@@ -537,6 +537,30 @@ export interface paths {
         patch: operations["update_strategy_api_strategies__strategy_id__patch"];
         trace?: never;
     };
+    "/api/strategies/{strategy_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Strategy Runs
+         * @description All backtest runs across every version of this strategy.
+         *
+         *     Replaces the frontend pattern of fetching /api/backtests and
+         *     filtering client-side — that approach is O(all runs in the system)
+         *     which grows poorly.
+         */
+        get: operations["list_strategy_runs_api_strategies__strategy_id__runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies/{strategy_id}/versions": {
         parameters: {
             query?: never;
@@ -2454,6 +2478,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StrategyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_strategy_runs_api_strategies__strategy_id__runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BacktestRunRead"][];
                 };
             };
             /** @description Validation Error */

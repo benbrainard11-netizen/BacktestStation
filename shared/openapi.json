@@ -4023,6 +4023,53 @@
         ]
       }
     },
+    "/api/strategies/{strategy_id}/runs": {
+      "get": {
+        "description": "All backtest runs across every version of this strategy.\n\nReplaces the frontend pattern of fetching /api/backtests and\nfiltering client-side \u2014 that approach is O(all runs in the system)\nwhich grows poorly.",
+        "operationId": "list_strategy_runs_api_strategies__strategy_id__runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BacktestRunRead"
+                  },
+                  "title": "Response List Strategy Runs Api Strategies  Strategy Id  Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Strategy Runs",
+        "tags": [
+          "strategies"
+        ]
+      }
+    },
     "/api/strategies/{strategy_id}/versions": {
       "post": {
         "operationId": "create_strategy_version_api_strategies__strategy_id__versions_post",
