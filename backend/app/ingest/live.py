@@ -78,6 +78,9 @@ STYPE_IN = "continuous"
 
 HEARTBEAT_INTERVAL_SEC = 10
 RECONNECT_BACKOFF_SEC = [5, 15, 30, 60, 120, 300]
+# Force the DBN file to flush+fsync every N seconds. Bounds data loss to
+# this window if the process crashes. Smaller = safer, larger = less I/O.
+FLUSH_INTERVAL_SEC = 30
 
 
 # --- Logging -------------------------------------------------------------
@@ -226,7 +229,15 @@ def run_session(
 
     # Append mode is critical for restart safety. Multiple add_stream
     # calls would write twice; we use one.
-    out_handle = open(out_path, "ab")
+    #
+    # buffering=0 disables Python's userspace buffer so writes hit the
+    # OS immediately. Without it, sparse off-hours traffic (a few ticks
+    # an hour during Friday close, weekends, or session breaks) sits in
+    # the 4KB buffer for hours and the on-disk file appears empty even
+    # though ticks are arriving — exactly what we hit on first run.
+    # The OS still has its own page cache; the periodic fsync below
+    # forces durable commit.
+    out_handle = open(out_path, "ab", buffering=0)
     client.add_stream(out_handle)
 
     def on_record(record: Any) -> None:  # noqa: ANN401
@@ -239,9 +250,11 @@ def run_session(
 
     try:
         # The Live client streams asynchronously; this loop just watches
-        # for day rollover or operator stop. Disconnect detection is
-        # delegated to Databento's internal reconnect logic; if that
-        # fails the heartbeat will go stale and we'll notice externally.
+        # for day rollover, operator stop, and the periodic fsync. Disconnect
+        # detection is delegated to Databento's internal reconnect logic;
+        # if that fails the heartbeat will go stale and we'll notice
+        # externally.
+        last_flush = time.monotonic()
         while not stop.is_set():
             now_date = dt.datetime.now(dt.timezone.utc).date()
             if now_date != today:
@@ -249,12 +262,26 @@ def run_session(
                     f"UTC date rolled {today} -> {now_date}; rotating file"
                 )
                 break
+            if time.monotonic() - last_flush >= FLUSH_INTERVAL_SEC:
+                try:
+                    out_handle.flush()
+                    os.fsync(out_handle.fileno())
+                except Exception as e:
+                    logger.warning(f"flush failed: {e}")
+                last_flush = time.monotonic()
             time.sleep(1)
     finally:
         try:
             client.stop()
         except Exception as e:
             logger.warning(f"client.stop() raised: {e}")
+        # Final flush + fsync so ticks received between the last interval
+        # flush and shutdown are durable on disk.
+        try:
+            out_handle.flush()
+            os.fsync(out_handle.fileno())
+        except Exception as e:
+            logger.warning(f"final flush failed: {e}")
         try:
             out_handle.close()
         except Exception:
