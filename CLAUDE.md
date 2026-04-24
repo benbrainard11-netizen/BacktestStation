@@ -31,6 +31,18 @@ BacktestStation — a local-first quant research terminal for futures strategies
 
 Auth, billing, Docker, Kubernetes, Postgres, walk-forward, Monte Carlo, websockets, mobile UI, broker execution integration, no-code strategy builders. See architecture doc §13.
 
+Also defer until explicitly scoped:
+
+- **In-app LLM chat.** The Prompt Generator emits a copyable prompt; the user runs it in Claude or GPT externally.
+- **Local LLM infrastructure** (Ollama, llama.cpp, etc.). Stay model-agnostic until a concrete use case forces the choice.
+- **Destructive cascade delete** for strategies or strategy versions with attached runs/trades/metrics. Archive instead. Current enforcement: `DELETE /api/strategies/{id}` returns 409 when versions exist; `DELETE /api/strategy-versions/{id}` returns 409 when runs exist. Use `PATCH /api/strategies/{id}` with `status=archived` or `PATCH /api/strategy-versions/{id}/archive`.
+- **Complex multi-agent systems** inside the app.
+- **Auto-applied AI suggestions.** Anything AI produces must land as a human-reviewable note, experiment, or decision — never modify strategies or configs directly.
+
+## Schema migration discipline
+
+Any schema change (new column, new table, vocabulary change) must include migration handling for existing local SQLite data. Pattern: add the model change, then add a guarded migration in `backend/app/db/session.py:_run_data_migrations` (`ALTER TABLE ... ADD COLUMN ...` or `CREATE TABLE IF NOT EXISTS ...`) so existing `data/meta.sqlite` files pick up the change on next app start. `Base.metadata.create_all()` won't add columns to existing tables — the explicit ALTER is required.
+
 ## Repo workflow
 
 - Monorepo. Branch per feature. Small PRs.

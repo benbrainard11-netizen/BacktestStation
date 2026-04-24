@@ -11,6 +11,99 @@
 >
 > Sections 4–7 (database schema, Databento ingestion, engine design) and the §12 phase ordering still describe the eventual end-state — useful as long-term reference, not as the next step.
 
+---
+
+## 0. Vision
+
+BacktestStation is a local-first strategy development workstation for futures strategies. It supports the full research loop:
+
+**idea → thesis → rules → version → experiment → backtest → analysis → decision → forward/live monitor → refine**
+
+The AI layer is a research assistant, not an autonomous trader. AI suggestions land as human-reviewed notes, experiments, and decisions — never automatic strategy changes.
+
+### Scope
+
+- **Shipped on `main`:** Strategy Library, imported backtest runs + metrics + autopsy + compare, CSV export, prop-firm simulator, data-quality report, tags editor.
+- **In progress (on branch, pre-merge):** Strategy Lifecycle Pipeline, Strategy Dossier page (initial version — will grow to include research, experiments, risk profile, live monitor, AI context), archive-not-delete at strategy + version level, board ↔ table toggle on `/strategies`, latest-run metrics panel.
+- **Next (after the in-progress branch merges):** Research Workspace, Experiment Ledger.
+- **Later:** AI Prompt Generator, Forward/Live Drift Monitor, Risk Profile Manager, In-App Strategy Engine.
+
+### Current phase
+
+Strategy lifecycle foundation: pipeline board, manual strategy creation, strategy versions, lifecycle stages, linked imported runs, archive-not-delete semantics at both strategy and version level. Status: working tree on `task/strategy-editor-pipeline`, not yet merged to `main`.
+
+### Next phase
+
+**Research Workspace** — extend the existing `Note` model (`backend/app/db/models.py` — currently attaches to `backtest_run_id` / `trade_id`). Add:
+- `strategy_id` (FK, nullable)
+- `strategy_version_id` (FK, nullable)
+- `note_type` with vocabulary `observation, hypothesis, question, decision, bug, risk_note`
+  - No `ai_idea` type until AI generation exists
+- `tags` (JSON list)
+
+Expose `NOTE_TYPES` through a `GET /api/notes/types` endpoint that mirrors the `STRATEGY_STAGES` pattern.
+
+**Experiment Ledger** — new `Experiment` table, minimal shape:
+- `id`
+- `strategy_version_id` (FK, required)
+- `hypothesis` (text, required)
+- `baseline_run_id` (FK, nullable)
+- `variant_run_id` (FK, nullable)
+- `change_description` (markdown text — freeform, no structured sub-fields at this scale)
+- `decision` (enum: `pending, promote, reject, retest, forward_test, archive`)
+- `notes` (text)
+- `created_at`, `updated_at`
+
+Expose `EXPERIMENT_DECISIONS` as a vocabulary endpoint.
+
+### Acceptance criteria for next phase
+
+**Research Workspace is done** when a user can:
+- create, edit, and delete a note attached to any of: strategy, strategy version, backtest run, trade
+- pick a `note_type` at creation time from the `NOTE_TYPES` vocabulary
+- add free-form tags
+- filter notes on the strategy dossier by `note_type` and by tag
+- see notes grouped by target (strategy-level vs version-level vs run/trade-level)
+
+**Experiment Ledger is done** when a user can:
+- create an experiment from the strategy dossier, picking a `strategy_version_id`
+- write a hypothesis and a markdown change description
+- link a `baseline_run_id` and an optional `variant_run_id` from runs already imported under that strategy
+- record a `decision` from the `EXPERIMENT_DECISIONS` vocabulary
+- view all experiments for a strategy from the dossier page
+
+### AI direction
+
+First AI feature is a **Research Prompt Generator**, not chat:
+- User picks a mode: Researcher, Critic, Statistician, Risk Manager, Engineer, Live Monitor
+- App bundles strategy context, version rules, recent notes, metrics, data quality, autopsy, linked runs
+- Output is a copyable prompt for Claude or GPT, run externally
+- Later: paste the response back as a note, experiment, or decision
+
+Model-agnostic from day one. No local-model lock-in, no specific API commitment. Possible modes later: private/redacted/full-context.
+
+### Safety rules
+
+- Database + metrics are source of truth. AI output is never authoritative.
+- No destructive cascade delete for strategies or strategy versions with attached data. Archive/retire first.
+- Existing import, backtest detail, compare, and autopsy pages must keep working as new features land.
+- AI suggestions become human-reviewed notes, experiments, or decisions — never auto-applied.
+
+### Build order
+
+1. Strategy lifecycle pipeline — in progress on `task/strategy-editor-pipeline`
+2. Strategy Dossier page — initial version on the same branch (will expand in later phases)
+3. Linked imported runs — working in the initial dossier
+4. Research Workspace (extends existing `Note` model)
+5. Experiment Ledger (new `Experiment` table)
+6. AI Prompt Generator
+7. Forward/live drift monitor
+8. Risk Profile Manager
+9. Simple engine prototype
+10. Full strategy engine
+
+---
+
 ## Context
 
 Solo beginner (using AI tools) building a futures-trading research/control center. Porting a real live-running strategy that uses **stop-loss + take-profit brackets**, ingesting **MBP-1 tick data** from Databento from day one, **monorepo** layout, full 12-item MVP on a stretched ~14-week timeline. Design prioritizes backtest correctness over UI polish.
