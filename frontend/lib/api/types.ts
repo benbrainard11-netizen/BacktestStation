@@ -22,6 +22,49 @@ export interface BacktestRun {
   created_at: string;
 }
 
+export interface RunMetrics {
+  id: number;
+  backtest_run_id: number;
+  net_pnl: number | null;
+  net_r: number | null;
+  win_rate: number | null;
+  profit_factor: number | null;
+  max_drawdown: number | null;
+  avg_r: number | null;
+  avg_win: number | null;
+  avg_loss: number | null;
+  trade_count: number | null;
+  longest_losing_streak: number | null;
+  best_trade: number | null;
+  worst_trade: number | null;
+}
+
+export interface Trade {
+  id: number;
+  backtest_run_id: number;
+  entry_ts: string;
+  exit_ts: string | null;
+  symbol: string;
+  side: string;
+  entry_price: number;
+  exit_price: number | null;
+  stop_price: number | null;
+  target_price: number | null;
+  size: number;
+  pnl: number | null;
+  r_multiple: number | null;
+  exit_reason: string | null;
+  tags: string[] | null;
+}
+
+export interface EquityPoint {
+  id: number;
+  backtest_run_id: number;
+  ts: string;
+  equity: number;
+  drawdown: number | null;
+}
+
 export interface BackendErrorBody {
   detail?: string;
 }

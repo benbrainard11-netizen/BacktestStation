@@ -1,0 +1,126 @@
+import type { RunMetrics } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
+
+type Tone = "positive" | "negative" | "neutral";
+
+interface MetricsGridProps {
+  metrics: RunMetrics | null;
+}
+
+export default function MetricsGrid({ metrics }: MetricsGridProps) {
+  if (metrics === null) {
+    return (
+      <div className="border border-dashed border-zinc-800 bg-zinc-950 px-4 py-6">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+          Metrics not imported
+        </p>
+        <p className="mt-2 text-xs text-zinc-500">
+          Include a metrics.json file on the next import to populate this panel.
+        </p>
+      </div>
+    );
+  }
+
+  const cards = [
+    cardFor("Net PnL", metrics.net_pnl, formatDollars, signedTone),
+    cardFor("Net R", metrics.net_r, formatR, signedTone),
+    cardFor("Win Rate", metrics.win_rate, formatPercentFraction, neutralTone),
+    cardFor(
+      "Profit Factor",
+      metrics.profit_factor,
+      (v) => v.toFixed(2),
+      (v) => (v >= 1 ? "positive" : "negative"),
+    ),
+    cardFor(
+      "Max Drawdown",
+      metrics.max_drawdown,
+      formatR,
+      (v) => (v < 0 ? "negative" : "neutral"),
+    ),
+    cardFor("Avg R", metrics.avg_r, formatR, signedTone),
+    cardFor("Avg Win", metrics.avg_win, formatR, signedTone),
+    cardFor("Avg Loss", metrics.avg_loss, formatR, signedTone),
+    cardFor("Trades", metrics.trade_count, (v) => v.toFixed(0), neutralTone),
+    cardFor(
+      "Longest Loss Streak",
+      metrics.longest_losing_streak,
+      (v) => v.toFixed(0),
+      neutralTone,
+    ),
+    cardFor("Best Trade", metrics.best_trade, formatDollars, signedTone),
+    cardFor("Worst Trade", metrics.worst_trade, formatDollars, signedTone),
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      {cards.map((card) => (
+        <Card key={card.label} {...card} />
+      ))}
+    </div>
+  );
+}
+
+interface CardProps {
+  label: string;
+  display: string;
+  tone: Tone;
+}
+
+function Card({ label, display, tone }: CardProps) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2 border border-zinc-800 bg-zinc-950 px-3 py-3">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+        {label}
+      </span>
+      <span className={cn("font-mono text-lg leading-none", TONE[tone])}>
+        {display}
+      </span>
+    </div>
+  );
+}
+
+const TONE: Record<Tone, string> = {
+  positive: "text-emerald-400",
+  negative: "text-rose-400",
+  neutral: "text-zinc-100",
+};
+
+function cardFor(
+  label: string,
+  value: number | null,
+  format: (v: number) => string,
+  toneFn: (v: number) => Tone,
+): CardProps {
+  if (value === null) return { label, display: "—", tone: "neutral" };
+  return { label, display: format(value), tone: toneFn(value) };
+}
+
+function signedTone(value: number): Tone {
+  if (value > 0) return "positive";
+  if (value < 0) return "negative";
+  return "neutral";
+}
+
+function neutralTone(): Tone {
+  return "neutral";
+}
+
+function formatDollars(value: number): string {
+  const sign = value < 0 ? "-" : value > 0 ? "+" : "";
+  const abs = Math.abs(value).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${sign}${abs}`;
+}
+
+function formatR(value: number): string {
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}R`;
+}
+
+function formatPercentFraction(value: number): string {
+  return `${(value * 100).toFixed(2)}%`;
+}
