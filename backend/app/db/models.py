@@ -199,6 +199,42 @@ class LiveHeartbeat(Base):
     payload: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 
 
+class Experiment(Base):
+    """A unit of structured research: hypothesis + baseline + variant + decision.
+
+    The Experiment Ledger sits between freeform notes (which live on the
+    `Note` table) and runnable backtests (`BacktestRun`). It records
+    *what* you were testing, *why*, *how it shook out*, and *what you
+    decided* — independent of any future in-app strategy engine.
+
+    `change_description` is freeform markdown on purpose. Once the shape
+    of "what changed between baseline and variant" stabilizes through
+    real use, structured sub-fields can replace it.
+    """
+
+    __tablename__ = "experiments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    strategy_version_id: Mapped[int] = mapped_column(
+        ForeignKey("strategy_versions.id"), index=True
+    )
+    hypothesis: Mapped[str] = mapped_column(Text)
+    baseline_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True
+    )
+    variant_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True
+    )
+    change_description: Mapped[str | None] = mapped_column(Text)
+    # pending | promote | reject | retest | forward_test | archive
+    decision: Mapped[str] = mapped_column(
+        String(20), default="pending", server_default="pending", index=True
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+
+
 class Note(Base):
     __tablename__ = "notes"
 

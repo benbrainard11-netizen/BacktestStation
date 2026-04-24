@@ -7,6 +7,7 @@ from app.api import (
     backtest_export,
     backtests,
     data_quality,
+    experiments,
     health,
     imports,
     monitor,
@@ -39,5 +40,6 @@ app.include_router(backtest_export.router, prefix="/api")
 app.include_router(data_quality.router, prefix="/api")
 app.include_router(autopsy.router, prefix="/api")
 app.include_router(notes.router, prefix="/api")
+app.include_router(experiments.router, prefix="/api")
 app.include_router(prop_firm.router, prefix="/api")
 app.include_router(prop_firm.backtest_router, prefix="/api")

@@ -2,6 +2,12 @@
 
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.data_quality import DataQualityIssue, DataQualityReportRead
+from app.schemas.experiments import (
+    ExperimentCreate,
+    ExperimentDecisionsRead,
+    ExperimentRead,
+    ExperimentUpdate,
+)
 from app.schemas.monitor import LiveMonitorStatus
 from app.schemas.notes import NoteCreate, NoteRead, NoteTypesRead, NoteUpdate
 from app.schemas.prop_firm import (
@@ -38,6 +44,10 @@ __all__ = [
     "DataQualityIssue",
     "DataQualityReportRead",
     "EquityPointRead",
+    "ExperimentCreate",
+    "ExperimentDecisionsRead",
+    "ExperimentRead",
+    "ExperimentUpdate",
     "ImportBacktestResponse",
     "LiveMonitorStatus",
     "NoteCreate",

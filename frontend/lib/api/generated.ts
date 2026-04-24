@@ -238,6 +238,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/experiments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Experiments
+         * @description List experiments, optionally filtered.
+         *
+         *     `strategy_id` filters across all versions of the strategy by joining
+         *     Experiment → StrategyVersion. `decision` is validated against
+         *     EXPERIMENT_DECISIONS.
+         */
+        get: operations["list_experiments_api_experiments_get"];
+        put?: never;
+        /** Create Experiment */
+        post: operations["create_experiment_api_experiments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/experiments/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Decisions
+         * @description Decision vocabulary, mirrors STRATEGY_STAGES pattern.
+         */
+        get: operations["list_decisions_api_experiments_decisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/experiments/{experiment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Experiment */
+        get: operations["get_experiment_api_experiments__experiment_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Experiment */
+        delete: operations["delete_experiment_api_experiments__experiment_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Experiment */
+        patch: operations["update_experiment_api_experiments__experiment_id__patch"];
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -702,6 +766,78 @@ export interface components {
              * Format: date-time
              */
             ts: string;
+        };
+        /** ExperimentCreate */
+        ExperimentCreate: {
+            /** Baseline Run Id */
+            baseline_run_id?: number | null;
+            /** Change Description */
+            change_description?: string | null;
+            /**
+             * Decision
+             * @default pending
+             */
+            decision: string;
+            /** Hypothesis */
+            hypothesis: string;
+            /** Notes */
+            notes?: string | null;
+            /** Strategy Version Id */
+            strategy_version_id: number;
+            /** Variant Run Id */
+            variant_run_id?: number | null;
+        };
+        /**
+         * ExperimentDecisionsRead
+         * @description GET /api/experiments/decisions body.
+         */
+        ExperimentDecisionsRead: {
+            /** Decisions */
+            decisions?: string[];
+        };
+        /** ExperimentRead */
+        ExperimentRead: {
+            /** Baseline Run Id */
+            baseline_run_id: number | null;
+            /** Change Description */
+            change_description: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decision */
+            decision: string;
+            /** Hypothesis */
+            hypothesis: string;
+            /** Id */
+            id: number;
+            /** Notes */
+            notes: string | null;
+            /** Strategy Version Id */
+            strategy_version_id: number;
+            /** Updated At */
+            updated_at: string | null;
+            /** Variant Run Id */
+            variant_run_id: number | null;
+        };
+        /**
+         * ExperimentUpdate
+         * @description PATCH /api/experiments/{id} body. Only fields present are applied.
+         */
+        ExperimentUpdate: {
+            /** Baseline Run Id */
+            baseline_run_id?: number | null;
+            /** Change Description */
+            change_description?: string | null;
+            /** Decision */
+            decision?: string | null;
+            /** Hypothesis */
+            hypothesis?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Variant Run Id */
+            variant_run_id?: number | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1589,6 +1725,187 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_experiments_api_experiments_get: {
+        parameters: {
+            query?: {
+                strategy_version_id?: number | null;
+                strategy_id?: number | null;
+                decision?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_experiment_api_experiments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExperimentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_decisions_api_experiments_decisions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentDecisionsRead"];
+                };
+            };
+        };
+    };
+    get_experiment_api_experiments__experiment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_experiment_api_experiments__experiment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_experiment_api_experiments__experiment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExperimentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentRead"];
                 };
             };
             /** @description Validation Error */
