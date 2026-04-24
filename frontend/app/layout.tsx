@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "InSyncAlgo",
+  title: "BacktestStation",
   description: "Futures strategy research terminal",
 };
 

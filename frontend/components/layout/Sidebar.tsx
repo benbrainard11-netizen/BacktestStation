@@ -72,7 +72,7 @@ export default function Sidebar() {
     <aside className="flex w-60 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
       <div className="border-b border-zinc-800 px-4 py-4">
         <h1 className="font-mono text-base tracking-[0.25em] text-zinc-100">
-          INSYNCALGO
+          BACKTESTSTATION
         </h1>
         <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
           v{version}

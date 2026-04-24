@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "InSyncAlgo",
+  "productName": "BacktestStation",
   "version": "0.1.0",
   "identifier": "com.insyncalgo.desktop",
   "build": {
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "InSyncAlgo",
+        "title": "BacktestStation",
         "width": 1280,
         "height": 800,
         "minWidth": 960,

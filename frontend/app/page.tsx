@@ -5,11 +5,13 @@ import QuickAccessGrid from "@/components/command-center/QuickAccessGrid";
 import RecentActivityPanel from "@/components/command-center/RecentActivityPanel";
 import RecentBacktestsTable from "@/components/command-center/RecentBacktestsTable";
 import SystemStatusPanel from "@/components/command-center/SystemStatusPanel";
+import MockDataBanner from "@/components/MockDataBanner";
 import PageHeader from "@/components/PageHeader";
 
 export default function CommandCenter() {
   return (
     <div className="flex flex-col gap-4 pb-6">
+      <MockDataBanner />
       <PageHeader
         title="Command Center"
         description="System overview, latest research activity, and import status"
