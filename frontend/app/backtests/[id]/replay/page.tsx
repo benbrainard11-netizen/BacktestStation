@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import ReplayChart from "@/components/backtests/ReplayChart";
 import TradeDetailsCard from "@/components/backtests/TradeDetailsCard";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
@@ -61,9 +60,10 @@ export default async function ReplayPage({ params, searchParams }: PageProps) {
             <Panel title="Trade details">
               <TradeDetailsCard trade={selected} />
             </Panel>
-            <Panel title="Replay chart" meta="synthetic">
-              <ReplayChart trade={selected} />
-            </Panel>
+            <p className="border border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 font-mono text-[11px] text-zinc-500">
+              Candle chart will land once the Databento tick pipeline is wired.
+              Details card + Prev/Next nav are the Phase 1 surface.
+            </p>
           </>
         ) : (
           <TradePicker trades={trades} runId={run.id} />
