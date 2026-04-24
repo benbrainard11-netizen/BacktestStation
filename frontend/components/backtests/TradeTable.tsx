@@ -1,8 +1,11 @@
+import Link from "next/link";
+
 import type { Trade } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 interface TradeTableProps {
   trades: Trade[];
+  runId: number;
 }
 
 const COLUMNS = [
@@ -19,9 +22,10 @@ const COLUMNS = [
   "R",
   "Exit reason",
   "Tags",
+  "",
 ] as const;
 
-export default function TradeTable({ trades }: TradeTableProps) {
+export default function TradeTable({ trades, runId }: TradeTableProps) {
   if (trades.length === 0) {
     return (
       <p className="font-mono text-xs text-zinc-500">
@@ -32,12 +36,12 @@ export default function TradeTable({ trades }: TradeTableProps) {
 
   return (
     <div className="overflow-x-auto border border-zinc-800">
-      <table className="w-full min-w-[1200px] font-mono text-[11px]">
+      <table className="w-full min-w-[1260px] font-mono text-[11px]">
         <thead>
           <tr className="border-b border-zinc-800 bg-zinc-900/60">
-            {COLUMNS.map((col) => (
+            {COLUMNS.map((col, i) => (
               <th
-                key={col}
+                key={`${col}-${i}`}
                 className="px-2 py-1.5 text-left text-[10px] uppercase tracking-widest text-zinc-500"
               >
                 {col}
@@ -47,7 +51,7 @@ export default function TradeTable({ trades }: TradeTableProps) {
         </thead>
         <tbody>
           {trades.map((trade) => (
-            <TradeRow key={trade.id} trade={trade} />
+            <TradeRow key={trade.id} trade={trade} runId={runId} />
           ))}
         </tbody>
       </table>
@@ -55,7 +59,7 @@ export default function TradeTable({ trades }: TradeTableProps) {
   );
 }
 
-function TradeRow({ trade }: { trade: Trade }) {
+function TradeRow({ trade, runId }: { trade: Trade; runId: number }) {
   return (
     <tr className="border-b border-zinc-900 text-zinc-300 last:border-b-0 hover:bg-zinc-900/30">
       <td className="px-2 py-1 text-zinc-400">{formatTs(trade.entry_ts)}</td>
@@ -98,6 +102,14 @@ function TradeRow({ trade }: { trade: Trade }) {
       <td className="px-2 py-1 text-zinc-400">{trade.exit_reason ?? "—"}</td>
       <td className="px-2 py-1 text-zinc-500">
         {trade.tags && trade.tags.length > 0 ? trade.tags.join(", ") : "—"}
+      </td>
+      <td className="px-2 py-1">
+        <Link
+          href={`/backtests/${runId}/replay?trade=${trade.id}`}
+          className="border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] uppercase tracking-widest text-zinc-200 hover:bg-zinc-800"
+        >
+          Replay →
+        </Link>
       </td>
     </tr>
   );

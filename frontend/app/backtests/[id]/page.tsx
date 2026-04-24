@@ -70,7 +70,7 @@ export default async function BacktestDetailPage({
         </Panel>
 
         <Panel title="Trades" meta={`${trades.length} total`}>
-          <TradeTable trades={trades} />
+          <TradeTable trades={trades} runId={run.id} />
         </Panel>
       </div>
     </div>
