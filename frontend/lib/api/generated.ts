@@ -296,7 +296,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Notes */
+        /**
+         * List Notes
+         * @description List notes with optional filters.
+         *
+         *     Filters AND together. `tag` matches when the value is in the JSON
+         *     tags list. `note_type` is validated against NOTE_TYPES.
+         */
         get: operations["list_notes_api_notes_get"];
         put?: never;
         /** Create Note */
@@ -305,6 +311,44 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/notes/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Note Types
+         * @description Vocabulary endpoint for note_type. Mirrors STRATEGY_STAGES pattern.
+         */
+        get: operations["list_note_types_api_notes_types_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Note */
+        delete: operations["delete_note_api_notes__note_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Note */
+        patch: operations["update_note_api_notes__note_id__patch"];
         trace?: never;
     };
     "/api/prop-firm/presets": {
@@ -725,6 +769,17 @@ export interface components {
             backtest_run_id?: number | null;
             /** Body */
             body: string;
+            /**
+             * Note Type
+             * @default observation
+             */
+            note_type: string;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+            /** Tags */
+            tags?: string[] | null;
             /** Trade Id */
             trade_id?: number | null;
         };
@@ -741,8 +796,41 @@ export interface components {
             created_at: string;
             /** Id */
             id: number;
+            /** Note Type */
+            note_type: string;
+            /** Strategy Id */
+            strategy_id: number | null;
+            /** Strategy Version Id */
+            strategy_version_id: number | null;
+            /** Tags */
+            tags: string[] | null;
             /** Trade Id */
             trade_id: number | null;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /**
+         * NoteTypesRead
+         * @description GET /api/notes/types body. Surfaces NOTE_TYPES vocabulary so the
+         *     frontend stays driven by the backend.
+         */
+        NoteTypesRead: {
+            /** Types */
+            types?: string[];
+        };
+        /**
+         * NoteUpdate
+         * @description PATCH /api/notes/{id} body. Only fields present in the request
+         *     are applied; omit a field to leave it untouched. Cannot move a note
+         *     between attachments — delete and recreate for that.
+         */
+        NoteUpdate: {
+            /** Body */
+            body?: string | null;
+            /** Note Type */
+            note_type?: string | null;
+            /** Tags */
+            tags?: string[] | null;
         };
         /**
          * PropFirmConfigIn
@@ -1590,8 +1678,12 @@ export interface operations {
     list_notes_api_notes_get: {
         parameters: {
             query?: {
+                strategy_id?: number | null;
+                strategy_version_id?: number | null;
                 backtest_run_id?: number | null;
                 trade_id?: number | null;
+                note_type?: string | null;
+                tag?: string | null;
             };
             header?: never;
             path?: never;
@@ -1634,6 +1726,90 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_note_types_api_notes_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteTypesRead"];
+                };
+            };
+        };
+    };
+    delete_note_api_notes__note_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_note_api_notes__note_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

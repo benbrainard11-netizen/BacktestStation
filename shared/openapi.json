@@ -803,6 +803,7 @@
         "type": "object"
       },
       "NoteCreate": {
+        "additionalProperties": false,
         "properties": {
           "backtest_run_id": {
             "anyOf": [
@@ -819,6 +820,47 @@
             "minLength": 1,
             "title": "Body",
             "type": "string"
+          },
+          "note_type": {
+            "default": "observation",
+            "title": "Note Type",
+            "type": "string"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
           },
           "trade_id": {
             "anyOf": [
@@ -864,6 +906,46 @@
             "title": "Id",
             "type": "integer"
           },
+          "note_type": {
+            "title": "Note Type",
+            "type": "string"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
           "trade_id": {
             "anyOf": [
               {
@@ -874,16 +956,91 @@
               }
             ],
             "title": "Trade Id"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
           }
         },
         "required": [
           "id",
+          "strategy_id",
+          "strategy_version_id",
           "backtest_run_id",
           "trade_id",
+          "note_type",
+          "tags",
           "body",
-          "created_at"
+          "created_at",
+          "updated_at"
         ],
         "title": "NoteRead",
+        "type": "object"
+      },
+      "NoteTypesRead": {
+        "description": "GET /api/notes/types body. Surfaces NOTE_TYPES vocabulary so the\nfrontend stays driven by the backend.",
+        "properties": {
+          "types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Types",
+            "type": "array"
+          }
+        },
+        "title": "NoteTypesRead",
+        "type": "object"
+      },
+      "NoteUpdate": {
+        "additionalProperties": false,
+        "description": "PATCH /api/notes/{id} body. Only fields present in the request\nare applied; omit a field to leave it untouched. Cannot move a note\nbetween attachments \u2014 delete and recreate for that.",
+        "properties": {
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "note_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Type"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "title": "NoteUpdate",
         "type": "object"
       },
       "PropFirmConfigIn": {
@@ -2682,8 +2839,41 @@
     },
     "/api/notes": {
       "get": {
+        "description": "List notes with optional filters.\n\nFilters AND together. `tag` matches when the value is in the JSON\ntags list. `note_type` is validated against NOTE_TYPES.",
         "operationId": "list_notes_api_notes_get",
         "parameters": [
+          {
+            "in": "query",
+            "name": "strategy_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Strategy Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "strategy_version_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Strategy Version Id"
+            }
+          },
           {
             "in": "query",
             "name": "backtest_run_id",
@@ -2714,6 +2904,38 @@
                 }
               ],
               "title": "Trade Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "note_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Note Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag"
             }
           }
         ],
@@ -2783,6 +3005,113 @@
           }
         },
         "summary": "Create Note",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/notes/types": {
+      "get": {
+        "description": "Vocabulary endpoint for note_type. Mirrors STRATEGY_STAGES pattern.",
+        "operationId": "list_note_types_api_notes_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteTypesRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Note Types",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/notes/{note_id}": {
+      "delete": {
+        "operationId": "delete_note_api_notes__note_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Note",
+        "tags": [
+          "notes"
+        ]
+      },
+      "patch": {
+        "operationId": "update_note_api_notes__note_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Note",
         "tags": [
           "notes"
         ]
