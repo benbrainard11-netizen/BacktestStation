@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import NewVersionButton from "@/components/strategies/NewVersionButton";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
@@ -74,10 +75,18 @@ export default async function StrategyDetailPage({ params }: PageProps) {
           </Panel>
         ) : null}
 
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            Versions · {sortedVersions.length}
+          </span>
+          <NewVersionButton strategyId={strategy.id} />
+        </div>
+
         {sortedVersions.length === 0 ? (
-          <Panel title="Versions">
+          <Panel title="No versions yet">
             <p className="font-mono text-xs text-zinc-500">
-              No versions registered yet.
+              A version captures a specific entry/exit/risk ruleset. Create one
+              above to start attaching backtest runs to it.
             </p>
           </Panel>
         ) : (

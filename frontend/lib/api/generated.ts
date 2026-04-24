@@ -334,6 +334,27 @@ export interface paths {
         /** List Strategies */
         get: operations["list_strategies_api_strategies_get"];
         put?: never;
+        /** Create Strategy */
+        post: operations["create_strategy_api_strategies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/strategies/stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Stages
+         * @description Lifecycle vocabulary. Frontend pipeline column order.
+         */
+        get: operations["list_stages_api_strategies_stages_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -352,10 +373,54 @@ export interface paths {
         get: operations["get_strategy_api_strategies__strategy_id__get"];
         put?: never;
         post?: never;
+        /**
+         * Delete Strategy
+         * @description Delete a strategy and all its versions + runs + children.
+         *
+         *     Relationships are declared with cascade="all, delete-orphan", so the
+         *     whole subtree goes in one shot. Free-floating notes that were attached
+         *     to deleted runs survive with a dangling FK.
+         */
+        delete: operations["delete_strategy_api_strategies__strategy_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Strategy */
+        patch: operations["update_strategy_api_strategies__strategy_id__patch"];
+        trace?: never;
+    };
+    "/api/strategies/{strategy_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Strategy Version */
+        post: operations["create_strategy_version_api_strategies__strategy_id__versions_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/strategy-versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Strategy Version */
+        delete: operations["delete_strategy_version_api_strategy_versions__version_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Strategy Version */
+        patch: operations["update_strategy_version_api_strategy_versions__version_id__patch"];
         trace?: never;
     };
 }
@@ -754,6 +819,25 @@ export interface components {
             /** Worst Trade */
             worst_trade: number | null;
         };
+        /**
+         * StrategyCreate
+         * @description POST /api/strategies body.
+         */
+        StrategyCreate: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
+            /**
+             * Status
+             * @default idea
+             */
+            status: string;
+            /** Tags */
+            tags?: string[] | null;
+        };
         /** StrategyRead */
         StrategyRead: {
             /**
@@ -779,6 +863,46 @@ export interface components {
              */
             versions: components["schemas"]["StrategyVersionRead"][];
         };
+        /**
+         * StrategyStagesRead
+         * @description GET /api/strategies/stages body. Exposes the lifecycle vocabulary so
+         *     the frontend pipeline board column order is driven by the backend.
+         */
+        StrategyStagesRead: {
+            /** Stages */
+            stages?: string[];
+        };
+        /**
+         * StrategyUpdate
+         * @description PATCH /api/strategies/{id} body. Only fields present in the request
+         *     are applied; omit a field to leave it untouched.
+         */
+        StrategyUpdate: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+        };
+        /**
+         * StrategyVersionCreate
+         * @description POST /api/strategies/{id}/versions body.
+         */
+        StrategyVersionCreate: {
+            /** Entry Md */
+            entry_md?: string | null;
+            /** Exit Md */
+            exit_md?: string | null;
+            /** Git Commit Sha */
+            git_commit_sha?: string | null;
+            /** Risk Md */
+            risk_md?: string | null;
+            /** Version */
+            version: string;
+        };
         /** StrategyVersionRead */
         StrategyVersionRead: {
             /**
@@ -800,6 +924,22 @@ export interface components {
             strategy_id: number;
             /** Version */
             version: string;
+        };
+        /**
+         * StrategyVersionUpdate
+         * @description PATCH /api/strategy-versions/{id} body.
+         */
+        StrategyVersionUpdate: {
+            /** Entry Md */
+            entry_md?: string | null;
+            /** Exit Md */
+            exit_md?: string | null;
+            /** Git Commit Sha */
+            git_commit_sha?: string | null;
+            /** Risk Md */
+            risk_md?: string | null;
+            /** Version */
+            version?: string | null;
         };
         /** TradeRead */
         TradeRead: {
@@ -1501,6 +1641,59 @@ export interface operations {
             };
         };
     };
+    create_strategy_api_strategies_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stages_api_strategies_stages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyStagesRead"];
+                };
+            };
+        };
+    };
     get_strategy_api_strategies__strategy_id__get: {
         parameters: {
             query?: never;
@@ -1519,6 +1712,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StrategyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_strategy_api_strategies__strategy_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_strategy_api_strategies__strategy_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_strategy_version_api_strategies__strategy_id__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyVersionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyVersionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_strategy_version_api_strategy_versions__version_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_strategy_version_api_strategy_versions__version_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyVersionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyVersionRead"];
                 };
             };
             /** @description Validation Error */

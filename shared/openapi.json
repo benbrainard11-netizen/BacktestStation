@@ -1362,6 +1362,60 @@
         "title": "RunMetricsRead",
         "type": "object"
       },
+      "StrategyCreate": {
+        "additionalProperties": false,
+        "description": "POST /api/strategies body.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "default": "idea",
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ],
+        "title": "StrategyCreate",
+        "type": "object"
+      },
       "StrategyRead": {
         "properties": {
           "created_at": {
@@ -1429,6 +1483,137 @@
           "created_at"
         ],
         "title": "StrategyRead",
+        "type": "object"
+      },
+      "StrategyStagesRead": {
+        "description": "GET /api/strategies/stages body. Exposes the lifecycle vocabulary so\nthe frontend pipeline board column order is driven by the backend.",
+        "properties": {
+          "stages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "title": "StrategyStagesRead",
+        "type": "object"
+      },
+      "StrategyUpdate": {
+        "additionalProperties": false,
+        "description": "PATCH /api/strategies/{id} body. Only fields present in the request\nare applied; omit a field to leave it untouched.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "title": "StrategyUpdate",
+        "type": "object"
+      },
+      "StrategyVersionCreate": {
+        "additionalProperties": false,
+        "description": "POST /api/strategies/{id}/versions body.",
+        "properties": {
+          "entry_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Md"
+          },
+          "exit_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Md"
+          },
+          "git_commit_sha": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit Sha"
+          },
+          "risk_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Md"
+          },
+          "version": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "StrategyVersionCreate",
         "type": "object"
       },
       "StrategyVersionRead": {
@@ -1506,6 +1691,69 @@
           "created_at"
         ],
         "title": "StrategyVersionRead",
+        "type": "object"
+      },
+      "StrategyVersionUpdate": {
+        "additionalProperties": false,
+        "description": "PATCH /api/strategy-versions/{id} body.",
+        "properties": {
+          "entry_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Md"
+          },
+          "exit_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Md"
+          },
+          "git_commit_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit Sha"
+          },
+          "risk_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Md"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "title": "StrategyVersionUpdate",
         "type": "object"
       },
       "TradeRead": {
@@ -2576,9 +2824,104 @@
         "tags": [
           "strategies"
         ]
+      },
+      "post": {
+        "operationId": "create_strategy_api_strategies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Strategy",
+        "tags": [
+          "strategies"
+        ]
+      }
+    },
+    "/api/strategies/stages": {
+      "get": {
+        "description": "Lifecycle vocabulary. Frontend pipeline column order.",
+        "operationId": "list_stages_api_strategies_stages_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyStagesRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Stages",
+        "tags": [
+          "strategies"
+        ]
       }
     },
     "/api/strategies/{strategy_id}": {
+      "delete": {
+        "description": "Delete a strategy and all its versions + runs + children.\n\nRelationships are declared with cascade=\"all, delete-orphan\", so the\nwhole subtree goes in one shot. Free-floating notes that were attached\nto deleted runs survive with a dangling FK.",
+        "operationId": "delete_strategy_api_strategies__strategy_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Strategy",
+        "tags": [
+          "strategies"
+        ]
+      },
       "get": {
         "operationId": "get_strategy_api_strategies__strategy_id__get",
         "parameters": [
@@ -2615,6 +2958,193 @@
           }
         },
         "summary": "Get Strategy",
+        "tags": [
+          "strategies"
+        ]
+      },
+      "patch": {
+        "operationId": "update_strategy_api_strategies__strategy_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Strategy",
+        "tags": [
+          "strategies"
+        ]
+      }
+    },
+    "/api/strategies/{strategy_id}/versions": {
+      "post": {
+        "operationId": "create_strategy_version_api_strategies__strategy_id__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyVersionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyVersionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Strategy Version",
+        "tags": [
+          "strategies"
+        ]
+      }
+    },
+    "/api/strategy-versions/{version_id}": {
+      "delete": {
+        "operationId": "delete_strategy_version_api_strategy_versions__version_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Strategy Version",
+        "tags": [
+          "strategies"
+        ]
+      },
+      "patch": {
+        "operationId": "update_strategy_version_api_strategy_versions__version_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyVersionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyVersionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Strategy Version",
         "tags": [
           "strategies"
         ]

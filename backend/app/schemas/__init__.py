@@ -18,8 +18,13 @@ from app.schemas.results import (
     EquityPointRead,
     ImportBacktestResponse,
     RunMetricsRead,
+    StrategyCreate,
     StrategyRead,
+    StrategyStagesRead,
+    StrategyUpdate,
+    StrategyVersionCreate,
     StrategyVersionRead,
+    StrategyVersionUpdate,
     TradeRead,
 )
 
@@ -42,7 +47,12 @@ __all__ = [
     "PropFirmPresetRead",
     "PropFirmResultRead",
     "RunMetricsRead",
+    "StrategyCreate",
     "StrategyRead",
+    "StrategyStagesRead",
+    "StrategyUpdate",
+    "StrategyVersionCreate",
     "StrategyVersionRead",
+    "StrategyVersionUpdate",
     "TradeRead",
 ]

@@ -142,3 +142,125 @@ class BacktestRunTagsUpdate(BaseModel):
             seen.add(trimmed)
             cleaned.append(trimmed)
         return cleaned
+
+
+# Strategy lifecycle vocabulary. Frontend pipeline board columns mirror this.
+STRATEGY_STAGES: tuple[str, ...] = (
+    "idea",
+    "research",
+    "building",
+    "backtest_validated",
+    "forward_test",
+    "live",
+    "retired",
+    "archived",
+)
+
+
+class StrategyCreate(BaseModel):
+    """POST /api/strategies body."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1)
+    slug: str = Field(..., min_length=1, max_length=120)
+    description: str | None = None
+    status: str = Field(default="idea", max_length=20)
+    tags: list[str] | None = None
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def _trim_name(cls, value: str) -> str:
+        trimmed = value.strip()
+        if trimmed == "":
+            raise ValueError("name must be non-empty")
+        return trimmed
+
+    @field_validator("slug", mode="after")
+    @classmethod
+    def _normalize_slug(cls, value: str) -> str:
+        trimmed = value.strip().lower()
+        if trimmed == "":
+            raise ValueError("slug must be non-empty")
+        return trimmed
+
+    @field_validator("status", mode="after")
+    @classmethod
+    def _valid_status(cls, value: str) -> str:
+        if value not in STRATEGY_STAGES:
+            raise ValueError(
+                f"status must be one of {STRATEGY_STAGES}, got {value!r}"
+            )
+        return value
+
+
+class StrategyUpdate(BaseModel):
+    """PATCH /api/strategies/{id} body. Only fields present in the request
+    are applied; omit a field to leave it untouched."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = None
+    description: str | None = None
+    status: str | None = None
+    tags: list[str] | None = None
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def _trim_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        if trimmed == "":
+            raise ValueError("name must be non-empty after trimming")
+        return trimmed
+
+    @field_validator("status", mode="after")
+    @classmethod
+    def _valid_status(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if value not in STRATEGY_STAGES:
+            raise ValueError(
+                f"status must be one of {STRATEGY_STAGES}, got {value!r}"
+            )
+        return value
+
+
+class StrategyVersionCreate(BaseModel):
+    """POST /api/strategies/{id}/versions body."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    version: str = Field(..., min_length=1, max_length=40)
+    entry_md: str | None = None
+    exit_md: str | None = None
+    risk_md: str | None = None
+    git_commit_sha: str | None = Field(default=None, max_length=40)
+
+    @field_validator("version", mode="after")
+    @classmethod
+    def _trim_version(cls, value: str) -> str:
+        trimmed = value.strip()
+        if trimmed == "":
+            raise ValueError("version must be non-empty")
+        return trimmed
+
+
+class StrategyVersionUpdate(BaseModel):
+    """PATCH /api/strategy-versions/{id} body."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    version: str | None = None
+    entry_md: str | None = None
+    exit_md: str | None = None
+    risk_md: str | None = None
+    git_commit_sha: str | None = None
+
+
+class StrategyStagesRead(BaseModel):
+    """GET /api/strategies/stages body. Exposes the lifecycle vocabulary so
+    the frontend pipeline board column order is driven by the backend."""
+
+    stages: list[str] = Field(default_factory=lambda: list(STRATEGY_STAGES))
