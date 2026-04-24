@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import DataQualityPanel from "@/components/backtests/DataQualityPanel";
 import DeleteRunButton from "@/components/backtests/DeleteRunButton";
 import EquityChart from "@/components/backtests/EquityChart";
+import ExportButtons from "@/components/backtests/ExportButtons";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
 import RenameRunButton from "@/components/backtests/RenameRunButton";
@@ -82,6 +83,8 @@ export default async function BacktestDetailPage({
       />
 
       <div className="flex flex-col gap-4 px-6">
+        <ExportButtons runId={run.id} hasMetrics={metrics !== null} />
+
         <MetricsGrid metrics={metrics} />
 
         <Panel

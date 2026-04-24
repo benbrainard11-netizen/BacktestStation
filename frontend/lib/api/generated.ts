@@ -82,6 +82,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/{backtest_id}/equity.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Equity Csv */
+        get: operations["export_equity_csv_api_backtests__backtest_id__equity_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}/metrics": {
         parameters: {
             query?: never;
@@ -99,6 +116,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/{backtest_id}/metrics.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Metrics Csv */
+        get: operations["export_metrics_csv_api_backtests__backtest_id__metrics_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}/trades": {
         parameters: {
             query?: never;
@@ -108,6 +142,23 @@ export interface paths {
         };
         /** List Backtest Trades */
         get: operations["list_backtest_trades_api_backtests__backtest_id__trades_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backtests/{backtest_id}/trades.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Trades Csv */
+        get: operations["export_trades_csv_api_backtests__backtest_id__trades_csv_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -742,6 +793,37 @@ export interface operations {
             };
         };
     };
+    export_equity_csv_api_backtests__backtest_id__equity_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_backtest_metrics_api_backtests__backtest_id__metrics_get: {
         parameters: {
             query?: never;
@@ -773,6 +855,37 @@ export interface operations {
             };
         };
     };
+    export_metrics_csv_api_backtests__backtest_id__metrics_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_backtest_trades_api_backtests__backtest_id__trades_get: {
         parameters: {
             query?: never;
@@ -791,6 +904,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TradeRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_trades_csv_api_backtests__backtest_id__trades_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

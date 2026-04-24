@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api import (
+    backtest_export,
     backtests,
     data_quality,
     health,
@@ -31,5 +32,6 @@ app.include_router(imports.router, prefix="/api")
 app.include_router(monitor.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(backtests.router, prefix="/api")
+app.include_router(backtest_export.router, prefix="/api")
 app.include_router(data_quality.router, prefix="/api")
 app.include_router(notes.router, prefix="/api")
