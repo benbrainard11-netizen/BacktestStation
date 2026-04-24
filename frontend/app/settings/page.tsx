@@ -7,7 +7,7 @@ export default function SettingsPage() {
       <PageHeader
         title="Settings"
         description="Local terminal configuration"
-        meta="PHASE 1 · STUB"
+        meta="PHASE 3 · NOT STARTED"
       />
       <div className="px-6 pb-6">
         <EmptyState

@@ -7,9 +7,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, NAV_ITEMS, type NavItem } from "@/lib/navigation";
 
-// App build info. Hardcoded until a build-time injection is wired (Phase 3+).
+// App version. Hardcoded, matches backend/pyproject.toml + frontend/package.json.
+// Build-time injection (git SHA + commit date) lands with Phase 3+ tooling.
 const APP_VERSION = "0.1.0";
-const APP_BUILD_DATE = "2026-04-24";
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -77,15 +77,9 @@ export default function Sidebar() {
       </nav>
 
       <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-zinc-600">Version</span>
-            <span className="text-zinc-300">v{APP_VERSION}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-zinc-600">Build</span>
-            <span className="text-zinc-300">{APP_BUILD_DATE}</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-600">Local build</span>
+          <span className="text-zinc-300">v{APP_VERSION}</span>
         </div>
       </div>
 

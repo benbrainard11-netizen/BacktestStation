@@ -7,12 +7,12 @@ export default function DataHealthPage() {
       <PageHeader
         title="Data Health"
         description="Dataset inventory, gap/duplicate reports, sha256 checksums"
-        meta="PHASE 2 · NOT STARTED"
+        meta="PHASE 3 · NOT STARTED"
       />
       <div className="px-6 pb-6">
         <EmptyState
-          label="Data Health lands in Phase 2"
-          detail="Arrives with the Databento ingestion pipeline. Phase 1 focuses on imported result files only."
+          label="Data Health lands with Phase 3"
+          detail="Arrives with the Databento ingestion pipeline. Phase 1-2 focus on imported result files only."
           willContain={[
             "Registered datasets with row counts",
             "Gap / duplicate / out-of-order reports",

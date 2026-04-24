@@ -7,7 +7,6 @@ import {
   Download,
   LayoutDashboard,
   Notebook,
-  PlayCircle,
   Settings as SettingsIcon,
 } from "lucide-react";
 
@@ -25,7 +24,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/import", label: "Import", group: "research", icon: Download },
   { href: "/strategies", label: "Strategies", group: "research", icon: BookOpen },
   { href: "/backtests", label: "Backtests", group: "research", icon: BarChart3 },
-  { href: "/replay", label: "Replay", group: "research", icon: PlayCircle },
 
   { href: "/monitor", label: "Monitor", group: "live", icon: Activity },
   { href: "/journal", label: "Journal", group: "live", icon: Notebook },

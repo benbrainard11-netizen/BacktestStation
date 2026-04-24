@@ -3,7 +3,7 @@
 > Source of truth for **product direction**. Update when a decision changes.
 > Paired with [`AGENTS.md`](../AGENTS.md) (agent rules), [`PHASE_1_SCOPE.md`](PHASE_1_SCOPE.md) (frozen Phase 1 spec), and [`ARCHITECTURE.md`](ARCHITECTURE.md) (system design / eventual end-state).
 >
-> Last updated: 2026-04-24
+> Last updated: 2026-04-24 (Phase 2 closed)
 
 ---
 
@@ -37,7 +37,7 @@ Personal tool first. Productization is a possible future — not a committed pat
 ### Frontend
 - Next.js 15 + React 19 + TypeScript + Tailwind + Tauri 2.
 - Real data on: `/import`, `/backtests`, `/backtests/[id]`, `/backtests/[id]/replay`, `/backtests/compare`, `/monitor`, `/strategies`, `/strategies/[id]`.
-- Placeholder still on: `/`, `/journal`, `/data-health`, `/settings`. (`/replay` at root exists as a leftover placeholder file — slated for deletion, see §11.)
+- Placeholders remaining: `/data-health` and `/settings` — both now clearly labeled "PHASE 3 · NOT STARTED" with descriptive copy. All Phase 1-2 spec pages (`/`, `/import`, `/backtests*`, `/strategies*`, `/monitor`, `/journal`) are wired to real API data. Root `/replay` was deleted 2026-04-24.
 - Built-in charts: equity curve, drawdown curve, R-multiple histogram, overlaid two-run equity comparison. Replay chart intentionally absent until Databento ticks land.
 
 ### Data
@@ -57,23 +57,24 @@ None of these have been built yet, intentionally:
 
 ---
 
-## 4. Phase 2: Close out + polish
+## 4. Phase 2: Close out + polish — ✅ COMPLETE (2026-04-24)
 
-Small bite-sized tasks that finish the "Imported Results Command Center" idea and sand the remaining edges. One branch per item.
+All "Imported Results Command Center" edges have been sanded. Remaining convenience features (bulk import, delete, rename, CSV export) moved to Phase 3 scope since they're not structural.
 
-### Must
-- **`/journal` page.** Notes keyed by `run_id` and/or `trade_id`. The `notes` table already exists; needs a small backend `POST /api/notes` endpoint + a frontend page that lists + creates.
-- **`/` Command Center real KPIs.** Wire the landing page to `/api/backtests` (latest run's metrics + monitor status). Drop the amber MockDataBanner.
-- **`/data-health`, `/settings`.** Either wire them minimally or explicitly mark "Phase 3" in-page.
+### Shipped
+- **`/journal` page** — `POST /api/notes` + `GET /api/notes` with optional run_id/trade_id filters, FK validation. Frontend page lists + creates notes, no mock data.
+- **`/` Command Center real KPIs** — fetches `/api/backtests`, `/api/backtests/{latest}/metrics`, `/api/monitor/live`, `/api/notes` in parallel. Summary row, latest metrics panel, monitor panel, recent runs + notes. MockDataBanner and all 9 mock components deleted.
+- **Root `/replay` deleted** — `/backtests/[id]/replay` is the only replay surface.
+- **`/data-health` and `/settings`** — kept as EmptyState placeholders with clear "PHASE 3 · NOT STARTED" labels.
+- **Graceful panel degradation** — a failed API endpoint now degrades the affected Command Center panel, not the whole page.
+- **Sidebar/TopBar chrome** — fake CPU/MEM/DISK sparklines and "DB READY" pill removed. Version shown as static "Local build · v0.1.0" (honest about being hardcoded).
 
-### Nice-to-have
+### Deferred to Phase 3 (see §5)
 - Bulk import / re-import / overwrite-existing.
 - Delete run, rename run, run favoriting/tagging.
 - Export trades/metrics back to CSV.
-- Shared `<ChartPlaceholder phase="..." />` component — replace ad-hoc "chart lands when Databento is wired" notes on the replay page and anywhere else we defer.
-
-### Done when
-All Phase-1-spec pages (`/import`, `/backtests`, `/backtests/[id]`, `/backtests/[id]/replay`, `/monitor`, `/strategies`, `/strategies/[id]`, `/journal`) show real data or explicitly-labeled placeholders. The `/` landing page reflects the current DB state, not mock data.
+- Shared `<ChartPlaceholder />` component.
+- Pydantic → OpenAPI → TS type generation (biggest structural risk; promote to early Phase 3).
 
 ---
 

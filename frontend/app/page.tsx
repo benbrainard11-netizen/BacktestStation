@@ -13,6 +13,12 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+type MetricsResult =
+  | { kind: "no_run" }
+  | { kind: "ok"; metrics: RunMetrics }
+  | { kind: "missing" }
+  | { kind: "error"; message: string };
+
 export default async function CommandCenter() {
   const [runs, monitor, notes] = await Promise.all([
     apiGet<BacktestRun[]>("/api/backtests").catch(() => [] as BacktestRun[]),
@@ -23,15 +29,19 @@ export default async function CommandCenter() {
   ]);
 
   const latestRun = runs[0] ?? null;
-  const latestMetrics =
-    latestRun !== null
-      ? await apiGet<RunMetrics>(`/api/backtests/${latestRun.id}/metrics`).catch(
-          (error) => {
-            if (error instanceof ApiError && error.status === 404) return null;
-            throw error;
-          },
-        )
-      : null;
+  const latestMetrics: MetricsResult = latestRun === null
+    ? { kind: "no_run" }
+    : await apiGet<RunMetrics>(`/api/backtests/${latestRun.id}/metrics`)
+        .then<MetricsResult>((m) => ({ kind: "ok", metrics: m }))
+        .catch<MetricsResult>((error) => {
+          if (error instanceof ApiError && error.status === 404) {
+            return { kind: "missing" };
+          }
+          return {
+            kind: "error",
+            message: error instanceof Error ? error.message : "request failed",
+          };
+        });
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -101,10 +111,12 @@ function SummaryRow({
 }: {
   runCount: number;
   latestRun: BacktestRun | null;
-  latestMetrics: RunMetrics | null;
+  latestMetrics: MetricsResult;
   monitor: LiveMonitorStatus | null;
   notesCount: number;
 }) {
+  const netR =
+    latestMetrics.kind === "ok" ? latestMetrics.metrics.net_r : null;
   const cards: SummaryCardProps[] = [
     {
       label: "Runs imported",
@@ -113,12 +125,15 @@ function SummaryRow({
     },
     {
       label: "Latest Net R",
-      value:
-        latestMetrics?.net_r !== null && latestMetrics?.net_r !== undefined
-          ? signedR(latestMetrics.net_r)
-          : "—",
-      hint: latestRun?.name ?? (latestRun ? `BT-${latestRun.id}` : "no run"),
-      tone: rTone(latestMetrics?.net_r ?? null),
+      value: netR !== null ? signedR(netR) : "—",
+      hint:
+        latestMetrics.kind === "error"
+          ? "metrics unavailable"
+          : latestMetrics.kind === "missing"
+            ? "not imported"
+            : latestRun?.name ??
+              (latestRun ? `BT-${latestRun.id}` : "no run"),
+      tone: rTone(netR),
     },
     {
       label: "Monitor",
@@ -176,13 +191,13 @@ function LatestMetricsPanel({
   metrics,
   run,
 }: {
-  metrics: RunMetrics | null;
+  metrics: MetricsResult;
   run: BacktestRun | null;
 }) {
-  if (run === null) {
+  if (metrics.kind === "no_run" || run === null) {
     return <EmptyLine label="No runs imported yet" href="/import" cta="Go to Import →" />;
   }
-  if (metrics === null) {
+  if (metrics.kind === "missing") {
     return (
       <div className="flex flex-col gap-2">
         <p className="font-mono text-xs text-zinc-500">
@@ -197,14 +212,28 @@ function LatestMetricsPanel({
       </div>
     );
   }
+  if (metrics.kind === "error") {
+    return (
+      <div className="border border-rose-900 bg-rose-950/40 p-3">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-rose-300">
+          Metrics unavailable
+        </p>
+        <p className="mt-1 font-mono text-xs text-zinc-200">{metrics.message}</p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          Other panels on this page are unaffected.
+        </p>
+      </div>
+    );
+  }
 
+  const m = metrics.metrics;
   const rows: { label: string; value: string; tone: "positive" | "negative" | "neutral" }[] = [
-    row("Net R", metrics.net_r, signedR, rTone),
-    row("Win rate", metrics.win_rate, (v) => `${(v * 100).toFixed(2)}%`, neutral),
-    row("Profit factor", metrics.profit_factor, (v) => v.toFixed(2), pfTone),
-    row("Max drawdown", metrics.max_drawdown, signedR, (v) => (v < 0 ? "negative" : "neutral")),
-    row("Avg R", metrics.avg_r, signedR, rTone),
-    row("Trades", metrics.trade_count, (v) => v.toFixed(0), neutral),
+    row("Net R", m.net_r, signedR, rTone),
+    row("Win rate", m.win_rate, (v) => `${(v * 100).toFixed(2)}%`, neutral),
+    row("Profit factor", m.profit_factor, (v) => v.toFixed(2), pfTone),
+    row("Max drawdown", m.max_drawdown, signedR, (v) => (v < 0 ? "negative" : "neutral")),
+    row("Avg R", m.avg_r, signedR, rTone),
+    row("Trades", m.trade_count, (v) => v.toFixed(0), neutral),
   ];
 
   return (
