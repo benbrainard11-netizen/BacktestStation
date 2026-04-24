@@ -11,11 +11,23 @@ BacktestStation — a local-first quant research terminal for futures strategies
 1. **Engine is pure.** `backend/app/engine/` imports nothing from `api/`, `db/`, `storage/`, or `ingest/`. It takes an event iterator + config, returns results. If you feel the need to import `sqlalchemy` or `httpx` inside the engine, stop — you're doing it wrong.
 2. **Strategies are dumb.** Strategy classes receive events and emit signals. No DB access, no HTTP, no file I/O, no reading globals.
 3. **No lookahead.** Strategies only see data up to the current event's timestamp. The engine enforces this via accessors like `history_up_to(ts)`; never hand a strategy a raw DataFrame.
-4. **Schemas have one source.** Pydantic models in `backend/app/schemas/` are the truth. Frontend imports generated TS types from `frontend/lib/api/` — never hand-write types that duplicate backend shapes. After any schema change, regenerate (`scripts/generate-types.sh`).
+4. **Schemas have one source.** Pydantic models in `backend/app/schemas/` are the truth.
+
+   **Target architecture (Phase 3+):** frontend imports generated TS types from `frontend/lib/api/`, produced by `scripts/generate-types.sh` (Pydantic → OpenAPI → TS). Neither the script nor a generated client exists yet.
+
+   **Current reality (Phase 1-2):** `frontend/lib/api/types.ts` is hand-authored, mirroring the backend Pydantic shapes by convention. When you edit a Pydantic schema, update the hand-written TS type in the same branch. Do not let them drift. The generator lands with Phase 3 ingestion work.
 5. **Every backtest is reproducible.** Each run stores: backend git SHA, engine version, full params JSON, dataset sha256. Two runs with identical inputs must produce byte-identical `equity.parquet` and `trades.parquet`. A test enforces this.
 6. **Results stored as Parquet, never pickle.** Human-inspectable and forward-compatible.
 7. **Named constants.** Contract value, tick size, commission, session hours, slippage — all live in a typed config module. Never inline magic numbers in engine or strategy code.
-8. **MBP-1 fills must be realistic.** When a stop and target are both reachable within the same tick window, resolve the race using the actual MBP-1 trade sequence. Never pick the more favorable outcome. This is the #1 correctness rule for this engine.
+8. **Stop-vs-target fills must be honest.** Never pick the more favorable outcome. This is the #1 correctness rule for the engine.
+
+   - **If trade-level sequence is available** (e.g., MBP-1 trades print in order within the window), use it. Whichever side printed first wins. Record `fill_confidence = exact`.
+   - **If the data is ambiguous** (both stop and target are reachable in the same window but trade order cannot be determined — e.g., OHLC bars only), resolve conservatively. Record `fill_confidence = conservative`.
+   - **Conservative default: stop wins.** Do not let the backtester pretend to know something it does not know.
+   - **Flag borderline cases** with `fill_confidence = ambiguous` so they surface for review; stop still wins in that case.
+   - **Every run records `ambiguous_fill_count`** so runs with a lot of ambiguous fills are visible without digging into trades.
+
+   See `docs/ROADMAP.md` §6 for the full fill-rules spec.
 9. **No premature abstractions.** There is one strategy today. Don't build a plugin framework, DSL, or dynamic loader until there are at least three concrete strategies.
 10. **Split at 300 lines.** If a file crosses 300 lines or a function crosses 60, split it. This is a beginner-readability floor.
 
