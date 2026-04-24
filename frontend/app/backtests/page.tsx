@@ -28,7 +28,17 @@ export default async function BacktestsPage() {
         description="Imported runs from existing backtest result files"
       />
 
-      <div className="px-6 pb-10">
+      <div className="flex flex-col gap-3 px-6 pb-10">
+        {runs.length >= 2 ? (
+          <div>
+            <Link
+              href="/backtests/compare"
+              className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
+            >
+              Compare runs →
+            </Link>
+          </div>
+        ) : null}
         {runs.length === 0 ? <EmptyRuns /> : <RunsTable runs={runs} />}
       </div>
     </div>
