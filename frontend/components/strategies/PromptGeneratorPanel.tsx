@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import Panel from "@/components/Panel";
 import { BackendErrorBody } from "@/lib/api/client";
@@ -46,6 +46,8 @@ export default function PromptGeneratorPanel({
     | { kind: "error"; message: string }
   >({ kind: "idle" });
   const [copied, setCopied] = useState(false);
+  const [copyFallback, setCopyFallback] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   async function generate() {
     setPhase({ kind: "generating" });
@@ -78,16 +80,35 @@ export default function PromptGeneratorPanel({
 
   async function copy() {
     if (result === null) return;
-    try {
-      await navigator.clipboard.writeText(result.prompt_text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      setPhase({
-        kind: "error",
-        message: e instanceof Error ? e.message : "Copy failed",
-      });
+    // navigator.clipboard only exists in secure contexts (HTTPS or
+    // localhost). Fall back to selecting the textarea so the user can
+    // hit Ctrl+C themselves.
+    const clipboard =
+      typeof navigator !== "undefined" ? navigator.clipboard : undefined;
+    if (clipboard === undefined) {
+      selectFallback();
+      return;
     }
+    try {
+      await clipboard.writeText(result.prompt_text);
+      setCopied(true);
+      setCopyFallback(false);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // writeText can reject for permission reasons even in a secure
+      // context (e.g., iframe without focus). Same fallback.
+      selectFallback();
+    }
+  }
+
+  function selectFallback() {
+    const el = textareaRef.current;
+    if (el !== null) {
+      el.focus();
+      el.select();
+    }
+    setCopyFallback(true);
+    setCopied(false);
   }
 
   const generating = phase.kind === "generating";
@@ -161,13 +182,16 @@ export default function PromptGeneratorPanel({
               </span>
             </div>
             <textarea
+              ref={textareaRef}
               readOnly
               value={result.prompt_text}
               rows={16}
               className="resize-y border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-200 focus:border-zinc-600 focus:outline-none"
             />
             <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-              Paste into a fresh Claude or GPT chat.
+              {copyFallback
+                ? "Clipboard unavailable — text selected. Use Ctrl+C (or ⌘+C), then paste into Claude or GPT."
+                : "Paste into a fresh Claude or GPT chat."}
             </p>
           </div>
         ) : null}
