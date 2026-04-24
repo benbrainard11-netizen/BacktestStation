@@ -4,11 +4,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import BacktestRun, EquityPoint, RunMetrics, Trade
+from app.db.models import (
+    BacktestRun,
+    ConfigSnapshot,
+    EquityPoint,
+    RunMetrics,
+    Trade,
+)
 from app.db.session import get_session
 from app.schemas import (
     BacktestRunRead,
     BacktestRunUpdate,
+    ConfigSnapshotRead,
     EquityPointRead,
     RunMetricsRead,
     TradeRead,
@@ -73,6 +80,21 @@ def get_backtest_metrics(
     if metrics is None:
         raise HTTPException(status_code=404, detail="Backtest metrics not found")
     return metrics
+
+
+@router.get("/{backtest_id}/config", response_model=ConfigSnapshotRead)
+def get_backtest_config(
+    backtest_id: int, db: Session = Depends(get_session)
+) -> ConfigSnapshot:
+    _require_run(db, backtest_id)
+    snapshot = db.scalars(
+        select(ConfigSnapshot).where(ConfigSnapshot.backtest_run_id == backtest_id)
+    ).first()
+    if snapshot is None:
+        raise HTTPException(
+            status_code=404, detail="Backtest config snapshot not found"
+        )
+    return snapshot
 
 
 @router.patch("/{backtest_id}", response_model=BacktestRunRead)

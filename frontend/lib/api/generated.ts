@@ -65,6 +65,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/{backtest_id}/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Backtest Config */
+        get: operations["get_backtest_config_api_backtests__backtest_id__config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}/data-quality": {
         parameters: {
             query?: never;
@@ -423,6 +440,22 @@ export interface components {
             trades_file: string;
             /** Version */
             version?: string | null;
+        };
+        /** ConfigSnapshotRead */
+        ConfigSnapshotRead: {
+            /** Backtest Run Id */
+            backtest_run_id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
         };
         /** DataQualityIssue */
         DataQualityIssue: {
@@ -929,6 +962,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AutopsyReportRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_backtest_config_api_backtests__backtest_id__config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigSnapshotRead"];
                 };
             };
             /** @description Validation Error */

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import AutopsyPanel from "@/components/backtests/AutopsyPanel";
+import ConfigSnapshotPanel from "@/components/backtests/ConfigSnapshotPanel";
 import DataQualityPanel from "@/components/backtests/DataQualityPanel";
 import DeleteRunButton from "@/components/backtests/DeleteRunButton";
 import EquityChart from "@/components/backtests/EquityChart";
@@ -18,6 +19,7 @@ import type { components } from "@/lib/api/generated";
 
 type AutopsyReport = components["schemas"]["AutopsyReportRead"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type ConfigSnapshot = components["schemas"]["ConfigSnapshotRead"];
 type DataQualityReport = components["schemas"]["DataQualityReportRead"];
 type EquityPoint = components["schemas"]["EquityPointRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
@@ -41,7 +43,7 @@ export default async function BacktestDetailPage({
     },
   );
 
-  const [metrics, trades, equity, dataQuality, autopsy] = await Promise.all([
+  const [metrics, trades, equity, dataQuality, autopsy, configResult] = await Promise.all([
     apiGet<RunMetrics>(`/api/backtests/${id}/metrics`).catch((error) => {
       if (error instanceof ApiError && error.status === 404) return null;
       throw error;
@@ -65,6 +67,20 @@ export default async function BacktestDetailPage({
         report: null,
         error: error instanceof Error ? error.message : "Unknown error",
       })),
+    apiGet<ConfigSnapshot>(`/api/backtests/${id}/config`)
+      .then<
+        | { config: ConfigSnapshot; error: null }
+        | { config: null; error: string | null }
+      >((config) => ({ config, error: null }))
+      .catch((error) => {
+        if (error instanceof ApiError && error.status === 404) {
+          return { config: null, error: null };
+        }
+        return {
+          config: null,
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }),
   ]);
 
   return (
@@ -134,6 +150,13 @@ export default async function BacktestDetailPage({
 
         <Panel title="Prop firm simulator" meta="deterministic">
           <PropFirmSimulator runId={run.id} />
+        </Panel>
+
+        <Panel title="Config snapshot" meta="imported">
+          <ConfigSnapshotPanel
+            config={configResult.config}
+            loadError={configResult.error}
+          />
         </Panel>
 
         <Panel title="Trades" meta={`${trades.length} total`}>

@@ -375,6 +375,36 @@
         "title": "Body_import_backtest_api_import_backtest_post",
         "type": "object"
       },
+      "ConfigSnapshotRead": {
+        "properties": {
+          "backtest_run_id": {
+            "title": "Backtest Run Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "backtest_run_id",
+          "payload",
+          "created_at"
+        ],
+        "title": "ConfigSnapshotRead",
+        "type": "object"
+      },
       "DataQualityIssue": {
         "properties": {
           "affected_range": {
@@ -1833,6 +1863,48 @@
         "summary": "Get Autopsy",
         "tags": [
           "autopsy"
+        ]
+      }
+    },
+    "/api/backtests/{backtest_id}/config": {
+      "get": {
+        "operationId": "get_backtest_config_api_backtests__backtest_id__config_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "backtest_id",
+            "required": true,
+            "schema": {
+              "title": "Backtest Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigSnapshotRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Backtest Config",
+        "tags": [
+          "backtests"
         ]
       }
     },
