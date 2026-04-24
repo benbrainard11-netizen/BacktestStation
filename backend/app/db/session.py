@@ -78,6 +78,35 @@ def _run_data_migrations(engine: Engine) -> None:
                 text("ALTER TABLE strategy_versions ADD COLUMN archived_at DATETIME")
             )
 
+        # 2026-04-24: Notes extended for the Research Workspace —
+        # attach to strategy/version, typed (observation/hypothesis/...),
+        # tagged, with an updated_at. Existing rows get note_type
+        # backfilled to 'observation' via the column DEFAULT.
+        notes_columns = {c["name"] for c in inspector.get_columns("notes")}
+        if "strategy_id" not in notes_columns:
+            connection.execute(
+                text("ALTER TABLE notes ADD COLUMN strategy_id INTEGER")
+            )
+        if "strategy_version_id" not in notes_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE notes ADD COLUMN strategy_version_id INTEGER"
+                )
+            )
+        if "note_type" not in notes_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE notes ADD COLUMN note_type VARCHAR(20) "
+                    "NOT NULL DEFAULT 'observation'"
+                )
+            )
+        if "tags" not in notes_columns:
+            connection.execute(text("ALTER TABLE notes ADD COLUMN tags JSON"))
+        if "updated_at" not in notes_columns:
+            connection.execute(
+                text("ALTER TABLE notes ADD COLUMN updated_at DATETIME")
+            )
+
 
 # Lazily-initialised module globals for the running FastAPI app.
 _engine: Engine | None = None

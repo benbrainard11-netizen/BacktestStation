@@ -203,9 +203,21 @@ class Note(Base):
     __tablename__ = "notes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    strategy_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategies.id"), index=True
+    )
+    strategy_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategy_versions.id"), index=True
+    )
     backtest_run_id: Mapped[int | None] = mapped_column(
         ForeignKey("backtest_runs.id"), index=True
     )
     trade_id: Mapped[int | None] = mapped_column(ForeignKey("trades.id"), index=True)
+    # One of: observation | hypothesis | question | decision | bug | risk_note
+    note_type: Mapped[str] = mapped_column(
+        String(20), default="observation", server_default="observation", index=True
+    )
+    tags: Mapped[list[str] | None] = mapped_column(JSON)
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
