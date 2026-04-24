@@ -103,7 +103,35 @@ except Exception as e:
     sys.exit(1)
 '@
 
-python -c $pyTest
+# Prefer the backend venv if it exists; otherwise fall back to system python
+# and offer to install databento. README.md says backend uses py -3.12 -m venv .venv.
+$venvPython = Join-Path $PSScriptRoot "..\backend\.venv\Scripts\python.exe"
+if (Test-Path $venvPython) {
+    $venvPython = (Resolve-Path $venvPython).Path
+    $py = $venvPython
+    Write-Host "  using backend venv: $py"
+} else {
+    $py = "python"
+    Write-Host "  no backend\.venv found — using system 'python' on PATH"
+    Write-Host "  (for the documented setup, run in another window:" -ForegroundColor DarkGray
+    Write-Host "     cd ..\backend; py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -e .[dev]" -ForegroundColor DarkGray
+    Write-Host "   then re-run this script.)" -ForegroundColor DarkGray
+}
+
+# If databento isn't importable, install it into whichever python we picked
+& $py -c "import databento" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  databento not importable in this python — installing now..." -ForegroundColor Yellow
+    & $py -m pip install --quiet databento
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "ERROR: 'pip install databento' failed. See output above." -ForegroundColor Red
+        Write-Host "Hint: activate the backend venv first, or run 'pip install databento' manually." -ForegroundColor Red
+        exit 1
+    }
+}
+
+& $py -c $pyTest
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     Write-Host "Setup test failed. Review the error above." -ForegroundColor Red
@@ -124,7 +152,10 @@ Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Open a NEW PowerShell window so env vars take effect."
 Write-Host "  2. Run the ingester:"
 Write-Host "       cd C:\Users\benbr\BacktestStation\backend"
+if (Test-Path $venvPython) {
+    Write-Host "       .\.venv\Scripts\Activate.ps1"
+}
 Write-Host "       python -m app.ingest.live"
-Write-Host "  3. In another PowerShell window, watch the heartbeat:"
-Write-Host "       Get-Content $root\heartbeat\live_ingester.json"
+Write-Host "  3. In another PowerShell window, tail the heartbeat live:"
+Write-Host "       Get-Content $root\heartbeat\live_ingester.json -Wait"
 Write-Host ""
