@@ -2,6 +2,7 @@
 
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.data_quality import DataQualityIssue, DataQualityReportRead
+from app.schemas.datasets import DatasetRead, DatasetScanResult
 from app.schemas.experiments import (
     ExperimentCreate,
     ExperimentDecisionsRead,
@@ -48,6 +49,8 @@ __all__ = [
     "ConfigSnapshotRead",
     "DataQualityIssue",
     "DataQualityReportRead",
+    "DatasetRead",
+    "DatasetScanResult",
     "EquityPointRead",
     "ExperimentCreate",
     "ExperimentDecisionsRead",

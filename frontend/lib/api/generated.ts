@@ -238,6 +238,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Datasets */
+        get: operations["list_datasets_api_datasets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/datasets/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan Warehouse
+         * @description Walk BS_DATA_ROOT and reconcile the datasets table against disk.
+         *
+         *     Files modified in the last 60s are skipped (in-progress writes).
+         *     Idempotent — running it twice in a row is a no-op the second time.
+         */
+        post: operations["scan_warehouse_api_datasets_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/experiments": {
         parameters: {
             query?: never;
@@ -811,6 +851,76 @@ export interface components {
             symbol: string;
             /** Total Bars */
             total_bars: number;
+        };
+        /** DatasetRead */
+        DatasetRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Dataset Code */
+            dataset_code: string;
+            /** End Ts */
+            end_ts: string | null;
+            /** File Path */
+            file_path: string;
+            /** File Size Bytes */
+            file_size_bytes: number;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Row Count */
+            row_count: number | null;
+            /** Schema */
+            schema: string;
+            /** Sha256 */
+            sha256: string | null;
+            /** Source */
+            source: string;
+            /** Start Ts */
+            start_ts: string | null;
+            /** Symbol */
+            symbol: string | null;
+        };
+        /**
+         * DatasetScanResult
+         * @description POST /api/datasets/scan response — summary of what changed.
+         */
+        DatasetScanResult: {
+            /**
+             * Added
+             * @description new rows inserted
+             */
+            added: number;
+            /** Errors */
+            errors?: string[];
+            /**
+             * Removed
+             * @description rows for files that no longer exist on disk
+             */
+            removed: number;
+            /**
+             * Scanned
+             * @description files walked
+             */
+            scanned: number;
+            /**
+             * Skipped
+             * @description files skipped (e.g. recently-modified, in-progress)
+             */
+            skipped: number;
+            /**
+             * Updated
+             * @description existing rows whose size/mtime changed
+             */
+            updated: number;
         };
         /** EquityPointRead */
         EquityPointRead: {
@@ -1839,6 +1949,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_datasets_api_datasets_get: {
+        parameters: {
+            query?: {
+                symbol?: string | null;
+                schema?: string | null;
+                source?: string | null;
+                kind?: string | null;
+                dataset_code?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scan_warehouse_api_datasets_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetScanResult"];
                 };
             };
         };

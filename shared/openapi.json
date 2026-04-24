@@ -550,6 +550,169 @@
         "title": "DataQualityReportRead",
         "type": "object"
       },
+      "DatasetRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dataset_code": {
+            "title": "Dataset Code",
+            "type": "string"
+          },
+          "end_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Ts"
+          },
+          "file_path": {
+            "title": "File Path",
+            "type": "string"
+          },
+          "file_size_bytes": {
+            "title": "File Size Bytes",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Count"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "start_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Ts"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "required": [
+          "id",
+          "file_path",
+          "dataset_code",
+          "schema",
+          "symbol",
+          "source",
+          "kind",
+          "start_ts",
+          "end_ts",
+          "file_size_bytes",
+          "row_count",
+          "sha256",
+          "last_seen_at",
+          "created_at"
+        ],
+        "title": "DatasetRead",
+        "type": "object"
+      },
+      "DatasetScanResult": {
+        "description": "POST /api/datasets/scan response \u2014 summary of what changed.",
+        "properties": {
+          "added": {
+            "description": "new rows inserted",
+            "title": "Added",
+            "type": "integer"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "removed": {
+            "description": "rows for files that no longer exist on disk",
+            "title": "Removed",
+            "type": "integer"
+          },
+          "scanned": {
+            "description": "files walked",
+            "title": "Scanned",
+            "type": "integer"
+          },
+          "skipped": {
+            "description": "files skipped (e.g. recently-modified, in-progress)",
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "updated": {
+            "description": "existing rows whose size/mtime changed",
+            "title": "Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scanned",
+          "added",
+          "updated",
+          "removed",
+          "skipped"
+        ],
+        "title": "DatasetScanResult",
+        "type": "object"
+      },
       "EquityPointRead": {
         "properties": {
           "backtest_run_id": {
@@ -3085,6 +3248,145 @@
         "summary": "Export Trades Csv",
         "tags": [
           "backtests"
+        ]
+      }
+    },
+    "/api/datasets": {
+      "get": {
+        "operationId": "list_datasets_api_datasets_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "symbol",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "in": "query",
+            "name": "schema",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Schema"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dataset_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dataset Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DatasetRead"
+                  },
+                  "title": "Response List Datasets Api Datasets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Datasets",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/datasets/scan": {
+      "post": {
+        "description": "Walk BS_DATA_ROOT and reconcile the datasets table against disk.\n\nFiles modified in the last 60s are skipped (in-progress writes).\nIdempotent \u2014 running it twice in a row is a no-op the second time.",
+        "operationId": "scan_warehouse_api_datasets_scan_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetScanResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Scan Warehouse",
+        "tags": [
+          "datasets"
         ]
       }
     },

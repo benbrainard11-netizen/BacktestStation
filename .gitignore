@@ -1,6 +1,8 @@
-# Local market data — never commit
-data/
-!data/.gitkeep
+# Local market data — never commit. Anchored to repo root so
+# unrelated `data/` directories under frontend/, backend/, etc. are NOT
+# ignored.
+/data/
+!/data/.gitkeep
 
 # Python
 __pycache__/

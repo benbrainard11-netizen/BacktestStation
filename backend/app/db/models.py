@@ -199,6 +199,43 @@ class LiveHeartbeat(Base):
     payload: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 
 
+class Dataset(Base):
+    """A market-data file BacktestStation knows about.
+
+    The on-disk file is the source of truth. This row is a queryable
+    cache: where the file is, what it contains, when it was last seen.
+    Repopulated by `POST /api/datasets/scan` which walks the warehouse.
+
+    `source` distinguishes how the data got here:
+      - "live"        — written by app.ingest.live (continuous TBBO stream)
+      - "historical"  — pulled by app.ingest.historical (monthly batch)
+      - "imported"    — manually imported result/replay data
+
+    `kind` distinguishes the storage format:
+      - "dbn"     — Databento native, immutable raw archive
+      - "parquet" — derived, queryable, can be regenerated from DBN
+    """
+
+    __tablename__ = "datasets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    file_path: Mapped[str] = mapped_column(String(500), unique=True, index=True)
+    dataset_code: Mapped[str] = mapped_column(String(40), index=True)  # e.g. GLBX.MDP3
+    schema: Mapped[str] = mapped_column(String(20), index=True)  # tbbo, mbp-1, ohlcv-1m, ...
+    symbol: Mapped[str | None] = mapped_column(String(40), index=True)  # None for multi-symbol DBN
+    source: Mapped[str] = mapped_column(String(20), index=True)  # live | historical | imported
+    kind: Mapped[str] = mapped_column(String(10), index=True)  # dbn | parquet
+    start_ts: Mapped[datetime | None] = mapped_column(DateTime)
+    end_ts: Mapped[datetime | None] = mapped_column(DateTime)
+    file_size_bytes: Mapped[int] = mapped_column(Integer)
+    row_count: Mapped[int | None] = mapped_column(Integer)
+    sha256: Mapped[str | None] = mapped_column(String(64))
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class Experiment(Base):
     """A unit of structured research: hypothesis + baseline + variant + decision.
 
