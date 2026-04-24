@@ -1,3 +1,18 @@
+// ============================================================================
+// Hand-authored types (legacy). Mirror the FastAPI Pydantic shapes by
+// convention — no generator enforces agreement.
+//
+// Prefer the auto-generated shapes in `./generated.ts` for NEW code:
+//
+//   import type { components } from "@/lib/api/generated";
+//   type Note = components["schemas"]["NoteRead"];
+//
+// Migrate existing consumers of this file to generated types over time, one
+// call site at a time, so the legacy file can eventually be deleted. Do not
+// add new interfaces here — edit a Pydantic schema and run
+// `scripts/generate-types.sh` instead.
+// ============================================================================
+
 export interface ImportBacktestResponse {
   backtest_id: number;
   strategy_id: number;

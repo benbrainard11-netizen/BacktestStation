@@ -79,6 +79,40 @@ Open http://localhost:3000. The sidebar routes to every placeholder page.
 
 Typecheck + lint: `npm run typecheck` and `npm run lint`.
 
+### Generated API types
+
+The frontend imports TypeScript types generated from the FastAPI OpenAPI
+schema. Regenerate whenever you add/remove endpoints or edit a Pydantic schema:
+
+```bash
+bash scripts/generate-types.sh
+```
+
+That script does two things:
+
+1. Runs `python -m app.cli.export_openapi` in the backend venv, writing
+   `shared/openapi.json` (committed — source of truth for the schema).
+2. Runs `npm run generate-types` in the frontend, writing
+   `frontend/lib/api/generated.ts` (also committed).
+
+Both output files are checked in so CI and collaborators always have an
+up-to-date snapshot. Drift check (fails if `shared/openapi.json` is stale):
+
+```bash
+cd backend
+.venv/Scripts/python.exe -m app.cli.export_openapi --check
+```
+
+Use the generated types in new code:
+
+```ts
+import type { components } from "@/lib/api/generated";
+type NoteRead = components["schemas"]["NoteRead"];
+```
+
+The older hand-authored `frontend/lib/api/types.ts` is the legacy shape
+module. It still works; migrate call sites to generated types over time.
+
 ## Current status
 
 Phase 0 complete: monorepo scaffold, health endpoint, dark UI shell, empty pages.

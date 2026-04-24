@@ -11,11 +11,7 @@ BacktestStation — a local-first quant research terminal for futures strategies
 1. **Engine is pure.** `backend/app/engine/` imports nothing from `api/`, `db/`, `storage/`, or `ingest/`. It takes an event iterator + config, returns results. If you feel the need to import `sqlalchemy` or `httpx` inside the engine, stop — you're doing it wrong.
 2. **Strategies are dumb.** Strategy classes receive events and emit signals. No DB access, no HTTP, no file I/O, no reading globals.
 3. **No lookahead.** Strategies only see data up to the current event's timestamp. The engine enforces this via accessors like `history_up_to(ts)`; never hand a strategy a raw DataFrame.
-4. **Schemas have one source.** Pydantic models in `backend/app/schemas/` are the truth.
-
-   **Target architecture (Phase 3+):** frontend imports generated TS types from `frontend/lib/api/`, produced by `scripts/generate-types.sh` (Pydantic → OpenAPI → TS). Neither the script nor a generated client exists yet.
-
-   **Current reality (Phase 1-2):** `frontend/lib/api/types.ts` is hand-authored, mirroring the backend Pydantic shapes by convention. When you edit a Pydantic schema, update the hand-written TS type in the same branch. Do not let them drift. The generator lands with Phase 3 ingestion work.
+4. **Schemas have one source.** Pydantic models in `backend/app/schemas/` are the truth. Run `bash scripts/generate-types.sh` after any schema change — it re-exports `shared/openapi.json` and regenerates `frontend/lib/api/generated.ts`. Both files are committed. Prefer generated types in new frontend code (`import type { components } from "@/lib/api/generated"`). The legacy `frontend/lib/api/types.ts` still works for existing consumers; migrate one call site at a time.
 5. **Every backtest is reproducible.** Each run stores: backend git SHA, engine version, full params JSON, dataset sha256. Two runs with identical inputs must produce byte-identical `equity.parquet` and `trades.parquet`. A test enforces this.
 6. **Results stored as Parquet, never pickle.** Human-inspectable and forward-compatible.
 7. **Named constants.** Contract value, tick size, commission, session hours, slippage — all live in a typed config module. Never inline magic numbers in engine or strategy code.
