@@ -58,7 +58,7 @@ export default function JournalPage() {
 
     setSubmit({ kind: "submitting" });
 
-    const payload: NoteCreate = { body: body.trim() };
+    const payload: NoteCreate = { body: body.trim(), note_type: "observation" };
     const runId = parseOptionalId(runIdInput);
     const tradeId = parseOptionalId(tradeIdInput);
     if (runId === "invalid") {

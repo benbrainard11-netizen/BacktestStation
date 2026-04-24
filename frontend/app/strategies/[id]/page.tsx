@@ -5,6 +5,7 @@ import ArchiveStrategyButton from "@/components/strategies/ArchiveStrategyButton
 import ArchiveVersionButton from "@/components/strategies/ArchiveVersionButton";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import NewVersionButton from "@/components/strategies/NewVersionButton";
+import NotesPanel from "@/components/strategies/NotesPanel";
 import StrategyEditor from "@/components/strategies/StrategyEditor";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import type { components } from "@/lib/api/generated";
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type NoteTypes = components["schemas"]["NoteTypesRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Strategy = components["schemas"]["StrategyRead"];
 type StrategyVersion = components["schemas"]["StrategyVersionRead"];
@@ -34,7 +36,12 @@ export default async function StrategyDetailPage({ params }: PageProps) {
     },
   );
 
-  const runs = await apiGet<BacktestRun[]>("/api/backtests");
+  const [runs, noteTypesResponse] = await Promise.all([
+    apiGet<BacktestRun[]>("/api/backtests"),
+    apiGet<NoteTypes>("/api/notes/types").catch(
+      () => ({ types: [] }) as NoteTypes,
+    ),
+  ]);
   const runsByVersion = new Map<number, BacktestRun[]>();
   for (const run of runs) {
     const list = runsByVersion.get(run.strategy_version_id) ?? [];
@@ -129,17 +136,16 @@ export default async function StrategyDetailPage({ params }: PageProps) {
         ) : null}
 
         {/*
-          TODO (research workspace, not built yet):
-            - Research notes attached to strategy + version (markdown, timestamped)
+          TODO (research workspace, future pieces):
             - Experiment ledger (parameter sweeps, hypotheses, results)
             - Research prompt generator (question → LLM-ready prompt w/ context)
             - Future in-app strategy engine hook
         */}
-        <Panel title="Research workspace">
-          <p className="font-mono text-xs text-zinc-500">
-            Notes, experiment ledger, and prompt generator will live here.
-          </p>
-        </Panel>
+        <NotesPanel
+          strategyId={strategy.id}
+          versions={strategy.versions}
+          noteTypes={noteTypesResponse.types ?? []}
+        />
 
         <div className="flex items-center justify-between">
           <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
