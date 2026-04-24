@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import AutopsyPanel from "@/components/backtests/AutopsyPanel";
 import DataQualityPanel from "@/components/backtests/DataQualityPanel";
 import DeleteRunButton from "@/components/backtests/DeleteRunButton";
 import EquityChart from "@/components/backtests/EquityChart";
@@ -15,6 +16,7 @@ import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
+type AutopsyReport = components["schemas"]["AutopsyReportRead"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type DataQualityReport = components["schemas"]["DataQualityReportRead"];
 type EquityPoint = components["schemas"]["EquityPointRead"];
@@ -39,7 +41,7 @@ export default async function BacktestDetailPage({
     },
   );
 
-  const [metrics, trades, equity, dataQuality] = await Promise.all([
+  const [metrics, trades, equity, dataQuality, autopsy] = await Promise.all([
     apiGet<RunMetrics>(`/api/backtests/${id}/metrics`).catch((error) => {
       if (error instanceof ApiError && error.status === 404) return null;
       throw error;
@@ -49,6 +51,15 @@ export default async function BacktestDetailPage({
     apiGet<DataQualityReport>(`/api/backtests/${id}/data-quality`)
       .then<
         { report: DataQualityReport; error: null } | { report: null; error: string }
+      >((report) => ({ report, error: null }))
+      .catch((error) => ({
+        report: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+      })),
+    apiGet<AutopsyReport>(`/api/backtests/${id}/autopsy`)
+      .then<
+        | { report: AutopsyReport; error: null }
+        | { report: null; error: string }
       >((report) => ({ report, error: null }))
       .catch((error) => ({
         report: null,
@@ -108,6 +119,17 @@ export default async function BacktestDetailPage({
 
         <Panel title="R-multiple distribution" meta={`${trades.length} trades`}>
           <RMultipleHistogram trades={trades} />
+        </Panel>
+
+        <Panel
+          title="Strategy autopsy"
+          meta={
+            autopsy.report
+              ? `confidence ${autopsy.report.edge_confidence}/100`
+              : "unavailable"
+          }
+        >
+          <AutopsyPanel report={autopsy.report} loadError={autopsy.error} />
         </Panel>
 
         <Panel title="Prop firm simulator" meta="deterministic">

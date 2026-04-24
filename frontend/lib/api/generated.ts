@@ -48,6 +48,23 @@ export interface paths {
         patch: operations["update_backtest_api_backtests__backtest_id__patch"];
         trace?: never;
     };
+    "/api/backtests/{backtest_id}/autopsy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Autopsy */
+        get: operations["get_autopsy_api_backtests__backtest_id__autopsy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}/data-quality": {
         parameters: {
             query?: never;
@@ -308,6 +325,42 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AutopsyConditionSlice */
+        AutopsyConditionSlice: {
+            /** Label */
+            label: string;
+            /** Net R */
+            net_r: number;
+            /** Trades */
+            trades: number;
+            /** Win Rate */
+            win_rate: number | null;
+        };
+        /** AutopsyReportRead */
+        AutopsyReportRead: {
+            /** Backtest Run Id */
+            backtest_run_id: number;
+            /** Best Conditions */
+            best_conditions: components["schemas"]["AutopsyConditionSlice"][];
+            /** Edge Confidence */
+            edge_confidence: number;
+            /** Go Live Recommendation */
+            go_live_recommendation: string;
+            /** Overall Verdict */
+            overall_verdict: string;
+            /** Overfitting Warnings */
+            overfitting_warnings: string[];
+            /** Risk Notes */
+            risk_notes: string[];
+            /** Strengths */
+            strengths: string[];
+            /** Suggested Next Test */
+            suggested_next_test: string;
+            /** Weaknesses */
+            weaknesses: string[];
+            /** Worst Conditions */
+            worst_conditions: components["schemas"]["AutopsyConditionSlice"][];
+        };
         /** BacktestRunRead */
         BacktestRunRead: {
             /**
@@ -845,6 +898,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BacktestRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_autopsy_api_backtests__backtest_id__autopsy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backtest_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutopsyReportRead"];
                 };
             };
             /** @description Validation Error */

@@ -1,6 +1,122 @@
 {
   "components": {
     "schemas": {
+      "AutopsyConditionSlice": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "net_r": {
+            "title": "Net R",
+            "type": "number"
+          },
+          "trades": {
+            "title": "Trades",
+            "type": "integer"
+          },
+          "win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Win Rate"
+          }
+        },
+        "required": [
+          "label",
+          "trades",
+          "net_r",
+          "win_rate"
+        ],
+        "title": "AutopsyConditionSlice",
+        "type": "object"
+      },
+      "AutopsyReportRead": {
+        "properties": {
+          "backtest_run_id": {
+            "title": "Backtest Run Id",
+            "type": "integer"
+          },
+          "best_conditions": {
+            "items": {
+              "$ref": "#/components/schemas/AutopsyConditionSlice"
+            },
+            "title": "Best Conditions",
+            "type": "array"
+          },
+          "edge_confidence": {
+            "title": "Edge Confidence",
+            "type": "integer"
+          },
+          "go_live_recommendation": {
+            "title": "Go Live Recommendation",
+            "type": "string"
+          },
+          "overall_verdict": {
+            "title": "Overall Verdict",
+            "type": "string"
+          },
+          "overfitting_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Overfitting Warnings",
+            "type": "array"
+          },
+          "risk_notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Risk Notes",
+            "type": "array"
+          },
+          "strengths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Strengths",
+            "type": "array"
+          },
+          "suggested_next_test": {
+            "title": "Suggested Next Test",
+            "type": "string"
+          },
+          "weaknesses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Weaknesses",
+            "type": "array"
+          },
+          "worst_conditions": {
+            "items": {
+              "$ref": "#/components/schemas/AutopsyConditionSlice"
+            },
+            "title": "Worst Conditions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "backtest_run_id",
+          "overall_verdict",
+          "edge_confidence",
+          "go_live_recommendation",
+          "strengths",
+          "weaknesses",
+          "overfitting_warnings",
+          "risk_notes",
+          "suggested_next_test",
+          "best_conditions",
+          "worst_conditions"
+        ],
+        "title": "AutopsyReportRead",
+        "type": "object"
+      },
       "BacktestRunRead": {
         "properties": {
           "created_at": {
@@ -1675,6 +1791,48 @@
         "summary": "Update Backtest",
         "tags": [
           "backtests"
+        ]
+      }
+    },
+    "/api/backtests/{backtest_id}/autopsy": {
+      "get": {
+        "operationId": "get_autopsy_api_backtests__backtest_id__autopsy_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "backtest_id",
+            "required": true,
+            "schema": {
+              "title": "Backtest Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutopsyReportRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Autopsy",
+        "tags": [
+          "autopsy"
         ]
       }
     },

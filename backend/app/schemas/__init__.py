@@ -1,5 +1,6 @@
 """Pydantic schemas exposed by the API."""
 
+from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.data_quality import DataQualityIssue, DataQualityReportRead
 from app.schemas.monitor import LiveMonitorStatus
 from app.schemas.notes import NoteCreate, NoteRead
@@ -22,6 +23,8 @@ from app.schemas.results import (
 )
 
 __all__ = [
+    "AutopsyConditionSlice",
+    "AutopsyReportRead",
     "BacktestRunRead",
     "BacktestRunUpdate",
     "ConfigSnapshotRead",
