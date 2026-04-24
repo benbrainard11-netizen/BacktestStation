@@ -5,49 +5,60 @@ interface ReplayChartProps {
 }
 
 const WIDTH = 1000;
-const HEIGHT = 320;
-const PAD_X = 32;
-const PAD_Y = 24;
-const CANDLES_BEFORE = 20;
-const CANDLES_AFTER = 20;
-const CANDLE_MINUTES = 1;
+const HEIGHT = 300;
+const PAD_X = 72;
+const PAD_Y = 28;
 
 /**
- * Phase 1 mock chart. Renders synthetic OHLC candles around the real
- * entry/exit timestamps so the replay workflow has something visible;
- * the bars carry NO real market information. Replace with real bars from
- * the Databento/parquet pipeline in a later phase.
+ * Minimalist schematic using only real trade data — no synthetic candles.
+ * Shows the stop/target zones, entry and exit levels, and a straight-line
+ * price path between the two known (ts, price) points. Real candle data
+ * replaces this later when the Databento/parquet pipeline lands.
  */
 export default function ReplayChart({ trade }: ReplayChartProps) {
   const entryTs = new Date(trade.entry_ts).getTime();
-  const exitTs = trade.exit_ts !== null ? new Date(trade.exit_ts).getTime() : entryTs;
+  const exitTs =
+    trade.exit_ts !== null ? new Date(trade.exit_ts).getTime() : entryTs;
 
-  const startTs = entryTs - CANDLES_BEFORE * CANDLE_MINUTES * 60_000;
-  const endTs = exitTs + CANDLES_AFTER * CANDLE_MINUTES * 60_000;
+  // Give the plot breathing room: 15% of trade duration before/after,
+  // minimum 5 min either side so single-bar trades still get a visible span.
+  const duration = Math.max(5 * 60_000, exitTs - entryTs);
+  const pad = Math.max(5 * 60_000, duration * 0.15);
+  const startTs = entryTs - pad;
+  const endTs = exitTs + pad;
 
-  const candles = generateSyntheticCandles(trade, startTs, endTs);
+  const isLong = trade.side === "long";
+  const entry = trade.entry_price;
+  const exit = trade.exit_price;
+  const stop = trade.stop_price;
+  const target = trade.target_price;
 
-  const allPrices = [
-    ...candles.flatMap((c) => [c.h, c.l]),
-    trade.entry_price,
-    trade.exit_price ?? trade.entry_price,
-    trade.stop_price ?? trade.entry_price,
-    trade.target_price ?? trade.entry_price,
-  ];
+  const allPrices = [entry, exit, stop, target].filter(
+    (v): v is number => v !== null,
+  );
   const pMin = Math.min(...allPrices);
   const pMax = Math.max(...allPrices);
-  const padding = (pMax - pMin) * 0.08 || 1;
+  const padding = (pMax - pMin) * 0.18 || 2;
   const yMin = pMin - padding;
   const yMax = pMax + padding;
 
-  const isLong = trade.side === "long";
+  const entryX = scaleX(entryTs, startTs, endTs);
+  const exitX = scaleX(exitTs, startTs, endTs);
+  const entryY = scaleY(entry, yMin, yMax);
+  const exitY = exit !== null ? scaleY(exit, yMin, yMax) : entryY;
+  const stopY = stop !== null ? scaleY(stop, yMin, yMax) : null;
+  const targetY = target !== null ? scaleY(target, yMin, yMax) : null;
+
+  const sideColor = isLong ? "rgb(52 211 153)" : "rgb(244 63 94)";
+  const pnlColor =
+    trade.pnl === null || trade.pnl === 0
+      ? "rgb(161 161 170)"
+      : trade.pnl > 0
+        ? "rgb(52 211 153)"
+        : "rgb(244 63 94)";
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between border border-amber-900/60 bg-amber-950/30 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-amber-300">
-        <span>Synthetic candle data — for layout only, not real market bars</span>
-        <span className="text-amber-500/80">mock</span>
-      </div>
       <div className="border border-zinc-800 bg-zinc-950">
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -55,124 +66,141 @@ export default function ReplayChart({ trade }: ReplayChartProps) {
           className="block w-full"
           style={{ height: HEIGHT }}
         >
-          <PriceLine
-            price={trade.entry_price}
-            yMin={yMin}
-            yMax={yMax}
-            color="rgb(161 161 170)"
-            label={`entry ${fmtPrice(trade.entry_price)}`}
+          {/* Stop zone: between entry and stop */}
+          {stopY !== null ? (
+            <Zone
+              yTop={Math.min(entryY, stopY)}
+              yBottom={Math.max(entryY, stopY)}
+              xLeft={entryX}
+              xRight={WIDTH - PAD_X}
+              fill="rgb(244 63 94 / 0.08)"
+            />
+          ) : null}
+          {/* Target zone: between entry and target */}
+          {targetY !== null ? (
+            <Zone
+              yTop={Math.min(entryY, targetY)}
+              yBottom={Math.max(entryY, targetY)}
+              xLeft={entryX}
+              xRight={WIDTH - PAD_X}
+              fill="rgb(52 211 153 / 0.08)"
+            />
+          ) : null}
+
+          {/* Horizontal levels */}
+          <Level
+            y={entryY}
+            label={`entry ${entry.toFixed(2)}`}
+            color="rgb(228 228 231)"
+            solid
           />
-          {trade.exit_price !== null ? (
-            <PriceLine
-              price={trade.exit_price}
-              yMin={yMin}
-              yMax={yMax}
-              color="rgb(161 161 170)"
-              label={`exit ${fmtPrice(trade.exit_price)}`}
-              dashed
-            />
-          ) : null}
-          {trade.stop_price !== null ? (
-            <PriceLine
-              price={trade.stop_price}
-              yMin={yMin}
-              yMax={yMax}
-              color="rgb(244 63 94)"
-              label={`stop ${fmtPrice(trade.stop_price)}`}
-            />
-          ) : null}
-          {trade.target_price !== null ? (
-            <PriceLine
-              price={trade.target_price}
-              yMin={yMin}
-              yMax={yMax}
+          {targetY !== null ? (
+            <Level
+              y={targetY}
+              label={`target ${target!.toFixed(2)}`}
               color="rgb(52 211 153)"
-              label={`target ${fmtPrice(trade.target_price)}`}
+            />
+          ) : null}
+          {stopY !== null ? (
+            <Level
+              y={stopY}
+              label={`stop ${stop!.toFixed(2)}`}
+              color="rgb(244 63 94)"
             />
           ) : null}
 
-          {candles.map((c, i) => {
-            const x = scaleX(c.ts, startTs, endTs);
-            const highY = scaleY(c.h, yMin, yMax);
-            const lowY = scaleY(c.l, yMin, yMax);
-            const openY = scaleY(c.o, yMin, yMax);
-            const closeY = scaleY(c.c, yMin, yMax);
-            const bullish = c.c >= c.o;
-            const color = bullish ? "rgb(52 211 153 / 0.6)" : "rgb(244 63 94 / 0.6)";
-            const bodyTop = Math.min(openY, closeY);
-            const bodyH = Math.max(1, Math.abs(closeY - openY));
-            return (
-              <g key={i}>
-                <line
-                  x1={x}
-                  x2={x}
-                  y1={highY}
-                  y2={lowY}
-                  stroke={color}
-                  strokeWidth={1}
-                  vectorEffect="non-scaling-stroke"
-                />
-                <rect
-                  x={x - 2.5}
-                  y={bodyTop}
-                  width={5}
-                  height={bodyH}
-                  fill={color}
-                />
-              </g>
-            );
-          })}
+          {/* Vertical time markers */}
+          <TimeMarker x={entryX} label="entry" />
+          {exit !== null && exitTs !== entryTs ? (
+            <TimeMarker x={exitX} label="exit" />
+          ) : null}
 
+          {/* Price path — straight line from entry point to exit point */}
+          {exit !== null ? (
+            <line
+              x1={entryX}
+              x2={exitX}
+              y1={entryY}
+              y2={exitY}
+              stroke={pnlColor}
+              strokeWidth={1.5}
+              strokeDasharray="2 3"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : null}
+
+          {/* Entry marker (side-colored) */}
           <Marker
-            ts={entryTs}
-            price={trade.entry_price}
-            startTs={startTs}
-            endTs={endTs}
-            yMin={yMin}
-            yMax={yMax}
-            color={isLong ? "rgb(52 211 153)" : "rgb(244 63 94)"}
+            x={entryX}
+            y={entryY}
+            color={sideColor}
             label={isLong ? "LONG" : "SHORT"}
+            size={7}
           />
-          {trade.exit_price !== null && trade.exit_ts !== null ? (
+          {/* Exit marker */}
+          {exit !== null ? (
             <Marker
-              ts={new Date(trade.exit_ts).getTime()}
-              price={trade.exit_price}
-              startTs={startTs}
-              endTs={endTs}
-              yMin={yMin}
-              yMax={yMax}
-              color="rgb(161 161 170)"
-              label="EXIT"
-              small
+              x={exitX}
+              y={exitY}
+              color={pnlColor}
+              label={`${trade.exit_reason ?? "exit"} ${exit.toFixed(2)}`}
+              size={5}
+              labelBelow
             />
           ) : null}
         </svg>
         <div className="flex justify-between border-t border-zinc-900 px-3 py-1 font-mono text-[10px] text-zinc-600">
           <span>{formatTs(startTs)}</span>
-          <span>entry {formatTs(entryTs)}</span>
+          <span>
+            {formatTs(entryTs)}
+            {exitTs !== entryTs ? ` → ${formatTs(exitTs)}` : ""}
+          </span>
           <span>{formatTs(endTs)}</span>
         </div>
       </div>
+      <p className="font-mono text-[10px] text-zinc-600">
+        Schematic view — real price levels only. Tick-by-tick chart lands when the
+        Databento data pipeline is wired.
+      </p>
     </div>
   );
 }
 
-function PriceLine({
-  price,
-  yMin,
-  yMax,
-  color,
-  label,
-  dashed,
+function Zone({
+  yTop,
+  yBottom,
+  xLeft,
+  xRight,
+  fill,
 }: {
-  price: number;
-  yMin: number;
-  yMax: number;
-  color: string;
-  label: string;
-  dashed?: boolean;
+  yTop: number;
+  yBottom: number;
+  xLeft: number;
+  xRight: number;
+  fill: string;
 }) {
-  const y = scaleY(price, yMin, yMax);
+  return (
+    <rect
+      x={xLeft}
+      y={yTop}
+      width={Math.max(0, xRight - xLeft)}
+      height={Math.max(0, yBottom - yTop)}
+      fill={fill}
+    />
+  );
+}
+
+function Level({
+  y,
+  label,
+  color,
+  solid,
+}: {
+  y: number;
+  label: string;
+  color: string;
+  solid?: boolean;
+}) {
   return (
     <g>
       <line
@@ -182,7 +210,8 @@ function PriceLine({
         y2={y}
         stroke={color}
         strokeWidth={1}
-        strokeDasharray={dashed ? "4 4" : undefined}
+        strokeDasharray={solid ? undefined : "4 4"}
+        strokeOpacity={solid ? 0.8 : 0.6}
         vectorEffect="non-scaling-stroke"
       />
       <text
@@ -199,36 +228,54 @@ function PriceLine({
   );
 }
 
-function Marker({
-  ts,
-  price,
-  startTs,
-  endTs,
-  yMin,
-  yMax,
-  color,
-  label,
-  small,
-}: {
-  ts: number;
-  price: number;
-  startTs: number;
-  endTs: number;
-  yMin: number;
-  yMax: number;
-  color: string;
-  label: string;
-  small?: boolean;
-}) {
-  const x = scaleX(ts, startTs, endTs);
-  const y = scaleY(price, yMin, yMax);
-  const radius = small ? 4 : 6;
+function TimeMarker({ x, label }: { x: number; label: string }) {
   return (
     <g>
-      <circle cx={x} cy={y} r={radius} fill={color} />
+      <line
+        x1={x}
+        x2={x}
+        y1={PAD_Y}
+        y2={HEIGHT - PAD_Y}
+        stroke="rgb(63 63 70)"
+        strokeWidth={1}
+        strokeDasharray="3 4"
+        vectorEffect="non-scaling-stroke"
+      />
       <text
-        x={x + radius + 3}
-        y={y - radius - 2}
+        x={x}
+        y={PAD_Y - 8}
+        textAnchor="middle"
+        fontSize={9}
+        fill="rgb(113 113 122)"
+        className="font-mono uppercase tracking-widest"
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
+function Marker({
+  x,
+  y,
+  color,
+  label,
+  size,
+  labelBelow,
+}: {
+  x: number;
+  y: number;
+  color: string;
+  label: string;
+  size: number;
+  labelBelow?: boolean;
+}) {
+  return (
+    <g>
+      <circle cx={x} cy={y} r={size} fill={color} />
+      <text
+        x={x + size + 4}
+        y={labelBelow ? y + size + 10 : y - size - 4}
         fontSize={10}
         fill={color}
         className="font-mono"
@@ -239,66 +286,9 @@ function Marker({
   );
 }
 
-interface Candle {
-  ts: number;
-  o: number;
-  h: number;
-  l: number;
-  c: number;
-}
-
-function generateSyntheticCandles(
-  trade: Trade,
-  startTs: number,
-  endTs: number,
-): Candle[] {
-  // deterministic pseudo-random walk seeded by trade id so replays are stable
-  let state = trade.id * 2654435761;
-  const rand = () => {
-    state = Math.imul(state ^ (state >>> 15), 2246822507);
-    state = Math.imul(state ^ (state >>> 13), 3266489909);
-    state ^= state >>> 16;
-    return (state >>> 0) / 4294967295;
-  };
-
-  const step = CANDLE_MINUTES * 60_000;
-  const totalBars = Math.max(2, Math.round((endTs - startTs) / step));
-  const entryTs = new Date(trade.entry_ts).getTime();
-  const exitTs =
-    trade.exit_ts !== null ? new Date(trade.exit_ts).getTime() : entryTs;
-
-  const volatility = Math.max(
-    1,
-    Math.abs((trade.stop_price ?? trade.entry_price) - trade.entry_price) * 0.2,
-  );
-
-  let price = trade.entry_price + (rand() - 0.5) * volatility * 4;
-  const candles: Candle[] = [];
-
-  for (let i = 0; i < totalBars; i++) {
-    const ts = startTs + i * step;
-    const isEntryBar = Math.abs(ts - entryTs) < step / 2;
-    const isExitBar = Math.abs(ts - exitTs) < step / 2;
-
-    const drift = (rand() - 0.5) * volatility;
-    const o = price;
-    let c = o + drift;
-    const h = Math.max(o, c) + rand() * volatility * 0.6;
-    const l = Math.min(o, c) - rand() * volatility * 0.6;
-    if (isEntryBar) {
-      c = trade.entry_price;
-    } else if (isExitBar && trade.exit_price !== null) {
-      c = trade.exit_price;
-    }
-    candles.push({ ts, o, h, l, c });
-    price = c;
-  }
-  return candles;
-}
-
 function scaleX(ts: number, startTs: number, endTs: number): number {
   const innerWidth = WIDTH - PAD_X * 2;
-  if (endTs === startTs) return PAD_X;
+  if (endTs === startTs) return WIDTH / 2;
   return PAD_X + ((ts - startTs) / (endTs - startTs)) * innerWidth;
 }
 
@@ -307,10 +297,6 @@ function scaleY(value: number, min: number, max: number): number {
   if (max === min) return PAD_Y + innerHeight / 2;
   const ratio = (value - min) / (max - min);
   return PAD_Y + (1 - ratio) * innerHeight;
-}
-
-function fmtPrice(value: number): string {
-  return value.toFixed(2);
 }
 
 function formatTs(ms: number): string {
