@@ -64,6 +64,13 @@ class Context:
     it for indicators (moving averages, etc.). It NEVER contains the
     current bar's future or any later bar — that's what prevents
     lookahead.
+
+    `aux` exposes auxiliary instruments aligned to the primary bar's
+    `ts_event`. Empty dict when no aux symbols were configured; for
+    each configured aux symbol, the value is the bar at that
+    timestamp or None if the aux had no bar at that minute (gap,
+    halt, weekend). Used by strategies that need cross-instrument
+    signals — most commonly SMT divergence (NQ vs ES, etc.).
     """
 
     now: dt.datetime
@@ -73,6 +80,7 @@ class Context:
     position: Position | None
     history: list[Bar] = field(default_factory=list)
     history_max: int = 1000
+    aux: dict[str, "Bar | None"] = field(default_factory=dict)
 
     @property
     def in_position(self) -> bool:

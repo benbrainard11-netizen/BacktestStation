@@ -316,3 +316,139 @@ def test_run_with_empty_bars() -> None:
     assert result.trades == []
     assert result.equity_points == []
     assert result.metrics["trade_count"] == 0
+
+
+# --- Multi-instrument (aux symbols) -------------------------------------
+
+
+def _aux_bar(minute: int, close: float, symbol: str = "ES.c.0") -> Bar:
+    ts = dt.datetime(2026, 4, 24, 13, 30, tzinfo=dt.timezone.utc)
+    return Bar(
+        ts_event=ts + dt.timedelta(minutes=minute),
+        symbol=symbol,
+        open=close - 0.5,
+        high=close + 0.5,
+        low=close - 1.0,
+        close=close,
+        volume=50,
+        trade_count=5,
+        vwap=close,
+    )
+
+
+def test_aux_empty_when_no_aux_symbols_configured() -> None:
+    """No aux configured -> context.aux is always {}."""
+    bars = [_bar(i, 21000, 21010, 20990, 21005) for i in range(3)]
+
+    class CheckAux(Strategy):
+        name = "check_aux"
+
+        def __init__(self) -> None:
+            self.seen_aux: list[dict] = []
+
+        def on_bar(self, bar: Bar, context: Context) -> list[OrderIntent]:
+            self.seen_aux.append(dict(context.aux))
+            return []
+
+    s = CheckAux()
+    run(s, bars, _config())
+    assert all(a == {} for a in s.seen_aux)
+
+
+def test_aux_bars_aligned_to_primary_ts() -> None:
+    """When aux is provided, context.aux[sym] is the bar at primary's ts_event."""
+    primary_bars = [_bar(i, 21000 + i, 21010 + i, 20990 + i, 21005 + i) for i in range(5)]
+    aux_data = {b.ts_event: b for b in [_aux_bar(i, 5000 + i) for i in range(5)]}
+
+    captured: list[Bar | None] = []
+
+    class CheckAux(Strategy):
+        name = "check_aux"
+
+        def on_bar(self, bar: Bar, context: Context) -> list[OrderIntent]:
+            captured.append(context.aux.get("ES.c.0"))
+            return []
+
+    cfg = _config(aux_symbols=["ES.c.0"])
+    run(CheckAux(), primary_bars, cfg, aux_bars={"ES.c.0": aux_data})
+
+    assert len(captured) == 5
+    for primary, aux in zip(primary_bars, captured):
+        assert aux is not None
+        assert aux.ts_event == primary.ts_event
+        assert aux.symbol == "ES.c.0"
+
+
+def test_aux_missing_minute_returns_none() -> None:
+    """Aux symbol with a gap: context.aux[sym] is None at that minute."""
+    primary_bars = [_bar(i, 21000, 21010, 20990, 21005) for i in range(5)]
+    # Aux only has bars at minutes 0, 2, 4 — gaps at 1 and 3.
+    aux_data = {
+        primary_bars[0].ts_event: _aux_bar(0, 5000),
+        primary_bars[2].ts_event: _aux_bar(2, 5002),
+        primary_bars[4].ts_event: _aux_bar(4, 5004),
+    }
+
+    captured: list[Bar | None] = []
+
+    class CheckAux(Strategy):
+        name = "check_aux"
+
+        def on_bar(self, bar: Bar, context: Context) -> list[OrderIntent]:
+            captured.append(context.aux.get("ES.c.0"))
+            return []
+
+    cfg = _config(aux_symbols=["ES.c.0"])
+    run(CheckAux(), primary_bars, cfg, aux_bars={"ES.c.0": aux_data})
+
+    assert len(captured) == 5
+    assert captured[0] is not None and captured[0].close == 5000
+    assert captured[1] is None
+    assert captured[2] is not None and captured[2].close == 5002
+    assert captured[3] is None
+    assert captured[4] is not None and captured[4].close == 5004
+
+
+def test_aux_bars_dict_missing_symbol_treated_as_empty() -> None:
+    """If runner forgot to load an aux symbol, context.aux still has the key
+    with None value (engine's defensive default)."""
+    primary_bars = [_bar(i, 21000, 21010, 20990, 21005) for i in range(2)]
+
+    captured: list[dict] = []
+
+    class CheckAux(Strategy):
+        name = "check_aux"
+
+        def on_bar(self, bar: Bar, context: Context) -> list[OrderIntent]:
+            captured.append(dict(context.aux))
+            return []
+
+    cfg = _config(aux_symbols=["ES.c.0"])
+    # Note: aux_bars is None — engine must default ES.c.0 to {} internally
+    run(CheckAux(), primary_bars, cfg, aux_bars=None)
+
+    assert all(a == {"ES.c.0": None} for a in captured)
+
+
+def test_aux_does_not_drive_loop() -> None:
+    """Engine iterates only the primary symbol — extra aux bars don't add
+    extra iterations."""
+    primary_bars = [_bar(i, 21000, 21010, 20990, 21005) for i in range(3)]
+    # Aux has 100 bars. Engine should only iterate 3.
+    aux_data = {
+        (dt.datetime(2026, 4, 24, 13, 30, tzinfo=dt.timezone.utc) + dt.timedelta(minutes=i)): _aux_bar(i, 5000)
+        for i in range(100)
+    }
+
+    on_bar_count = [0]
+
+    class Counter(Strategy):
+        name = "counter"
+
+        def on_bar(self, bar: Bar, context: Context) -> list[OrderIntent]:
+            on_bar_count[0] += 1
+            return []
+
+    cfg = _config(aux_symbols=["ES.c.0"])
+    run(Counter(), primary_bars, cfg, aux_bars={"ES.c.0": aux_data})
+    assert on_bar_count[0] == 3

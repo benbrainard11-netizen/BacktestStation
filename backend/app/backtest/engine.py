@@ -45,6 +45,12 @@ class RunConfig:
 
     Reproducibility: every field that affects the output sits here.
     The runner serializes this to config.json next to the run outputs.
+
+    `aux_symbols` lists additional instruments the strategy can read
+    via `context.aux[symbol]`. Used for cross-instrument signals like
+    SMT divergence (NQ vs ES). Aux instruments do NOT drive the event
+    loop — only the primary `symbol` does. Aux bars are aligned by
+    `ts_event`; missing minutes show up as None.
     """
 
     strategy_name: str
@@ -60,6 +66,7 @@ class RunConfig:
     contract_value: float = 20.0
     flatten_on_last_bar: bool = True
     history_max: int = 1000
+    aux_symbols: list[str] = field(default_factory=list)
     # Strategy-specific params; the strategy class is responsible for
     # interpreting them. Kept here so the run is fully reproducible
     # from the config.
@@ -79,9 +86,26 @@ class BacktestResult:
 
 
 def run(
-    strategy: Strategy, bars: list[Bar], config: RunConfig
+    strategy: Strategy,
+    bars: list[Bar],
+    config: RunConfig,
+    *,
+    aux_bars: dict[str, dict[dt.datetime, Bar]] | None = None,
 ) -> BacktestResult:
-    """Run one backtest. Returns trades, equity, events, metrics."""
+    """Run one backtest. Returns trades, equity, events, metrics.
+
+    `aux_bars` is a per-symbol dict of (ts_event -> Bar) lookups. The
+    engine refreshes `context.aux` per primary bar by looking up each
+    aux symbol's bar at the same ts_event. Missing minute = None.
+    """
+    aux_bars = aux_bars or {}
+    # Validate every configured aux symbol has been provided (even if
+    # the dict is empty for that symbol — the runner / caller must
+    # decide what "no data at all" means).
+    for sym in config.aux_symbols:
+        if sym not in aux_bars:
+            aux_bars[sym] = {}
+
     broker = Broker(
         BrokerConfig(
             tick_size=config.tick_size,
@@ -98,6 +122,7 @@ def run(
         position=None,
         history=[],
         history_max=config.history_max,
+        aux={},
     )
 
     events: list[Event] = []
@@ -110,6 +135,14 @@ def run(
     for i, bar in enumerate(bars):
         context.now = bar.ts_event
         context.bar_index = i
+        # Refresh aux bars aligned to this primary ts_event. Missing
+        # minute -> None. We rebuild the dict each bar so strategies
+        # never see a stale aux row.
+        if config.aux_symbols:
+            context.aux = {
+                sym: aux_bars[sym].get(bar.ts_event)
+                for sym in config.aux_symbols
+            }
 
         # 1. Resolve pending entry orders submitted on the prior bar.
         for fill in broker.resolve_pending_entries(bar):

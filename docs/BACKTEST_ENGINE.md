@@ -86,6 +86,7 @@ That's the entire contract. Four methods, three of which usually stay as no-ops.
 - `context.history` — bars seen so far (capped at `history_max`)
 - `context.position` — current open position, or `None`
 - `context.equity` — running equity
+- `context.aux` — `{symbol: Bar | None}` for any aux instruments configured via `RunConfig.aux_symbols`. See "Multi-instrument" below.
 
 ### What strategies CANNOT do
 
@@ -93,6 +94,42 @@ That's the entire contract. Four methods, three of which usually stay as no-ops.
 - Read the database, filesystem, or network
 - Use `datetime.now()` (use `context.now` for determinism)
 - Mutate the bar or context
+
+## Multi-instrument (aux symbols)
+
+Some strategies need to peek at *another* instrument while trading the primary — SMT divergence (NQ vs ES), cross-asset filters (oil vs equity index), basket signals. The engine supports this via aux symbols without giving up its single-symbol event loop.
+
+```python
+config = RunConfig(
+    strategy_name="my_strat",
+    symbol="NQ.c.0",        # primary — drives the loop
+    aux_symbols=["ES.c.0"], # aligned per primary bar's ts_event
+    timeframe="1m",
+    start="2026-04-20", end="2026-04-25",
+)
+```
+
+Inside `on_bar`, the strategy reads aux bars via `context.aux`:
+
+```python
+def on_bar(self, bar: Bar, context: Context) -> list[OrderIntent]:
+    es_bar = context.aux.get("ES.c.0")
+    if es_bar is None:
+        return []  # ES had no bar this minute (gap/halt) — skip
+    if bar.close > bar.open and es_bar.close < es_bar.open:
+        # NQ up while ES down — divergence
+        ...
+```
+
+Rules:
+
+- **Only the primary drives the loop.** Aux bars never trigger `on_bar`. They're a side-channel lookup keyed by the primary's `ts_event`.
+- **Missing minutes are `None`.** If aux had no bar at the primary's timestamp (data gap, halt, weekend hour), `context.aux[symbol]` is `None`. Strategies must handle this.
+- **Lookahead still impossible.** Aux is queried at the primary's `ts_event`, not the next bar — same prohibition as primary history.
+- **The runner loads aux automatically.** `runner.load_aux_bars(config)` reads each aux symbol's bars from the warehouse and indexes by `ts_event`. The engine treats a missing aux symbol as "always None at every minute" so a misconfigured warehouse never crashes the run.
+- **Aux is not traded.** `context.position` always refers to the primary symbol. Order intents are filled against the primary bar only.
+
+This is how Fractal AMD / SMT-style strategies plug in once they're ported.
 
 ## Order intent types (v1)
 
@@ -180,7 +217,7 @@ That's the whole how-to. Strategies stay tiny because the engine handles everyth
 
 ## Tests
 
-48 tests across:
+45 tests across:
 
 - `test_backtest_orders.py` — dataclass invariants
 - `test_backtest_broker.py` — fill resolution, ambiguous bars, force-close

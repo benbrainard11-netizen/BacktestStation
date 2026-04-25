@@ -91,12 +91,44 @@ def _resolve_strategy(name: str, params: dict, config: RunConfig) -> Strategy:
 
 
 def load_bars(config: RunConfig) -> list[Bar]:
-    """Read bars from the data warehouse and convert to Bar dataclasses."""
-    df = read_bars(
+    """Read primary bars from the warehouse and convert to Bar dataclasses."""
+    return _read_symbol_bars(
         symbol=config.symbol,
         timeframe=config.timeframe,
         start=config.start,
         end=config.end,
+    )
+
+
+def load_aux_bars(
+    config: RunConfig,
+) -> dict[str, dict[dt.datetime, Bar]]:
+    """Read each aux symbol's bars and index by ts_event.
+
+    Returns `{symbol: {ts_event: Bar}}`. Missing symbols (no data)
+    return an empty inner dict, which the engine treats as
+    "always None at every minute".
+    """
+    out: dict[str, dict[dt.datetime, Bar]] = {}
+    for sym in config.aux_symbols:
+        bars = _read_symbol_bars(
+            symbol=sym,
+            timeframe=config.timeframe,
+            start=config.start,
+            end=config.end,
+        )
+        out[sym] = {b.ts_event: b for b in bars}
+    return out
+
+
+def _read_symbol_bars(
+    *, symbol: str, timeframe: str, start: str, end: str
+) -> list[Bar]:
+    df = read_bars(
+        symbol=symbol,
+        timeframe=timeframe,
+        start=start,
+        end=end,
         as_pandas=True,
     )
     if df is None or len(df) == 0:
@@ -409,8 +441,9 @@ def run_backtest(
     """
     started_at = dt.datetime.now(dt.timezone.utc)
     bars = load_bars(config)
+    aux_bars = load_aux_bars(config)
     strategy = _resolve_strategy(config.strategy_name, config.params, config)
-    result = engine_run(strategy, bars, config)
+    result = engine_run(strategy, bars, config, aux_bars=aux_bars)
     completed_at = dt.datetime.now(dt.timezone.utc)
 
     out_dir: Path | None = None

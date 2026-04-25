@@ -16,6 +16,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.backtest.engine import RunConfig
 from app.backtest.runner import (
+    load_aux_bars,
     load_bars,
     make_run_dir,
     run_backtest,
@@ -90,6 +91,44 @@ def test_load_bars_returns_dataclasses(warehouse: Path) -> None:
     assert bars[0].symbol == "NQ.c.0"
     assert isinstance(bars[0].ts_event, dt.datetime)
     assert bars[0].ts_event.tzinfo is not None
+
+
+def test_load_aux_bars_indexes_by_ts(warehouse: Path) -> None:
+    """Runner reads aux symbols and returns {symbol: {ts: Bar}}."""
+    _seed_bars(warehouse, "NQ.c.0", dt.date(2026, 4, 24), minutes=10)
+    _seed_bars(warehouse, "ES.c.0", dt.date(2026, 4, 24), minutes=10)
+    config = RunConfig(
+        strategy_name="moving_average_crossover",
+        symbol="NQ.c.0",
+        timeframe="1m",
+        start="2026-04-24",
+        end="2026-04-25",
+        aux_symbols=["ES.c.0"],
+        params={"fast_period": 2, "slow_period": 4},
+    )
+    aux = load_aux_bars(config)
+    assert "ES.c.0" in aux
+    assert len(aux["ES.c.0"]) == 10
+    # Each value is a Bar keyed by its ts_event.
+    sample_ts, sample_bar = next(iter(aux["ES.c.0"].items()))
+    assert sample_bar.ts_event == sample_ts
+    assert sample_bar.symbol == "ES.c.0"
+
+
+def test_load_aux_bars_handles_missing_symbol(warehouse: Path) -> None:
+    """Aux symbol with no warehouse data -> empty inner dict."""
+    _seed_bars(warehouse, "NQ.c.0", dt.date(2026, 4, 24), minutes=5)
+    config = RunConfig(
+        strategy_name="moving_average_crossover",
+        symbol="NQ.c.0",
+        timeframe="1m",
+        start="2026-04-24",
+        end="2026-04-25",
+        aux_symbols=["RTY.c.0"],
+        params={"fast_period": 2, "slow_period": 4},
+    )
+    aux = load_aux_bars(config)
+    assert aux == {"RTY.c.0": {}}
 
 
 # --- Output file structure ---------------------------------------------
