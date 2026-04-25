@@ -83,6 +83,12 @@ def _resolve_strategy(name: str, params: dict, config: RunConfig) -> Strategy:
         return MovingAverageCrossover.from_config(
             params, tick_size=config.tick_size, qty=config.qty
         )
+    if name == "fractal_amd":
+        from app.strategies.fractal_amd import FractalAMD
+
+        return FractalAMD.from_config(
+            params, tick_size=config.tick_size, qty=config.qty
+        )
     raise ValueError(
         f"unknown strategy {name!r}; add a branch in runner._resolve_strategy"
     )
