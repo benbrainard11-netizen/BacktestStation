@@ -59,10 +59,9 @@ class FractalAMD(Strategy):
         # current bar via context.aux; SMT detection needs prior
         # bars too, so we accumulate here.
         self.aux_history: dict[str, list[Bar]] = {}
-        # High-water mark per HTF tf so we don't re-scan completed
-        # candles every bar. Maps tf -> end_ts of the last scanned
-        # candle.
-        self._last_scanned: dict[str, dt.datetime] = {}
+        # Candles we no longer need to re-scan because their entire
+        # expansion window is in the past. Keyed by (tf, cur_start_iso).
+        self._fully_scanned: set[tuple[str, str]] = set()
 
     # ------------------------------------------------------------------
     # Engine lifecycle
@@ -75,7 +74,7 @@ class FractalAMD(Strategy):
         self.trades_today = 0
         self.entries_today = set()
         self.aux_history = {sym: [] for sym in self.config.aux_symbols}
-        self._last_scanned = {}
+        self._fully_scanned = set()
 
     def on_bar(self, bar: Bar, context: Context) -> "list[OrderIntent]":
         # 1. Accumulate aux history.
@@ -131,27 +130,33 @@ class FractalAMD(Strategy):
     # ------------------------------------------------------------------
 
     def _scan_for_setups(self, bar: Bar, context: Context) -> None:
-        """Scan completed HTF candles for new stage signals.
+        """Scan completed HTF candles for new stage signals + LTF setups.
 
-        Runs every primary bar but only inspects HTF candles whose
-        end <= current bar's ts_event (so we never look ahead). For
-        each new completed HTF candle, check the (current, prior)
-        pair via `check_candle_pair`; on a confirmed signal, record
-        a StageSignal. Setup objects (with FVG fields) get built in
-        chunk 2 once we know how to detect the FVG zone within the
-        confirmed candle.
+        Re-scans every HTF candle pair whose **expansion window is still
+        active**. Live bot's `scan_for_setups` re-scans everything every
+        minute; we trim the work to "candles whose expansion window
+        could still yield new setups."
+
+        Two reasons re-scan is load-bearing (vs. the original
+        scan-once-on-close):
+
+        1. When an HTF candle CLOSES, its LTF expansion window has not
+           yet closed -- so building setups would find no FVGs. Live bot
+           returns to that HTF candle on later bars when more LTF
+           candles have completed.
+        2. FVG zones can shift as more LTF data fills in.
+
+        Once expansion is fully behind us
+        (`exp_end + small_buffer <= bar.ts_event`), the candle is
+        recorded as `_fully_scanned` and skipped on subsequent bars.
         """
         bars_by_asset = self._bars_by_asset(context)
-        # Need at least two HTF candles' worth of bars on every asset.
         if any(len(b) == 0 for b in bars_by_asset.values()):
             return
 
-        # The current trading day in ET.
+        # Globex trading day in ET. Day boundary is 18:00 ET prior day
+        # -> 17:00 ET current day.
         bar_et = bar.ts_event.astimezone(ET)
-        # Globex day boundary: 18:00 ET prior day -> 17:00 ET current
-        # day. If bar is before 18:00 ET, the trading day is "today
-        # (ET calendar)"; if at/after 18:00 ET, the trading day is
-        # tomorrow.
         if bar_et.hour >= 18:
             day_et = (bar_et + dt.timedelta(days=1)).replace(
                 hour=12, minute=0, second=0, microsecond=0
@@ -164,12 +169,13 @@ class FractalAMD(Strategy):
             for i, (cur_start, cur_end) in enumerate(all_candles):
                 if i == 0:
                     continue  # need a prior candle for ref
-                # Only act on completed candles (end <= now).
+                # Only inspect closed HTF candles.
                 if cur_end > bar.ts_event:
-                    break
-                # Skip if already scanned.
-                last = self._last_scanned.get(tf)
-                if last is not None and cur_end <= last:
+                    continue  # not closed yet
+
+                # Skip if expansion window is fully behind us.
+                key = (tf, cur_start.isoformat())
+                if key in self._fully_scanned:
                     continue
 
                 ref_start, ref_end = all_candles[i - 1]
@@ -181,10 +187,13 @@ class FractalAMD(Strategy):
                     ref_end=ref_end,
                     timeframe=tf,
                 )
+
+                # Compute expansion window end for the perf gate.
+                exp_end = cur_end + (cur_end - cur_start) * 2
+
                 if signal is not None:
-                    self.stage_signals.append(signal)
-                    # Walk the LTF expansion window for FVG-bearing
-                    # entry candidates. Each unfilled FVG => one Setup.
+                    if not self._stage_signal_seen(signal):
+                        self.stage_signals.append(signal)
                     new_setups = self._build_setups_from_ltf(
                         signal=signal,
                         bar_now=bar,
@@ -194,7 +203,24 @@ class FractalAMD(Strategy):
                     for s in new_setups:
                         if not self._is_duplicate_setup(s):
                             self.setups.append(s)
-                self._last_scanned[tf] = cur_end
+
+                # Once the entire expansion window is in the past, we'll
+                # never produce a new setup from this candle -- record
+                # it so we stop re-scanning.
+                if exp_end <= bar.ts_event:
+                    self._fully_scanned.add(key)
+
+    def _stage_signal_seen(self, signal: StageSignal) -> bool:
+        """Idempotent stage-signal recording. Identity = (tf, cur_start,
+        direction). Same identity twice = same logical signal."""
+        for existing in self.stage_signals:
+            if (
+                existing.timeframe == signal.timeframe
+                and existing.candle_start == signal.candle_start
+                and existing.direction == signal.direction
+            ):
+                return True
+        return False
 
     def _try_emit_entry(self, bar: Bar) -> OrderIntent | None:
         """Pick the best TOUCHED setup and emit a BracketOrder.

@@ -115,11 +115,17 @@ def parse_record(record: dict) -> ParsedTrade | None:
     else:
         return None
 
-    # date is YYYY-MM-DD, entry_time is HH:MM:SS, both in ET per live bot.
-    entry_dt_et = dt.datetime.fromisoformat(
+    # date is YYYY-MM-DD, entry_time is HH:MM:SS. The live bot emits
+    # the entry_time field via `trade.entry_time.strftime("%H:%M:%S")`
+    # without explicit tz handling -- and trade.entry_time turns out to
+    # be tz-naive UTC (verified 2026-04-25 by aligning live entry
+    # prices against historical MBP-1: a "13:31:00" record matched the
+    # 13:31 UTC NQ bar exactly, NOT the 13:31 ET bar 4 hours later).
+    # Treat the literal time as UTC.
+    entry_naive = dt.datetime.fromisoformat(
         f"{record['date']}T{record['entry_time']}"
-    ).replace(tzinfo=ET)
-    entry_ts = entry_dt_et.astimezone(dt.timezone.utc).replace(tzinfo=None)
+    )
+    entry_ts = entry_naive  # already UTC; SQLAlchemy column is tz-naive UTC
 
     pnl_dollars: float | None = None
     if "pnl_dollars" in record and record["pnl_dollars"] is not None:
@@ -133,10 +139,12 @@ def parse_record(record: dict) -> ParsedTrade | None:
     if raw_exit:
         try:
             exit_dt = dt.datetime.fromisoformat(str(raw_exit))
-            if exit_dt.tzinfo is None:
-                # Live bot writes ET-naive ISO strings; assume ET.
-                exit_dt = exit_dt.replace(tzinfo=ET)
-            exit_ts = exit_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
+            # Same UTC convention as entry_time. Strip tz if present
+            # (we may emit tz-aware ISO strings going forward; keep
+            # tz-naive UTC at storage time for SQLAlchemy column).
+            if exit_dt.tzinfo is not None:
+                exit_dt = exit_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
+            exit_ts = exit_dt
         except (ValueError, TypeError):
             exit_ts = None
 

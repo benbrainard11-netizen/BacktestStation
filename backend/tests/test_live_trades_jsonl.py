@@ -109,11 +109,10 @@ def test_parse_missing_pnl_dollars_is_optional():
 
 
 def test_parse_v2_exit_time_populates_exit_ts():
-    """live_bot v2+ records carry exit_time; importer should populate
-    Trade.exit_ts (ET -> UTC, tz-naive)."""
+    """v2+ records carry exit_time. Stored UTC tz-naive."""
     rec = {
         **VALID_RECORD,
-        "exit_time": "2026-04-24T10:30:00",  # ET
+        "exit_time": "2026-04-24T10:30:00",  # naive -> treat as UTC
         "session_label": "NY_AM",
         "schema_version": "live_bot_v2",
     }
@@ -121,8 +120,8 @@ def test_parse_v2_exit_time_populates_exit_ts():
     assert parsed is not None
     assert parsed.exit_ts is not None
     assert parsed.exit_ts.tzinfo is None
-    # ET 10:30 -> UTC 14:30 during EDT.
-    assert parsed.exit_ts.hour == 14
+    # Stored tz-naive UTC; literal time preserved.
+    assert parsed.exit_ts.hour == 10
     assert parsed.exit_ts.minute == 30
     assert parsed.session_label == "NY_AM"
 
@@ -155,13 +154,16 @@ def test_parse_missing_symbol_and_contracts_uses_defaults():
     assert parsed.contracts == 1
 
 
-def test_parse_converts_et_to_utc_naive():
-    """ET 10:15 -> UTC 14:15 (during EDT). Stored tz-naive."""
+def test_parse_treats_entry_time_as_utc():
+    """The live bot's entry_time is UTC (verified 2026-04-25 by aligning
+    live entry prices against historical bars: a 13:31:00 live record
+    matched the 13:31 UTC bar's open exactly, not 13:31 ET 4 hours later).
+    Importer stores it tz-naive UTC."""
     parsed = parse_record(VALID_RECORD)
     assert parsed is not None
     assert parsed.entry_ts.tzinfo is None  # tz-naive UTC for SQLite
-    # 2026-04-24 10:15 ET = 14:15 UTC during EDT
-    assert parsed.entry_ts.hour == 14
+    # VALID_RECORD has entry_time "10:15:00" -> stored as 10:15 UTC.
+    assert parsed.entry_ts.hour == 10
     assert parsed.entry_ts.minute == 15
 
 
