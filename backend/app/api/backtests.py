@@ -1,19 +1,34 @@
-"""Backtest run endpoints: read + light mutations (rename)."""
+"""Backtest run endpoints: read + light mutations (rename) + engine kickoff."""
+
+import datetime as dt
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.backtest.engine import RunConfig, run as engine_run
+from app.backtest.runner import (
+    _data_root,
+    _git_sha,
+    _resolve_strategy,
+    load_aux_bars,
+    load_bars,
+    make_run_dir,
+    persist_run_to_session,
+    write_run,
+)
 from app.db.models import (
     BacktestRun,
     ConfigSnapshot,
     EquityPoint,
     RunMetrics,
+    StrategyVersion,
     Trade,
 )
 from app.db.session import get_session
 from app.schemas import (
     BacktestRunRead,
+    BacktestRunRequest,
     BacktestRunTagsUpdate,
     BacktestRunUpdate,
     ConfigSnapshotRead,
@@ -30,6 +45,61 @@ def _require_run(db: Session, backtest_id: int) -> BacktestRun:
     if run is None:
         raise HTTPException(status_code=404, detail="Backtest run not found")
     return run
+
+
+@router.post("/run", response_model=BacktestRunRead, status_code=201)
+def run_engine_backtest(
+    payload: BacktestRunRequest, db: Session = Depends(get_session)
+) -> BacktestRun:
+    """Kick off a synchronous engine backtest. Loads bars, runs the strategy,
+    writes outputs to disk, persists the BacktestRun row, returns it."""
+    version = db.get(StrategyVersion, payload.strategy_version_id)
+    if version is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"strategy version {payload.strategy_version_id} not found",
+        )
+
+    config = RunConfig(
+        strategy_name=payload.strategy_name,
+        symbol=payload.symbol,
+        timeframe=payload.timeframe,
+        start=payload.start,
+        end=payload.end,
+        initial_equity=payload.initial_equity,
+        qty=payload.qty,
+        aux_symbols=payload.aux_symbols,
+        params=payload.params,
+    )
+
+    try:
+        strategy = _resolve_strategy(config.strategy_name, config.params, config)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+
+    bars = load_bars(config)
+    if not bars:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"no bars found for {config.symbol} {config.timeframe} "
+                f"{config.start}..{config.end} -- check the warehouse"
+            ),
+        )
+    aux_bars = load_aux_bars(config)
+
+    started_at = dt.datetime.now(dt.timezone.utc)
+    result = engine_run(strategy, bars, config, aux_bars=aux_bars)
+    completed_at = dt.datetime.now(dt.timezone.utc)
+
+    out_dir, _ = make_run_dir(_data_root(), config.strategy_name, started_at)
+    write_run(out_dir, result, started_at, completed_at, _git_sha())
+
+    run_id = persist_run_to_session(
+        db, config, result, out_dir, payload.strategy_version_id
+    )
+    db.commit()
+    return _require_run(db, run_id)
 
 
 @router.get("", response_model=list[BacktestRunRead])

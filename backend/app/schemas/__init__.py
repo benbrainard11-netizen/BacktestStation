@@ -24,6 +24,7 @@ from app.schemas.prop_firm import (
 )
 from app.schemas.results import (
     BacktestRunRead,
+    BacktestRunRequest,
     BacktestRunTagsUpdate,
     BacktestRunUpdate,
     ConfigSnapshotRead,
@@ -44,6 +45,7 @@ __all__ = [
     "AutopsyConditionSlice",
     "AutopsyReportRead",
     "BacktestRunRead",
+    "BacktestRunRequest",
     "BacktestRunTagsUpdate",
     "BacktestRunUpdate",
     "ConfigSnapshotRead",

@@ -173,6 +173,10 @@
             ],
             "title": "Session Label"
           },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
           "start_ts": {
             "anyOf": [
               {
@@ -233,10 +237,78 @@
           "start_ts",
           "end_ts",
           "import_source",
+          "source",
           "status",
           "created_at"
         ],
         "title": "BacktestRunRead",
+        "type": "object"
+      },
+      "BacktestRunRequest": {
+        "additionalProperties": false,
+        "description": "POST /api/backtests/run body \u2014 kicks off a synchronous engine run.",
+        "properties": {
+          "aux_symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aux Symbols",
+            "type": "array"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "initial_equity": {
+            "default": 25000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Equity",
+            "type": "number"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "qty": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Qty",
+            "type": "integer"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          },
+          "strategy_name": {
+            "minLength": 1,
+            "title": "Strategy Name",
+            "type": "string"
+          },
+          "strategy_version_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Strategy Version Id",
+            "type": "integer"
+          },
+          "symbol": {
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          },
+          "timeframe": {
+            "default": "1m",
+            "title": "Timeframe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy_name",
+          "strategy_version_id",
+          "symbol",
+          "start",
+          "end"
+        ],
+        "title": "BacktestRunRequest",
         "type": "object"
       },
       "BacktestRunTagsUpdate": {
@@ -2747,6 +2819,48 @@
           }
         },
         "summary": "List Backtests",
+        "tags": [
+          "backtests"
+        ]
+      }
+    },
+    "/api/backtests/run": {
+      "post": {
+        "description": "Kick off a synchronous engine backtest. Loads bars, runs the strategy,\nwrites outputs to disk, persists the BacktestRun row, returns it.",
+        "operationId": "run_engine_backtest_api_backtests_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BacktestRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BacktestRunRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Engine Backtest",
         "tags": [
           "backtests"
         ]

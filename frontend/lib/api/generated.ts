@@ -21,6 +21,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Engine Backtest
+         * @description Kick off a synchronous engine backtest. Loads bars, runs the strategy,
+         *     writes outputs to disk, persists the BacktestRun row, returns it.
+         */
+        post: operations["run_engine_backtest_api_backtests_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}": {
         parameters: {
             query?: never;
@@ -761,6 +782,8 @@ export interface components {
             name: string | null;
             /** Session Label */
             session_label: string | null;
+            /** Source */
+            source: string;
             /** Start Ts */
             start_ts: string | null;
             /** Status */
@@ -773,6 +796,43 @@ export interface components {
             tags?: string[] | null;
             /** Timeframe */
             timeframe: string | null;
+        };
+        /**
+         * BacktestRunRequest
+         * @description POST /api/backtests/run body — kicks off a synchronous engine run.
+         */
+        BacktestRunRequest: {
+            /** Aux Symbols */
+            aux_symbols?: string[];
+            /** End */
+            end: string;
+            /**
+             * Initial Equity
+             * @default 25000
+             */
+            initial_equity: number;
+            /** Params */
+            params?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Qty
+             * @default 1
+             */
+            qty: number;
+            /** Start */
+            start: string;
+            /** Strategy Name */
+            strategy_name: string;
+            /** Strategy Version Id */
+            strategy_version_id: number;
+            /** Symbol */
+            symbol: string;
+            /**
+             * Timeframe
+             * @default 1m
+             */
+            timeframe: string;
         };
         /**
          * BacktestRunTagsUpdate
@@ -1571,6 +1631,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BacktestRunRead"][];
+                };
+            };
+        };
+    };
+    run_engine_backtest_api_backtests_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BacktestRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BacktestRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

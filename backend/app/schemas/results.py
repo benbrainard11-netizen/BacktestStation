@@ -1,9 +1,9 @@
 """API response schemas for imported strategy results."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class OrmModel(BaseModel):
@@ -97,6 +97,38 @@ class ConfigSnapshotRead(OrmModel):
     backtest_run_id: int
     payload: dict[str, Any]
     created_at: datetime
+
+
+class BacktestRunRequest(BaseModel):
+    """POST /api/backtests/run body — kicks off a synchronous engine run."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_name: str = Field(..., min_length=1)
+    strategy_version_id: int = Field(..., gt=0)
+    symbol: str = Field(..., min_length=1)
+    aux_symbols: list[str] = Field(default_factory=list)
+    timeframe: str = Field(default="1m")
+    start: str  # YYYY-MM-DD
+    end: str  # YYYY-MM-DD
+    qty: int = Field(default=1, ge=1)
+    initial_equity: float = Field(default=25_000.0, gt=0)
+    params: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("start", "end", mode="after")
+    @classmethod
+    def _valid_iso_date(cls, value: str) -> str:
+        try:
+            date.fromisoformat(value)
+        except ValueError as e:
+            raise ValueError(f"must be YYYY-MM-DD, got {value!r}") from e
+        return value
+
+    @model_validator(mode="after")
+    def _start_before_end(self) -> "BacktestRunRequest":
+        if date.fromisoformat(self.start) > date.fromisoformat(self.end):
+            raise ValueError("start must be on or before end")
+        return self
 
 
 class ImportBacktestResponse(OrmModel):

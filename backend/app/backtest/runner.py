@@ -64,6 +64,7 @@ from app.db.session import (
     make_engine,
     make_session_factory,
 )
+from sqlalchemy.orm import Session
 
 
 # --- Strategy resolution ----------------------------------------------
@@ -322,6 +323,88 @@ def _events_to_table(events: list) -> pa.Table:
 # --- DB integration ----------------------------------------------------
 
 
+def persist_run_to_session(
+    session: Session,
+    config: RunConfig,
+    result: BacktestResult,
+    out_dir: Path | None,
+    strategy_version_id: int,
+) -> int:
+    """Insert BacktestRun + trades/equity/metrics/config into the given session.
+
+    Caller owns the session lifecycle and the commit. Returns the new run id.
+    Used by both `insert_db_row` (CLI / standalone) and the `POST
+    /api/backtests/run` endpoint (which passes its own FastAPI session).
+    """
+    run = BacktestRun(
+        strategy_version_id=strategy_version_id,
+        name=f"{config.strategy_name} {config.start}..{config.end}",
+        symbol=config.symbol,
+        timeframe=config.timeframe,
+        start_ts=_iso_to_dt(config.start),
+        end_ts=_iso_to_dt(config.end),
+        import_source=str(out_dir) if out_dir is not None else None,
+        source="engine",
+        status="complete",
+    )
+    session.add(run)
+    session.flush()  # populate run.id
+
+    for t in result.trades:
+        session.add(
+            TradeModel(
+                backtest_run_id=run.id,
+                entry_ts=_strip_tz(t.entry_ts),
+                exit_ts=_strip_tz(t.exit_ts),
+                symbol=config.symbol,
+                side=t.side.value,
+                entry_price=t.entry_price,
+                exit_price=t.exit_price,
+                stop_price=t.stop_price,
+                target_price=t.target_price,
+                size=float(t.qty),
+                pnl=t.pnl,
+                r_multiple=t.r_multiple,
+                exit_reason=t.exit_reason,
+            )
+        )
+    for p in result.equity_points:
+        session.add(
+            EquityPointModel(
+                backtest_run_id=run.id,
+                ts=_strip_tz(p.ts),
+                equity=p.equity,
+                drawdown=p.drawdown,
+            )
+        )
+    if result.metrics:
+        m = result.metrics
+        session.add(
+            RunMetrics(
+                backtest_run_id=run.id,
+                net_pnl=m.get("net_pnl"),
+                net_r=m.get("net_r"),
+                win_rate=m.get("win_rate"),
+                profit_factor=m.get("profit_factor"),
+                max_drawdown=m.get("max_drawdown"),
+                avg_r=m.get("avg_r"),
+                avg_win=m.get("avg_win"),
+                avg_loss=m.get("avg_loss"),
+                trade_count=m.get("trade_count"),
+                longest_losing_streak=m.get("longest_losing_streak"),
+                best_trade=m.get("best_trade"),
+                worst_trade=m.get("worst_trade"),
+            )
+        )
+    session.add(
+        ConfigSnapshot(
+            backtest_run_id=run.id,
+            payload={**asdict(config), "engine_version": ENGINE_VERSION},
+        )
+    )
+    return run.id
+
+
 def insert_db_row(
     config: RunConfig,
     result: BacktestResult,
@@ -329,10 +412,9 @@ def insert_db_row(
     strategy_version_id: int,
     db_url: str | None = None,
 ) -> int:
-    """Insert a BacktestRun + associated trades/equity/metrics/config rows.
-
-    Returns the new run id. Uses the same DB the FastAPI app does.
-    """
+    """Insert a BacktestRun + child rows. Standalone wrapper around
+    `persist_run_to_session` that opens its own session against the
+    configured DB. Used by the CLI runner."""
     if db_url is None:
         engine = make_engine()
     else:
@@ -340,74 +422,11 @@ def insert_db_row(
     create_all(engine)
     factory = make_session_factory(engine)
     with factory() as session:
-        run = BacktestRun(
-            strategy_version_id=strategy_version_id,
-            name=f"{config.strategy_name} {config.start}..{config.end}",
-            symbol=config.symbol,
-            timeframe=config.timeframe,
-            start_ts=_iso_to_dt(config.start),
-            end_ts=_iso_to_dt(config.end),
-            import_source=str(out_dir),
-            source="engine",
-            status="complete",
-        )
-        session.add(run)
-        session.flush()  # populate run.id
-
-        for t in result.trades:
-            session.add(
-                TradeModel(
-                    backtest_run_id=run.id,
-                    entry_ts=_strip_tz(t.entry_ts),
-                    exit_ts=_strip_tz(t.exit_ts),
-                    symbol=config.symbol,
-                    side=t.side.value,
-                    entry_price=t.entry_price,
-                    exit_price=t.exit_price,
-                    stop_price=t.stop_price,
-                    target_price=t.target_price,
-                    size=float(t.qty),
-                    pnl=t.pnl,
-                    r_multiple=t.r_multiple,
-                    exit_reason=t.exit_reason,
-                )
-            )
-        for p in result.equity_points:
-            session.add(
-                EquityPointModel(
-                    backtest_run_id=run.id,
-                    ts=_strip_tz(p.ts),
-                    equity=p.equity,
-                    drawdown=p.drawdown,
-                )
-            )
-        if result.metrics:
-            m = result.metrics
-            session.add(
-                RunMetrics(
-                    backtest_run_id=run.id,
-                    net_pnl=m.get("net_pnl"),
-                    net_r=m.get("net_r"),
-                    win_rate=m.get("win_rate"),
-                    profit_factor=m.get("profit_factor"),
-                    max_drawdown=m.get("max_drawdown"),
-                    avg_r=m.get("avg_r"),
-                    avg_win=m.get("avg_win"),
-                    avg_loss=m.get("avg_loss"),
-                    trade_count=m.get("trade_count"),
-                    longest_losing_streak=m.get("longest_losing_streak"),
-                    best_trade=m.get("best_trade"),
-                    worst_trade=m.get("worst_trade"),
-                )
-            )
-        session.add(
-            ConfigSnapshot(
-                backtest_run_id=run.id,
-                payload={**asdict(config), "engine_version": ENGINE_VERSION},
-            )
+        run_id = persist_run_to_session(
+            session, config, result, out_dir, strategy_version_id
         )
         session.commit()
-        return run.id
+        return run_id
 
 
 def _iso_to_dt(value: str) -> dt.datetime:
