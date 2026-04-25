@@ -22,6 +22,11 @@ from app.schemas.prop_firm import (
     PropFirmPresetRead,
     PropFirmResultRead,
 )
+from app.schemas.prop_simulator import (
+    SimulationRunDetail,
+    SimulationRunListRow,
+    SimulationRunRequest,
+)
 from app.schemas.results import (
     BacktestRunRead,
     BacktestRunRequest,
@@ -72,6 +77,9 @@ __all__ = [
     "PropFirmDayRow",
     "PropFirmPresetRead",
     "PropFirmResultRead",
+    "SimulationRunDetail",
+    "SimulationRunListRow",
+    "SimulationRunRequest",
     "RunMetricsRead",
     "StrategyCreate",
     "StrategyRead",

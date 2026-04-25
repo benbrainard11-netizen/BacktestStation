@@ -553,6 +553,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/prop-firm/simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Simulations */
+        get: operations["list_simulations_api_prop_firm_simulations_get"];
+        put?: never;
+        /**
+         * Create Simulation
+         * @description Run a Monte Carlo prop-firm simulation against one or more backtests.
+         */
+        post: operations["create_simulation_api_prop_firm_simulations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/prop-firm/simulations/{sim_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Simulation */
+        get: operations["get_simulation_api_prop_firm_simulations__sim_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies": {
         parameters: {
             query?: never;
@@ -877,6 +915,15 @@ export interface components {
             /** Version */
             version?: string | null;
         };
+        /** ConfidenceInterval */
+        ConfidenceInterval: {
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Value */
+            value: number;
+        };
         /** ConfigSnapshotRead */
         ConfigSnapshotRead: {
             /** Backtest Run Id */
@@ -892,6 +939,15 @@ export interface components {
             payload: {
                 [key: string]: unknown;
             };
+        };
+        /** DailyPnL */
+        DailyPnL: {
+            /** Date */
+            date: string;
+            /** Pnl */
+            pnl: number;
+            /** Trades */
+            trades: number;
         };
         /** DataQualityIssue */
         DataQualityIssue: {
@@ -1005,6 +1061,40 @@ export interface components {
              */
             updated: number;
         };
+        /** DistributionBucket */
+        DistributionBucket: {
+            /** Count */
+            count: number;
+            /** Range High */
+            range_high: number;
+            /** Range Low */
+            range_low: number;
+        };
+        /** DistributionStats */
+        DistributionStats: {
+            /** Iqr */
+            iqr: number;
+            /** Max */
+            max: number;
+            /** Mean */
+            mean: number;
+            /** Median */
+            median: number;
+            /** Min */
+            min: number;
+            /** P10 */
+            p10: number;
+            /** P25 */
+            p25: number;
+            /** P75 */
+            p75: number;
+            /** P90 */
+            p90: number;
+            /** Spread */
+            spread: number;
+            /** Std Dev */
+            std_dev: number;
+        };
         /** EquityPointRead */
         EquityPointRead: {
             /** Backtest Run Id */
@@ -1092,6 +1182,167 @@ export interface components {
             notes?: string | null;
             /** Variant Run Id */
             variant_run_id?: number | null;
+        };
+        /** FanBands */
+        FanBands: {
+            /** Median */
+            median: number[];
+            /** P10 */
+            p10: number[];
+            /** P25 */
+            p25: number[];
+            /** P75 */
+            p75: number[];
+            /** P90 */
+            p90: number[];
+            /** Starting Balance */
+            starting_balance: number;
+        };
+        /** FirmRuleProfile */
+        FirmRuleProfile: {
+            /** Account Name */
+            account_name: string;
+            /** Account Size */
+            account_size: number;
+            /**
+             * Activation Fee
+             * @default 0
+             */
+            activation_fee: number;
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+            /**
+             * Consistency Rule Enabled
+             * @default false
+             */
+            consistency_rule_enabled: boolean;
+            /**
+             * Consistency Rule Type
+             * @default none
+             * @enum {string}
+             */
+            consistency_rule_type: "best_day_pct_of_total" | "min_trading_days" | "max_daily_swing" | "none";
+            /** Consistency Rule Value */
+            consistency_rule_value?: number | null;
+            /**
+             * Copy Trading Allowed
+             * @default true
+             */
+            copy_trading_allowed: boolean;
+            /** Daily Loss Limit */
+            daily_loss_limit: number | null;
+            /**
+             * Eval Fee
+             * @default 0
+             */
+            eval_fee: number;
+            /** Firm Name */
+            firm_name: string;
+            /** First Payout Rules */
+            first_payout_rules?: string | null;
+            /** Max Contracts */
+            max_contracts?: number | null;
+            /** Max Drawdown */
+            max_drawdown: number;
+            /** Maximum Trading Days */
+            maximum_trading_days?: number | null;
+            /** Minimum Trading Days */
+            minimum_trading_days?: number | null;
+            /**
+             * Monthly Fee
+             * @default 0
+             */
+            monthly_fee: number;
+            /**
+             * News Trading Allowed
+             * @default true
+             */
+            news_trading_allowed: boolean;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Overnight Holding Allowed
+             * @default false
+             */
+            overnight_holding_allowed: boolean;
+            /** Payout Cap */
+            payout_cap?: number | null;
+            /** Payout Min Days */
+            payout_min_days?: number | null;
+            /** Payout Min Profit */
+            payout_min_profit?: number | null;
+            /**
+             * Payout Split
+             * @default 0.9
+             */
+            payout_split: number;
+            /**
+             * Phase Type
+             * @default evaluation
+             * @enum {string}
+             */
+            phase_type: "evaluation" | "funded" | "payout";
+            /** Profile Id */
+            profile_id: string;
+            /** Profit Target */
+            profit_target: number | null;
+            /** Recurring Payout Rules */
+            recurring_payout_rules?: string | null;
+            /** Refund Rules */
+            refund_rules?: string | null;
+            /**
+             * Reset Fee
+             * @default 0
+             */
+            reset_fee: number;
+            /** Rule Last Verified At */
+            rule_last_verified_at?: string | null;
+            /** Rule Source Url */
+            rule_source_url?: string | null;
+            /**
+             * Scaling Plan Enabled
+             * @default false
+             */
+            scaling_plan_enabled: boolean;
+            /** Scaling Plan Rules */
+            scaling_plan_rules?: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Trailing Drawdown Enabled
+             * @default false
+             */
+            trailing_drawdown_enabled: boolean;
+            /** Trailing Drawdown Stop Level */
+            trailing_drawdown_stop_level?: number | null;
+            /**
+             * Trailing Drawdown Type
+             * @default none
+             * @enum {string}
+             */
+            trailing_drawdown_type: "intraday" | "end_of_day" | "static" | "none";
+            /**
+             * Verification Status
+             * @default demo
+             * @enum {string}
+             */
+            verification_status: "verified" | "unverified" | "demo";
+            /**
+             * Version
+             * @default 1
+             */
+            version: number;
+            /**
+             * Weekend Holding Allowed
+             * @default false
+             */
+            weekend_holding_allowed: boolean;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1265,6 +1516,52 @@ export interface components {
             /** Tags */
             tags?: string[] | null;
         };
+        /** OutcomeDistribution */
+        OutcomeDistribution: {
+            /** Buckets */
+            buckets: components["schemas"]["DistributionBucket"][];
+            /**
+             * Metric
+             * @enum {string}
+             */
+            metric: "final_balance" | "ev_after_fees" | "max_drawdown";
+            stats: components["schemas"]["DistributionStats"];
+        };
+        /** PoolBacktestSummary */
+        PoolBacktestSummary: {
+            /** Backtest Id */
+            backtest_id: number;
+            /** Commission Model */
+            commission_model: string;
+            /** Confidence Score */
+            confidence_score: number;
+            /** Data Source */
+            data_source: string;
+            /** Day Count */
+            day_count: number;
+            /** End Date */
+            end_date: string;
+            /** Initial Balance */
+            initial_balance: number;
+            /** Market */
+            market: string;
+            /** Slippage Model */
+            slippage_model: string;
+            /** Start Date */
+            start_date: string;
+            /** Strategy Id */
+            strategy_id: number;
+            /** Strategy Name */
+            strategy_name: string;
+            /** Strategy Version */
+            strategy_version: string;
+            /** Symbol */
+            symbol: string;
+            /** Timeframe */
+            timeframe: string;
+            /** Trade Count */
+            trade_count: number;
+        };
         /**
          * PromptGenerateRequest
          * @description POST /api/prompts/generate body.
@@ -1402,6 +1699,25 @@ export interface components {
             total_trades: number;
             worst_day: components["schemas"]["PropFirmDayRow"] | null;
         };
+        /** RiskSweepRow */
+        RiskSweepRow: {
+            /** Average Dd Usage Percent */
+            average_dd_usage_percent: number;
+            /** Avg Days To Pass */
+            avg_days_to_pass: number;
+            /** Ev After Fees */
+            ev_after_fees: number;
+            /** Fail Rate */
+            fail_rate: number;
+            /** Main Failure Reason */
+            main_failure_reason: ("daily_loss_limit" | "trailing_drawdown" | "max_drawdown" | "consistency_rule" | "payout_blocked" | "min_days_not_met" | "account_expired" | "max_trades_reached" | "other") | null;
+            /** Pass Rate */
+            pass_rate: number;
+            /** Payout Rate */
+            payout_rate: number;
+            /** Risk Per Trade */
+            risk_per_trade: number;
+        };
         /** RunMetricsRead */
         RunMetricsRead: {
             /** Avg Loss */
@@ -1432,6 +1748,365 @@ export interface components {
             win_rate: number | null;
             /** Worst Trade */
             worst_trade: number | null;
+        };
+        /** SelectedPath */
+        SelectedPath: {
+            /**
+             * Bucket
+             * @enum {string}
+             */
+            bucket: "best" | "worst" | "median" | "near_fail" | "near_pass";
+            /** Days */
+            days: number;
+            /** Ending Balance */
+            ending_balance: number;
+            /** Equity Curve */
+            equity_curve: number[];
+            /** Failure Reason */
+            failure_reason: ("daily_loss_limit" | "trailing_drawdown" | "max_drawdown" | "consistency_rule" | "payout_blocked" | "min_days_not_met" | "account_expired" | "max_trades_reached" | "other") | null;
+            /**
+             * Final Status
+             * @enum {string}
+             */
+            final_status: "passed" | "failed" | "payout_reached" | "expired";
+            /** Max Drawdown Usage Percent */
+            max_drawdown_usage_percent: number;
+            /** Sequence Number */
+            sequence_number: number;
+            /** Trades */
+            trades: number;
+        };
+        /** SimulationAggregatedStats */
+        SimulationAggregatedStats: {
+            average_days_to_pass: components["schemas"]["ConfidenceInterval"];
+            average_drawdown_usage: components["schemas"]["ConfidenceInterval"];
+            /** Average Fees Paid */
+            average_fees_paid: number;
+            /** Average Final Balance */
+            average_final_balance: number;
+            /** Average Max Drawdown */
+            average_max_drawdown: number;
+            /** Average Payout */
+            average_payout: number;
+            /** Average Trades To Pass */
+            average_trades_to_pass: number;
+            /** Consistency Failure Rate */
+            consistency_failure_rate: number;
+            /** Daily Loss Failure Rate */
+            daily_loss_failure_rate: number;
+            ev_after_fees_distribution: components["schemas"]["OutcomeDistribution"];
+            expected_value_after_fees: components["schemas"]["ConfidenceInterval"];
+            /** Expected Value Before Fees */
+            expected_value_before_fees: number;
+            fail_rate: components["schemas"]["ConfidenceInterval"];
+            final_balance_distribution: components["schemas"]["OutcomeDistribution"];
+            max_drawdown_distribution: components["schemas"]["OutcomeDistribution"];
+            /** Median Days To Pass */
+            median_days_to_pass: number;
+            /** Median Drawdown Usage */
+            median_drawdown_usage: number;
+            /** Median Final Balance */
+            median_final_balance: number;
+            /** Median Max Drawdown */
+            median_max_drawdown: number;
+            /** Median Payout */
+            median_payout: number;
+            /** Median Trades To Pass */
+            median_trades_to_pass: number;
+            /** Most Common Failure Reason */
+            most_common_failure_reason: ("daily_loss_limit" | "trailing_drawdown" | "max_drawdown" | "consistency_rule" | "payout_blocked" | "min_days_not_met" | "account_expired" | "max_trades_reached" | "other") | null;
+            /** P10 Final Balance */
+            p10_final_balance: number;
+            /** P25 Final Balance */
+            p25_final_balance: number;
+            /** P75 Final Balance */
+            p75_final_balance: number;
+            /** P90 Final Balance */
+            p90_final_balance: number;
+            pass_rate: components["schemas"]["ConfidenceInterval"];
+            /** Payout Blocked Rate */
+            payout_blocked_rate: number;
+            payout_rate: components["schemas"]["ConfidenceInterval"];
+            /** Profit Target Hit Rate */
+            profit_target_hit_rate: number;
+            /** Std Dev Ev After Fees */
+            std_dev_ev_after_fees: number;
+            /** Std Dev Final Balance */
+            std_dev_final_balance: number;
+            /** Trailing Drawdown Failure Rate */
+            trailing_drawdown_failure_rate: number;
+            /** Worst Max Drawdown */
+            worst_max_drawdown: number;
+        };
+        /**
+         * SimulationRunConfigOut
+         * @description Echo of the request shape for the run-detail page's config panel.
+         */
+        SimulationRunConfigOut: {
+            /** Account Size */
+            account_size: number;
+            /** Commission Override */
+            commission_override: number | null;
+            /** Copy Trade Accounts */
+            copy_trade_accounts: number;
+            /** Created At */
+            created_at: string;
+            /** Daily Loss Stop */
+            daily_loss_stop: number | null;
+            /** Daily Profit Stop */
+            daily_profit_stop: number | null;
+            /** Daily Trade Limit */
+            daily_trade_limit: number | null;
+            /** Fees Enabled */
+            fees_enabled: boolean;
+            /** Firm Profile Id */
+            firm_profile_id: string;
+            /** Max Days Per Sequence */
+            max_days_per_sequence: number | null;
+            /** Max Losses Per Day */
+            max_losses_per_day: number | null;
+            /** Max Trades Per Sequence */
+            max_trades_per_sequence: number | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes: string;
+            /** Payout Rules Enabled */
+            payout_rules_enabled: boolean;
+            /**
+             * Phase Mode
+             * @enum {string}
+             */
+            phase_mode: "eval_only" | "funded_only" | "eval_to_payout";
+            /** Random Seed */
+            random_seed: number;
+            /** Reduce Risk After Loss */
+            reduce_risk_after_loss: boolean;
+            /**
+             * Risk Mode
+             * @enum {string}
+             */
+            risk_mode: "fixed_dollar" | "fixed_contracts" | "percent_balance" | "risk_sweep";
+            /** Risk Per Trade */
+            risk_per_trade: number | null;
+            /** Risk Sweep Values */
+            risk_sweep_values: number[] | null;
+            /**
+             * Sampling Mode
+             * @enum {string}
+             */
+            sampling_mode: "trade_bootstrap" | "day_bootstrap" | "regime_bootstrap";
+            /** Selected Backtest Ids */
+            selected_backtest_ids: number[];
+            /** Selected Strategy Ids */
+            selected_strategy_ids: number[];
+            /** Simulation Count */
+            simulation_count: number;
+            /** Simulation Id */
+            simulation_id: string;
+            /** Slippage Override */
+            slippage_override: number | null;
+            /** Starting Balance */
+            starting_balance: number;
+            /** Use Replacement */
+            use_replacement: boolean;
+            /** Walkaway After Winner */
+            walkaway_after_winner: boolean;
+        };
+        /**
+         * SimulationRunDetail
+         * @description Full run-detail payload consumed by /prop-simulator/runs/[id].
+         */
+        SimulationRunDetail: {
+            aggregated: components["schemas"]["SimulationAggregatedStats"];
+            confidence: components["schemas"]["SimulatorConfidenceScore"];
+            config: components["schemas"]["SimulationRunConfigOut"];
+            /** Daily Pnl */
+            daily_pnl: components["schemas"]["DailyPnL"][];
+            fan_bands: components["schemas"]["FanBands"];
+            firm: components["schemas"]["FirmRuleProfile"];
+            /** Pool Backtests */
+            pool_backtests: components["schemas"]["PoolBacktestSummary"][];
+            /** Risk Sweep */
+            risk_sweep?: components["schemas"]["RiskSweepRow"][] | null;
+            /** Rule Violation Counts */
+            rule_violation_counts: {
+                [key: string]: number;
+            };
+            /** Selected Paths */
+            selected_paths: components["schemas"]["SelectedPath"][];
+        };
+        /** SimulationRunListRow */
+        SimulationRunListRow: {
+            /** Account Size */
+            account_size: number;
+            /** Backtests Used */
+            backtests_used: number;
+            /** Confidence */
+            confidence: number;
+            /** Created At */
+            created_at: string;
+            /** Ev After Fees */
+            ev_after_fees: number;
+            /** Fail Rate */
+            fail_rate: number;
+            /** Firm Name */
+            firm_name: string;
+            /** Name */
+            name: string;
+            /** Pass Rate */
+            pass_rate: number;
+            /** Payout Rate */
+            payout_rate: number;
+            /** Risk Label */
+            risk_label: string;
+            /**
+             * Sampling Mode
+             * @enum {string}
+             */
+            sampling_mode: "trade_bootstrap" | "day_bootstrap" | "regime_bootstrap";
+            /** Simulation Count */
+            simulation_count: number;
+            /** Simulation Id */
+            simulation_id: string;
+            /** Strategy Name */
+            strategy_name: string;
+        };
+        /**
+         * SimulationRunRequest
+         * @description POST /api/prop-firm/simulations body.
+         */
+        SimulationRunRequest: {
+            /** Account Size */
+            account_size: number;
+            /** Commission Override */
+            commission_override?: number | null;
+            /**
+             * Copy Trade Accounts
+             * @default 1
+             */
+            copy_trade_accounts: number;
+            /** Daily Loss Stop */
+            daily_loss_stop?: number | null;
+            /** Daily Profit Stop */
+            daily_profit_stop?: number | null;
+            /** Daily Trade Limit */
+            daily_trade_limit?: number | null;
+            /**
+             * Fees Enabled
+             * @default true
+             */
+            fees_enabled: boolean;
+            /** Firm Profile Id */
+            firm_profile_id: string;
+            /** Max Days Per Sequence */
+            max_days_per_sequence?: number | null;
+            /** Max Losses Per Day */
+            max_losses_per_day?: number | null;
+            /** Max Trades Per Sequence */
+            max_trades_per_sequence?: number | null;
+            /** Name */
+            name: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Payout Rules Enabled
+             * @default true
+             */
+            payout_rules_enabled: boolean;
+            /**
+             * Phase Mode
+             * @default eval_only
+             * @enum {string}
+             */
+            phase_mode: "eval_only" | "funded_only" | "eval_to_payout";
+            /**
+             * Random Seed
+             * @default 42
+             */
+            random_seed: number;
+            /**
+             * Reduce Risk After Loss
+             * @default false
+             */
+            reduce_risk_after_loss: boolean;
+            /**
+             * Risk Mode
+             * @default fixed_dollar
+             * @enum {string}
+             */
+            risk_mode: "fixed_dollar" | "fixed_contracts" | "percent_balance" | "risk_sweep";
+            /**
+             * Risk Per Trade
+             * @default 200
+             */
+            risk_per_trade: number | null;
+            /** Risk Sweep Values */
+            risk_sweep_values?: number[] | null;
+            /**
+             * Sampling Mode
+             * @default trade_bootstrap
+             * @enum {string}
+             */
+            sampling_mode: "trade_bootstrap" | "day_bootstrap" | "regime_bootstrap";
+            /** Selected Backtest Ids */
+            selected_backtest_ids: number[];
+            /**
+             * Simulation Count
+             * @default 500
+             */
+            simulation_count: number;
+            /** Slippage Override */
+            slippage_override?: number | null;
+            /** Starting Balance */
+            starting_balance: number;
+            /**
+             * Use Replacement
+             * @default true
+             */
+            use_replacement: boolean;
+            /**
+             * Walkaway After Winner
+             * @default false
+             */
+            walkaway_after_winner: boolean;
+        };
+        /** SimulatorConfidenceScore */
+        SimulatorConfidenceScore: {
+            /** Convergence Stability */
+            convergence_stability: number;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "low" | "moderate" | "high" | "very_high";
+            /** Overall */
+            overall: number;
+            /** Sequence Count */
+            sequence_count: number;
+            subscores: components["schemas"]["SimulatorConfidenceSubscores"];
+            /** Weaknesses */
+            weaknesses: string[];
+        };
+        /** SimulatorConfidenceSubscores */
+        SimulatorConfidenceSubscores: {
+            /** Backtest Input Quality */
+            backtest_input_quality: number;
+            /** Day Pool Quality */
+            day_pool_quality: number;
+            /** Firm Rule Accuracy */
+            firm_rule_accuracy: number;
+            /** Monte Carlo Stability */
+            monte_carlo_stability: number;
+            /** Risk Model Accuracy */
+            risk_model_accuracy: number;
+            /** Sampling Method Quality */
+            sampling_method_quality: number;
+            /** Trade Pool Quality */
+            trade_pool_quality: number;
         };
         /**
          * StrategyCreate
@@ -2663,6 +3338,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PropFirmPresetRead"][];
+                };
+            };
+        };
+    };
+    list_simulations_api_prop_firm_simulations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationRunListRow"][];
+                };
+            };
+        };
+    };
+    create_simulation_api_prop_firm_simulations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulationRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_simulation_api_prop_firm_simulations__sim_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sim_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

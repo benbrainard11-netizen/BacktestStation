@@ -475,6 +475,29 @@
         "title": "Body_import_backtest_api_import_backtest_post",
         "type": "object"
       },
+      "ConfidenceInterval": {
+        "properties": {
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "low",
+          "high"
+        ],
+        "title": "ConfidenceInterval",
+        "type": "object"
+      },
       "ConfigSnapshotRead": {
         "properties": {
           "backtest_run_id": {
@@ -503,6 +526,29 @@
           "created_at"
         ],
         "title": "ConfigSnapshotRead",
+        "type": "object"
+      },
+      "DailyPnL": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "pnl": {
+            "title": "Pnl",
+            "type": "number"
+          },
+          "trades": {
+            "title": "Trades",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "pnl",
+          "trades"
+        ],
+        "title": "DailyPnL",
         "type": "object"
       },
       "DataQualityIssue": {
@@ -783,6 +829,92 @@
           "skipped"
         ],
         "title": "DatasetScanResult",
+        "type": "object"
+      },
+      "DistributionBucket": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "range_high": {
+            "title": "Range High",
+            "type": "number"
+          },
+          "range_low": {
+            "title": "Range Low",
+            "type": "number"
+          }
+        },
+        "required": [
+          "range_low",
+          "range_high",
+          "count"
+        ],
+        "title": "DistributionBucket",
+        "type": "object"
+      },
+      "DistributionStats": {
+        "properties": {
+          "iqr": {
+            "title": "Iqr",
+            "type": "number"
+          },
+          "max": {
+            "title": "Max",
+            "type": "number"
+          },
+          "mean": {
+            "title": "Mean",
+            "type": "number"
+          },
+          "median": {
+            "title": "Median",
+            "type": "number"
+          },
+          "min": {
+            "title": "Min",
+            "type": "number"
+          },
+          "p10": {
+            "title": "P10",
+            "type": "number"
+          },
+          "p25": {
+            "title": "P25",
+            "type": "number"
+          },
+          "p75": {
+            "title": "P75",
+            "type": "number"
+          },
+          "p90": {
+            "title": "P90",
+            "type": "number"
+          },
+          "spread": {
+            "title": "Spread",
+            "type": "number"
+          },
+          "std_dev": {
+            "title": "Std Dev",
+            "type": "number"
+          }
+        },
+        "required": [
+          "mean",
+          "median",
+          "std_dev",
+          "min",
+          "max",
+          "p10",
+          "p25",
+          "p75",
+          "p90",
+          "iqr",
+          "spread"
+        ],
+        "title": "DistributionStats",
         "type": "object"
       },
       "EquityPointRead": {
@@ -1076,6 +1208,384 @@
           }
         },
         "title": "ExperimentUpdate",
+        "type": "object"
+      },
+      "FanBands": {
+        "properties": {
+          "median": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Median",
+            "type": "array"
+          },
+          "p10": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P10",
+            "type": "array"
+          },
+          "p25": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P25",
+            "type": "array"
+          },
+          "p75": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P75",
+            "type": "array"
+          },
+          "p90": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P90",
+            "type": "array"
+          },
+          "starting_balance": {
+            "title": "Starting Balance",
+            "type": "number"
+          }
+        },
+        "required": [
+          "starting_balance",
+          "median",
+          "p10",
+          "p25",
+          "p75",
+          "p90"
+        ],
+        "title": "FanBands",
+        "type": "object"
+      },
+      "FirmRuleProfile": {
+        "properties": {
+          "account_name": {
+            "title": "Account Name",
+            "type": "string"
+          },
+          "account_size": {
+            "title": "Account Size",
+            "type": "number"
+          },
+          "activation_fee": {
+            "default": 0.0,
+            "title": "Activation Fee",
+            "type": "number"
+          },
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "consistency_rule_enabled": {
+            "default": false,
+            "title": "Consistency Rule Enabled",
+            "type": "boolean"
+          },
+          "consistency_rule_type": {
+            "default": "none",
+            "enum": [
+              "best_day_pct_of_total",
+              "min_trading_days",
+              "max_daily_swing",
+              "none"
+            ],
+            "title": "Consistency Rule Type",
+            "type": "string"
+          },
+          "consistency_rule_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Rule Value"
+          },
+          "copy_trading_allowed": {
+            "default": true,
+            "title": "Copy Trading Allowed",
+            "type": "boolean"
+          },
+          "daily_loss_limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Limit"
+          },
+          "eval_fee": {
+            "default": 0.0,
+            "title": "Eval Fee",
+            "type": "number"
+          },
+          "firm_name": {
+            "title": "Firm Name",
+            "type": "string"
+          },
+          "first_payout_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Payout Rules"
+          },
+          "max_contracts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Contracts"
+          },
+          "max_drawdown": {
+            "title": "Max Drawdown",
+            "type": "number"
+          },
+          "maximum_trading_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Trading Days"
+          },
+          "minimum_trading_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Trading Days"
+          },
+          "monthly_fee": {
+            "default": 0.0,
+            "title": "Monthly Fee",
+            "type": "number"
+          },
+          "news_trading_allowed": {
+            "default": true,
+            "title": "News Trading Allowed",
+            "type": "boolean"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "overnight_holding_allowed": {
+            "default": false,
+            "title": "Overnight Holding Allowed",
+            "type": "boolean"
+          },
+          "payout_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Cap"
+          },
+          "payout_min_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Days"
+          },
+          "payout_min_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Profit"
+          },
+          "payout_split": {
+            "default": 0.9,
+            "title": "Payout Split",
+            "type": "number"
+          },
+          "phase_type": {
+            "default": "evaluation",
+            "enum": [
+              "evaluation",
+              "funded",
+              "payout"
+            ],
+            "title": "Phase Type",
+            "type": "string"
+          },
+          "profile_id": {
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "profit_target": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit Target"
+          },
+          "recurring_payout_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurring Payout Rules"
+          },
+          "refund_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Rules"
+          },
+          "reset_fee": {
+            "default": 0.0,
+            "title": "Reset Fee",
+            "type": "number"
+          },
+          "rule_last_verified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Last Verified At"
+          },
+          "rule_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Source Url"
+          },
+          "scaling_plan_enabled": {
+            "default": false,
+            "title": "Scaling Plan Enabled",
+            "type": "boolean"
+          },
+          "scaling_plan_rules": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Scaling Plan Rules",
+            "type": "array"
+          },
+          "trailing_drawdown_enabled": {
+            "default": false,
+            "title": "Trailing Drawdown Enabled",
+            "type": "boolean"
+          },
+          "trailing_drawdown_stop_level": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trailing Drawdown Stop Level"
+          },
+          "trailing_drawdown_type": {
+            "default": "none",
+            "enum": [
+              "intraday",
+              "end_of_day",
+              "static",
+              "none"
+            ],
+            "title": "Trailing Drawdown Type",
+            "type": "string"
+          },
+          "verification_status": {
+            "default": "demo",
+            "enum": [
+              "verified",
+              "unverified",
+              "demo"
+            ],
+            "title": "Verification Status",
+            "type": "string"
+          },
+          "version": {
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "weekend_holding_allowed": {
+            "default": false,
+            "title": "Weekend Holding Allowed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "profile_id",
+          "firm_name",
+          "account_name",
+          "account_size",
+          "profit_target",
+          "max_drawdown",
+          "daily_loss_limit"
+        ],
+        "title": "FirmRuleProfile",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1642,6 +2152,124 @@
         "title": "NoteUpdate",
         "type": "object"
       },
+      "OutcomeDistribution": {
+        "properties": {
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/DistributionBucket"
+            },
+            "title": "Buckets",
+            "type": "array"
+          },
+          "metric": {
+            "enum": [
+              "final_balance",
+              "ev_after_fees",
+              "max_drawdown"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/DistributionStats"
+          }
+        },
+        "required": [
+          "metric",
+          "stats",
+          "buckets"
+        ],
+        "title": "OutcomeDistribution",
+        "type": "object"
+      },
+      "PoolBacktestSummary": {
+        "properties": {
+          "backtest_id": {
+            "title": "Backtest Id",
+            "type": "integer"
+          },
+          "commission_model": {
+            "title": "Commission Model",
+            "type": "string"
+          },
+          "confidence_score": {
+            "title": "Confidence Score",
+            "type": "number"
+          },
+          "data_source": {
+            "title": "Data Source",
+            "type": "string"
+          },
+          "day_count": {
+            "title": "Day Count",
+            "type": "integer"
+          },
+          "end_date": {
+            "title": "End Date",
+            "type": "string"
+          },
+          "initial_balance": {
+            "title": "Initial Balance",
+            "type": "number"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "slippage_model": {
+            "title": "Slippage Model",
+            "type": "string"
+          },
+          "start_date": {
+            "title": "Start Date",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "integer"
+          },
+          "strategy_name": {
+            "title": "Strategy Name",
+            "type": "string"
+          },
+          "strategy_version": {
+            "title": "Strategy Version",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "timeframe": {
+            "title": "Timeframe",
+            "type": "string"
+          },
+          "trade_count": {
+            "title": "Trade Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "backtest_id",
+          "strategy_id",
+          "strategy_name",
+          "strategy_version",
+          "symbol",
+          "market",
+          "timeframe",
+          "start_date",
+          "end_date",
+          "data_source",
+          "commission_model",
+          "slippage_model",
+          "initial_balance",
+          "confidence_score",
+          "trade_count",
+          "day_count"
+        ],
+        "title": "PoolBacktestSummary",
+        "type": "object"
+      },
       "PromptGenerateRequest": {
         "additionalProperties": false,
         "description": "POST /api/prompts/generate body.",
@@ -2038,6 +2666,72 @@
         "title": "PropFirmResultRead",
         "type": "object"
       },
+      "RiskSweepRow": {
+        "properties": {
+          "average_dd_usage_percent": {
+            "title": "Average Dd Usage Percent",
+            "type": "number"
+          },
+          "avg_days_to_pass": {
+            "title": "Avg Days To Pass",
+            "type": "number"
+          },
+          "ev_after_fees": {
+            "title": "Ev After Fees",
+            "type": "number"
+          },
+          "fail_rate": {
+            "title": "Fail Rate",
+            "type": "number"
+          },
+          "main_failure_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "daily_loss_limit",
+                  "trailing_drawdown",
+                  "max_drawdown",
+                  "consistency_rule",
+                  "payout_blocked",
+                  "min_days_not_met",
+                  "account_expired",
+                  "max_trades_reached",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Failure Reason"
+          },
+          "pass_rate": {
+            "title": "Pass Rate",
+            "type": "number"
+          },
+          "payout_rate": {
+            "title": "Payout Rate",
+            "type": "number"
+          },
+          "risk_per_trade": {
+            "title": "Risk Per Trade",
+            "type": "number"
+          }
+        },
+        "required": [
+          "risk_per_trade",
+          "pass_rate",
+          "fail_rate",
+          "payout_rate",
+          "avg_days_to_pass",
+          "average_dd_usage_percent",
+          "ev_after_fees",
+          "main_failure_reason"
+        ],
+        "title": "RiskSweepRow",
+        "type": "object"
+      },
       "RunMetricsRead": {
         "properties": {
           "avg_loss": {
@@ -2198,6 +2892,1023 @@
           "worst_trade"
         ],
         "title": "RunMetricsRead",
+        "type": "object"
+      },
+      "SelectedPath": {
+        "properties": {
+          "bucket": {
+            "enum": [
+              "best",
+              "worst",
+              "median",
+              "near_fail",
+              "near_pass"
+            ],
+            "title": "Bucket",
+            "type": "string"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "ending_balance": {
+            "title": "Ending Balance",
+            "type": "number"
+          },
+          "equity_curve": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Equity Curve",
+            "type": "array"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "daily_loss_limit",
+                  "trailing_drawdown",
+                  "max_drawdown",
+                  "consistency_rule",
+                  "payout_blocked",
+                  "min_days_not_met",
+                  "account_expired",
+                  "max_trades_reached",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "final_status": {
+            "enum": [
+              "passed",
+              "failed",
+              "payout_reached",
+              "expired"
+            ],
+            "title": "Final Status",
+            "type": "string"
+          },
+          "max_drawdown_usage_percent": {
+            "title": "Max Drawdown Usage Percent",
+            "type": "number"
+          },
+          "sequence_number": {
+            "title": "Sequence Number",
+            "type": "integer"
+          },
+          "trades": {
+            "title": "Trades",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bucket",
+          "sequence_number",
+          "final_status",
+          "days",
+          "trades",
+          "ending_balance",
+          "max_drawdown_usage_percent",
+          "failure_reason",
+          "equity_curve"
+        ],
+        "title": "SelectedPath",
+        "type": "object"
+      },
+      "SimulationAggregatedStats": {
+        "properties": {
+          "average_days_to_pass": {
+            "$ref": "#/components/schemas/ConfidenceInterval"
+          },
+          "average_drawdown_usage": {
+            "$ref": "#/components/schemas/ConfidenceInterval"
+          },
+          "average_fees_paid": {
+            "title": "Average Fees Paid",
+            "type": "number"
+          },
+          "average_final_balance": {
+            "title": "Average Final Balance",
+            "type": "number"
+          },
+          "average_max_drawdown": {
+            "title": "Average Max Drawdown",
+            "type": "number"
+          },
+          "average_payout": {
+            "title": "Average Payout",
+            "type": "number"
+          },
+          "average_trades_to_pass": {
+            "title": "Average Trades To Pass",
+            "type": "number"
+          },
+          "consistency_failure_rate": {
+            "title": "Consistency Failure Rate",
+            "type": "number"
+          },
+          "daily_loss_failure_rate": {
+            "title": "Daily Loss Failure Rate",
+            "type": "number"
+          },
+          "ev_after_fees_distribution": {
+            "$ref": "#/components/schemas/OutcomeDistribution"
+          },
+          "expected_value_after_fees": {
+            "$ref": "#/components/schemas/ConfidenceInterval"
+          },
+          "expected_value_before_fees": {
+            "title": "Expected Value Before Fees",
+            "type": "number"
+          },
+          "fail_rate": {
+            "$ref": "#/components/schemas/ConfidenceInterval"
+          },
+          "final_balance_distribution": {
+            "$ref": "#/components/schemas/OutcomeDistribution"
+          },
+          "max_drawdown_distribution": {
+            "$ref": "#/components/schemas/OutcomeDistribution"
+          },
+          "median_days_to_pass": {
+            "title": "Median Days To Pass",
+            "type": "number"
+          },
+          "median_drawdown_usage": {
+            "title": "Median Drawdown Usage",
+            "type": "number"
+          },
+          "median_final_balance": {
+            "title": "Median Final Balance",
+            "type": "number"
+          },
+          "median_max_drawdown": {
+            "title": "Median Max Drawdown",
+            "type": "number"
+          },
+          "median_payout": {
+            "title": "Median Payout",
+            "type": "number"
+          },
+          "median_trades_to_pass": {
+            "title": "Median Trades To Pass",
+            "type": "number"
+          },
+          "most_common_failure_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "daily_loss_limit",
+                  "trailing_drawdown",
+                  "max_drawdown",
+                  "consistency_rule",
+                  "payout_blocked",
+                  "min_days_not_met",
+                  "account_expired",
+                  "max_trades_reached",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Most Common Failure Reason"
+          },
+          "p10_final_balance": {
+            "title": "P10 Final Balance",
+            "type": "number"
+          },
+          "p25_final_balance": {
+            "title": "P25 Final Balance",
+            "type": "number"
+          },
+          "p75_final_balance": {
+            "title": "P75 Final Balance",
+            "type": "number"
+          },
+          "p90_final_balance": {
+            "title": "P90 Final Balance",
+            "type": "number"
+          },
+          "pass_rate": {
+            "$ref": "#/components/schemas/ConfidenceInterval"
+          },
+          "payout_blocked_rate": {
+            "title": "Payout Blocked Rate",
+            "type": "number"
+          },
+          "payout_rate": {
+            "$ref": "#/components/schemas/ConfidenceInterval"
+          },
+          "profit_target_hit_rate": {
+            "title": "Profit Target Hit Rate",
+            "type": "number"
+          },
+          "std_dev_ev_after_fees": {
+            "title": "Std Dev Ev After Fees",
+            "type": "number"
+          },
+          "std_dev_final_balance": {
+            "title": "Std Dev Final Balance",
+            "type": "number"
+          },
+          "trailing_drawdown_failure_rate": {
+            "title": "Trailing Drawdown Failure Rate",
+            "type": "number"
+          },
+          "worst_max_drawdown": {
+            "title": "Worst Max Drawdown",
+            "type": "number"
+          }
+        },
+        "required": [
+          "pass_rate",
+          "fail_rate",
+          "payout_rate",
+          "average_final_balance",
+          "median_final_balance",
+          "std_dev_final_balance",
+          "p10_final_balance",
+          "p25_final_balance",
+          "p75_final_balance",
+          "p90_final_balance",
+          "average_days_to_pass",
+          "median_days_to_pass",
+          "average_trades_to_pass",
+          "median_trades_to_pass",
+          "average_max_drawdown",
+          "median_max_drawdown",
+          "worst_max_drawdown",
+          "average_drawdown_usage",
+          "median_drawdown_usage",
+          "average_payout",
+          "median_payout",
+          "expected_value_before_fees",
+          "expected_value_after_fees",
+          "std_dev_ev_after_fees",
+          "average_fees_paid",
+          "most_common_failure_reason",
+          "daily_loss_failure_rate",
+          "trailing_drawdown_failure_rate",
+          "consistency_failure_rate",
+          "profit_target_hit_rate",
+          "payout_blocked_rate",
+          "final_balance_distribution",
+          "ev_after_fees_distribution",
+          "max_drawdown_distribution"
+        ],
+        "title": "SimulationAggregatedStats",
+        "type": "object"
+      },
+      "SimulationRunConfigOut": {
+        "description": "Echo of the request shape for the run-detail page's config panel.",
+        "properties": {
+          "account_size": {
+            "title": "Account Size",
+            "type": "number"
+          },
+          "commission_override": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commission Override"
+          },
+          "copy_trade_accounts": {
+            "title": "Copy Trade Accounts",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "daily_loss_stop": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Stop"
+          },
+          "daily_profit_stop": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Profit Stop"
+          },
+          "daily_trade_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Trade Limit"
+          },
+          "fees_enabled": {
+            "title": "Fees Enabled",
+            "type": "boolean"
+          },
+          "firm_profile_id": {
+            "title": "Firm Profile Id",
+            "type": "string"
+          },
+          "max_days_per_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Days Per Sequence"
+          },
+          "max_losses_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Losses Per Day"
+          },
+          "max_trades_per_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Sequence"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "payout_rules_enabled": {
+            "title": "Payout Rules Enabled",
+            "type": "boolean"
+          },
+          "phase_mode": {
+            "enum": [
+              "eval_only",
+              "funded_only",
+              "eval_to_payout"
+            ],
+            "title": "Phase Mode",
+            "type": "string"
+          },
+          "random_seed": {
+            "title": "Random Seed",
+            "type": "integer"
+          },
+          "reduce_risk_after_loss": {
+            "title": "Reduce Risk After Loss",
+            "type": "boolean"
+          },
+          "risk_mode": {
+            "enum": [
+              "fixed_dollar",
+              "fixed_contracts",
+              "percent_balance",
+              "risk_sweep"
+            ],
+            "title": "Risk Mode",
+            "type": "string"
+          },
+          "risk_per_trade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Per Trade"
+          },
+          "risk_sweep_values": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Sweep Values"
+          },
+          "sampling_mode": {
+            "enum": [
+              "trade_bootstrap",
+              "day_bootstrap",
+              "regime_bootstrap"
+            ],
+            "title": "Sampling Mode",
+            "type": "string"
+          },
+          "selected_backtest_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Selected Backtest Ids",
+            "type": "array"
+          },
+          "selected_strategy_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Selected Strategy Ids",
+            "type": "array"
+          },
+          "simulation_count": {
+            "title": "Simulation Count",
+            "type": "integer"
+          },
+          "simulation_id": {
+            "title": "Simulation Id",
+            "type": "string"
+          },
+          "slippage_override": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slippage Override"
+          },
+          "starting_balance": {
+            "title": "Starting Balance",
+            "type": "number"
+          },
+          "use_replacement": {
+            "title": "Use Replacement",
+            "type": "boolean"
+          },
+          "walkaway_after_winner": {
+            "title": "Walkaway After Winner",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "simulation_id",
+          "name",
+          "created_at",
+          "selected_backtest_ids",
+          "selected_strategy_ids",
+          "firm_profile_id",
+          "account_size",
+          "starting_balance",
+          "phase_mode",
+          "sampling_mode",
+          "simulation_count",
+          "max_trades_per_sequence",
+          "max_days_per_sequence",
+          "use_replacement",
+          "random_seed",
+          "risk_mode",
+          "risk_per_trade",
+          "risk_sweep_values",
+          "commission_override",
+          "slippage_override",
+          "daily_trade_limit",
+          "daily_loss_stop",
+          "daily_profit_stop",
+          "walkaway_after_winner",
+          "reduce_risk_after_loss",
+          "max_losses_per_day",
+          "copy_trade_accounts",
+          "fees_enabled",
+          "payout_rules_enabled",
+          "notes"
+        ],
+        "title": "SimulationRunConfigOut",
+        "type": "object"
+      },
+      "SimulationRunDetail": {
+        "description": "Full run-detail payload consumed by /prop-simulator/runs/[id].",
+        "properties": {
+          "aggregated": {
+            "$ref": "#/components/schemas/SimulationAggregatedStats"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/SimulatorConfidenceScore"
+          },
+          "config": {
+            "$ref": "#/components/schemas/SimulationRunConfigOut"
+          },
+          "daily_pnl": {
+            "items": {
+              "$ref": "#/components/schemas/DailyPnL"
+            },
+            "title": "Daily Pnl",
+            "type": "array"
+          },
+          "fan_bands": {
+            "$ref": "#/components/schemas/FanBands"
+          },
+          "firm": {
+            "$ref": "#/components/schemas/FirmRuleProfile"
+          },
+          "pool_backtests": {
+            "items": {
+              "$ref": "#/components/schemas/PoolBacktestSummary"
+            },
+            "title": "Pool Backtests",
+            "type": "array"
+          },
+          "risk_sweep": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RiskSweepRow"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Sweep"
+          },
+          "rule_violation_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Rule Violation Counts",
+            "type": "object"
+          },
+          "selected_paths": {
+            "items": {
+              "$ref": "#/components/schemas/SelectedPath"
+            },
+            "title": "Selected Paths",
+            "type": "array"
+          }
+        },
+        "required": [
+          "config",
+          "firm",
+          "pool_backtests",
+          "aggregated",
+          "selected_paths",
+          "fan_bands",
+          "rule_violation_counts",
+          "confidence",
+          "daily_pnl"
+        ],
+        "title": "SimulationRunDetail",
+        "type": "object"
+      },
+      "SimulationRunListRow": {
+        "properties": {
+          "account_size": {
+            "title": "Account Size",
+            "type": "number"
+          },
+          "backtests_used": {
+            "title": "Backtests Used",
+            "type": "integer"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "ev_after_fees": {
+            "title": "Ev After Fees",
+            "type": "number"
+          },
+          "fail_rate": {
+            "title": "Fail Rate",
+            "type": "number"
+          },
+          "firm_name": {
+            "title": "Firm Name",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pass_rate": {
+            "title": "Pass Rate",
+            "type": "number"
+          },
+          "payout_rate": {
+            "title": "Payout Rate",
+            "type": "number"
+          },
+          "risk_label": {
+            "title": "Risk Label",
+            "type": "string"
+          },
+          "sampling_mode": {
+            "enum": [
+              "trade_bootstrap",
+              "day_bootstrap",
+              "regime_bootstrap"
+            ],
+            "title": "Sampling Mode",
+            "type": "string"
+          },
+          "simulation_count": {
+            "title": "Simulation Count",
+            "type": "integer"
+          },
+          "simulation_id": {
+            "title": "Simulation Id",
+            "type": "string"
+          },
+          "strategy_name": {
+            "title": "Strategy Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "simulation_id",
+          "name",
+          "strategy_name",
+          "backtests_used",
+          "firm_name",
+          "account_size",
+          "sampling_mode",
+          "simulation_count",
+          "risk_label",
+          "pass_rate",
+          "fail_rate",
+          "payout_rate",
+          "ev_after_fees",
+          "confidence",
+          "created_at"
+        ],
+        "title": "SimulationRunListRow",
+        "type": "object"
+      },
+      "SimulationRunRequest": {
+        "additionalProperties": false,
+        "description": "POST /api/prop-firm/simulations body.",
+        "properties": {
+          "account_size": {
+            "exclusiveMinimum": 0.0,
+            "title": "Account Size",
+            "type": "number"
+          },
+          "commission_override": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commission Override"
+          },
+          "copy_trade_accounts": {
+            "default": 1,
+            "title": "Copy Trade Accounts",
+            "type": "integer"
+          },
+          "daily_loss_stop": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Stop"
+          },
+          "daily_profit_stop": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Profit Stop"
+          },
+          "daily_trade_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Trade Limit"
+          },
+          "fees_enabled": {
+            "default": true,
+            "title": "Fees Enabled",
+            "type": "boolean"
+          },
+          "firm_profile_id": {
+            "minLength": 1,
+            "title": "Firm Profile Id",
+            "type": "string"
+          },
+          "max_days_per_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Days Per Sequence"
+          },
+          "max_losses_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Losses Per Day"
+          },
+          "max_trades_per_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Sequence"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "payout_rules_enabled": {
+            "default": true,
+            "title": "Payout Rules Enabled",
+            "type": "boolean"
+          },
+          "phase_mode": {
+            "default": "eval_only",
+            "enum": [
+              "eval_only",
+              "funded_only",
+              "eval_to_payout"
+            ],
+            "title": "Phase Mode",
+            "type": "string"
+          },
+          "random_seed": {
+            "default": 42,
+            "title": "Random Seed",
+            "type": "integer"
+          },
+          "reduce_risk_after_loss": {
+            "default": false,
+            "title": "Reduce Risk After Loss",
+            "type": "boolean"
+          },
+          "risk_mode": {
+            "default": "fixed_dollar",
+            "enum": [
+              "fixed_dollar",
+              "fixed_contracts",
+              "percent_balance",
+              "risk_sweep"
+            ],
+            "title": "Risk Mode",
+            "type": "string"
+          },
+          "risk_per_trade": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 200.0,
+            "title": "Risk Per Trade"
+          },
+          "risk_sweep_values": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Sweep Values"
+          },
+          "sampling_mode": {
+            "default": "trade_bootstrap",
+            "enum": [
+              "trade_bootstrap",
+              "day_bootstrap",
+              "regime_bootstrap"
+            ],
+            "title": "Sampling Mode",
+            "type": "string"
+          },
+          "selected_backtest_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "title": "Selected Backtest Ids",
+            "type": "array"
+          },
+          "simulation_count": {
+            "default": 500,
+            "maximum": 10000.0,
+            "minimum": 10.0,
+            "title": "Simulation Count",
+            "type": "integer"
+          },
+          "slippage_override": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slippage Override"
+          },
+          "starting_balance": {
+            "exclusiveMinimum": 0.0,
+            "title": "Starting Balance",
+            "type": "number"
+          },
+          "use_replacement": {
+            "default": true,
+            "title": "Use Replacement",
+            "type": "boolean"
+          },
+          "walkaway_after_winner": {
+            "default": false,
+            "title": "Walkaway After Winner",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "selected_backtest_ids",
+          "firm_profile_id",
+          "account_size",
+          "starting_balance"
+        ],
+        "title": "SimulationRunRequest",
+        "type": "object"
+      },
+      "SimulatorConfidenceScore": {
+        "properties": {
+          "convergence_stability": {
+            "title": "Convergence Stability",
+            "type": "number"
+          },
+          "label": {
+            "enum": [
+              "low",
+              "moderate",
+              "high",
+              "very_high"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "overall": {
+            "title": "Overall",
+            "type": "number"
+          },
+          "sequence_count": {
+            "title": "Sequence Count",
+            "type": "integer"
+          },
+          "subscores": {
+            "$ref": "#/components/schemas/SimulatorConfidenceSubscores"
+          },
+          "weaknesses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Weaknesses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "overall",
+          "label",
+          "subscores",
+          "weaknesses",
+          "sequence_count",
+          "convergence_stability"
+        ],
+        "title": "SimulatorConfidenceScore",
+        "type": "object"
+      },
+      "SimulatorConfidenceSubscores": {
+        "properties": {
+          "backtest_input_quality": {
+            "title": "Backtest Input Quality",
+            "type": "number"
+          },
+          "day_pool_quality": {
+            "title": "Day Pool Quality",
+            "type": "number"
+          },
+          "firm_rule_accuracy": {
+            "title": "Firm Rule Accuracy",
+            "type": "number"
+          },
+          "monte_carlo_stability": {
+            "title": "Monte Carlo Stability",
+            "type": "number"
+          },
+          "risk_model_accuracy": {
+            "title": "Risk Model Accuracy",
+            "type": "number"
+          },
+          "sampling_method_quality": {
+            "title": "Sampling Method Quality",
+            "type": "number"
+          },
+          "trade_pool_quality": {
+            "title": "Trade Pool Quality",
+            "type": "number"
+          }
+        },
+        "required": [
+          "monte_carlo_stability",
+          "trade_pool_quality",
+          "day_pool_quality",
+          "firm_rule_accuracy",
+          "risk_model_accuracy",
+          "sampling_method_quality",
+          "backtest_input_quality"
+        ],
+        "title": "SimulatorConfidenceSubscores",
         "type": "object"
       },
       "StrategyCreate": {
@@ -4356,6 +6067,113 @@
           }
         },
         "summary": "List Presets",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
+    "/api/prop-firm/simulations": {
+      "get": {
+        "operationId": "list_simulations_api_prop_firm_simulations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SimulationRunListRow"
+                  },
+                  "title": "Response List Simulations Api Prop Firm Simulations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Simulations",
+        "tags": [
+          "prop-firm"
+        ]
+      },
+      "post": {
+        "description": "Run a Monte Carlo prop-firm simulation against one or more backtests.",
+        "operationId": "create_simulation_api_prop_firm_simulations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Simulation",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
+    "/api/prop-firm/simulations/{sim_id}": {
+      "get": {
+        "operationId": "get_simulation_api_prop_firm_simulations__sim_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sim_id",
+            "required": true,
+            "schema": {
+              "title": "Sim Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Simulation",
         "tags": [
           "prop-firm"
         ]

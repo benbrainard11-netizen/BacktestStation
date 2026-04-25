@@ -15,8 +15,14 @@ import RiskSweepTable from "@/components/prop-simulator/runs/RiskSweepTable";
 import RuleViolationPanel from "@/components/prop-simulator/runs/RuleViolationPanel";
 import RunSummaryPanel from "@/components/prop-simulator/runs/RunSummaryPanel";
 import SelectedPathsPanel from "@/components/prop-simulator/runs/SelectedPathsPanel";
-import { findMockRunDetail } from "@/lib/prop-simulator/mocks";
-import type { SimulatorConfidenceScore } from "@/lib/prop-simulator/types";
+import { ApiError, apiGet } from "@/lib/api/client";
+import type { components } from "@/lib/api/generated";
+import type {
+  SimulationRunDetail,
+  SimulatorConfidenceScore,
+} from "@/lib/prop-simulator/types";
+
+type ApiSimulationRunDetail = components["schemas"]["SimulationRunDetail"];
 
 interface RunDetailPageProps {
   params: Promise<{ id: string }>;
@@ -35,10 +41,19 @@ function confidenceRows(confidence: SimulatorConfidenceScore) {
   ];
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
   const { id } = await params;
-  const detail = findMockRunDetail(id);
-  if (!detail) notFound();
+  const apiDetail = await apiGet<ApiSimulationRunDetail>(
+    `/api/prop-firm/simulations/${id}`,
+  ).catch((err) => {
+    if (err instanceof ApiError && err.status === 404) notFound();
+    throw err;
+  });
+  // Generated API shape is structurally compatible with the local
+  // SimulationRunDetail type.
+  const detail = apiDetail as unknown as SimulationRunDetail;
 
   const { config, firm, pool_backtests, aggregated, risk_sweep, selected_paths, rule_violation_counts, confidence } = detail;
 

@@ -9,7 +9,9 @@ import {
   MOCK_POOL_BACKTESTS,
 } from "@/lib/prop-simulator/mocks";
 import type {
+  FirmRuleProfile,
   PhaseMode,
+  PoolBacktestSummary,
   RiskMode,
   SamplingMode,
 } from "@/lib/prop-simulator/types";
@@ -47,33 +49,55 @@ const STEPS: StepDef[] = [
   { key: "review", label: "Review + run" },
 ];
 
-const INITIAL_STATE: WorkflowState = {
-  selectedBacktestIds: [MOCK_POOL_BACKTESTS[0]?.backtest_id].filter(
-    (v): v is number => typeof v === "number",
-  ),
-  firmProfileId: MOCK_FIRMS[0]?.profile_id ?? null,
-  phaseMode: "eval_to_payout",
-  samplingMode: "day_bootstrap",
-  simulationCount: 10_000,
-  useReplacement: true,
-  randomSeed: 42,
-  riskMode: "fixed_dollar",
-  riskPerTrade: 100,
-  riskSweepValues: [100, 150, 200, 250, 300],
-  rules: {
-    dailyLossStop: 800,
-    dailyProfitStop: null,
-    dailyTradeLimit: null,
-    maxLossesPerDay: 3,
-    reduceRiskAfterLoss: false,
-    walkawayAfterWinner: false,
-    feesEnabled: true,
-    payoutRulesEnabled: true,
-  },
-};
+function buildInitialState(
+  pool: PoolBacktestSummary[],
+  firms: FirmRuleProfile[],
+): WorkflowState {
+  return {
+    selectedBacktestIds: [pool[0]?.backtest_id].filter(
+      (v): v is number => typeof v === "number",
+    ),
+    firmProfileId: firms[0]?.profile_id ?? null,
+    phaseMode: "eval_to_payout",
+    samplingMode: "day_bootstrap",
+    simulationCount: 500,
+    useReplacement: true,
+    randomSeed: 42,
+    riskMode: "fixed_dollar",
+    riskPerTrade: 200,
+    riskSweepValues: [100, 150, 200, 250, 300],
+    rules: {
+      dailyLossStop: 800,
+      dailyProfitStop: null,
+      dailyTradeLimit: null,
+      maxLossesPerDay: 3,
+      reduceRiskAfterLoss: false,
+      walkawayAfterWinner: false,
+      feesEnabled: true,
+      payoutRulesEnabled: true,
+    },
+  };
+}
 
-export default function NewSimulationWorkflow() {
-  const [state, setState] = useState<WorkflowState>(INITIAL_STATE);
+interface NewSimulationWorkflowProps {
+  /** Real backtest pool from /api/backtests (transformed to
+   * PoolBacktestSummary). When empty, falls back to MOCK_POOL_BACKTESTS
+   * so the wizard's UI still demos. */
+  pool?: PoolBacktestSummary[];
+  /** Real firm presets from /api/prop-firm/presets (transformed to
+   * FirmRuleProfile). When empty, falls back to MOCK_FIRMS. */
+  firms?: FirmRuleProfile[];
+}
+
+export default function NewSimulationWorkflow({
+  pool,
+  firms,
+}: NewSimulationWorkflowProps = {}) {
+  const effectivePool = pool && pool.length > 0 ? pool : MOCK_POOL_BACKTESTS;
+  const effectiveFirms = firms && firms.length > 0 ? firms : MOCK_FIRMS;
+  const [state, setState] = useState<WorkflowState>(() =>
+    buildInitialState(effectivePool, effectiveFirms),
+  );
   const [stepIndex, setStepIndex] = useState(0);
 
   const goPrev = () => setStepIndex((i) => Math.max(0, i - 1));
@@ -96,14 +120,14 @@ export default function NewSimulationWorkflow() {
       <Panel title={STEPS[stepIndex].label} meta={`step ${stepIndex + 1} / ${STEPS.length}`}>
         {step === "backtest" && (
           <StepBacktestSelect
-            pool={MOCK_POOL_BACKTESTS}
+            pool={effectivePool}
             selected={state.selectedBacktestIds}
             onToggle={toggleBacktest}
           />
         )}
         {step === "firm" && (
           <StepFirmSelect
-            firms={MOCK_FIRMS}
+            firms={effectiveFirms}
             selectedProfileId={state.firmProfileId}
             onSelectFirm={(id) => setState((s) => ({ ...s, firmProfileId: id }))}
             phaseMode={state.phaseMode}
@@ -146,7 +170,9 @@ export default function NewSimulationWorkflow() {
             onChange={(next) => setState((s) => ({ ...s, rules: next }))}
           />
         )}
-        {step === "review" && <StepReviewRun state={state} />}
+        {step === "review" && (
+          <StepReviewRun state={state} firms={effectiveFirms} />
+        )}
       </Panel>
 
       <div className="flex items-center justify-between">

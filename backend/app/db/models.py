@@ -277,6 +277,50 @@ class Experiment(Base):
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
 
+class PropFirmSimulation(Base):
+    """One Monte Carlo prop-firm simulation run.
+
+    `aggregated_json` and `selected_paths_json` cache the heavy
+    payload (fan_bands, distributions, paths) so repeated GETs of the
+    same run don't re-aggregate. `summary_*` columns are denormalized
+    for fast list-page queries.
+    """
+
+    __tablename__ = "prop_firm_simulations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    source_backtest_run_id: Mapped[int] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True
+    )
+    firm_profile_id: Mapped[str] = mapped_column(String(60), index=True)
+    config_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    firm_profile_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    aggregated_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    selected_paths_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
+    fan_bands_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    confidence_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    rule_violation_counts_json: Mapped[dict[str, int]] = mapped_column(JSON)
+    daily_pnl_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
+    risk_sweep_json: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON)
+    pool_backtests_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
+
+    # Denormalized scalars for the list page (avoid hydrating JSON blobs).
+    summary_pass_rate: Mapped[float] = mapped_column(Float)
+    summary_fail_rate: Mapped[float] = mapped_column(Float)
+    summary_payout_rate: Mapped[float] = mapped_column(Float)
+    summary_ev_after_fees: Mapped[float] = mapped_column(Float)
+    summary_confidence: Mapped[float] = mapped_column(Float)
+    sampling_mode: Mapped[str] = mapped_column(String(40))
+    simulation_count: Mapped[int] = mapped_column(Integer)
+    risk_label: Mapped[str] = mapped_column(String(40))
+    strategy_name: Mapped[str] = mapped_column(String(120))
+    firm_name: Mapped[str] = mapped_column(String(120))
+    account_size: Mapped[float] = mapped_column(Float)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class Note(Base):
     __tablename__ = "notes"
 

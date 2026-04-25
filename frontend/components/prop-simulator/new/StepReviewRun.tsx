@@ -1,10 +1,23 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import type { WorkflowState } from "./NewSimulationWorkflow";
 import { MOCK_POOL_BACKTESTS, findMockFirm } from "@/lib/prop-simulator/mocks";
 import { samplingModeLabel } from "@/lib/prop-simulator/format";
+import type { BackendErrorBody } from "@/lib/api/client";
+import type { FirmRuleProfile } from "@/lib/prop-simulator/types";
 
 interface StepReviewRunProps {
   state: WorkflowState;
+  firms?: FirmRuleProfile[];
 }
+
+type SubmitState =
+  | { kind: "idle" }
+  | { kind: "running" }
+  | { kind: "error"; message: string };
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
@@ -19,11 +32,79 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function StepReviewRun({ state }: StepReviewRunProps) {
-  const firm = state.firmProfileId ? findMockFirm(state.firmProfileId) : null;
+export default function StepReviewRun({ state, firms }: StepReviewRunProps) {
+  const router = useRouter();
+  const [submitState, setSubmitState] = useState<SubmitState>({ kind: "idle" });
+
+  const firm = state.firmProfileId
+    ? (firms ?? []).find((f) => f.profile_id === state.firmProfileId) ??
+      findMockFirm(state.firmProfileId)
+    : null;
   const selectedBacktests = MOCK_POOL_BACKTESTS.filter((bt) =>
     state.selectedBacktestIds.includes(bt.backtest_id),
   );
+
+  async function handleRun() {
+    if (!state.firmProfileId) {
+      setSubmitState({ kind: "error", message: "Pick a firm profile first." });
+      return;
+    }
+    if (state.selectedBacktestIds.length === 0) {
+      setSubmitState({ kind: "error", message: "Select at least one backtest." });
+      return;
+    }
+    setSubmitState({ kind: "running" });
+    const body = {
+      name: `${firm?.firm_name ?? "Sim"} ${new Date().toISOString().slice(0, 16)}`,
+      selected_backtest_ids: state.selectedBacktestIds,
+      firm_profile_id: state.firmProfileId,
+      account_size: firm?.account_size ?? 50_000,
+      starting_balance: firm?.account_size ?? 50_000,
+      phase_mode: state.phaseMode,
+      sampling_mode: state.samplingMode,
+      simulation_count: state.simulationCount,
+      use_replacement: state.useReplacement,
+      random_seed: state.randomSeed,
+      risk_mode: state.riskMode,
+      risk_per_trade: state.riskPerTrade,
+      risk_sweep_values:
+        state.riskMode === "risk_sweep" ? state.riskSweepValues : null,
+      daily_trade_limit: state.rules.dailyTradeLimit,
+      daily_loss_stop: state.rules.dailyLossStop,
+      daily_profit_stop: state.rules.dailyProfitStop,
+      walkaway_after_winner: state.rules.walkawayAfterWinner,
+      reduce_risk_after_loss: state.rules.reduceRiskAfterLoss,
+      max_losses_per_day: state.rules.maxLossesPerDay,
+      copy_trade_accounts: 1,
+      fees_enabled: state.rules.feesEnabled,
+      payout_rules_enabled: state.rules.payoutRulesEnabled,
+      notes: "",
+    };
+    try {
+      const resp = await fetch("/api/prop-firm/simulations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const message = await extractErrorMessage(resp);
+        setSubmitState({ kind: "error", message });
+        return;
+      }
+      const created = await resp.json();
+      const simId = created?.config?.simulation_id;
+      if (typeof simId === "string" || typeof simId === "number") {
+        router.push(`/prop-simulator/runs/${simId}`);
+      } else {
+        router.push("/prop-simulator/runs");
+      }
+    } catch (err) {
+      setSubmitState({
+        kind: "error",
+        message: err instanceof Error ? err.message : "Network error",
+      });
+    }
+  }
   const totalTrades = selectedBacktests.reduce((sum, bt) => sum + bt.trade_count, 0);
   const totalDays = selectedBacktests.reduce((sum, bt) => sum + bt.day_count, 0);
 
@@ -144,13 +225,62 @@ export default function StepReviewRun({ state }: StepReviewRunProps) {
         </div>
       </div>
 
-      <button
-        type="button"
-        disabled
-        className="cursor-not-allowed border border-zinc-800 bg-zinc-950 px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-zinc-600"
-      >
-        Run {state.simulationCount.toLocaleString()} simulations · engine not wired
-      </button>
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={handleRun}
+          disabled={submitState.kind === "running"}
+          className={
+            submitState.kind === "running"
+              ? "cursor-not-allowed border border-zinc-800 bg-zinc-950 px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-zinc-600"
+              : "border border-zinc-700 bg-zinc-900 px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-zinc-100 hover:bg-zinc-800"
+          }
+        >
+          {submitState.kind === "running"
+            ? "Running…"
+            : `Run ${state.simulationCount.toLocaleString()} simulations`}
+        </button>
+        {submitState.kind === "error" ? (
+          <p className="font-mono text-[11px] text-rose-400">
+            {submitState.message}
+          </p>
+        ) : null}
+        {submitState.kind === "running" ? (
+          <p className="font-mono text-[10px] text-zinc-500">
+            Bootstrapping {state.simulationCount.toLocaleString()} sequences,
+            aggregating distributions, persisting run. Redirects on success.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
+}
+
+async function extractErrorMessage(response: Response): Promise<string> {
+  try {
+    const parsed = (await response.json()) as BackendErrorBody & {
+      detail?: unknown;
+    };
+    if (typeof parsed.detail === "string" && parsed.detail.length > 0) {
+      return parsed.detail;
+    }
+    if (Array.isArray(parsed.detail) && parsed.detail.length > 0) {
+      return parsed.detail
+        .map((e: unknown) => {
+          if (
+            e &&
+            typeof e === "object" &&
+            "msg" in e &&
+            typeof (e as { msg: unknown }).msg === "string"
+          ) {
+            return (e as { msg: string }).msg;
+          }
+          return JSON.stringify(e);
+        })
+        .join("; ");
+    }
+  } catch {
+    // fall through
+  }
+  return `${response.status} ${response.statusText || "Request failed"}`;
 }
