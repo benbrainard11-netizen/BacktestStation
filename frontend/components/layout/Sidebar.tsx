@@ -11,9 +11,17 @@ import { NAV_GROUPS, NAV_ITEMS, type NavItem } from "@/lib/navigation";
 // Build-time injection (git SHA + commit date) lands with Phase 3+ tooling.
 const APP_VERSION = "0.1.0";
 
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
+function pickActiveHref(pathname: string, items: NavItem[]): string | null {
+  if (pathname === "/") return "/";
+  let best: { href: string; length: number } | null = null;
+  for (const item of items) {
+    if (item.href === "/") continue;
+    if (pathname !== item.href && !pathname.startsWith(`${item.href}/`)) continue;
+    if (best === null || item.href.length > best.length) {
+      best = { href: item.href, length: item.href.length };
+    }
+  }
+  return best?.href ?? null;
 }
 
 function NavRow({ item, active }: { item: NavItem; active: boolean }) {
@@ -22,16 +30,25 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={cn(
-        "flex items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors",
+        "group relative flex items-center gap-3 rounded-sm px-3 py-2 text-sm",
+        "transition-all duration-150 ease-out",
         active
-          ? "bg-zinc-900 text-zinc-100"
-          : "text-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-100",
+          ? "bg-zinc-900 text-zinc-100 shadow-edge-top"
+          : "text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-100",
       )}
     >
+      {active ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-emerald-500/80"
+        />
+      ) : null}
       <Icon
         className={cn(
-          "h-4 w-4 shrink-0",
-          active ? "text-emerald-400" : "text-zinc-500",
+          "h-4 w-4 shrink-0 transition-colors duration-150",
+          active
+            ? "text-emerald-400 drop-shadow-[0_0_4px_rgba(52,211,153,0.35)]"
+            : "text-zinc-500 group-hover:text-zinc-400",
         )}
         strokeWidth={1.5}
         aria-hidden="true"
@@ -43,6 +60,7 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const activeHref = pickActiveHref(pathname, NAV_ITEMS);
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
@@ -67,7 +85,7 @@ export default function Sidebar() {
               <ul className="space-y-px">
                 {items.map((item) => (
                   <li key={item.href}>
-                    <NavRow item={item} active={isActive(pathname, item.href)} />
+                    <NavRow item={item} active={item.href === activeHref} />
                   </li>
                 ))}
               </ul>

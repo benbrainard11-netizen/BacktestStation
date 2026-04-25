@@ -6,6 +6,16 @@
   color-scheme: dark;
 }
 
+/* Default rounding for every full-border element (buttons, inputs, table
+   wrappers, stat cells, badges, etc.). Split borders like `border-b` are
+   unaffected. Explicit `rounded-*` utilities still win — so cards that set
+   `rounded-md` keep their 6px radius. */
+@layer base {
+  .border {
+    border-radius: 0.25rem;
+  }
+}
+
 html,
 body {
   background-color: rgb(9 9 11);
@@ -18,8 +28,8 @@ html {
 
 body {
   font-family:
-    var(--font-inter),
-    "Inter",
+    var(--font-work-sans),
+    "Work Sans",
     "Segoe UI Variable Text",
     "Segoe UI",
     system-ui,
@@ -29,7 +39,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "ss01", "cv11";
+  letter-spacing: 0.005em;
 }
 
 ::selection {
@@ -55,9 +65,10 @@ body {
   background: rgb(63 63 70);
 }
 
+/* `font-mono` no longer swaps fonts; it only turns on tabular numerals so
+   columns of digits line up in Work Sans. */
 .font-mono {
-  font-feature-settings: "tnum" 1, "zero" 1;
-  letter-spacing: 0;
+  font-feature-settings: "tnum" 1;
 }
 
 .bg-stripes {
@@ -68,4 +79,369 @@ body {
     rgba(255, 255, 255, 0.015) 6px,
     rgba(255, 255, 255, 0.015) 12px
   );
+}
+
+/* Depth utilities — used by /prop-simulator and any page that wants the
+   premium terminal feel. Subtle grid + radial vignette behind panels. */
+.bg-depth-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+/* Drafting-paper grid — finer + slightly stronger than bg-depth-grid; used
+   as atmosphere on the tearsheet view. */
+.bg-drafting-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size:
+    16px 16px,
+    16px 16px,
+    96px 96px,
+    96px 96px;
+}
+
+.bg-noise {
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.012) 1px,
+    transparent 1px
+  );
+  background-size: 3px 3px;
+}
+
+.bg-depth-radial {
+  background-image: radial-gradient(
+    ellipse at top,
+    rgba(255, 255, 255, 0.025) 0%,
+    transparent 65%
+  );
+}
+
+/* Slow ambient motion — used by the simulation-core hero visual. */
+@keyframes orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-spin-reverse {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes ambient-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Long-running ambient elements: hint GPU compositing so they don't
+   thrash the main thread during scroll / hover. */
+.orbit-slow {
+  animation: orbit-spin 80s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+  will-change: transform;
+}
+
+.orbit-medium {
+  animation: orbit-spin-reverse 50s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+  will-change: transform;
+}
+
+.ambient-pulse {
+  animation: ambient-pulse 7s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Eased panel entrance. cubic-bezier(0.16, 1, 0.3, 1) is the "ease-out-expo"
+   curve Linear / Vercel use — fast-out-slow-in feels noticeably more
+   premium than plain ease-out. */
+.panel-enter {
+  animation: panel-enter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Stagger entrance for stacked panels in a flex column. Delays cap at
+   ~280ms so a long page doesn't have its bottom panels arrive late. */
+.flex.flex-col > .panel-enter:nth-child(1) { animation-delay: 0ms; }
+.flex.flex-col > .panel-enter:nth-child(2) { animation-delay: 40ms; }
+.flex.flex-col > .panel-enter:nth-child(3) { animation-delay: 80ms; }
+.flex.flex-col > .panel-enter:nth-child(4) { animation-delay: 120ms; }
+.flex.flex-col > .panel-enter:nth-child(5) { animation-delay: 160ms; }
+.flex.flex-col > .panel-enter:nth-child(6) { animation-delay: 200ms; }
+.flex.flex-col > .panel-enter:nth-child(7) { animation-delay: 240ms; }
+.flex.flex-col > .panel-enter:nth-child(n + 8) { animation-delay: 280ms; }
+
+/* Non-invasive page-level entrance. Add `auto-enter` to a wrapper to
+   animate every direct child with the same panel-enter cascade — used
+   on Research pages whose content uses raw bordered divs instead of
+   the shared Panel component. */
+.auto-enter > * {
+  animation: panel-enter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+.auto-enter > *:nth-child(1) { animation-delay: 0ms; }
+.auto-enter > *:nth-child(2) { animation-delay: 40ms; }
+.auto-enter > *:nth-child(3) { animation-delay: 80ms; }
+.auto-enter > *:nth-child(4) { animation-delay: 120ms; }
+.auto-enter > *:nth-child(5) { animation-delay: 160ms; }
+.auto-enter > *:nth-child(6) { animation-delay: 200ms; }
+.auto-enter > *:nth-child(7) { animation-delay: 240ms; }
+.auto-enter > *:nth-child(n + 8) { animation-delay: 280ms; }
+
+/* ECG-style horizontal scroll for the live-monitor heartbeat trace.
+   The path is rendered 3x viewport-wide; we scroll one segment-width
+   to the left on a loop so the spike enters/exits cleanly. */
+@keyframes ecg-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+.ecg-scroll {
+  animation: ecg-scroll 4s linear infinite;
+  will-change: transform;
+}
+
+/* Slow Y-axis tilt oscillation for the simulation core — gives the rings
+   a subtle dimensional sway. Perspective lives on the outer wrapper so
+   this transform composes with mouse-parallax tilt above it. */
+@keyframes core-tilt {
+  0%,
+  100% {
+    transform: rotateX(8deg) rotateY(-6deg);
+  }
+  50% {
+    transform: rotateX(8deg) rotateY(6deg);
+  }
+}
+
+.core-tilt {
+  animation: core-tilt 18s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+/* Risk slider — native range styled for the dark terminal aesthetic.
+   Track has an inner shadow, thumb has an emerald focus ring. */
+input[type="range"].terminal-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 22px;
+  width: 100%;
+  cursor: pointer;
+}
+
+input[type="range"].terminal-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgb(39 39 42);
+  border-radius: 2px;
+  border: 1px solid rgb(24 24 27);
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+input[type="range"].terminal-slider::-moz-range-track {
+  height: 4px;
+  background: rgb(39 39 42);
+  border-radius: 2px;
+  border: 1px solid rgb(24 24 27);
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+input[type="range"].terminal-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: rgb(228 228 231);
+  border: 1px solid rgb(82 82 91);
+  margin-top: -6px;
+  box-shadow:
+    0 0 0 2px rgba(52, 211, 153, 0),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+  transition: box-shadow 150ms ease-out;
+}
+
+input[type="range"].terminal-slider::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: rgb(228 228 231);
+  border: 1px solid rgb(82 82 91);
+  box-shadow:
+    0 0 0 2px rgba(52, 211, 153, 0),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+  transition: box-shadow 150ms ease-out;
+}
+
+input[type="range"].terminal-slider:hover::-webkit-slider-thumb,
+input[type="range"].terminal-slider:focus::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 4px rgba(52, 211, 153, 0.22),
+    0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+input[type="range"].terminal-slider:hover::-moz-range-thumb,
+input[type="range"].terminal-slider:focus::-moz-range-thumb {
+  box-shadow:
+    0 0 0 4px rgba(52, 211, 153, 0.22),
+    0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+input[type="range"].terminal-slider:focus {
+  outline: none;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-slow,
+  .orbit-medium,
+  .ambient-pulse,
+  .panel-enter,
+  .core-tilt,
+  .ecg-scroll,
+  .auto-enter > * {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   Print stylesheet — primarily for the /scope tearsheet, but
+   safe to apply globally. Forces white background, hides app
+   chrome (sidebar, topbar, banner, context bar, command palette
+   overlay), keeps panel content intact and prevents internal
+   page breaks. The MOCK watermark stays so printed pages remain
+   honestly labeled.
+   ============================================================ */
+@media print {
+  @page {
+    size: Letter;
+    margin: 0.5in;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0a0a0a !important;
+  }
+
+  /* Hide app chrome that doesn't belong on paper. */
+  aside,
+  header[data-tauri-drag-region],
+  footer,
+  [data-print-hide="true"] {
+    display: none !important;
+  }
+
+  /* Main scroll container becomes flow content. */
+  main {
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /* Strip atmospheric dark backgrounds + grids. */
+  .bg-depth-grid,
+  .bg-depth-radial,
+  .bg-drafting-grid,
+  .bg-noise,
+  .bg-stripes {
+    background-image: none !important;
+  }
+
+  /* Borders + text become near-black for legibility on paper. */
+  [class*="border-zinc-"] {
+    border-color: #d4d4d8 !important;
+  }
+  [class*="text-zinc-100"],
+  [class*="text-zinc-200"],
+  [class*="text-zinc-300"] {
+    color: #0a0a0a !important;
+  }
+  [class*="text-zinc-400"],
+  [class*="text-zinc-500"],
+  [class*="text-zinc-600"],
+  [class*="text-zinc-700"] {
+    color: #4b4b4f !important;
+  }
+  [class*="bg-zinc-9"],
+  [class*="bg-zinc-950"] {
+    background-color: #ffffff !important;
+  }
+
+  /* Keep emerald + rose for verdict numbers — printed financial
+     reports use red/green for sign, this is conventional. */
+  [class*="text-emerald-3"],
+  [class*="text-emerald-4"] {
+    color: #047857 !important;
+  }
+  [class*="text-rose-3"],
+  [class*="text-rose-4"] {
+    color: #b91c1c !important;
+  }
+  [class*="text-amber-3"] {
+    color: #b45309 !important;
+  }
+
+  /* Each Panel / hero / breakdown should not split across pages
+     when avoidable. */
+  section,
+  article > section,
+  article > header,
+  article > footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Drop ambient + entrance animations on paper. */
+  .panel-enter,
+  .auto-enter > *,
+  .core-tilt,
+  .orbit-slow,
+  .orbit-medium,
+  .ambient-pulse,
+  .ecg-scroll {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* Watermark stays visible but a touch stronger on white paper. */
+  .pointer-events-none[aria-hidden="true"] span {
+    /* Affects the MOCK watermark only via its parent classes. */
+  }
 }

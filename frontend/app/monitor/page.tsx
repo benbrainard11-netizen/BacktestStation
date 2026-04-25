@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 
 import IngesterStatusPanel from "@/components/monitor/IngesterStatusPanel";
 import MetricCard from "@/components/MetricCard";
+import HeartbeatPulse from "@/components/monitor/HeartbeatPulse";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import StatusDot, { type StatusTone } from "@/components/StatusDot";
+import { cn } from "@/lib/utils";
 import { formatSigned, formatUSD, toneFor } from "@/lib/format";
 import type { BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
@@ -42,7 +44,7 @@ export default function MonitorPage() {
   }, []);
 
   return (
-    <div>
+    <div className="pb-10">
       <PageHeader
         title="Monitor"
         description="Live strategy status read from the local live_status.json file"
@@ -65,7 +67,7 @@ function MonitorBody({ state }: { state: FetchState }) {
 
 function LoadingPanel() {
   return (
-    <div className="flex items-center gap-3 border border-zinc-800 bg-zinc-950 px-6 py-8 text-zinc-400">
+    <div className="panel-enter flex items-center gap-3 rounded-md border border-zinc-800 bg-zinc-950 px-6 py-8 text-zinc-400 shadow-dim">
       <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} aria-hidden />
       <span className="font-mono text-xs uppercase tracking-widest">
         Loading live status…
@@ -76,7 +78,7 @@ function LoadingPanel() {
 
 function ErrorPanel({ message }: { message: string }) {
   return (
-    <div className="border border-rose-900 bg-rose-950/30 px-6 py-6">
+    <div className="panel-enter rounded-md border border-rose-900 bg-rose-950/30 px-6 py-6 shadow-dim">
       <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-rose-300">
         <AlertTriangle className="h-4 w-4" strokeWidth={1.5} aria-hidden />
         <span>Unable to read live status</span>
@@ -93,7 +95,7 @@ function ErrorPanel({ message }: { message: string }) {
 function MissingFilePanel({ data }: { data: LiveMonitorStatus }) {
   return (
     <>
-      <div className="border border-amber-900/40 bg-amber-950/20 px-6 py-6">
+      <div className="panel-enter rounded-md border border-amber-900/40 bg-amber-950/20 px-6 py-6 shadow-dim">
         <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-amber-300">
           <FileX className="h-4 w-4" strokeWidth={1.5} aria-hidden />
           <span>Live status file not found</span>
@@ -123,7 +125,7 @@ function LiveStatusView({
 }) {
   return (
     <>
-      <StatusHero data={data} fetchedAt={fetchedAt} />
+      <LiveHero data={data} fetchedAt={fetchedAt} />
       <KpiGrid data={data} />
       <SignalErrorRow data={data} />
       <SourcePath path={data.source_path} />
@@ -131,7 +133,7 @@ function LiveStatusView({
   );
 }
 
-function StatusHero({
+function LiveHero({
   data,
   fetchedAt,
 }: {
@@ -139,38 +141,76 @@ function StatusHero({
   fetchedAt: number;
 }) {
   const tone = statusTone(data.strategy_status);
+  const pulseTone =
+    tone === "live"
+      ? "live"
+      : tone === "off"
+        ? "off"
+        : tone === "warn"
+          ? "warn"
+          : "idle";
+
   return (
-    <section className="flex flex-wrap items-center justify-between gap-6 border border-zinc-800 bg-zinc-950 px-6 py-5">
-      <div className="flex items-center gap-3">
-        <StatusDot status={tone} pulse={tone === "live"} />
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-            Strategy status
-          </p>
-          <p className="text-lg font-medium text-zinc-100">
-            {data.strategy_status}
-          </p>
+    <Panel title="Live channel" meta="polling 5s · local file" tone="hero">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center gap-3">
+            <StatusDot status={tone} pulse={tone === "live"} />
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-500">
+                Strategy status
+              </p>
+              <p
+                className={cn(
+                  "text-2xl font-light tracking-tight",
+                  tone === "live" && "text-emerald-300",
+                  tone === "off" && "text-rose-300",
+                  tone === "idle" && "text-zinc-300",
+                  tone === "warn" && "text-amber-300",
+                )}
+              >
+                {data.strategy_status}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            <HeroStat label="Symbol" value={data.current_symbol ?? "—"} />
+            <HeroStat label="Session" value={data.current_session ?? "—"} />
+            <HeroStat
+              label="Last heartbeat"
+              value={formatHeartbeat(data.last_heartbeat, fetchedAt)}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-500">
+            Telemetry
+          </span>
+          <HeartbeatPulse tone={pulseTone} />
+          <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-600">
+            {pulseTone === "live"
+              ? "trace · streaming"
+              : pulseTone === "off"
+                ? "trace · halted"
+                : "trace · idle"}
+          </span>
         </div>
       </div>
-      <div className="flex items-center gap-6 font-mono text-xs">
-        <StatBlock label="Symbol" value={data.current_symbol ?? "—"} />
-        <StatBlock label="Session" value={data.current_session ?? "—"} />
-        <StatBlock
-          label="Last heartbeat"
-          value={formatHeartbeat(data.last_heartbeat, fetchedAt)}
-        />
-      </div>
-    </section>
+    </Panel>
   );
 }
 
-function StatBlock({ label, value }: { label: string; value: string }) {
+function HeroStat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="text-[10px] uppercase tracking-widest text-zinc-500">
+    <div className="flex flex-col gap-1.5 rounded-md border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 shadow-edge-top">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
         {label}
-      </p>
-      <p className="mt-0.5 text-zinc-200">{value}</p>
+      </span>
+      <span className="font-mono text-sm tabular-nums text-zinc-100">
+        {value}
+      </span>
     </div>
   );
 }

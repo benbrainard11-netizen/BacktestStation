@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import AutopsyPanel from "@/components/backtests/AutopsyPanel";
+import BacktestConfidencePanel from "@/components/backtests/BacktestConfidencePanel";
 import ConfigSnapshotPanel from "@/components/backtests/ConfigSnapshotPanel";
 import DataQualityPanel from "@/components/backtests/DataQualityPanel";
 import DeleteRunButton from "@/components/backtests/DeleteRunButton";
@@ -18,6 +19,7 @@ import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
+import { computeHeuristicConfidence } from "@/lib/backtests/confidence-heuristic";
 
 type AutopsyReport = components["schemas"]["AutopsyReportRead"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
@@ -159,8 +161,26 @@ export default async function BacktestDetailPage({
           <AutopsyPanel report={autopsy.report} loadError={autopsy.error} />
         </Panel>
 
-        <Panel title="Prop firm simulator" meta="deterministic">
+        <Panel
+          title="Deterministic prop check"
+          meta="single-path · see Prop Firm → Simulator for Monte Carlo"
+        >
           <PropFirmSimulator runId={run.id} />
+        </Panel>
+
+        <Panel
+          title="Backtest confidence"
+          meta="MOCK · placeholder heuristic"
+        >
+          <BacktestConfidencePanel
+            confidence={computeHeuristicConfidence({
+              tradeCount: trades.length,
+              startIso: run.start_ts,
+              endIso: run.end_ts,
+              dataQualityScore: dataQuality.report?.reliability_score ?? null,
+              hasConfigSnapshot: configResult.config !== null,
+            })}
+          />
         </Panel>
 
         <Panel title="Config snapshot" meta="imported">

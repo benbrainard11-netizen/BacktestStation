@@ -59,12 +59,12 @@ export default async function StrategiesPage() {
   }
 
   return (
-    <div>
+    <div className="auto-enter">
       <PageHeader
         title="Strategies"
         description="Pipeline board or table view. Move ideas toward live via the stage buttons on each card."
       />
-      <div className="flex flex-col gap-4 px-6 pb-10">
+      <div className="auto-enter flex flex-col gap-4 px-6 pb-10">
         <div className="flex items-center justify-between gap-3">
           <NewStrategyButton stages={stagesResponse.stages ?? FALLBACK_STAGES} />
           <span className="font-mono text-[11px] text-zinc-500">

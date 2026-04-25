@@ -10,7 +10,7 @@ export default function EmptyState({
   willContain,
 }: EmptyStateProps) {
   return (
-    <div className="border border-dashed border-zinc-800 bg-zinc-950 px-6 py-6">
+    <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950 px-6 py-6">
       <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
         Empty · placeholder
       </p>
