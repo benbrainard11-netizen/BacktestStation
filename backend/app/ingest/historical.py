@@ -57,7 +57,8 @@ except ImportError:  # pragma: no cover
 # --- Configuration -------------------------------------------------------
 
 DATASET = "GLBX.MDP3"
-SCHEMA = "mbp-1"
+DEFAULT_SCHEMA = "mbp-1"
+ALLOWED_SCHEMAS = ("mbp-1", "tbbo", "ohlcv-1m", "ohlcv-1s", "ohlcv-1h", "ohlcv-1d")
 SYMBOLS = ["NQ.c.0", "ES.c.0", "YM.c.0", "RTY.c.0"]
 STYPE_IN = "continuous"
 
@@ -123,12 +124,14 @@ def days_in_month(year: int, month: int) -> list[dt.date]:
 # --- File path -----------------------------------------------------------
 
 
-def file_for_date(data_root: Path, day: dt.date) -> Path:
+def file_for_date(
+    data_root: Path, day: dt.date, schema: str = DEFAULT_SCHEMA
+) -> Path:
     return (
         data_root
         / "raw"
         / "historical"
-        / f"{DATASET}-{SCHEMA}-{day.isoformat()}.dbn"
+        / f"{DATASET}-{schema}-{day.isoformat()}.dbn"
     )
 
 
@@ -141,8 +144,9 @@ def pull_day(
     day: dt.date,
     symbols: list[str],
     logger: logging.Logger,
+    schema: str = DEFAULT_SCHEMA,
 ) -> tuple[bool, int]:
-    """Fetch one day's worth of MBP-1 and write to `out_path`.
+    """Fetch one day's worth of `schema` data and write to `out_path`.
 
     Returns (wrote_file, bytes_written). Empty responses produce no
     file (returns (False, 0)) — the absence of the file is the signal
@@ -155,13 +159,13 @@ def pull_day(
 
     logger.info(
         f"pulling {day.isoformat()}: "
-        f"dataset={DATASET} schema={SCHEMA} symbols={symbols}"
+        f"dataset={DATASET} schema={schema} symbols={symbols}"
     )
 
     try:
         response = client.timeseries.get_range(
             dataset=DATASET,
-            schema=SCHEMA,
+            schema=schema,
             symbols=symbols,
             stype_in=STYPE_IN,
             start=start.isoformat(),
@@ -195,6 +199,7 @@ def pull_month(
     data_root: Path | None = None,
     api_key: str | None = None,
     max_days: int | None = None,
+    schema: str = DEFAULT_SCHEMA,
     *,
     client: "db.Historical | None" = None,
     logger: logging.Logger | None = None,
@@ -206,6 +211,10 @@ def pull_month(
     """
     if not (1 <= month <= 12):
         raise ValueError(f"month must be 1..12, got {month}")
+    if schema not in ALLOWED_SCHEMAS:
+        raise ValueError(
+            f"schema {schema!r} not in {ALLOWED_SCHEMAS}"
+        )
 
     symbols = symbols or SYMBOLS
     data_root = data_root or _data_root()
@@ -224,13 +233,13 @@ def pull_month(
 
     for day in days:
         result.days_attempted += 1
-        out_path = file_for_date(data_root, day)
+        out_path = file_for_date(data_root, day, schema)
         if out_path.exists() and out_path.stat().st_size > 0:
             result.days_skipped_existing += 1
             logger.info(f"skipping {day.isoformat()}: file exists")
             continue
         try:
-            wrote, size = pull_day(client, out_path, day, symbols, logger)
+            wrote, size = pull_day(client, out_path, day, symbols, logger, schema)
             if wrote:
                 result.days_written += 1
                 result.bytes_written += size
@@ -256,12 +265,30 @@ def pull_month(
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Pull a month of MBP-1 from Databento")
+    p = argparse.ArgumentParser(
+        description="Pull a month of historical data from Databento"
+    )
     p.add_argument(
         "--month",
         type=str,
         default=None,
         help="YYYY-MM (defaults to last full month UTC)",
+    )
+    p.add_argument(
+        "--schema",
+        type=str,
+        default=DEFAULT_SCHEMA,
+        choices=ALLOWED_SCHEMAS,
+        help=f"Databento schema (default: {DEFAULT_SCHEMA})",
+    )
+    p.add_argument(
+        "--symbols",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated continuous symbols, e.g. ES.c.0,YM.c.0. "
+            f"Defaults to {','.join(SYMBOLS)}."
+        ),
     )
     p.add_argument(
         "--max-days",
@@ -285,7 +312,19 @@ def main(argv: list[str] | None = None) -> int:
             sys.stderr.write(f"--month must be YYYY-MM, got {args.month!r}\n")
             return 1
 
-    result = pull_month(year, month, max_days=args.max_days)
+    symbols = (
+        [s.strip() for s in args.symbols.split(",") if s.strip()]
+        if args.symbols
+        else None
+    )
+
+    result = pull_month(
+        year,
+        month,
+        symbols=symbols,
+        max_days=args.max_days,
+        schema=args.schema,
+    )
     return 0 if not result.errors else 1
 
 
