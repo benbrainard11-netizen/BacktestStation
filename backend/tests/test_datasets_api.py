@@ -196,6 +196,7 @@ def test_scan_returns_503_when_root_missing(
 def test_scanner_parses_parquet_path(
     session_factory: sessionmaker[Session], tmp_path: Path
 ) -> None:
+    """Legacy non-Hive layout still recognized during migration window."""
     root = tmp_path / "data"
     parquet = root / "parquet" / "ES.c.0" / "ohlcv-1m" / "2026-04-24.parquet"
     _write_old_file(parquet, b"parq")
@@ -211,5 +212,67 @@ def test_scanner_parses_parquet_path(
         ).all())
         assert len(rows) == 1
         assert rows[0].symbol == "ES.c.0"
+        assert rows[0].schema == "ohlcv-1m"
+        assert rows[0].kind == "parquet"
+
+
+def test_scanner_parses_hive_raw_parquet(
+    session_factory: sessionmaker[Session], tmp_path: Path
+) -> None:
+    """Post-rewrite Hive-partitioned raw parquet."""
+    root = tmp_path / "data"
+    parquet = (
+        root
+        / "raw"
+        / "databento"
+        / "tbbo"
+        / "symbol=NQ.c.0"
+        / "date=2026-04-24"
+        / "part-000.parquet"
+    )
+    _write_old_file(parquet, b"hive_raw")
+
+    with session_factory() as session:
+        result = dataset_scanner.scan_datasets(session, root)
+
+    assert result.added == 1
+
+    with session_factory() as session:
+        rows = list(
+            session.scalars(__import__("sqlalchemy").select(models.Dataset)).all()
+        )
+        assert len(rows) == 1
+        assert rows[0].symbol == "NQ.c.0"
+        assert rows[0].schema == "tbbo"
+        assert rows[0].kind == "parquet"
+
+
+def test_scanner_parses_hive_bars(
+    session_factory: sessionmaker[Session], tmp_path: Path
+) -> None:
+    """Post-rewrite Hive-partitioned 1m bars."""
+    root = tmp_path / "data"
+    parquet = (
+        root
+        / "processed"
+        / "bars"
+        / "timeframe=1m"
+        / "symbol=NQ.c.0"
+        / "date=2026-04-24"
+        / "part-000.parquet"
+    )
+    _write_old_file(parquet, b"bars")
+
+    with session_factory() as session:
+        result = dataset_scanner.scan_datasets(session, root)
+
+    assert result.added == 1
+
+    with session_factory() as session:
+        rows = list(
+            session.scalars(__import__("sqlalchemy").select(models.Dataset)).all()
+        )
+        assert len(rows) == 1
+        assert rows[0].symbol == "NQ.c.0"
         assert rows[0].schema == "ohlcv-1m"
         assert rows[0].kind == "parquet"

@@ -51,7 +51,26 @@ _DBN_RE = re.compile(
     r"^(?P<dataset>[A-Z]+\.[A-Z0-9]+)-(?P<schema>[a-z0-9-]+)-"
     r"(?P<date>\d{4}-\d{2}-\d{2})\.dbn(\.zst)?$"
 )
-_PARQUET_PATH_RE = re.compile(
+# Hive-partitioned raw parquet:
+#   raw/databento/{schema}/symbol={symbol}/date={YYYY-MM-DD}/part-NNN.parquet
+_HIVE_RAW_RE = re.compile(
+    r"raw[\\/]databento[\\/](?P<schema>[a-z0-9-]+)[\\/]"
+    r"symbol=(?P<symbol>[^\\/]+)[\\/]"
+    r"date=(?P<date>\d{4}-\d{2}-\d{2})[\\/]"
+    r"part-\d+\.parquet$"
+)
+# Hive-partitioned bars:
+#   processed/bars/timeframe={tf}/symbol={symbol}/date={YYYY-MM-DD}/part-NNN.parquet
+_HIVE_BARS_RE = re.compile(
+    r"processed[\\/]bars[\\/]timeframe=(?P<timeframe>[^\\/]+)[\\/]"
+    r"symbol=(?P<symbol>[^\\/]+)[\\/]"
+    r"date=(?P<date>\d{4}-\d{2}-\d{2})[\\/]"
+    r"part-\d+\.parquet$"
+)
+# Legacy loose parquet (pre-rewrite); kept so the scanner doesn't break
+# during the migration window. Will get cleaned out once everyone has run
+# `python -m app.ingest.parquet_mirror --rebuild`.
+_LEGACY_PARQUET_RE = re.compile(
     r"parquet[\\/](?P<symbol>[^\\/]+)[\\/](?P<schema>[^\\/]+)[\\/]"
     r"(?P<date>\d{4}-\d{2}-\d{2})\.parquet$"
 )
@@ -129,8 +148,11 @@ def _walk(
     out: list[_FileInfo] = []
 
     raw_dir = data_root / "raw"
-    parquet_dir = data_root / "parquet"
+    hive_raw_dir = raw_dir / "databento"
+    bars_dir = data_root / "processed" / "bars"
+    legacy_parquet_dir = data_root / "parquet"
 
+    # 1. DBN files (the immutable source archive).
     for source_dir, source_name in [
         (raw_dir / "live", "live"),
         (raw_dir / "historical", "historical"),
@@ -152,16 +174,44 @@ def _walk(
                 continue
             out.append(parsed)
 
-    if parquet_dir.exists():
-        for path in parquet_dir.rglob("*.parquet"):
-            if not path.is_file():
+    # 2. Hive-partitioned raw parquet (post-rewrite).
+    if hive_raw_dir.exists():
+        for path in hive_raw_dir.rglob("*.parquet"):
+            if not path.is_file() or _is_recent(path, cutoff):
+                if path.is_file():
+                    result.skipped += 1
                 continue
-            if _is_recent(path, cutoff):
+            parsed = _parse_hive_raw_parquet(path)
+            if parsed is None:
+                logger.info(f"unrecognized hive raw parquet, skipping: {path}")
                 result.skipped += 1
                 continue
-            parsed = _parse_parquet(path, data_root)
+            out.append(parsed)
+
+    # 3. Hive-partitioned bars (1m only currently).
+    if bars_dir.exists():
+        for path in bars_dir.rglob("*.parquet"):
+            if not path.is_file() or _is_recent(path, cutoff):
+                if path.is_file():
+                    result.skipped += 1
+                continue
+            parsed = _parse_hive_bars_parquet(path)
             if parsed is None:
-                logger.info(f"unrecognized parquet path, skipping: {path}")
+                logger.info(f"unrecognized hive bars parquet, skipping: {path}")
+                result.skipped += 1
+                continue
+            out.append(parsed)
+
+    # 4. Legacy loose parquet (kept for migration window).
+    if legacy_parquet_dir.exists():
+        for path in legacy_parquet_dir.rglob("*.parquet"):
+            if not path.is_file() or _is_recent(path, cutoff):
+                if path.is_file():
+                    result.skipped += 1
+                continue
+            parsed = _parse_legacy_parquet(path)
+            if parsed is None:
+                logger.info(f"unrecognized legacy parquet, skipping: {path}")
                 result.skipped += 1
                 continue
             out.append(parsed)
@@ -199,22 +249,70 @@ def _parse_dbn(path: Path, source: str) -> _FileInfo | None:
     )
 
 
-def _parse_parquet(path: Path, data_root: Path) -> _FileInfo | None:
-    m = _PARQUET_PATH_RE.search(str(path))
+def _parse_hive_raw_parquet(path: Path) -> _FileInfo | None:
+    """Parse raw/databento/{schema}/symbol={X}/date={Y}/part-NNN.parquet."""
+    m = _HIVE_RAW_RE.search(str(path))
     if m is None:
         return None
     date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(
         tzinfo=timezone.utc
     )
     size = path.stat().st_size
-    # Parquet under our convention is always per-symbol-per-day, derived
-    # from a DBN file. We can't tell live vs historical from the path
-    # alone; conservative default is "live" since that's what the live
-    # ingester produces. Could be overridden by the producer setting it
-    # explicitly when registering — out of scope for the scanner.
     return _FileInfo(
         file_path=str(path),
-        dataset_code="UNKNOWN",  # parquet path doesn't include this; producer can backfill
+        dataset_code="UNKNOWN",  # not encoded in path; embedded parquet metadata has it
+        schema=m.group("schema"),
+        symbol=m.group("symbol"),
+        source="live",  # could be live or historical; not encoded in path
+        kind="parquet",
+        start_ts=date_obj,
+        end_ts=date_obj + timedelta(days=1),
+        file_size_bytes=size,
+        sha256=_sha256_if_small(path, size),
+    )
+
+
+def _parse_hive_bars_parquet(path: Path) -> _FileInfo | None:
+    """Parse processed/bars/timeframe={tf}/symbol={X}/date={Y}/part-NNN.parquet."""
+    m = _HIVE_BARS_RE.search(str(path))
+    if m is None:
+        return None
+    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(
+        tzinfo=timezone.utc
+    )
+    size = path.stat().st_size
+    timeframe = m.group("timeframe")
+    return _FileInfo(
+        file_path=str(path),
+        dataset_code="DERIVED",
+        schema=f"ohlcv-{timeframe}",
+        symbol=m.group("symbol"),
+        source="live",
+        kind="parquet",
+        start_ts=date_obj,
+        end_ts=date_obj + timedelta(days=1),
+        file_size_bytes=size,
+        sha256=_sha256_if_small(path, size),
+    )
+
+
+def _parse_legacy_parquet(path: Path) -> _FileInfo | None:
+    """Parse the pre-rewrite parquet/{symbol}/{schema}/{date}.parquet layout.
+
+    Kept so the registry doesn't lose track of files during the migration
+    window. After `--rebuild` runs and the legacy directory is deleted,
+    these rows naturally age out via the missing-file reaper.
+    """
+    m = _LEGACY_PARQUET_RE.search(str(path))
+    if m is None:
+        return None
+    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(
+        tzinfo=timezone.utc
+    )
+    size = path.stat().st_size
+    return _FileInfo(
+        file_path=str(path),
+        dataset_code="UNKNOWN",
         schema=m.group("schema"),
         symbol=m.group("symbol"),
         source="live",
