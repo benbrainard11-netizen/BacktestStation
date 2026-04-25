@@ -82,6 +82,15 @@ First AI feature is a **Research Prompt Generator**, not chat:
 
 Model-agnostic from day one. No local-model lock-in, no specific API commitment. Possible modes later: private/redacted/full-context.
 
+The Prompt Generator is the first feature of an eventual **AI Command Center** layer. The full long-arc vision for that layer is captured (docs-only, non-binding) in:
+- [`AI_COMMAND_CENTER_SPEC.md`](AI_COMMAND_CENTER_SPEC.md) — umbrella spec
+- [`AI_MEMORY_AND_KNOWLEDGE_DESIGN.md`](AI_MEMORY_AND_KNOWLEDGE_DESIGN.md) — memory categories (mostly already covered by existing models)
+- [`AI_AGENT_MODES.md`](AI_AGENT_MODES.md) — possible future modes
+- [`AI_LOCAL_CLOUD_WORKFLOW.md`](AI_LOCAL_CLOUD_WORKFLOW.md) — local + cloud composition
+- [`AI_ROADMAP.md`](AI_ROADMAP.md) — phased roadmap, gated by triggers, not dates
+
+Those docs are **vision capture, not implementation commitments.** Phase 1 here remains the priority; AI Command Center work doesn't start until the triggers in the roadmap fire.
+
 ### Safety rules
 
 - Database + metrics are source of truth. AI output is never authoritative.
