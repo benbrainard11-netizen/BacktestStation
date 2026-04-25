@@ -132,6 +132,7 @@ These are **explicitly deferred** until the Command Center reaches the appropria
 - ❌ **In-app LLM chat.** Confirmed in `CLAUDE.md`. The Command Center prompts copy out to Claude/GPT externally.
 - ❌ **Bulk external AI session tracking.** Salient takeaways from cloud conversations get saved manually as Notes/Decisions/Experiments. Bulk capture is an open question, not a roadmap item.
 - ❌ **Auto-applied AI suggestions.** Per `CLAUDE.md`.
+- ❌ **Framework soup.** Don't reach for LangChain + LlamaIndex + LangGraph + AutoGen + CrewAI + a vector DB service all at once. **Pick one minimal retrieval path first** (direct embedding + cosine similarity over existing rows) and ship it. Add framework dependencies only when the simple version has shipped, run for weeks, and revealed a concrete gap one of those frameworks fills.
 
 ## Phase 1 protection
 

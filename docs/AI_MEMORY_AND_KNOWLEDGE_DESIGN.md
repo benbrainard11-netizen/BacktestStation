@@ -321,3 +321,18 @@ Of 17 categories, **12 are already fully covered** by existing models. Three are
 **The takeaway:** the BacktestStation schema is mostly already right for the AI Command Center. The work isn't "design a memory schema." The work is "build retrieval over what already exists, plus a small handful of new tables only when proven necessary."
 
 This document is intentionally NOT a migration plan. It's a checklist for future-you (or Husky, or a future Claude session): when considering "do I need a new table for X?", first check this doc to see if X already has a home.
+
+## Future implementation note — start simple
+
+When retrieval over this memory eventually gets built (Phase C-D in [`AI_ROADMAP.md`](AI_ROADMAP.md)):
+
+> **Start with simple embedding + retrieval using existing BacktestStation records and pgvector before introducing external RAG/agent frameworks.**
+
+Concretely: embed each Note body, Strategy description, version markdown, and experiment hypothesis with a small open embedding model; store the vectors next to the source row; query with cosine similarity + structured filters. **Cited source records always travel with the answer** — no untraceable summaries.
+
+(Current storage is SQLite — pgvector lands when/if we migrate to Postgres for the metadata DB. `sqlite-vec` is an alternative if we stay on SQLite. Pick at the time, not now.)
+
+Avoid:
+- LangChain, LlamaIndex, LangGraph, or other framework stacks until the simple loop has shipped and proven useful
+- Vector DBs that are separate services (Pinecone, Weaviate) — keep retrieval co-located with the source DB
+- Re-embedding the entire corpus on every model swap; design for incremental embedding from day one

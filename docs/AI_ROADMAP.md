@@ -68,11 +68,18 @@ Until **all four** are true, stay in Phase A. Use the docs to inform decisions; 
 - A CLI or thin web UI for asking memory questions outside the main app
 - Likely the `/research` mode from [`AI_AGENT_MODES.md`](AI_AGENT_MODES.md) implemented first
 
+**Architecture rule for the initial build:**
+
+> **Initial local assistant should use minimal infrastructure: direct local model calls + pgvector retrieval + cited source records. Avoid LangGraph / agent orchestration until the simple retrieval loop proves useful.**
+
+The shape: query → embed → top-k vector lookup against existing rows → format as prompt for the local model → answer cites which source rows informed it. That's it. No agent loops, no tool-calling protocols, no graph state machines until the simple version has shipped and you've felt where it falls short.
+
 **What's deferred:**
 - SQL/Python tool access (Phase D)
 - AI Command Center UI inside BacktestStation (Phase E)
 - Cloud automation
 - Autonomous trading anything (forever)
+- LangChain, LlamaIndex, LangGraph, AutoGen, CrewAI, and similar framework stacks
 
 **Trigger to advance:** the prototype answers ≥10 real research questions usefully across a week of usage. If it can't reliably retrieve and summarize, the model or pipeline is wrong; iterate within Phase C rather than advancing.
 
@@ -142,6 +149,7 @@ These remain off-limits regardless of phase progression:
 - **Autonomous trading actions.** The assistant never places, modifies, or cancels orders. Period.
 - **Auto-applied configuration changes.** Strategy version edits, sizing rule changes, lifecycle status moves all require explicit user action.
 - **Bulk capture of cloud LLM transcripts.** Manual takeaway capture is the default. Revisit only if real evidence shows search-old-conversations is a recurring need.
+- **Framework soup.** Don't reach for LangChain + LlamaIndex + LangGraph + AutoGen + CrewAI + a vector DB service all at once. **Pick one minimal retrieval path first** and ship it. Add framework dependencies only when the simple version is in production and a concrete gap has shown up.
 - **Multi-tenant anything.** Personal-first.
 - **Subscriptions / billing inside the app.** Ben uses Max + Plus subs externally; the app stays single-user offline.
 

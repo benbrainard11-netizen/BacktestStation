@@ -82,6 +82,19 @@ BacktestStation is. Every "what did I conclude about X" answer should be answera
 
 Cloud LLMs are **compute**, not **memory**. They reason over context you give them. Your job is to feed them the right context — the local model + retrieval handle that.
 
+### Don't route everything through the biggest local model
+
+> **Avoid routing all tasks through the largest available local model. Prefer fast, stable, composable local models and escalate to GPT/Claude only for tasks that genuinely need stronger reasoning, coding, or research.**
+
+The temptation: "I have a 70B-class local model running, send everything to it." Don't. Reasons:
+
+- A small fast model (3-8B) handles routing, summarization, and tag suggestion with sub-second latency. A 70B model handles the same in 5-30s. The user feels every bit of that latency.
+- Smaller models are more *stable* — easier to swap, less infrastructure-fragile, less GPU memory contention with other work.
+- Composability matters: a small model that calls retrieval + a small model that summarizes + escalation to cloud for hard reasoning beats one giant model trying to do everything.
+- Hard reasoning, novel research, and large-context coding still go to GPT/Claude manually. The local stack doesn't have to be best-at-everything; it has to be fast and good enough for the routine 80%.
+
+Escalation criteria worth thinking about: complexity of the question, length of context required, novelty (cloud LLMs see far more variety in their training data), correctness stakes (decisions that affect money go to the bigger model).
+
 ## The prompt packaging workflow
 
 This is the canonical flow for "I have a question that needs Claude/GPT-level reasoning":
