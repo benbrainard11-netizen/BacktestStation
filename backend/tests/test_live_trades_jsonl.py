@@ -108,6 +108,42 @@ def test_parse_missing_pnl_dollars_is_optional():
     assert parsed.pnl_r == pytest.approx(3.0)
 
 
+def test_parse_v2_exit_time_populates_exit_ts():
+    """live_bot v2+ records carry exit_time; importer should populate
+    Trade.exit_ts (ET -> UTC, tz-naive)."""
+    rec = {
+        **VALID_RECORD,
+        "exit_time": "2026-04-24T10:30:00",  # ET
+        "session_label": "NY_AM",
+        "schema_version": "live_bot_v2",
+    }
+    parsed = parse_record(rec)
+    assert parsed is not None
+    assert parsed.exit_ts is not None
+    assert parsed.exit_ts.tzinfo is None
+    # ET 10:30 -> UTC 14:30 during EDT.
+    assert parsed.exit_ts.hour == 14
+    assert parsed.exit_ts.minute == 30
+    assert parsed.session_label == "NY_AM"
+
+
+def test_parse_v1_record_has_null_exit_ts():
+    """Existing v1 records without exit_time still parse; exit_ts None."""
+    rec = {**VALID_RECORD}  # no exit_time field
+    parsed = parse_record(rec)
+    assert parsed is not None
+    assert parsed.exit_ts is None
+    assert parsed.session_label is None
+
+
+def test_parse_v2_malformed_exit_time_does_not_drop_record():
+    """A bad exit_time string shouldn't kill the whole record import."""
+    rec = {**VALID_RECORD, "exit_time": "not-a-date"}
+    parsed = parse_record(rec)
+    assert parsed is not None
+    assert parsed.exit_ts is None  # gracefully nulled
+
+
 def test_parse_missing_symbol_and_contracts_uses_defaults():
     """symbol defaults to '', contracts to 1 when absent (older live builds)."""
     rec = {**VALID_RECORD}

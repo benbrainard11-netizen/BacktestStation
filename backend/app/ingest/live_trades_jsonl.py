@@ -63,9 +63,10 @@ RUN_NAME_PREFIX = "live (jsonl):"
 class ParsedTrade:
     """Validated trade record after parsing one JSONL line.
 
-    `pnl_dollars` is optional -- older live-bot builds don't emit it.
-    When missing, the importer leaves Trade.pnl as None and lets the
-    dossier fall back to r_multiple-based metrics.
+    Many fields are optional to support multiple live-bot schema
+    versions. The bot's schema is additive (v1 omits exit_time / FVG
+    context; v2 adds them) -- the importer fills nulls when fields
+    are absent.
     """
 
     entry_ts: dt.datetime  # tz-naive UTC
@@ -81,6 +82,8 @@ class ParsedTrade:
     exit_reason: str
     order_id: str
     basket_id: str
+    exit_ts: dt.datetime | None = None  # v2+: parsed from exit_time
+    session_label: str | None = None  # v2+: Globex session bucket
 
 
 def parse_record(record: dict) -> ParsedTrade | None:
@@ -122,6 +125,25 @@ def parse_record(record: dict) -> ParsedTrade | None:
     if "pnl_dollars" in record and record["pnl_dollars"] is not None:
         pnl_dollars = float(record["pnl_dollars"])
 
+    # v2+ fields (live_bot schema_version "live_bot_v2"). Parser is
+    # forgiving: malformed exit_time -> None rather than skipping the
+    # whole record.
+    exit_ts: dt.datetime | None = None
+    raw_exit = record.get("exit_time")
+    if raw_exit:
+        try:
+            exit_dt = dt.datetime.fromisoformat(str(raw_exit))
+            if exit_dt.tzinfo is None:
+                # Live bot writes ET-naive ISO strings; assume ET.
+                exit_dt = exit_dt.replace(tzinfo=ET)
+            exit_ts = exit_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
+        except (ValueError, TypeError):
+            exit_ts = None
+
+    session_label: str | None = None
+    if "session_label" in record and record["session_label"] is not None:
+        session_label = str(record["session_label"])
+
     return ParsedTrade(
         entry_ts=entry_ts,
         side=side,
@@ -136,6 +158,8 @@ def parse_record(record: dict) -> ParsedTrade | None:
         exit_reason=str(record.get("exit_reason", "")),
         order_id=str(record.get("order_id", "")),
         basket_id=str(record.get("basket_id", "")),
+        exit_ts=exit_ts,
+        session_label=session_label,
     )
 
 
@@ -223,7 +247,7 @@ def import_jsonl(
                 Trade(
                     backtest_run_id=run.id,
                     entry_ts=t.entry_ts,
-                    exit_ts=None,  # not in JSONL schema
+                    exit_ts=t.exit_ts,  # v2+ live-bot schema; None for v1 records
                     symbol=symbol,
                     side=t.side,
                     entry_price=t.entry_price,
