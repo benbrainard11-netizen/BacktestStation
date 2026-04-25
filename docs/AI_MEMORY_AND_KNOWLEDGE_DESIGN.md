@@ -330,8 +330,6 @@ When retrieval over this memory eventually gets built (Phase C-D in [`AI_ROADMAP
 
 Concretely: embed each Note body, Strategy description, version markdown, and experiment hypothesis with a small open embedding model; store the vectors next to the source row; query with cosine similarity + structured filters. **Cited source records always travel with the answer** — no untraceable summaries.
 
-(Current storage is SQLite — pgvector lands when/if we migrate to Postgres for the metadata DB. `sqlite-vec` is an alternative if we stay on SQLite. Pick at the time, not now.)
-
 Avoid:
 - LangChain, LlamaIndex, LangGraph, or other framework stacks until the simple loop has shipped and proven useful
 - Vector DBs that are separate services (Pinecone, Weaviate) — keep retrieval co-located with the source DB
