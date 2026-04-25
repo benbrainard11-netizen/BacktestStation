@@ -6,9 +6,9 @@ Long-running daemons that write to the BacktestStation data warehouse. These are
 
 | File | Purpose | Status |
 |---|---|---|
-| `live.py` | Databento Live TBBO streamer | ✓ first draft |
+| `live.py` | Databento Live TBBO streamer | ✓ running on ben-247 |
+| `parquet_mirror.py` | Periodic DBN → parquet conversion | ✓ first draft |
 | `historical.py` | Monthly MBP-1 batch puller | TODO |
-| `parquet_mirror.py` | Periodic DBN → parquet conversion | TODO |
 
 ## Where this runs
 
@@ -104,6 +104,32 @@ One DBN file per UTC date. Contains all 4 symbols' TBBO records mixed (sorted by
 ```
 
 BacktestStation's `/monitor` page will eventually read this — separate work item.
+
+## Parquet mirror
+
+Run periodically (hourly via Windows Task Scheduler is a good default) to convert completed DBN files into per-symbol per-day parquet files for fast query.
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.parquet_mirror
+```
+
+Output:
+```
+{DATA_ROOT}/parquet/{symbol}/{schema}/{YYYY-MM-DD}.parquet
+```
+
+Idempotent — running twice produces no extra work. Skips DBN files modified in the last 60 seconds (the live ingester might still be appending to them).
+
+DBN remains the immutable source of truth. Parquet is derived; if it ever gets corrupted or you change schemas, regenerate from DBN with no data loss.
+
+To run hourly via Task Scheduler:
+
+```powershell
+$action = New-ScheduledTaskAction -Execute "python.exe" -Argument "-m app.ingest.parquet_mirror" -WorkingDirectory "C:\Users\benbr\BacktestStation\backend"
+$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 1)
+Register-ScheduledTask -TaskName "BacktestStationParquetMirror" -Action $action -Trigger $trigger -RunLevel Highest
+```
 
 ## Things to know
 
