@@ -8,7 +8,7 @@ Long-running daemons that write to the BacktestStation data warehouse. These are
 |---|---|---|
 | `live.py` | Databento Live TBBO streamer | ✓ running on ben-247 |
 | `parquet_mirror.py` | Periodic DBN → parquet conversion | ✓ first draft |
-| `historical.py` | Monthly MBP-1 batch puller | TODO |
+| `historical.py` | Monthly MBP-1 batch puller | ✓ first draft |
 
 ## Where this runs
 
@@ -130,6 +130,36 @@ $action = New-ScheduledTaskAction -Execute "python.exe" -Argument "-m app.ingest
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 1)
 Register-ScheduledTask -TaskName "BacktestStationParquetMirror" -Action $action -Trigger $trigger -RunLevel Highest
 ```
+
+## Historical MBP-1 puller
+
+Run on the 1st of each month to pull the previous month's high-fidelity MBP-1 data. Per-day `.dbn` files land in `{DATA_ROOT}/raw/historical/`. Idempotent — already-downloaded days are skipped, empty days produce no file.
+
+```powershell
+# Default: pull last full month
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.historical
+
+# Backfill a specific month
+python -m app.ingest.historical --month 2026-03
+
+# Cap days for testing
+python -m app.ingest.historical --month 2026-03 --max-days 3
+```
+
+Schedule monthly via Task Scheduler:
+
+```powershell
+$action = New-ScheduledTaskAction -Execute "python.exe" -Argument "-m app.ingest.historical" -WorkingDirectory "C:\Users\benbr\BacktestStation\backend"
+$trigger = New-ScheduledTaskTrigger -Daily -At 6am
+# Filter to "first day of month" via the more-detailed CIM API:
+$trigger.Repetition.Interval = "P1M"
+Register-ScheduledTask -TaskName "BacktestStationHistoricalPull" -Action $action -Trigger $trigger -RunLevel Highest
+```
+
+(Or use the GUI Task Scheduler with "Monthly" trigger on day 1 — easier than the PowerShell incantation above.)
+
+A full month of MBP-1 for 4 CME symbols takes 10-30 minutes depending on volume. Make sure the task's timeout is at least 1 hour.
 
 ## Things to know
 

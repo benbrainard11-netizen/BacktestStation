@@ -3,7 +3,5 @@
 Currently:
 - live.py            Databento Live TBBO streamer for the 24/7 node.
 - parquet_mirror.py  Periodic DBN -> per-symbol parquet conversion.
-
-Future:
-- historical.py   Monthly cron-driven MBP-1 batch puller.
+- historical.py      Monthly MBP-1 batch puller from Databento Historical API.
 """
