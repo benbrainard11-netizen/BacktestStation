@@ -3,6 +3,7 @@ import { Work_Sans } from "next/font/google";
 
 import CommandPalette from "@/components/layout/CommandPalette";
 import ContextBar from "@/components/layout/ContextBar";
+import KeyboardHelp from "@/components/layout/KeyboardHelp";
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
           </div>
         </div>
         <CommandPalette />
+        <KeyboardHelp />
       </body>
     </html>
   );

@@ -48,6 +48,12 @@ export interface CompareSetupRow {
   main_failure_reason: FailureReason;
 }
 
+export interface DailyPnL {
+  date: string; // ISO yyyy-mm-dd
+  pnl: number;
+  trades: number;
+}
+
 export interface SimulationRunDetail {
   config: SimulationRunConfig;
   firm: FirmRuleProfile;
@@ -58,6 +64,9 @@ export interface SimulationRunDetail {
   fan_bands: FanBands;
   rule_violation_counts: Record<RuleViolationEventType, number>;
   confidence: SimulatorConfidenceScore;
+  /** Daily P&L for the underlying backtest that fed this run — used by
+   *  the calendar heatmap on the dashboard. */
+  daily_pnl: DailyPnL[];
 }
 
 export interface FirmRuleStatusSummary {

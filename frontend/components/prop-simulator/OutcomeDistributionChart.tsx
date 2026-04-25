@@ -106,7 +106,10 @@ export default function OutcomeDistributionChart({
             fill="rgb(82 82 91 / 0.18)"
           />
 
-          {/* histogram bars (with hover hit areas) */}
+          {/* histogram bars (with hover hit areas). y/height get a CSS
+              transition so metric-tab switches tween instead of snap.
+              SVG presentation-attribute transitions are supported in
+              Chromium 78+; WebView2 is current. */}
           {buckets.map((bucket, i) => {
             const x0 = xPos(bucket.range_low);
             const x1 = xPos(bucket.range_high);
@@ -125,7 +128,10 @@ export default function OutcomeDistributionChart({
                   }
                   stroke="rgb(161 161 170 / 0.18)"
                   strokeWidth="0.5"
-                  className="transition-all duration-150"
+                  style={{
+                    transition:
+                      "y 320ms cubic-bezier(0.16, 1, 0.3, 1), height 320ms cubic-bezier(0.16, 1, 0.3, 1), fill 150ms ease-out",
+                  }}
                 />
                 {/* full-height hit target */}
                 <rect
@@ -140,6 +146,8 @@ export default function OutcomeDistributionChart({
             );
           })}
 
+          {/* mean / median lines also tween when metric switches */}
+
           {/* median line (dashed zinc) */}
           <line
             x1={xPos(stats.median)}
@@ -149,6 +157,10 @@ export default function OutcomeDistributionChart({
             stroke="rgb(212 212 216 / 0.85)"
             strokeWidth="1"
             strokeDasharray="3 3"
+            style={{
+              transition:
+                "x1 320ms cubic-bezier(0.16, 1, 0.3, 1), x2 320ms cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
           />
 
           {/* mean line (emerald) */}
@@ -159,6 +171,10 @@ export default function OutcomeDistributionChart({
             y2={padTop + innerH}
             stroke="rgb(52 211 153 / 0.95)"
             strokeWidth="1.25"
+            style={{
+              transition:
+                "x1 320ms cubic-bezier(0.16, 1, 0.3, 1), x2 320ms cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
           />
 
           {/* P10 / P90 markers */}

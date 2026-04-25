@@ -36,12 +36,20 @@ export default function ContextBar() {
           </span>
         ))}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <span className="text-zinc-600">cmd palette</span>
-        <kbd className="flex h-4 items-center gap-0.5 rounded-sm border border-zinc-700 bg-zinc-900 px-1 text-[9px] text-zinc-300">
-          <span>⌘</span>
-          <span>K</span>
-        </kbd>
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="hidden items-center gap-1.5 sm:flex">
+          <span className="text-zinc-600">help</span>
+          <kbd className="flex h-4 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 px-1 text-[9px] text-zinc-300">
+            ?
+          </kbd>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-zinc-600">cmd</span>
+          <kbd className="flex h-4 items-center gap-0.5 rounded-sm border border-zinc-700 bg-zinc-900 px-1 text-[9px] text-zinc-300">
+            <span>⌘</span>
+            <span>K</span>
+          </kbd>
+        </span>
       </div>
     </footer>
   );

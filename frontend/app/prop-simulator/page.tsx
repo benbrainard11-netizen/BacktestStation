@@ -1,3 +1,4 @@
+import DailyPnLPanel from "@/components/prop-simulator/dashboard/DailyPnLPanel";
 import DemoFirmsWarning from "@/components/prop-simulator/dashboard/DemoFirmsWarning";
 import FirmRuleStatusPanel from "@/components/prop-simulator/dashboard/FirmRuleStatusPanel";
 import QuickStatsRow from "@/components/prop-simulator/dashboard/QuickStatsRow";
@@ -24,21 +25,24 @@ export default function PropSimulatorDashboardPage() {
       <QuickStatsRow summary={summary} />
 
       {featuredRun ? (
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <OutcomeDistributionPanel
-            distributions={[
-              featuredRun.aggregated.final_balance_distribution,
-              featuredRun.aggregated.ev_after_fees_distribution,
-              featuredRun.aggregated.max_drawdown_distribution,
-            ]}
-            meta="featured run · sim-001 · 10,000 sequences"
-          />
-          <SamplePathsPanel
-            paths={featuredRun.selected_paths}
-            fanBands={featuredRun.fan_bands}
-            meta="featured run · sim-001 · envelope + paths"
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            <OutcomeDistributionPanel
+              distributions={[
+                featuredRun.aggregated.final_balance_distribution,
+                featuredRun.aggregated.ev_after_fees_distribution,
+                featuredRun.aggregated.max_drawdown_distribution,
+              ]}
+              meta="featured run · sim-001 · 10,000 sequences"
+            />
+            <SamplePathsPanel
+              paths={featuredRun.selected_paths}
+              fanBands={featuredRun.fan_bands}
+              meta="featured run · sim-001 · envelope + paths"
+            />
+          </div>
+          <DailyPnLPanel data={featuredRun.daily_pnl} />
+        </>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">

@@ -1,8 +1,16 @@
+"use client";
+
 // Pure-SVG research instrument visual for the /prop-simulator hero.
 //
 // Three concentric rings (one solid, two dashed) read as Monte Carlo
 // boundaries; a scatter of dim dots reads as the sample field; an
-// emerald core pulses to imply convergence. No external 3D libraries.
+// emerald core pulses to imply convergence. Mouse parallax adds a
+// subtle ±5deg tilt as the cursor moves across the wrapper, layered
+// on top of the slow ambient core-tilt oscillation. No 3D libraries.
+
+import { useRef, useState } from "react";
+
+const PARALLAX_RANGE_DEG = 5;
 
 const FIELD_DOTS: { x: number; y: number; r: number; op: number }[] = [
   { x: 84, y: 70, r: 1.1, op: 0.32 },
@@ -37,10 +45,62 @@ const TICK_ANGLES = [10, 38, 72, 116, 148, 202, 238, 290, 326];
 const OUTER_MARKS = [0, 90, 180, 270];
 
 export default function SimulationCoreVisual() {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const rafRef = useRef<number | null>(null);
+  const pendingRef = useRef<{ x: number; y: number } | null>(null);
+
+  function handleMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width; // 0..1
+    const py = (e.clientY - rect.top) / rect.height; // 0..1
+    pendingRef.current = { x: (px - 0.5) * 2, y: (py - 0.5) * 2 };
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const next = pendingRef.current;
+      if (next === null) return;
+      setTilt({
+        x: next.y * -PARALLAX_RANGE_DEG, // up = positive rotateX
+        y: next.x * PARALLAX_RANGE_DEG,
+      });
+    });
+  }
+
+  function handleLeave() {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    pendingRef.current = null;
+    setTilt({ x: 0, y: 0 });
+  }
+
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[260px]">
-      <div className="core-tilt absolute inset-0">
-      <svg viewBox="0 0 280 280" className="absolute inset-0 h-full w-full">
+    <div
+      ref={wrapperRef}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      className="relative mx-auto aspect-square w-full max-w-[260px]"
+      style={{
+        perspective: "900px",
+        transformStyle: "preserve-3d",
+      }}
+    >
+      {/* Mouse-driven parallax layer. transform-style preserve-3d so the
+          inner core-tilt rotation composes with this rotation. */}
+      <div
+        className="absolute inset-0"
+        style={{
+          transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transformStyle: "preserve-3d",
+          transition: "transform 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        <div className="core-tilt absolute inset-0">
+          <svg viewBox="0 0 280 280" className="absolute inset-0 h-full w-full">
         <defs>
           <radialGradient id="core-grad" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
@@ -166,8 +226,9 @@ export default function SimulationCoreVisual() {
           stroke="rgb(52 211 153 / 0.32)"
           strokeWidth="0.85"
         />
-        <circle cx="140" cy="140" r="3" fill="rgb(52 211 153 / 0.95)" />
-      </svg>
+          <circle cx="140" cy="140" r="3" fill="rgb(52 211 153 / 0.95)" />
+        </svg>
+        </div>
       </div>
     </div>
   );

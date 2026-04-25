@@ -237,14 +237,15 @@ body {
 }
 
 /* Slow Y-axis tilt oscillation for the simulation core — gives the rings
-   a subtle dimensional sway without spinning the whole element. */
+   a subtle dimensional sway. Perspective lives on the outer wrapper so
+   this transform composes with mouse-parallax tilt above it. */
 @keyframes core-tilt {
   0%,
   100% {
-    transform: perspective(900px) rotateX(8deg) rotateY(-6deg);
+    transform: rotateX(8deg) rotateY(-6deg);
   }
   50% {
-    transform: perspective(900px) rotateX(8deg) rotateY(6deg);
+    transform: rotateX(8deg) rotateY(6deg);
   }
 }
 
@@ -337,5 +338,110 @@ input[type="range"].terminal-slider:focus {
   .ecg-scroll,
   .auto-enter > * {
     animation: none;
+  }
+}
+
+/* ============================================================
+   Print stylesheet — primarily for the /scope tearsheet, but
+   safe to apply globally. Forces white background, hides app
+   chrome (sidebar, topbar, banner, context bar, command palette
+   overlay), keeps panel content intact and prevents internal
+   page breaks. The MOCK watermark stays so printed pages remain
+   honestly labeled.
+   ============================================================ */
+@media print {
+  @page {
+    size: Letter;
+    margin: 0.5in;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0a0a0a !important;
+  }
+
+  /* Hide app chrome that doesn't belong on paper. */
+  aside,
+  header[data-tauri-drag-region],
+  footer,
+  [data-print-hide="true"] {
+    display: none !important;
+  }
+
+  /* Main scroll container becomes flow content. */
+  main {
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /* Strip atmospheric dark backgrounds + grids. */
+  .bg-depth-grid,
+  .bg-depth-radial,
+  .bg-drafting-grid,
+  .bg-noise,
+  .bg-stripes {
+    background-image: none !important;
+  }
+
+  /* Borders + text become near-black for legibility on paper. */
+  [class*="border-zinc-"] {
+    border-color: #d4d4d8 !important;
+  }
+  [class*="text-zinc-100"],
+  [class*="text-zinc-200"],
+  [class*="text-zinc-300"] {
+    color: #0a0a0a !important;
+  }
+  [class*="text-zinc-400"],
+  [class*="text-zinc-500"],
+  [class*="text-zinc-600"],
+  [class*="text-zinc-700"] {
+    color: #4b4b4f !important;
+  }
+  [class*="bg-zinc-9"],
+  [class*="bg-zinc-950"] {
+    background-color: #ffffff !important;
+  }
+
+  /* Keep emerald + rose for verdict numbers — printed financial
+     reports use red/green for sign, this is conventional. */
+  [class*="text-emerald-3"],
+  [class*="text-emerald-4"] {
+    color: #047857 !important;
+  }
+  [class*="text-rose-3"],
+  [class*="text-rose-4"] {
+    color: #b91c1c !important;
+  }
+  [class*="text-amber-3"] {
+    color: #b45309 !important;
+  }
+
+  /* Each Panel / hero / breakdown should not split across pages
+     when avoidable. */
+  section,
+  article > section,
+  article > header,
+  article > footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Drop ambient + entrance animations on paper. */
+  .panel-enter,
+  .auto-enter > *,
+  .core-tilt,
+  .orbit-slow,
+  .orbit-medium,
+  .ambient-pulse,
+  .ecg-scroll {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* Watermark stays visible but a touch stronger on white paper. */
+  .pointer-events-none[aria-hidden="true"] span {
+    /* Affects the MOCK watermark only via its parent classes. */
   }
 }

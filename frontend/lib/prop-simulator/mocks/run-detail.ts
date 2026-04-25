@@ -9,7 +9,7 @@ import type {
   SimulationRunConfig,
 } from "../types/simulation";
 import type { SimulatorConfidenceScore } from "../types/confidence";
-import type { SimulationRunDetail } from "../types/views";
+import type { DailyPnL, SimulationRunDetail } from "../types/views";
 import { MOCK_FIRMS, findMockFirm } from "./firms";
 import { MOCK_POOL_BACKTESTS, MOCK_SIMULATION_RUNS_LIST } from "./runs";
 
@@ -306,6 +306,49 @@ const MOCK_FAN_BANDS: FanBands = generateFanBands(
   FINAL_BALANCE_P90 - FINAL_BALANCE_MEAN,
 );
 
+// Deterministic daily-P&L series for the calendar heatmap. ~6 months of
+// trading days with a slight positive drift + biased volatility (more
+// frequent small wins, occasional larger losses).
+function generateDailyPnL(
+  endDate: Date,
+  weeks: number,
+  seed: number,
+): DailyPnL[] {
+  const series: DailyPnL[] = [];
+  let state = seed >>> 0 || 1;
+  const lcg = () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+  // Walk backwards from endDate, skipping weekends.
+  const cursor = new Date(endDate);
+  cursor.setUTCHours(0, 0, 0, 0);
+  const totalDays = weeks * 7;
+  for (let i = 0; i < totalDays; i++) {
+    const day = new Date(cursor);
+    day.setUTCDate(cursor.getUTCDate() - i);
+    const dow = day.getUTCDay();
+    if (dow === 0 || dow === 6) continue;
+    const r = lcg();
+    // Bias slightly positive; long left tail for occasional rough days.
+    const noise = r < 0.18 ? -1 - lcg() * 1.4 : -0.2 + lcg() * 1.6;
+    const pnl = Math.round(noise * 350);
+    const trades = 1 + Math.floor(lcg() * 6);
+    series.unshift({
+      date: day.toISOString().slice(0, 10),
+      pnl,
+      trades,
+    });
+  }
+  return series;
+}
+
+const MOCK_DAILY_PNL: DailyPnL[] = generateDailyPnL(
+  new Date("2026-04-24T00:00:00Z"),
+  26,
+  0xb05731,
+);
+
 const CANONICAL_RUN_DETAIL: SimulationRunDetail = {
   config: MOCK_RUN_CONFIG,
   firm: MOCK_FIRMS[0],
@@ -314,6 +357,7 @@ const CANONICAL_RUN_DETAIL: SimulationRunDetail = {
   risk_sweep: MOCK_RISK_SWEEP,
   selected_paths: MOCK_SELECTED_PATHS,
   fan_bands: MOCK_FAN_BANDS,
+  daily_pnl: MOCK_DAILY_PNL,
   rule_violation_counts: {
     daily_loss_limit: 1_121,
     trailing_drawdown: 2_014,
