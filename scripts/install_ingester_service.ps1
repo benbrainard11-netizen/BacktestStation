@@ -115,12 +115,20 @@ if (-not $nssmExe) {
 }
 
 # --- 4. Remove any prior install ----------------------------------------
+#
+# Avoid asking nssm "does the service exist?" -- in Windows PowerShell 5.1,
+# any form of native-exe stderr redirection (2>$null, 2>&1) gets wrapped in
+# a NativeCommandError that ErrorActionPreference=Stop trips on. Use the
+# built-in Get-Service cmdlet instead; it returns null cleanly when the
+# service doesn't exist and never invokes a native exe's stderr.
 
-$existing = & $nssmExePath status $ServiceName 2>$null
-if ($LASTEXITCODE -eq 0) {
+$existing = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+if ($existing) {
     Write-Host ""
-    Write-Host "Existing $ServiceName service found, removing..." -ForegroundColor Yellow
-    & $nssmExePath stop $ServiceName 2>$null | Out-Null
+    Write-Host "Existing $ServiceName service found ($($existing.Status)), removing..." -ForegroundColor Yellow
+    if ($existing.Status -eq 'Running') {
+        & $nssmExePath stop $ServiceName | Out-Null
+    }
     & $nssmExePath remove $ServiceName confirm | Out-Null
     Start-Sleep -Seconds 2
 }
@@ -161,10 +169,17 @@ Write-Host ""
 Write-Host "Starting $ServiceName..." -ForegroundColor Cyan
 & $nssmExePath start $ServiceName | Out-Null
 Start-Sleep -Seconds 3
-$status = & $nssmExePath status $ServiceName
+# Use Get-Service rather than 'nssm status' for the readiness check.
+# nssm.exe writes its status output as UTF-16, which Windows PowerShell
+# captures with embedded null bytes; the resulting string LOOKS like
+# "SERVICE_RUNNING" but a -match against it fails because every char is
+# followed by \0. Get-Service goes through the Windows service manager
+# directly and returns a clean enum.
+$svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+$status = if ($svc) { $svc.Status } else { 'NOT_FOUND' }
 
 Write-Host ""
-if ($status -match "RUNNING") {
+if ($status -eq 'Running') {
     Write-Host "Service installed and running." -ForegroundColor Green
     Write-Host ""
     Write-Host "  Status:    $status"
