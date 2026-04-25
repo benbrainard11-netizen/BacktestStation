@@ -1,14 +1,13 @@
 """Fractal AMD Strategy class -- engine plug-in entry point.
 
-Chunks 1+2 of the port. Detects HTF stage signals + LTF FVG zones
-+ flags WATCHING setups as TOUCHED when a primary bar enters the
-zone. Does NOT yet emit orders -- chunk 3 adds entry validation
-and BracketOrder emission.
+Chunks 1+2+3 of the port. Detects HTF stage signals + LTF FVG zones,
+flags WATCHING setups as TOUCHED on bar intersection, then validates
+TOUCHED setups (entry window + risk gate + dedup) and emits
+BracketOrders. End-to-end: bars -> setup -> FVG -> touch -> trade.
 
-Multi-instrument is wired: NQ primary, ES + YM aux. Per-bar aux
-history is accumulated in `self.aux_history` because the engine
-only exposes the CURRENT aux bar via `context.aux`. SMT detection
-needs HISTORY across all three.
+Continuation-OF gate is config-controlled; defaults to off until
+the OHLCV-delta proxy is implemented (live_bot computes it from
+order-flow data we don't have at bar level).
 """
 
 from __future__ import annotations
@@ -16,6 +15,7 @@ from __future__ import annotations
 import datetime as dt
 from typing import TYPE_CHECKING
 
+from app.backtest.orders import BracketOrder, OrderIntent, Side
 from app.backtest.strategy import Bar, Context, Strategy
 from app.strategies.fractal_amd.config import FractalAMDConfig
 from app.strategies.fractal_amd.signals import (
@@ -33,7 +33,7 @@ from app.strategies.fractal_amd.signals import (
 )
 
 if TYPE_CHECKING:
-    from app.backtest.orders import Fill, OrderIntent
+    from app.backtest.orders import Fill
 
 
 class FractalAMD(Strategy):
@@ -97,23 +97,31 @@ class FractalAMD(Strategy):
         # 5. Touch detection on WATCHING setups.
         check_touch(self.setups, bar)
 
-        # 6. Entry-window gate is wired but not yet acted on -- the
-        # strategy still emits no orders this chunk. Acted on in
-        # chunk 3.
-        _ = is_in_entry_window(
-            bar.ts_event,
+        # 6. Entry validation + BracketOrder emission. Only one entry
+        # per bar (live bot serializes too); the trades_today cap +
+        # entry_dedup gate already enforce most of the cardinality
+        # we want.
+        bar_et = bar.ts_event.astimezone(ET)
+        if not is_in_entry_window(
+            bar_et,
             open_hour=self.config.rth_open_hour,
             open_min=self.config.rth_open_min,
             close_hour=self.config.max_entry_hour,
-        )
+        ):
+            return []
 
-        return []
+        if context.position is not None:
+            return []  # one position at a time
+
+        intent = self._try_emit_entry(bar)
+        return [intent] if intent is not None else []
 
     def on_fill(self, fill: "Fill", context: Context) -> None:
-        # Increment daily counter on exit fills (entries don't count
-        # toward the cap until they close per trusted-bot semantics).
-        if not fill.is_entry:
-            self.trades_today += 1
+        # trades_today is incremented in _try_emit_entry on intent emit
+        # (mirrors live bot: counter bumps when the entry is committed,
+        # not when it later fills/exits). Nothing to do here yet --
+        # future chunks may track per-fill stats for performance metrics.
+        return None
 
     def on_end(self, context: Context) -> None:
         pass
@@ -187,6 +195,109 @@ class FractalAMD(Strategy):
                         if not self._is_duplicate_setup(s):
                             self.setups.append(s)
                 self._last_scanned[tf] = cur_end
+
+    def _try_emit_entry(self, bar: Bar) -> OrderIntent | None:
+        """Pick the best TOUCHED setup and emit a BracketOrder.
+
+        Validation:
+        - Setup status == TOUCHED
+        - Touched within `entry_max_bars_after_touch` bars
+        - Risk in [min_risk_pts, max_risk_pts]
+        - 15-min direction dedup (entries_today)
+
+        On a successful emit, the setup is marked FILLED (won't re-fire)
+        and `entries_today` is updated. On a failure that's terminal
+        (out-of-window touch / risk fail / dedup hit), the setup is
+        reset to WATCHING so the same FVG can re-touch.
+        """
+        # Find candidate touched setups.
+        touched = [s for s in self.setups if s.status == "TOUCHED"]
+        if not touched:
+            return None
+
+        # Pick the most recently touched (live bot semantics: fire on the
+        # bar after the touch).
+        touched.sort(key=lambda s: s.touch_bar_time or dt.datetime.min, reverse=True)
+
+        for setup in touched:
+            outcome = self._validate_and_build_intent(setup, bar)
+            if outcome is None:
+                # Validation failed terminally -> reset to WATCHING and try the next.
+                setup.status = "WATCHING"
+                setup.touch_bar_time = None
+                continue
+            intent, dedup_key = outcome
+            setup.status = "FILLED"
+            self.entries_today.add(dedup_key)
+            self.trades_today += 1
+            return intent
+        return None
+
+    def _validate_and_build_intent(
+        self, setup: Setup, bar: Bar
+    ) -> tuple[OrderIntent, tuple[str, dt.datetime]] | None:
+        """Validate one TOUCHED setup; build a BracketOrder if it passes.
+
+        Returns (intent, dedup_key) on success, None on terminal fail
+        (caller resets setup to WATCHING).
+        """
+        # Touch-age cap: if the touch bar is too far behind, treat the
+        # setup as stale and reset.
+        if setup.touch_bar_time is None:
+            return None
+        bars_since_touch = max(
+            0,
+            int(
+                (bar.ts_event - setup.touch_bar_time).total_seconds() // 60
+            ),
+        )
+        if bars_since_touch > self.config.entry_max_bars_after_touch:
+            return None
+        # Don't fire on the touch bar itself -- entry happens on the
+        # NEXT bar (mirrors live bot's bar-after-touch semantics, and
+        # avoids look-ahead within the touch bar).
+        if bars_since_touch < 1:
+            return None
+
+        # Compute entry / stop / target.
+        # Entry approximates the bar.open since the engine will fill
+        # the bracket order at next bar's open + slippage anyway.
+        if setup.direction == "BEARISH":
+            side = Side.SHORT
+            entry_price = bar.open
+            stop = setup.fvg_high + self.config.stop_buffer_pts
+            risk = stop - entry_price
+            target = entry_price - risk * self.config.target_r
+        else:
+            side = Side.LONG
+            entry_price = bar.open
+            stop = setup.fvg_low - self.config.stop_buffer_pts
+            risk = entry_price - stop
+            target = entry_price + risk * self.config.target_r
+
+        # Risk validation in points.
+        if risk <= 0 or risk > self.config.max_risk_pts:
+            return None
+        if risk < self.config.min_risk_pts:
+            return None
+
+        # 15-min direction dedup.
+        bar_et = bar.ts_event.astimezone(ET)
+        bucket_minute = (
+            bar_et.minute // self.config.entry_dedup_minutes
+        ) * self.config.entry_dedup_minutes
+        bucket = bar_et.replace(minute=bucket_minute, second=0, microsecond=0)
+        dedup_key = (setup.direction, bucket)
+        if dedup_key in self.entries_today:
+            return None
+
+        intent = BracketOrder(
+            side=side,
+            qty=1,
+            stop_price=stop,
+            target_price=target,
+        )
+        return intent, dedup_key
 
     def _build_setups_from_ltf(
         self,

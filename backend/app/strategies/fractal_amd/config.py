@@ -37,6 +37,22 @@ class FractalAMDConfig:
     # Setup deduplication: same FVG = one setup per day.
     dedupe_setups: bool = True
 
+    # Stop-buffer in points beyond the FVG far edge. Mirrors live_bot.BUFFER.
+    stop_buffer_pts: float = 1.0
+
+    # Minimum continuation-OF score gate. None = disabled (recommended for
+    # backtest until OF/delta proxy is implemented). Live bot uses 3.
+    min_co_score: int | None = None
+
+    # Touch-to-entry timing window: a touched setup must convert to entry
+    # within `entry_max_bars_after_touch` primary bars or it resets to
+    # WATCHING. Mirrors live's 30s-150s window applied to bar-level events.
+    entry_max_bars_after_touch: int = 3
+
+    # 15-min direction dedup: at most one entry per (direction, 15-min
+    # bucket). Mirrors live's `entries_today` set.
+    entry_dedup_minutes: int = 15
+
     @classmethod
     def from_params(cls, params: dict) -> "FractalAMDConfig":
         """Build a config from the loose `RunConfig.params` dict.
