@@ -3,12 +3,16 @@ import FirmRuleStatusPanel from "@/components/prop-simulator/dashboard/FirmRuleS
 import QuickStatsRow from "@/components/prop-simulator/dashboard/QuickStatsRow";
 import RecentRunsPanel from "@/components/prop-simulator/dashboard/RecentRunsPanel";
 import RiskSweepSummaryPanel from "@/components/prop-simulator/dashboard/RiskSweepSummaryPanel";
+import SamplePathsPanel from "@/components/prop-simulator/dashboard/SamplePathsPanel";
 import SetupHighlightPanel from "@/components/prop-simulator/dashboard/SetupHighlightPanel";
 import SimulationCorePanel from "@/components/prop-simulator/dashboard/SimulationCorePanel";
-import { MOCK_DASHBOARD_SUMMARY } from "@/lib/prop-simulator/mocks";
+import { findMockRunDetail, MOCK_DASHBOARD_SUMMARY } from "@/lib/prop-simulator/mocks";
 
 export default function PropSimulatorDashboardPage() {
   const summary = MOCK_DASHBOARD_SUMMARY;
+  // Pull the canonical run detail so we can preview equity paths inline on
+  // the dashboard. Fallback gracefully if the mock id ever moves.
+  const featuredRun = findMockRunDetail("sim-001");
 
   return (
     <div className="flex flex-col gap-4 px-6 pb-10 pt-6">
@@ -17,6 +21,13 @@ export default function PropSimulatorDashboardPage() {
       <DemoFirmsWarning status={summary.firm_rule_status} />
 
       <QuickStatsRow summary={summary} />
+
+      {featuredRun ? (
+        <SamplePathsPanel
+          paths={featuredRun.selected_paths}
+          meta="featured run · sim-001 · 5 buckets"
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <SetupHighlightPanel

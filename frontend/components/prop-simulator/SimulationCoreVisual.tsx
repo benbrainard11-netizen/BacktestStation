@@ -39,6 +39,7 @@ const OUTER_MARKS = [0, 90, 180, 270];
 export default function SimulationCoreVisual() {
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[260px]">
+      <div className="core-tilt absolute inset-0">
       <svg viewBox="0 0 280 280" className="absolute inset-0 h-full w-full">
         <defs>
           <radialGradient id="core-grad" cx="50%" cy="50%" r="50%">
@@ -167,6 +168,7 @@ export default function SimulationCoreVisual() {
         />
         <circle cx="140" cy="140" r="3" fill="rgb(52 211 153 / 0.95)" />
       </svg>
+      </div>
     </div>
   );
 }

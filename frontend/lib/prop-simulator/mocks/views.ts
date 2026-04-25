@@ -123,9 +123,12 @@ export const MOCK_DASHBOARD_SUMMARY: DashboardSummary = {
   highest_ev_setup: HIGHEST_EV_SETUP,
   safest_pass_setup: SAFEST_PASS_SETUP,
   risk_sweep_preview: [
+    { risk_per_trade: 50, pass_rate: 0.732, fail_rate: 0.268, payout_rate: 0.411, avg_days_to_pass: 24.8, average_dd_usage_percent: 0.28, ev_after_fees: 189, main_failure_reason: "account_expired" },
     { risk_per_trade: 100, pass_rate: 0.712, fail_rate: 0.288, payout_rate: 0.448, avg_days_to_pass: 18.4, average_dd_usage_percent: 0.39, ev_after_fees: 412, main_failure_reason: "account_expired" },
     { risk_per_trade: 150, pass_rate: 0.687, fail_rate: 0.313, payout_rate: 0.493, avg_days_to_pass: 13.1, average_dd_usage_percent: 0.52, ev_after_fees: 721, main_failure_reason: "trailing_drawdown" },
+    { risk_per_trade: 200, pass_rate: 0.624, fail_rate: 0.376, payout_rate: 0.461, avg_days_to_pass: 10.4, average_dd_usage_percent: 0.62, ev_after_fees: 683, main_failure_reason: "trailing_drawdown" },
     { risk_per_trade: 250, pass_rate: 0.554, fail_rate: 0.446, payout_rate: 0.410, avg_days_to_pass: 7.8, average_dd_usage_percent: 0.71, ev_after_fees: 603, main_failure_reason: "trailing_drawdown" },
+    { risk_per_trade: 300, pass_rate: 0.421, fail_rate: 0.579, payout_rate: 0.297, avg_days_to_pass: 5.8, average_dd_usage_percent: 0.83, ev_after_fees: 211, main_failure_reason: "trailing_drawdown" },
     { risk_per_trade: 500, pass_rate: 0.249, fail_rate: 0.751, payout_rate: 0.162, avg_days_to_pass: 3.2, average_dd_usage_percent: 0.94, ev_after_fees: -188, main_failure_reason: "trailing_drawdown" },
   ],
   firm_rule_status: {
