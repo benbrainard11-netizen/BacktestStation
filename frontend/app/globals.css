@@ -55,9 +55,10 @@ body {
   background: rgb(63 63 70);
 }
 
+/* `font-mono` no longer swaps fonts; it only turns on tabular numerals so
+   columns of digits line up in Work Sans. */
 .font-mono {
-  font-feature-settings: "tnum" 1, "zero" 1;
-  letter-spacing: 0;
+  font-feature-settings: "tnum" 1;
 }
 
 .bg-stripes {
