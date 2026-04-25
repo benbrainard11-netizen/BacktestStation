@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useTween } from "@/lib/hooks/useTween";
 import type { RiskSweepRow } from "@/lib/prop-simulator/types";
 import {
   failureReasonLabel,
@@ -20,7 +21,6 @@ interface StatBlockProps {
   label: string;
   value: string;
   tone?: "neutral" | "positive" | "negative";
-  span?: 1 | 2;
 }
 
 const TONE_CLASS: Record<NonNullable<StatBlockProps["tone"]>, string> = {
@@ -29,14 +29,9 @@ const TONE_CLASS: Record<NonNullable<StatBlockProps["tone"]>, string> = {
   neutral: "text-zinc-100",
 };
 
-function StatBlock({ label, value, tone = "neutral", span = 1 }: StatBlockProps) {
+function StatBlock({ label, value, tone = "neutral" }: StatBlockProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-1.5 rounded-md border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 shadow-edge-top",
-        span === 2 ? "sm:col-span-2" : undefined,
-      )}
-    >
+    <div className="flex flex-col gap-1.5 rounded-md border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 shadow-edge-top">
       <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
         {label}
       </span>
@@ -60,6 +55,14 @@ export default function InteractiveCoreStats({
   const safeIndex = Math.min(Math.max(0, index), sweep.length - 1);
   const row = sweep[safeIndex];
 
+  // Tween every numeric stat smoothly to the target row's values. Format
+  // the live tweened number for display so the slider feels analog.
+  const passRate = useTween(row.pass_rate);
+  const payoutRate = useTween(row.payout_rate);
+  const evAfterFees = useTween(row.ev_after_fees);
+  const avgDays = useTween(row.avg_days_to_pass);
+  const ddUsage = useTween(row.average_dd_usage_percent);
+
   const evTone =
     row.ev_after_fees > 0
       ? "positive"
@@ -71,21 +74,15 @@ export default function InteractiveCoreStats({
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
         <StatBlock label="Paths" value="10,000" />
-        <StatBlock label="Pass" value={formatPercent(row.pass_rate)} />
-        <StatBlock label="Payout" value={formatPercent(row.payout_rate)} />
+        <StatBlock label="Pass" value={formatPercent(passRate)} />
+        <StatBlock label="Payout" value={formatPercent(payoutRate)} />
         <StatBlock
           label="EV after fees"
-          value={formatCurrencySigned(row.ev_after_fees)}
+          value={formatCurrencySigned(Math.round(evAfterFees))}
           tone={evTone}
         />
-        <StatBlock
-          label="Avg days to pass"
-          value={formatDays(row.avg_days_to_pass)}
-        />
-        <StatBlock
-          label="DD usage"
-          value={formatPercent(row.average_dd_usage_percent)}
-        />
+        <StatBlock label="Avg days to pass" value={formatDays(avgDays)} />
+        <StatBlock label="DD usage" value={formatPercent(ddUsage)} />
       </div>
 
       <div className="flex flex-col gap-2 rounded-md border border-zinc-800/80 bg-zinc-950/30 px-3 py-3 shadow-edge-top">

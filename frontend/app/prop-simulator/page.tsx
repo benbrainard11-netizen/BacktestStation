@@ -26,7 +26,11 @@ export default function PropSimulatorDashboardPage() {
       {featuredRun ? (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           <OutcomeDistributionPanel
-            distribution={featuredRun.aggregated.final_balance_distribution}
+            distributions={[
+              featuredRun.aggregated.final_balance_distribution,
+              featuredRun.aggregated.ev_after_fees_distribution,
+              featuredRun.aggregated.max_drawdown_distribution,
+            ]}
             meta="featured run · sim-001 · 10,000 sequences"
           />
           <SamplePathsPanel

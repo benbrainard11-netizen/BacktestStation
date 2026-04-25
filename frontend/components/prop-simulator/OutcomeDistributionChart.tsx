@@ -1,7 +1,6 @@
-// SVG histogram + statistical overlays for an OutcomeDistribution.
-//
-// Renders bucket bars + a soft ±1σ band, a mean line (emerald), a median
-// line (zinc), and P10/P90 markers. No external chart library.
+"use client";
+
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import type {
@@ -31,6 +30,19 @@ function formatTick(metric: DistributionMetric, value: number): string {
   }
 }
 
+function formatRange(metric: DistributionMetric, value: number): string {
+  switch (metric) {
+    case "final_balance":
+      return `$${Math.round(value).toLocaleString("en-US")}`;
+    case "ev_after_fees": {
+      const sign = value < 0 ? "-" : value > 0 ? "+" : "";
+      return `${sign}$${Math.abs(Math.round(value)).toLocaleString("en-US")}`;
+    }
+    case "max_drawdown":
+      return `$${Math.round(value).toLocaleString("en-US")}`;
+  }
+}
+
 export default function OutcomeDistributionChart({
   distribution,
   width = 720,
@@ -38,6 +50,8 @@ export default function OutcomeDistributionChart({
   className,
 }: OutcomeDistributionChartProps) {
   const { buckets, stats, metric } = distribution;
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
   if (buckets.length === 0) return null;
 
   const padLeft = 8;
@@ -59,108 +73,151 @@ export default function OutcomeDistributionChart({
   const sigmaLow = Math.max(xMin, stats.mean - stats.std_dev);
   const sigmaHigh = Math.min(xMax, stats.mean + stats.std_dev);
 
-  // X-axis tick positions — aim for ~5 evenly spaced labels.
   const tickCount = 5;
   const ticks = Array.from({ length: tickCount + 1 }, (_, i) =>
     xMin + (xRange * i) / tickCount,
   );
 
+  const totalCount = buckets.reduce((acc, b) => acc + b.count, 0);
+  const hovered = hoverIndex !== null ? buckets[hoverIndex] ?? null : null;
+  const hoverPct = hovered && totalCount > 0
+    ? (hovered.count / totalCount) * 100
+    : 0;
+
+  const tooltipPx = hovered ? xPos(hovered.range_low + (hovered.range_high - hovered.range_low) / 2) : 0;
+  const tooltipLeftPct = (tooltipPx / width) * 100;
+
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="block w-full"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        {/* ±1σ shaded band */}
-        <rect
-          x={xPos(sigmaLow)}
-          y={padTop}
-          width={Math.max(0, xPos(sigmaHigh) - xPos(sigmaLow))}
-          height={innerH}
-          fill="rgb(82 82 91 / 0.18)"
-        />
-
-        {/* histogram bars */}
-        {buckets.map((bucket, i) => {
-          const x0 = xPos(bucket.range_low);
-          const x1 = xPos(bucket.range_high);
-          const w = Math.max(1, x1 - x0 - 1);
-          const h = bucket.count * yScale;
-          return (
-            <rect
-              key={i}
-              x={x0 + 0.5}
-              y={padTop + innerH - h}
-              width={w}
-              height={h}
-              fill="rgb(113 113 122 / 0.65)"
-              stroke="rgb(161 161 170 / 0.18)"
-              strokeWidth="0.5"
-            />
-          );
-        })}
-
-        {/* median line (dashed zinc) */}
-        <line
-          x1={xPos(stats.median)}
-          x2={xPos(stats.median)}
-          y1={padTop}
-          y2={padTop + innerH}
-          stroke="rgb(212 212 216 / 0.85)"
-          strokeWidth="1"
-          strokeDasharray="3 3"
-        />
-
-        {/* mean line (emerald) */}
-        <line
-          x1={xPos(stats.mean)}
-          x2={xPos(stats.mean)}
-          y1={padTop}
-          y2={padTop + innerH}
-          stroke="rgb(52 211 153 / 0.95)"
-          strokeWidth="1.25"
-        />
-
-        {/* P10 / P90 markers (small ticks under the bars) */}
-        {[stats.p10, stats.p90].map((v, i) => (
-          <line
-            key={i}
-            x1={xPos(v)}
-            x2={xPos(v)}
-            y1={padTop + innerH - 4}
-            y2={padTop + innerH + 4}
-            stroke="rgb(161 161 170 / 0.85)"
-            strokeWidth="1"
+    <div className={cn("relative flex flex-col gap-2", className)}>
+      <div className="relative">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="block w-full"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          onMouseLeave={() => setHoverIndex(null)}
+        >
+          {/* ±1σ shaded band */}
+          <rect
+            x={xPos(sigmaLow)}
+            y={padTop}
+            width={Math.max(0, xPos(sigmaHigh) - xPos(sigmaLow))}
+            height={innerH}
+            fill="rgb(82 82 91 / 0.18)"
           />
-        ))}
 
-        {/* baseline */}
-        <line
-          x1={padLeft}
-          y1={padTop + innerH}
-          x2={width - padRight}
-          y2={padTop + innerH}
-          stroke="rgb(63 63 70 / 0.7)"
-          strokeWidth="0.5"
-        />
+          {/* histogram bars (with hover hit areas) */}
+          {buckets.map((bucket, i) => {
+            const x0 = xPos(bucket.range_low);
+            const x1 = xPos(bucket.range_high);
+            const w = Math.max(1, x1 - x0 - 1);
+            const h = bucket.count * yScale;
+            const isHover = hoverIndex === i;
+            return (
+              <g key={i}>
+                <rect
+                  x={x0 + 0.5}
+                  y={padTop + innerH - h}
+                  width={w}
+                  height={h}
+                  fill={
+                    isHover ? "rgb(212 212 216 / 0.85)" : "rgb(113 113 122 / 0.65)"
+                  }
+                  stroke="rgb(161 161 170 / 0.18)"
+                  strokeWidth="0.5"
+                  className="transition-all duration-150"
+                />
+                {/* full-height hit target */}
+                <rect
+                  x={x0 + 0.5}
+                  y={padTop}
+                  width={w}
+                  height={innerH}
+                  fill="transparent"
+                  onMouseEnter={() => setHoverIndex(i)}
+                />
+              </g>
+            );
+          })}
 
-        {/* x-axis tick labels */}
-        {ticks.map((v, i) => (
-          <text
-            key={i}
-            x={xPos(v)}
-            y={height - 6}
-            textAnchor="middle"
-            fontSize="9"
-            fill="rgb(113 113 122)"
-            fontFamily="var(--font-work-sans)"
+          {/* median line (dashed zinc) */}
+          <line
+            x1={xPos(stats.median)}
+            x2={xPos(stats.median)}
+            y1={padTop}
+            y2={padTop + innerH}
+            stroke="rgb(212 212 216 / 0.85)"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
+
+          {/* mean line (emerald) */}
+          <line
+            x1={xPos(stats.mean)}
+            x2={xPos(stats.mean)}
+            y1={padTop}
+            y2={padTop + innerH}
+            stroke="rgb(52 211 153 / 0.95)"
+            strokeWidth="1.25"
+          />
+
+          {/* P10 / P90 markers */}
+          {[stats.p10, stats.p90].map((v, i) => (
+            <line
+              key={i}
+              x1={xPos(v)}
+              x2={xPos(v)}
+              y1={padTop + innerH - 4}
+              y2={padTop + innerH + 4}
+              stroke="rgb(161 161 170 / 0.85)"
+              strokeWidth="1"
+            />
+          ))}
+
+          {/* baseline */}
+          <line
+            x1={padLeft}
+            y1={padTop + innerH}
+            x2={width - padRight}
+            y2={padTop + innerH}
+            stroke="rgb(63 63 70 / 0.7)"
+            strokeWidth="0.5"
+          />
+
+          {/* x-axis tick labels */}
+          {ticks.map((v, i) => (
+            <text
+              key={i}
+              x={xPos(v)}
+              y={height - 6}
+              textAnchor="middle"
+              fontSize="9"
+              fill="rgb(113 113 122)"
+              fontFamily="var(--font-work-sans)"
+            >
+              {formatTick(metric, v)}
+            </text>
+          ))}
+        </svg>
+
+        {hovered ? (
+          <div
+            className="pointer-events-none absolute -top-1 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md border border-zinc-700 bg-zinc-950/95 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-widest text-zinc-200 shadow-dim"
+            style={{ left: `${tooltipLeftPct}%` }}
           >
-            {formatTick(metric, v)}
-          </text>
-        ))}
-      </svg>
+            <div className="text-zinc-100">
+              {formatRange(metric, hovered.range_low)} ·{" "}
+              {formatRange(metric, hovered.range_high)}
+            </div>
+            <div className="mt-0.5 text-zinc-500">
+              <span className="text-emerald-400">
+                {hovered.count.toLocaleString()}
+              </span>{" "}
+              seq · {hoverPct.toFixed(2)}%
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400">
         <span className="flex items-center gap-1.5">
@@ -185,6 +242,7 @@ export default function OutcomeDistributionChart({
           <span aria-hidden="true" className="h-[3px] w-4 rounded-sm bg-zinc-400" />
           P10 / P90 ticks
         </span>
+        <span className="ml-auto text-zinc-600">hover bars for bucket counts</span>
       </div>
     </div>
   );

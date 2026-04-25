@@ -199,6 +199,10 @@ export interface SimulationAggregatedStats {
   payout_blocked_rate: number;
   /** Histogram + percentile stats for ending-balance shape. */
   final_balance_distribution: OutcomeDistribution;
+  /** Histogram + percentile stats for EV after fees. */
+  ev_after_fees_distribution: OutcomeDistribution;
+  /** Histogram + percentile stats for max drawdown across sequences. */
+  max_drawdown_distribution: OutcomeDistribution;
 }
 
 export interface RiskSweepRow {

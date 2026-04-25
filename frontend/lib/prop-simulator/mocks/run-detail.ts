@@ -135,6 +135,40 @@ const MOCK_RUN_AGGREGATED: SimulationAggregatedStats = {
       58_000,
     ),
   },
+  ev_after_fees_distribution: {
+    metric: "ev_after_fees",
+    stats: {
+      mean: 412,
+      median: 388,
+      std_dev: 127,
+      min: -640,
+      max: 1_412,
+      p10: 224,
+      p25: 312,
+      p75: 528,
+      p90: 612,
+      iqr: 528 - 312,
+      spread: 612 - 224,
+    },
+    buckets: gaussianHistogram(412, 127, 10_000, 30, -700, 1_500),
+  },
+  max_drawdown_distribution: {
+    metric: "max_drawdown",
+    stats: {
+      mean: 780,
+      median: 720,
+      std_dev: 360,
+      min: 0,
+      max: 2_040,
+      p10: 280,
+      p25: 460,
+      p75: 1_020,
+      p90: 1_280,
+      iqr: 1_020 - 460,
+      spread: 1_280 - 280,
+    },
+    buckets: gaussianHistogram(780, 360, 10_000, 30, 0, 2_100),
+  },
 };
 
 const MOCK_RISK_SWEEP: RiskSweepRow[] = [

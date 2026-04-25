@@ -69,7 +69,13 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
           <EvAfterFeesPanel stats={aggregated} />
         </div>
 
-        <OutcomeDistributionPanel distribution={aggregated.final_balance_distribution} />
+        <OutcomeDistributionPanel
+          distributions={[
+            aggregated.final_balance_distribution,
+            aggregated.ev_after_fees_distribution,
+            aggregated.max_drawdown_distribution,
+          ]}
+        />
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <DaysToPassPanel stats={aggregated} />
