@@ -67,28 +67,28 @@ export default function SimulationCompareTable({
         <tbody>
           {rows.map((row) => {
             const highlights: string[] = [];
-            if (bestEv?.setup_id === row.setup_id) highlights.push("best EV");
-            if (bestPass?.setup_id === row.setup_id) highlights.push("best pass");
-            if (bestPayout?.setup_id === row.setup_id) highlights.push("best payout");
-            if (fastestPass?.setup_id === row.setup_id) highlights.push("fastest pass");
-            if (lowestFail?.setup_id === row.setup_id) highlights.push("lowest fail");
-            if (bestConfidence?.setup_id === row.setup_id) highlights.push("best confidence");
+            if (bestEv?.setup_id === row.setup_id) highlights.push("EV");
+            if (bestPass?.setup_id === row.setup_id) highlights.push("pass");
+            if (bestPayout?.setup_id === row.setup_id) highlights.push("payout");
+            if (fastestPass?.setup_id === row.setup_id) highlights.push("fastest");
+            if (lowestFail?.setup_id === row.setup_id) highlights.push("low fail");
+            if (bestConfidence?.setup_id === row.setup_id) highlights.push("conf");
             return (
               <tr
                 key={row.setup_id}
-                className="border-b border-zinc-900/80 text-zinc-300 last:border-b-0 hover:bg-zinc-900/40"
+                className="border-b border-zinc-900/80 align-top text-zinc-300 last:border-b-0 hover:bg-zinc-900/40"
               >
                 <td className="max-w-[260px] px-3 py-2 text-zinc-100">
-                  <div className="flex min-w-0 items-center gap-1">
+                  <div className="flex min-w-0 flex-col gap-1.5">
                     <span title={row.setup_label} className="truncate">
                       {row.setup_label}
                     </span>
                     {highlights.length > 0 ? (
-                      <span className="inline-flex flex-none flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1">
                         {highlights.map((h) => (
-                          <HighlightBadge key={h}>{h}</HighlightBadge>
+                          <HighlightBadge key={h}>best {h}</HighlightBadge>
                         ))}
-                      </span>
+                      </div>
                     ) : null}
                   </div>
                 </td>
