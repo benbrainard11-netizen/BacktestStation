@@ -43,6 +43,7 @@ class BacktestRunRead(OrmModel):
     start_ts: datetime | None
     end_ts: datetime | None
     import_source: str | None
+    source: str
     status: str
     tags: list[str] | None = None
     created_at: datetime

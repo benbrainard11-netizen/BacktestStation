@@ -108,6 +108,17 @@ def _run_data_migrations(engine: Engine) -> None:
                 text("ALTER TABLE notes ADD COLUMN updated_at DATETIME")
             )
 
+        # 2026-04-25: BacktestRun gains `source` to distinguish imported
+        # vs engine-produced runs. Existing rows backfill to "imported".
+        run_columns = {c["name"] for c in inspector.get_columns("backtest_runs")}
+        if "source" not in run_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE backtest_runs ADD COLUMN source VARCHAR(20) "
+                    "NOT NULL DEFAULT 'imported'"
+                )
+            )
+
 
 # Lazily-initialised module globals for the running FastAPI app.
 _engine: Engine | None = None

@@ -100,16 +100,19 @@ Those docs are **vision capture, not implementation commitments.** Phase 1 here 
 
 ### Build order
 
-1. Strategy lifecycle pipeline — in progress on `task/strategy-editor-pipeline`
-2. Strategy Dossier page — initial version on the same branch (will expand in later phases)
-3. Linked imported runs — working in the initial dossier
-4. Research Workspace (extends existing `Note` model)
-5. Experiment Ledger (new `Experiment` table)
-6. AI Prompt Generator
-7. Forward/live drift monitor
-8. Risk Profile Manager
-9. Simple engine prototype
-10. Full strategy engine
+1. Strategy lifecycle pipeline — ✓ shipped
+2. Strategy Dossier page — ✓ shipped (initial version; will expand in later phases)
+3. Linked imported runs — ✓ shipped
+4. Research Workspace (Note model extended) — ✓ shipped
+5. Experiment Ledger (new `Experiment` table) — ✓ shipped
+6. AI Prompt Generator — ✓ shipped
+7. Data warehouse layer (Hive parquet, manifests, reader API) — ✓ shipped
+8. Backtest engine v1 (bar-based, single-position, bracket orders) — ✓ shipped (see [`BACKTEST_ENGINE.md`](BACKTEST_ENGINE.md))
+9. Port real strategies as engine plugins (Fractal AMD first)
+10. Forward/live drift monitor
+11. Risk Profile Manager
+12. Tick-replay engine (Level 2)
+13. MBP-1 order book replay (Level 3)
 
 ---
 

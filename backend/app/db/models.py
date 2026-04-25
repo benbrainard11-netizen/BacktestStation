@@ -80,6 +80,11 @@ class BacktestRun(Base):
     end_ts: Mapped[datetime | None] = mapped_column(DateTime)
     # File path or short tag describing where the run was imported from.
     import_source: Mapped[str | None] = mapped_column(Text)
+    # "imported" — trades.csv/equity.csv/metrics.json bundle from another tool.
+    # "engine"   — produced by the in-app backtest engine.
+    source: Mapped[str] = mapped_column(
+        String(20), default="imported", server_default="imported", index=True
+    )
     status: Mapped[str] = mapped_column(String(20), default="imported")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
