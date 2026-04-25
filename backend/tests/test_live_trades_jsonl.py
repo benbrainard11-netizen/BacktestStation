@@ -97,6 +97,28 @@ def test_parse_missing_required_field_returns_none():
     assert parse_record(rec) is None
 
 
+def test_parse_missing_pnl_dollars_is_optional():
+    """Older live-bot builds don't emit pnl_dollars; importer keeps the trade
+    and leaves Trade.pnl as None."""
+    rec = {**VALID_RECORD}
+    del rec["pnl_dollars"]
+    parsed = parse_record(rec)
+    assert parsed is not None
+    assert parsed.pnl_dollars is None
+    assert parsed.pnl_r == pytest.approx(3.0)
+
+
+def test_parse_missing_symbol_and_contracts_uses_defaults():
+    """symbol defaults to '', contracts to 1 when absent (older live builds)."""
+    rec = {**VALID_RECORD}
+    del rec["symbol"]
+    del rec["contracts"]
+    parsed = parse_record(rec)
+    assert parsed is not None
+    assert parsed.symbol == ""
+    assert parsed.contracts == 1
+
+
 def test_parse_converts_et_to_utc_naive():
     """ET 10:15 -> UTC 14:15 (during EDT). Stored tz-naive."""
     parsed = parse_record(VALID_RECORD)

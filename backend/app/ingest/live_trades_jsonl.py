@@ -61,7 +61,12 @@ RUN_NAME_PREFIX = "live (jsonl):"
 
 @dataclass(frozen=True)
 class ParsedTrade:
-    """Validated trade record after parsing one JSONL line."""
+    """Validated trade record after parsing one JSONL line.
+
+    `pnl_dollars` is optional -- older live-bot builds don't emit it.
+    When missing, the importer leaves Trade.pnl as None and lets the
+    dossier fall back to r_multiple-based metrics.
+    """
 
     entry_ts: dt.datetime  # tz-naive UTC
     side: str  # "long" | "short"
@@ -71,7 +76,7 @@ class ParsedTrade:
     exit_price: float
     stop_price: float
     target_price: float
-    pnl_dollars: float
+    pnl_dollars: float | None
     pnl_r: float
     exit_reason: str
     order_id: str
@@ -82,8 +87,9 @@ def parse_record(record: dict) -> ParsedTrade | None:
     """Convert one raw JSONL dict to a ParsedTrade. Returns None if invalid.
 
     Required fields: date, entry_time, direction, entry_price,
-    exit_price, stop, target, pnl_r, pnl_dollars. Missing fields ->
-    record skipped (logged by caller).
+    exit_price, stop, target, pnl_r. Older live-bot builds don't emit
+    symbol / contracts / pnl_dollars / risk_dollars -- those are
+    treated as optional with sensible defaults.
     """
     required = (
         "date",
@@ -94,7 +100,6 @@ def parse_record(record: dict) -> ParsedTrade | None:
         "stop",
         "target",
         "pnl_r",
-        "pnl_dollars",
     )
     if any(k not in record for k in required):
         return None
@@ -113,6 +118,10 @@ def parse_record(record: dict) -> ParsedTrade | None:
     ).replace(tzinfo=ET)
     entry_ts = entry_dt_et.astimezone(dt.timezone.utc).replace(tzinfo=None)
 
+    pnl_dollars: float | None = None
+    if "pnl_dollars" in record and record["pnl_dollars"] is not None:
+        pnl_dollars = float(record["pnl_dollars"])
+
     return ParsedTrade(
         entry_ts=entry_ts,
         side=side,
@@ -122,7 +131,7 @@ def parse_record(record: dict) -> ParsedTrade | None:
         exit_price=float(record["exit_price"]),
         stop_price=float(record["stop"]),
         target_price=float(record["target"]),
-        pnl_dollars=float(record["pnl_dollars"]),
+        pnl_dollars=pnl_dollars,
         pnl_r=float(record["pnl_r"]),
         exit_reason=str(record.get("exit_reason", "")),
         order_id=str(record.get("order_id", "")),
@@ -222,7 +231,7 @@ def import_jsonl(
                     stop_price=t.stop_price,
                     target_price=t.target_price,
                     size=float(t.contracts),
-                    pnl=t.pnl_dollars,
+                    pnl=t.pnl_dollars,  # may be None for older live-bot builds
                     r_multiple=t.pnl_r,
                     exit_reason=t.exit_reason or None,
                 )
