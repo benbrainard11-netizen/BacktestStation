@@ -1,6 +1,7 @@
 // MOCK canonical simulation run detail — used by /runs/[id].
 
 import type {
+  DistributionBucket,
   RiskSweepRow,
   SelectedPath,
   SimulationAggregatedStats,
@@ -44,16 +45,51 @@ const MOCK_RUN_CONFIG: SimulationRunConfig = {
   notes: "Baseline demo simulation — numbers are fake.",
 };
 
+function gaussianHistogram(
+  mean: number,
+  stdDev: number,
+  totalCount: number,
+  bins: number,
+  lower: number,
+  upper: number,
+): DistributionBucket[] {
+  const binWidth = (upper - lower) / bins;
+  const densities = Array.from({ length: bins }, (_, i) => {
+    const center = lower + (i + 0.5) * binWidth;
+    const z = (center - mean) / stdDev;
+    return Math.exp(-0.5 * z * z);
+  });
+  const sumD = densities.reduce((a, b) => a + b, 0);
+  return densities.map((d, i) => {
+    const start = lower + i * binWidth;
+    return {
+      range_low: start,
+      range_high: start + binWidth,
+      count: Math.round((d / sumD) * totalCount),
+    };
+  });
+}
+
+const FINAL_BALANCE_MEAN = 51_920;
+const FINAL_BALANCE_STDDEV = 2_050;
+const FINAL_BALANCE_MIN = 47_810;
+const FINAL_BALANCE_MAX = 55_120;
+const FINAL_BALANCE_P10 = 47_980;
+const FINAL_BALANCE_P25 = 49_740;
+const FINAL_BALANCE_P75 = 53_420;
+const FINAL_BALANCE_P90 = 54_560;
+
 const MOCK_RUN_AGGREGATED: SimulationAggregatedStats = {
   pass_rate: { value: 0.612, low: 0.604, high: 0.623 },
   fail_rate: { value: 0.388, low: 0.377, high: 0.396 },
   payout_rate: { value: 0.448, low: 0.439, high: 0.458 },
-  average_final_balance: 51_920,
+  average_final_balance: FINAL_BALANCE_MEAN,
   median_final_balance: 52_100,
-  p10_final_balance: 47_980,
-  p25_final_balance: 49_740,
-  p75_final_balance: 53_420,
-  p90_final_balance: 54_560,
+  std_dev_final_balance: FINAL_BALANCE_STDDEV,
+  p10_final_balance: FINAL_BALANCE_P10,
+  p25_final_balance: FINAL_BALANCE_P25,
+  p75_final_balance: FINAL_BALANCE_P75,
+  p90_final_balance: FINAL_BALANCE_P90,
   average_days_to_pass: { value: 18.4, low: 17.9, high: 19.0 },
   median_days_to_pass: 17,
   average_trades_to_pass: 41.2,
@@ -67,6 +103,7 @@ const MOCK_RUN_AGGREGATED: SimulationAggregatedStats = {
   median_payout: 500,
   expected_value_before_fees: 612,
   expected_value_after_fees: { value: 412, low: 284, high: 538 },
+  std_dev_ev_after_fees: 127,
   average_fees_paid: 201,
   most_common_failure_reason: "trailing_drawdown",
   daily_loss_failure_rate: 0.112,
@@ -74,6 +111,30 @@ const MOCK_RUN_AGGREGATED: SimulationAggregatedStats = {
   consistency_failure_rate: 0.048,
   profit_target_hit_rate: 0.612,
   payout_blocked_rate: 0.164,
+  final_balance_distribution: {
+    metric: "final_balance",
+    stats: {
+      mean: FINAL_BALANCE_MEAN,
+      median: 52_100,
+      std_dev: FINAL_BALANCE_STDDEV,
+      min: FINAL_BALANCE_MIN,
+      max: FINAL_BALANCE_MAX,
+      p10: FINAL_BALANCE_P10,
+      p25: FINAL_BALANCE_P25,
+      p75: FINAL_BALANCE_P75,
+      p90: FINAL_BALANCE_P90,
+      iqr: FINAL_BALANCE_P75 - FINAL_BALANCE_P25,
+      spread: FINAL_BALANCE_P90 - FINAL_BALANCE_P10,
+    },
+    buckets: gaussianHistogram(
+      FINAL_BALANCE_MEAN,
+      FINAL_BALANCE_STDDEV,
+      10_000,
+      30,
+      45_000,
+      58_000,
+    ),
+  },
 };
 
 const MOCK_RISK_SWEEP: RiskSweepRow[] = [

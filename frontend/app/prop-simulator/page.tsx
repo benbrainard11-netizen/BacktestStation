@@ -6,6 +6,7 @@ import RiskSweepSummaryPanel from "@/components/prop-simulator/dashboard/RiskSwe
 import SamplePathsPanel from "@/components/prop-simulator/dashboard/SamplePathsPanel";
 import SetupHighlightPanel from "@/components/prop-simulator/dashboard/SetupHighlightPanel";
 import SimulationCorePanel from "@/components/prop-simulator/dashboard/SimulationCorePanel";
+import OutcomeDistributionPanel from "@/components/prop-simulator/OutcomeDistributionPanel";
 import { findMockRunDetail, MOCK_DASHBOARD_SUMMARY } from "@/lib/prop-simulator/mocks";
 
 export default function PropSimulatorDashboardPage() {
@@ -23,10 +24,16 @@ export default function PropSimulatorDashboardPage() {
       <QuickStatsRow summary={summary} />
 
       {featuredRun ? (
-        <SamplePathsPanel
-          paths={featuredRun.selected_paths}
-          meta="featured run · sim-001 · 5 buckets"
-        />
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <OutcomeDistributionPanel
+            distribution={featuredRun.aggregated.final_balance_distribution}
+            meta="featured run · sim-001 · 10,000 sequences"
+          />
+          <SamplePathsPanel
+            paths={featuredRun.selected_paths}
+            meta="featured run · sim-001 · 5 buckets"
+          />
+        </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">

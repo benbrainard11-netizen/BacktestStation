@@ -10,6 +10,7 @@ import EquityPathOverlayPanel from "@/components/prop-simulator/runs/EquityPathO
 import EvAfterFeesPanel from "@/components/prop-simulator/runs/EvAfterFeesPanel";
 import FailureReasonPanel from "@/components/prop-simulator/runs/FailureReasonPanel";
 import MonteCarloOutcomePanel from "@/components/prop-simulator/runs/MonteCarloOutcomePanel";
+import OutcomeDistributionPanel from "@/components/prop-simulator/OutcomeDistributionPanel";
 import RiskSweepTable from "@/components/prop-simulator/runs/RiskSweepTable";
 import RuleViolationPanel from "@/components/prop-simulator/runs/RuleViolationPanel";
 import RunSummaryPanel from "@/components/prop-simulator/runs/RunSummaryPanel";
@@ -67,6 +68,8 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
           />
           <EvAfterFeesPanel stats={aggregated} />
         </div>
+
+        <OutcomeDistributionPanel distribution={aggregated.final_balance_distribution} />
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <DaysToPassPanel stats={aggregated} />

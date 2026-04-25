@@ -134,12 +134,44 @@ export interface ConfidenceInterval {
   high: number;
 }
 
+export interface DistributionStats {
+  mean: number;
+  median: number;
+  std_dev: number;
+  min: number;
+  max: number;
+  p10: number;
+  p25: number;
+  p75: number;
+  p90: number;
+  iqr: number;
+  spread: number;
+}
+
+export interface DistributionBucket {
+  range_low: number;
+  range_high: number;
+  count: number;
+}
+
+export type DistributionMetric =
+  | "final_balance"
+  | "ev_after_fees"
+  | "max_drawdown";
+
+export interface OutcomeDistribution {
+  metric: DistributionMetric;
+  stats: DistributionStats;
+  buckets: DistributionBucket[];
+}
+
 export interface SimulationAggregatedStats {
   pass_rate: ConfidenceInterval;
   fail_rate: ConfidenceInterval;
   payout_rate: ConfidenceInterval;
   average_final_balance: number;
   median_final_balance: number;
+  std_dev_final_balance: number;
   p10_final_balance: number;
   p25_final_balance: number;
   p75_final_balance: number;
@@ -157,6 +189,7 @@ export interface SimulationAggregatedStats {
   median_payout: number;
   expected_value_before_fees: number;
   expected_value_after_fees: ConfidenceInterval;
+  std_dev_ev_after_fees: number;
   average_fees_paid: number;
   most_common_failure_reason: FailureReason;
   daily_loss_failure_rate: number;
@@ -164,6 +197,8 @@ export interface SimulationAggregatedStats {
   consistency_failure_rate: number;
   profit_target_hit_rate: number;
   payout_blocked_rate: number;
+  /** Histogram + percentile stats for ending-balance shape. */
+  final_balance_distribution: OutcomeDistribution;
 }
 
 export interface RiskSweepRow {
