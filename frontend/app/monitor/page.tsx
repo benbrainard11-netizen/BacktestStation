@@ -3,6 +3,7 @@
 import { AlertTriangle, FileX, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import IngesterStatusPanel from "@/components/monitor/IngesterStatusPanel";
 import MetricCard from "@/components/MetricCard";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
@@ -48,6 +49,7 @@ export default function MonitorPage() {
         meta={metaLabel(state)}
       />
       <div className="flex flex-col gap-4 px-6 pb-6">
+        <IngesterStatusPanel />
         <MonitorBody state={state} />
       </div>
     </div>

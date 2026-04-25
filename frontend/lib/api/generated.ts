@@ -376,6 +376,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/monitor/ingester": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ingester Status
+         * @description Return the live ingester's most recent heartbeat.
+         *
+         *     404 if the file doesn't exist (ingester not running or never run).
+         *     422 if the file exists but is malformed.
+         */
+        get: operations["get_ingester_status_api_monitor_ingester_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/monitor/live": {
         parameters: {
             query?: never;
@@ -1038,6 +1061,49 @@ export interface components {
             strategy_version_id: number;
             /** Trades Imported */
             trades_imported: number;
+        };
+        /**
+         * IngesterStatus
+         * @description Live ingester heartbeat — mirror of {DATA_ROOT}/heartbeat/live_ingester.json.
+         *
+         *     Written by app.ingest.live every HEARTBEAT_INTERVAL_SEC. Read by
+         *     GET /api/monitor/ingester so the UI can show live feed health.
+         *
+         *     `data_schema` is aliased to "schema" for both input and output so the
+         *     on-disk JSON key stays "schema" without shadowing BaseModel.schema().
+         */
+        IngesterStatus: {
+            /** Current Date */
+            current_date: string | null;
+            /** Current File */
+            current_file: string | null;
+            /** Dataset */
+            dataset: string;
+            /** Last Error */
+            last_error: string | null;
+            /** Last Tick Ts */
+            last_tick_ts: string | null;
+            /** Reconnect Count */
+            reconnect_count: number;
+            /** Schema */
+            schema: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+            /** Stype In */
+            stype_in: string;
+            /** Symbols */
+            symbols: string[];
+            /** Ticks Last 60S */
+            ticks_last_60s: number;
+            /** Ticks Received */
+            ticks_received: number;
+            /** Uptime Seconds */
+            uptime_seconds: number;
         };
         /** LiveMonitorStatus */
         LiveMonitorStatus: {
@@ -2238,6 +2304,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ingester_status_api_monitor_ingester_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngesterStatus"];
                 };
             };
         };

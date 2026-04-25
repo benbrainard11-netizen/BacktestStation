@@ -1080,6 +1080,118 @@
         "title": "ImportBacktestResponse",
         "type": "object"
       },
+      "IngesterStatus": {
+        "description": "Live ingester heartbeat \u2014 mirror of {DATA_ROOT}/heartbeat/live_ingester.json.\n\nWritten by app.ingest.live every HEARTBEAT_INTERVAL_SEC. Read by\nGET /api/monitor/ingester so the UI can show live feed health.\n\n`data_schema` is aliased to \"schema\" for both input and output so the\non-disk JSON key stays \"schema\" without shadowing BaseModel.schema().",
+        "properties": {
+          "current_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Date"
+          },
+          "current_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current File"
+          },
+          "dataset": {
+            "title": "Dataset",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_tick_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Tick Ts"
+          },
+          "reconnect_count": {
+            "title": "Reconnect Count",
+            "type": "integer"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "stype_in": {
+            "title": "Stype In",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "ticks_last_60s": {
+            "title": "Ticks Last 60S",
+            "type": "integer"
+          },
+          "ticks_received": {
+            "title": "Ticks Received",
+            "type": "integer"
+          },
+          "uptime_seconds": {
+            "title": "Uptime Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "started_at",
+          "uptime_seconds",
+          "last_tick_ts",
+          "ticks_received",
+          "ticks_last_60s",
+          "current_file",
+          "current_date",
+          "symbols",
+          "dataset",
+          "schema",
+          "stype_in",
+          "reconnect_count",
+          "last_error"
+        ],
+        "title": "IngesterStatus",
+        "type": "object"
+      },
       "LiveMonitorStatus": {
         "properties": {
           "current_session": {
@@ -3721,6 +3833,28 @@
         "summary": "Import Backtest",
         "tags": [
           "import"
+        ]
+      }
+    },
+    "/api/monitor/ingester": {
+      "get": {
+        "description": "Return the live ingester's most recent heartbeat.\n\n404 if the file doesn't exist (ingester not running or never run).\n422 if the file exists but is malformed.",
+        "operationId": "get_ingester_status_api_monitor_ingester_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngesterStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Ingester Status",
+        "tags": [
+          "monitor"
         ]
       }
     },

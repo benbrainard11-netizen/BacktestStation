@@ -43,3 +43,21 @@ def ensure_data_dir() -> Path:
     """Create the local data directory if it does not exist; return it."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     return DATA_DIR
+
+
+def warehouse_root() -> Path:
+    """Root of the on-disk data warehouse (raw DBN, parquet mirror, heartbeats).
+
+    Configured via the BS_DATA_ROOT env var — same pattern the ingester
+    daemons use. Defaults to C:/data on Windows, ./data elsewhere. This
+    is DIFFERENT from DATA_DIR which is the repo-relative metadata
+    directory; the warehouse lives outside the repo on a 24/7 collection
+    node and is mounted/synced separately.
+    """
+    default = "C:/data" if os.name == "nt" else "./data"
+    return Path(os.environ.get("BS_DATA_ROOT", default))
+
+
+def ingester_heartbeat_path() -> Path:
+    """Path to the live ingester's heartbeat JSON. Read by /api/monitor/ingester."""
+    return warehouse_root() / "heartbeat" / "live_ingester.json"
