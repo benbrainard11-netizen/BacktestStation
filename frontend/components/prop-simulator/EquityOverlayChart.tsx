@@ -1,6 +1,6 @@
-// Reusable SVG equity-overlay chart. Multiple paths share one normalized
-// Y-axis; X-axis stretches to the longest path. Faint grid + zero-line +
-// per-bucket stroke colors. No external chart library.
+"use client";
+
+import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import type { SelectedPath } from "@/lib/prop-simulator/types";
@@ -37,6 +37,18 @@ const BUCKET_DOT_BG: Record<SelectedPath["bucket"], string> = {
   worst: "bg-rose-400",
 };
 
+const BUCKET_TEXT: Record<SelectedPath["bucket"], string> = {
+  best: "text-emerald-400",
+  near_pass: "text-emerald-300/85",
+  median: "text-zinc-200",
+  near_fail: "text-rose-300/85",
+  worst: "text-rose-400",
+};
+
+function formatBalance(v: number): string {
+  return `$${Math.round(v).toLocaleString("en-US")}`;
+}
+
 export default function EquityOverlayChart({
   paths,
   width = 600,
@@ -44,6 +56,9 @@ export default function EquityOverlayChart({
   showAxes = true,
   className,
 }: EquityOverlayChartProps) {
+  const [hoverDay, setHoverDay] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
   if (paths.length === 0) {
     return (
       <div className="flex h-40 items-center justify-center font-mono text-xs text-zinc-500">
@@ -73,13 +88,68 @@ export default function EquityOverlayChart({
     min + (range * i) / yTicks,
   );
 
+  function handleMove(e: React.MouseEvent<SVGSVGElement>) {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    // Convert pixel x → viewBox x
+    const vx = (px / rect.width) * width;
+    if (vx < padLeft || vx > width - padRight) {
+      setHoverDay(null);
+      return;
+    }
+    const stepX = innerW / Math.max(1, maxLen - 1);
+    const dayIndex = Math.round((vx - padLeft) / stepX);
+    setHoverDay(Math.max(0, Math.min(maxLen - 1, dayIndex)));
+  }
+
+  const stepX = innerW / Math.max(1, maxLen - 1);
+  const hoverX = hoverDay !== null ? padLeft + hoverDay * stepX : null;
+
+  // Per-path readout values at hoverDay (when path has data at that index).
+  const hoverValues = hoverDay !== null
+    ? paths.map((p) => ({
+        bucket: p.bucket,
+        value: p.equity_curve[hoverDay] ?? null,
+      }))
+    : [];
+
   return (
     <div className={cn("flex flex-col gap-3", className)}>
+      {/* Status-line readout — always reserves vertical space so the chart
+          doesn't jump. */}
+      <div className="flex h-5 flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+        {hoverDay !== null ? (
+          <>
+            <span className="text-zinc-400">day {hoverDay}</span>
+            <span className="text-zinc-700">·</span>
+            {hoverValues.map((hv) =>
+              hv.value !== null ? (
+                <span key={hv.bucket} className="flex items-center gap-1">
+                  <span className={BUCKET_TEXT[hv.bucket]}>
+                    {BUCKET_LABEL[hv.bucket].slice(0, 3).toUpperCase()}
+                  </span>
+                  <span className="tabular-nums text-zinc-200">
+                    {formatBalance(hv.value)}
+                  </span>
+                </span>
+              ) : null,
+            )}
+          </>
+        ) : (
+          <span className="text-zinc-600">hover chart for crosshair</span>
+        )}
+      </div>
+
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
         className="block w-full"
         preserveAspectRatio="none"
         aria-hidden="true"
+        onMouseMove={handleMove}
+        onMouseLeave={() => setHoverDay(null)}
       >
         {/* horizontal grid */}
         {showAxes
@@ -123,7 +193,6 @@ export default function EquityOverlayChart({
 
         {/* paths */}
         {paths.map((path) => {
-          const stepX = innerW / Math.max(1, maxLen - 1);
           const points = path.equity_curve
             .map((v, i) => {
               const x = padLeft + i * stepX;
@@ -143,6 +212,35 @@ export default function EquityOverlayChart({
             />
           );
         })}
+
+        {/* crosshair vertical guide + per-path dots */}
+        {hoverX !== null ? (
+          <>
+            <line
+              x1={hoverX}
+              y1={padTop}
+              x2={hoverX}
+              y2={padTop + innerH}
+              stroke="rgb(212 212 216 / 0.55)"
+              strokeWidth="0.75"
+              strokeDasharray="2 3"
+            />
+            {paths.map((path) => {
+              const v = path.equity_curve[hoverDay ?? -1];
+              if (v === undefined) return null;
+              const y = padTop + innerH - ((v - min) / range) * innerH;
+              return (
+                <circle
+                  key={path.bucket}
+                  cx={hoverX}
+                  cy={y}
+                  r="2.5"
+                  className={cn("fill-current", BUCKET_TEXT[path.bucket])}
+                />
+              );
+            })}
+          </>
+        ) : null}
 
         {/* x-axis label markers */}
         {showAxes ? (

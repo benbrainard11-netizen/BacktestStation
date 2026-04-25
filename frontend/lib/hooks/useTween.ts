@@ -11,11 +11,16 @@ function easeOutCubic(t: number): number {
  * If `target` changes mid-tween, the next animation starts from the
  * currently displayed value rather than snapping.
  *
- * Returns the live tweened number on every frame.
+ * Pass `initialValue` (e.g. 0) to count up from a different starting
+ * value on first mount instead of snapping straight to `target`.
  */
-export function useTween(target: number, duration: number = 280): number {
-  const currentRef = useRef(target);
-  const startRef = useRef(target);
+export function useTween(
+  target: number,
+  duration: number = 280,
+  initialValue?: number,
+): number {
+  const currentRef = useRef(initialValue ?? target);
+  const startRef = useRef(initialValue ?? target);
   const startTimeRef = useRef<number>(0);
   // We deliberately avoid re-rendering at full RAF cadence by storing the
   // value in a ref; the forced state update below triggers React for the

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import RowSparkline from "@/components/prop-simulator/shared/RowSparkline";
 import { cn } from "@/lib/utils";
 import type { SimulationRunListRow } from "@/lib/prop-simulator/types";
 import {
@@ -20,6 +21,7 @@ export default function SimulationRunsTable({ rows }: SimulationRunsTableProps) 
         <thead>
           <tr className="border-b border-zinc-800 bg-zinc-900/40 text-[10px] uppercase tracking-widest text-zinc-500">
             <th className="whitespace-nowrap px-3 py-2">Name</th>
+            <th className="whitespace-nowrap px-3 py-2">Trend</th>
             <th className="whitespace-nowrap px-3 py-2">Strategy</th>
             <th className="whitespace-nowrap px-3 py-2 text-right">Backtests</th>
             <th className="whitespace-nowrap px-3 py-2">Firm</th>
@@ -49,6 +51,9 @@ export default function SimulationRunsTable({ rows }: SimulationRunsTableProps) 
                 >
                   {row.name}
                 </Link>
+              </td>
+              <td className="whitespace-nowrap px-3 py-2">
+                <RowSparkline row={row} />
               </td>
               <td className="whitespace-nowrap px-3 py-2 text-zinc-400">
                 {row.strategy_name}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import Panel from "@/components/Panel";
+import RowSparkline from "@/components/prop-simulator/shared/RowSparkline";
 import { cn } from "@/lib/utils";
 import type { SimulationRunListRow } from "@/lib/prop-simulator/types";
 import {
@@ -22,6 +23,7 @@ export default function RecentRunsPanel({ runs }: RecentRunsPanelProps) {
           <thead>
             <tr className="border-b border-zinc-800 text-[10px] uppercase tracking-widest text-zinc-500">
               <th className="whitespace-nowrap py-2 pr-3">Name</th>
+              <th className="whitespace-nowrap py-2 pr-3">Trend</th>
               <th className="whitespace-nowrap py-2 pr-3">Firm</th>
               <th className="whitespace-nowrap py-2 pr-3">Mode</th>
               <th className="whitespace-nowrap py-2 pr-3 text-right">Seq</th>
@@ -46,6 +48,9 @@ export default function RecentRunsPanel({ runs }: RecentRunsPanelProps) {
                   >
                     {run.name}
                   </Link>
+                </td>
+                <td className="whitespace-nowrap py-2 pr-3">
+                  <RowSparkline row={run} />
                 </td>
                 <td className="whitespace-nowrap py-2 pr-3 text-zinc-400">
                   {run.firm_name}

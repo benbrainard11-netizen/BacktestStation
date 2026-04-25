@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useDelta } from "@/lib/hooks/useDelta";
 import { useTween } from "@/lib/hooks/useTween";
 import type { RiskSweepRow } from "@/lib/prop-simulator/types";
 import {
@@ -17,9 +18,13 @@ interface InteractiveCoreStatsProps {
   defaultIndex?: number;
 }
 
+type DeltaFormat = "percent" | "currency" | "days";
+
 interface StatBlockProps {
   label: string;
   value: string;
+  delta: number | null;
+  deltaFormat: DeltaFormat;
   tone?: "neutral" | "positive" | "negative";
 }
 
@@ -29,11 +34,54 @@ const TONE_CLASS: Record<NonNullable<StatBlockProps["tone"]>, string> = {
   neutral: "text-zinc-100",
 };
 
-function StatBlock({ label, value, tone = "neutral" }: StatBlockProps) {
+function formatDelta(delta: number, format: DeltaFormat): string {
+  const sign = delta > 0 ? "+" : "";
+  switch (format) {
+    case "percent":
+      return `${sign}${(delta * 100).toFixed(1)}%`;
+    case "currency": {
+      return `${sign}$${Math.abs(Math.round(delta)).toLocaleString("en-US")}`.replace(
+        "$",
+        delta < 0 ? "-$" : delta > 0 ? "+$" : "$",
+      );
+    }
+    case "days":
+      return `${sign}${delta.toFixed(1)}d`;
+  }
+}
+
+function DeltaChip({ delta, format }: { delta: number | null; format: DeltaFormat }) {
+  if (delta === null) return null;
+  const tone = delta > 0 ? "emerald" : "rose";
+  const toneClass =
+    tone === "emerald"
+      ? "border-emerald-900/70 bg-emerald-950/40 text-emerald-300"
+      : "border-rose-900/70 bg-rose-950/40 text-rose-300";
+  return (
+    <span
+      key={Math.random()}
+      className={cn(
+        "panel-enter pointer-events-none ml-1 inline-flex items-center rounded-sm border px-1 py-px font-mono text-[9px] tabular-nums leading-none",
+        toneClass,
+      )}
+    >
+      {formatDelta(delta, format)}
+    </span>
+  );
+}
+
+function StatBlock({
+  label,
+  value,
+  delta,
+  deltaFormat,
+  tone = "neutral",
+}: StatBlockProps) {
   return (
     <div className="flex flex-col gap-1.5 rounded-md border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 shadow-edge-top">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+      <span className="flex items-center font-mono text-[10px] uppercase tracking-widest text-zinc-500">
         {label}
+        <DeltaChip delta={delta} format={deltaFormat} />
       </span>
       <span
         className={cn(
@@ -55,13 +103,20 @@ export default function InteractiveCoreStats({
   const safeIndex = Math.min(Math.max(0, index), sweep.length - 1);
   const row = sweep[safeIndex];
 
-  // Tween every numeric stat smoothly to the target row's values. Format
-  // the live tweened number for display so the slider feels analog.
-  const passRate = useTween(row.pass_rate);
-  const payoutRate = useTween(row.payout_rate);
-  const evAfterFees = useTween(row.ev_after_fees);
-  const avgDays = useTween(row.avg_days_to_pass);
-  const ddUsage = useTween(row.average_dd_usage_percent);
+  // Tween every numeric stat — initialValue=0 means each one counts up from
+  // zero on first mount, then transitions smoothly between rows on slider
+  // changes thereafter.
+  const passRate = useTween(row.pass_rate, 600, 0);
+  const payoutRate = useTween(row.payout_rate, 600, 0);
+  const evAfterFees = useTween(row.ev_after_fees, 600, 0);
+  const avgDays = useTween(row.avg_days_to_pass, 600, 0);
+  const ddUsage = useTween(row.average_dd_usage_percent, 600, 0);
+
+  const passDelta = useDelta(row.pass_rate);
+  const payoutDelta = useDelta(row.payout_rate);
+  const evDelta = useDelta(row.ev_after_fees);
+  const daysDelta = useDelta(row.avg_days_to_pass);
+  const ddDelta = useDelta(row.average_dd_usage_percent);
 
   const evTone =
     row.ev_after_fees > 0
@@ -73,16 +128,43 @@ export default function InteractiveCoreStats({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-        <StatBlock label="Paths" value="10,000" />
-        <StatBlock label="Pass" value={formatPercent(passRate)} />
-        <StatBlock label="Payout" value={formatPercent(payoutRate)} />
+        <StatBlock
+          label="Paths"
+          value="10,000"
+          delta={null}
+          deltaFormat="percent"
+        />
+        <StatBlock
+          label="Pass"
+          value={formatPercent(passRate)}
+          delta={passDelta}
+          deltaFormat="percent"
+        />
+        <StatBlock
+          label="Payout"
+          value={formatPercent(payoutRate)}
+          delta={payoutDelta}
+          deltaFormat="percent"
+        />
         <StatBlock
           label="EV after fees"
           value={formatCurrencySigned(Math.round(evAfterFees))}
+          delta={evDelta}
+          deltaFormat="currency"
           tone={evTone}
         />
-        <StatBlock label="Avg days to pass" value={formatDays(avgDays)} />
-        <StatBlock label="DD usage" value={formatPercent(ddUsage)} />
+        <StatBlock
+          label="Avg days to pass"
+          value={formatDays(avgDays)}
+          delta={daysDelta}
+          deltaFormat="days"
+        />
+        <StatBlock
+          label="DD usage"
+          value={formatPercent(ddUsage)}
+          delta={ddDelta}
+          deltaFormat="percent"
+        />
       </div>
 
       <div className="flex flex-col gap-2 rounded-md border border-zinc-800/80 bg-zinc-950/30 px-3 py-3 shadow-edge-top">
