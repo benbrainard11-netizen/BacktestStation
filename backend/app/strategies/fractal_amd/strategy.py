@@ -1,9 +1,9 @@
 """Fractal AMD Strategy class -- engine plug-in entry point.
 
-Chunk 1 of the port. Detects HTF stage signals (SMT divergence +
-rejection candles at session/1H granularity) and accumulates
-`self.setups`. Does NOT yet emit orders -- FVG detection (chunk 2)
-+ check_touch + entry validation (chunk 3) come next.
+Chunks 1+2 of the port. Detects HTF stage signals + LTF FVG zones
++ flags WATCHING setups as TOUCHED when a primary bar enters the
+zone. Does NOT yet emit orders -- chunk 3 adds entry validation
+and BracketOrder emission.
 
 Multi-instrument is wired: NQ primary, ES + YM aux. Per-bar aux
 history is accumulated in `self.aux_history` because the engine
@@ -24,7 +24,12 @@ from app.strategies.fractal_amd.signals import (
     StageSignal,
     candle_bounds,
     check_candle_pair,
+    check_touch,
+    detect_fvgs,
+    detect_smt_at_level,
+    get_ohlc,
     is_in_entry_window,
+    resample_bars,
 )
 
 if TYPE_CHECKING:
@@ -86,10 +91,13 @@ class FractalAMD(Strategy):
         if self.trades_today >= self.config.max_trades_per_day:
             return []
 
-        # 4. Scan completed HTF candles for new stage signals.
+        # 4. Scan completed HTF candles for new stage signals + LTF FVGs.
         self._scan_for_setups(bar, context)
 
-        # 5. Entry-window gate is wired but not yet acted on -- the
+        # 5. Touch detection on WATCHING setups.
+        check_touch(self.setups, bar)
+
+        # 6. Entry-window gate is wired but not yet acted on -- the
         # strategy still emits no orders this chunk. Acted on in
         # chunk 3.
         _ = is_in_entry_window(
@@ -167,23 +175,136 @@ class FractalAMD(Strategy):
                 )
                 if signal is not None:
                     self.stage_signals.append(signal)
-                    # Record a Setup placeholder. FVG fields stay 0 --
-                    # filled in chunk 2 when we add FVG detection on
-                    # resampled LTF bars within the confirmed candle.
-                    self.setups.append(
+                    # Walk the LTF expansion window for FVG-bearing
+                    # entry candidates. Each unfilled FVG => one Setup.
+                    new_setups = self._build_setups_from_ltf(
+                        signal=signal,
+                        bar_now=bar,
+                        bars_by_asset=bars_by_asset,
+                        day_et=day_et,
+                    )
+                    for s in new_setups:
+                        if not self._is_duplicate_setup(s):
+                            self.setups.append(s)
+                self._last_scanned[tf] = cur_end
+
+    def _build_setups_from_ltf(
+        self,
+        *,
+        signal: StageSignal,
+        bar_now: Bar,
+        bars_by_asset: dict[str, list[Bar]],
+        day_et: dt.datetime,
+    ) -> list[Setup]:
+        """Walk the LTF expansion window for FVG-bearing setups.
+
+        Mirrors `live_bot.SignalEngine.scan_for_setups:395-473` --
+        after an HTF stage closes, the strategy gives itself an
+        expansion window of `2 * htf_duration` to look for LTF
+        confirmation. Within each LTF candle pair that has same-
+        direction LTF SMT, resample the underlying 1m bars and
+        run FVG detection. Each unfilled FVG -> one Setup.
+        """
+        primary = bars_by_asset[self.config.primary_symbol]
+        cs, ce = signal.candle_start, signal.candle_end
+        exp_s = ce
+        exp_e = exp_s + (ce - cs) * 2
+
+        new_setups: list[Setup] = []
+
+        for ltf_tf, ltf_min in (("15m", 15), ("5m", 5)):
+            ltf_candles = candle_bounds(day_et, ltf_tf)
+            # Restrict to expansion window AND completed candles.
+            rel = [
+                (s, e) for s, e in ltf_candles
+                if s >= exp_s
+                and e <= exp_e + dt.timedelta(minutes=1)
+                and e <= bar_now.ts_event
+            ]
+            for li in range(1, len(rel)):
+                lcs, lce = rel[li]
+                lrs, lre = rel[li - 1]
+
+                # LTF SMT: same direction as the HTF stage
+                ref_ohlc = {
+                    sym: get_ohlc(bars, lrs, lre)
+                    for sym, bars in bars_by_asset.items()
+                }
+                if any(v is None for v in ref_ohlc.values()):
+                    continue
+                if signal.direction == "BEARISH":
+                    levels = {sym: ref_ohlc[sym].high for sym in bars_by_asset}
+                    smt = detect_smt_at_level(
+                        bars_by_asset, levels, "high", lcs, lce
+                    )
+                    if not (smt.has_smt and smt.direction == "BEARISH"):
+                        continue
+                else:
+                    levels = {sym: ref_ohlc[sym].low for sym in bars_by_asset}
+                    smt = detect_smt_at_level(
+                        bars_by_asset, levels, "low", lcs, lce
+                    )
+                    if not (smt.has_smt and smt.direction == "BULLISH"):
+                        continue
+
+                # FVG detection on RESAMPLED LTF bars (the 2026-04-10 fix).
+                fvg_window_start = lrs
+                fvg_window_end = min(
+                    lce + dt.timedelta(minutes=ltf_min * 5),
+                    bar_now.ts_event,
+                )
+                primary_window = [
+                    b for b in primary
+                    if fvg_window_start <= b.ts_event < fvg_window_end
+                ]
+                if len(primary_window) < ltf_min * 3:
+                    continue
+                ltf_bars = resample_bars(primary_window, ltf_min)
+                if len(ltf_bars) < 3:
+                    continue
+                fvgs = detect_fvgs(
+                    ltf_bars, signal.direction, min_gap_pct=0.3, expiry_bars=60
+                )
+                for fvg in fvgs:
+                    if fvg.filled:
+                        continue
+                    new_setups.append(
                         Setup(
                             direction=signal.direction,
-                            htf_tf=tf,
-                            htf_candle_start=cur_start,
-                            htf_candle_end=cur_end,
-                            ltf_tf="",  # chunk 2
-                            ltf_candle_end=cur_end,
-                            fvg_high=0.0,
-                            fvg_low=0.0,
-                            fvg_mid=0.0,
+                            htf_tf=signal.timeframe,
+                            htf_candle_start=cs,
+                            htf_candle_end=ce,
+                            ltf_tf=ltf_tf,
+                            ltf_candle_end=lce,
+                            fvg_high=fvg.high,
+                            fvg_low=fvg.low,
+                            fvg_mid=fvg.mid,
                         )
                     )
-                self._last_scanned[tf] = cur_end
+        return new_setups
+
+    def _is_duplicate_setup(self, s: Setup) -> bool:
+        """Same FVG zone (rounded) per direction + tf+ltf = one setup
+        per day -- mirrors live_bot.scan_for_setups:479-489 dedupe.
+        """
+        key = (
+            s.direction,
+            s.htf_tf,
+            s.ltf_tf,
+            round(s.fvg_low, 4),
+            round(s.fvg_high, 4),
+        )
+        for existing in self.setups:
+            ekey = (
+                existing.direction,
+                existing.htf_tf,
+                existing.ltf_tf,
+                round(existing.fvg_low, 4),
+                round(existing.fvg_high, 4),
+            )
+            if key == ekey:
+                return True
+        return False
 
     def _bars_by_asset(self, context: Context) -> dict[str, list[Bar]]:
         """Build the per-asset history dict the signal helpers expect.

@@ -237,8 +237,10 @@ def test_engineered_smt_day_detects_one_bearish_setup() -> None:
     strategy = FractalAMD(FractalAMDConfig())
     result = engine_run(strategy, nq_bars, config, aux_bars=aux_bars)
 
-    # No trades yet (chunks 2-3 add FVG + entry). But at least one
-    # BEARISH 1H stage signal must have been recorded.
+    # No trades yet (chunk 3 adds entry + BracketOrder). But at least
+    # one BEARISH 1H stage signal must have been recorded. Setup
+    # creation requires LTF SMT + FVG too; the richer fixture in
+    # test_fractal_amd_fvg_touch.py exercises that path.
     bearish_1h = [
         s for s in strategy.stage_signals
         if s.timeframe == "1H" and s.direction == "BEARISH"
@@ -246,10 +248,6 @@ def test_engineered_smt_day_detects_one_bearish_setup() -> None:
     assert len(bearish_1h) >= 1, (
         f"expected at least one BEARISH 1H stage signal, got "
         f"{[(s.timeframe, s.direction) for s in strategy.stage_signals]}"
-    )
-    # Setups list should also include the corresponding placeholder.
-    assert any(
-        s.direction == "BEARISH" and s.htf_tf == "1H" for s in strategy.setups
     )
     assert result.trades == []
 

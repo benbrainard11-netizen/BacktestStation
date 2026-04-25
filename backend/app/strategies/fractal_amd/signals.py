@@ -105,13 +105,13 @@ class StageSignal:
         return int(self.has_smt) + int(self.has_rejection)
 
 
-@dataclass(frozen=True)
+@dataclass
 class Setup:
     """A detected trading setup waiting for entry.
 
-    Mirrors `live_bot.Setup` so the eventual port can copy state-
-    machine behavior (WATCHING -> TOUCHED -> FILLED) verbatim. The
-    FVG fields (high/low/mid) are populated by chunk 2 of the port.
+    Mirrors `live_bot.Setup`. Mutable on purpose -- check_touch flips
+    status WATCHING -> TOUCHED in place; chunk 3's entry validation
+    flips TOUCHED -> FILLED.
     """
 
     direction: Direction
@@ -125,6 +125,33 @@ class Setup:
     fvg_mid: float
     status: Literal["WATCHING", "TOUCHED", "FILLED"] = "WATCHING"
     touch_bar_time: dt.datetime | None = None
+
+
+@dataclass
+class FVG:
+    """A detected Fair Value Gap.
+
+    Mirrors `fvg_detector.FVG`. `filled` / `expired` are set by the
+    forward-walk inside `detect_fvgs`.
+    """
+
+    direction: Direction
+    high: float
+    low: float
+    creation_time: dt.datetime
+    creation_bar_idx: int  # index in the source bars list
+    filled: bool = False
+    fill_time: dt.datetime | None = None
+    fill_bar_idx: int | None = None
+    expired: bool = False
+
+    @property
+    def width(self) -> float:
+        return self.high - self.low
+
+    @property
+    def mid(self) -> float:
+        return (self.high + self.low) / 2.0
 
 
 # --- Time / candle bounds ---------------------------------------------
@@ -462,16 +489,204 @@ def is_in_entry_window(
     return True
 
 
-# --- FVG / touch / etc — stubs filled in by chunks 2-3 ----------------
+# --- FVG detection ----------------------------------------------------
 
 
-def detect_fvg(
-    bars: list[Bar], lookback: int = 3
-) -> tuple[float, float, float] | None:
-    """Detect a Fair Value Gap. Stub — filled in by chunk 2."""
-    return None
+def resample_bars(bars: list[Bar], tf_minutes: int) -> list[HTFCandle]:
+    """Resample 1m bars into N-minute HTFCandles.
+
+    Mirrors `fvg_detector.resample_bars` (left-closed / left-labeled).
+    Bars are bucketed by their `ts_event` floored to the nearest
+    `tf_minutes` boundary in UTC. Output ordered by start ascending.
+    """
+    if not bars:
+        return []
+    delta = dt.timedelta(minutes=tf_minutes)
+    buckets: dict[dt.datetime, list[Bar]] = {}
+    for b in bars:
+        # Floor to nearest tf_minutes boundary (UTC).
+        ts = b.ts_event
+        epoch = dt.datetime(1970, 1, 1, tzinfo=ts.tzinfo)
+        offset_min = int((ts - epoch).total_seconds() // 60)
+        bucket_min = (offset_min // tf_minutes) * tf_minutes
+        bucket_start = epoch + dt.timedelta(minutes=bucket_min)
+        buckets.setdefault(bucket_start, []).append(b)
+
+    out: list[HTFCandle] = []
+    for start in sorted(buckets):
+        group = buckets[start]
+        out.append(
+            HTFCandle(
+                timeframe=f"{tf_minutes}m",
+                start=start,
+                end=start + delta,
+                open=group[0].open,
+                high=max(b.high for b in group),
+                low=min(b.low for b in group),
+                close=group[-1].close,
+            )
+        )
+    return out
 
 
-def check_touch(setup: Setup, bar: Bar) -> bool:
-    """Has this bar's [low, high] crossed into the FVG? Stub — chunk 2."""
-    return False
+def detect_fvgs(
+    candles: list[HTFCandle],
+    direction: Direction,
+    *,
+    min_gap_pct: float = 0.3,
+    expiry_bars: int = 60,
+) -> list[FVG]:
+    """Detect Fair Value Gaps in a sequence of candles.
+
+    A bullish FVG forms when candle 2 displaces UP enough that
+    candle_1.high < candle_3.low (price skipped upward). The gap zone
+    is (candle_1.high, candle_3.low).
+
+    A bearish FVG forms symmetrically: candle_3.high < candle_1.low.
+
+    `min_gap_pct` filters noise: gap width must be >= min_gap_pct *
+    20-bar avg range. After detection, walks forward to mark fills
+    (price traded fully through the zone) and expiries.
+
+    Mirrors `fvg_detector.detect_fvgs`. Trusted-bot uses
+    min_gap_pct=0.3, expiry_bars=60 on resampled 5m/15m candles.
+    """
+    if len(candles) < 3:
+        return []
+
+    highs = [c.high for c in candles]
+    lows = [c.low for c in candles]
+    ranges = [h - l for h, l in zip(highs, lows)]
+
+    # Rolling 20-candle avg range. Reuse first valid for early bars.
+    avg_range: list[float] = [0.0] * len(candles)
+    for i in range(len(candles)):
+        if i >= 20:
+            avg_range[i] = sum(ranges[i - 20 : i]) / 20
+        else:
+            # Use whatever's available so early-day FVGs don't get
+            # zero-floored. Fall back to 1.0 if no range data at all.
+            avail = ranges[:i] or ranges
+            avg_range[i] = sum(avail) / len(avail) if avail else 1.0
+
+    fvgs: list[FVG] = []
+    for i in range(2, len(candles)):
+        c1_h = highs[i - 2]
+        c1_l = lows[i - 2]
+        c3_h = highs[i]
+        c3_l = lows[i]
+        ar = avg_range[i] if avg_range[i] > 0 else 1.0
+
+        if direction == "BULLISH":
+            gap_low = c1_h
+            gap_high = c3_l
+            gap_width = gap_high - gap_low
+            if gap_width > 0 and gap_width >= ar * min_gap_pct:
+                fvgs.append(
+                    FVG(
+                        direction="BULLISH",
+                        high=gap_high,
+                        low=gap_low,
+                        creation_time=candles[i].start,
+                        creation_bar_idx=i,
+                    )
+                )
+        else:
+            gap_high = c1_l
+            gap_low = c3_h
+            gap_width = gap_high - gap_low
+            if gap_width > 0 and gap_width >= ar * min_gap_pct:
+                fvgs.append(
+                    FVG(
+                        direction="BEARISH",
+                        high=gap_high,
+                        low=gap_low,
+                        creation_time=candles[i].start,
+                        creation_bar_idx=i,
+                    )
+                )
+
+    # Forward walk to track fills + expiries.
+    for fvg in fvgs:
+        start = fvg.creation_bar_idx + 1
+        end = min(start + expiry_bars, len(candles))
+        for j in range(start, end):
+            if fvg.direction == "BULLISH":
+                # Filled when price drops fully through (bar low <= fvg.low)
+                if lows[j] <= fvg.low:
+                    fvg.filled = True
+                    fvg.fill_time = candles[j].start
+                    fvg.fill_bar_idx = j
+                    break
+            else:
+                if highs[j] >= fvg.high:
+                    fvg.filled = True
+                    fvg.fill_time = candles[j].start
+                    fvg.fill_bar_idx = j
+                    break
+        if not fvg.filled and (end - start) >= expiry_bars:
+            fvg.expired = True
+
+    return fvgs
+
+
+def find_nearest_unfilled_fvg(
+    fvgs: list[FVG], current_price: float, current_bar_idx: int, expiry_bars: int = 60
+) -> FVG | None:
+    """Return the unfilled, non-expired FVG nearest to current_price.
+
+    "Nearest" = smallest |current_price - fvg.mid|. Mirrors
+    `fvg_detector.find_nearest_unfilled_fvg`.
+    """
+    candidates: list[FVG] = []
+    for fvg in fvgs:
+        if fvg.creation_bar_idx >= current_bar_idx:
+            continue
+        if (current_bar_idx - fvg.creation_bar_idx) > expiry_bars:
+            continue
+        if fvg.filled and fvg.fill_bar_idx is not None and fvg.fill_bar_idx < current_bar_idx:
+            continue
+        candidates.append(fvg)
+    if not candidates:
+        return None
+    candidates.sort(key=lambda f: abs(current_price - f.mid))
+    return candidates[0]
+
+
+# --- Touch detection --------------------------------------------------
+
+
+def check_touch(setups: list[Setup], bar: Bar) -> list[Setup]:
+    """Mark the nearest WATCHING setup per direction as TOUCHED if the
+    bar's [low, high] intersects its FVG range.
+
+    Mirrors `live_bot.SignalEngine.check_touch`. The "nearest" rule
+    (sort by `abs(setup.fvg_mid - bar.close)`) was the bug fix in the
+    trusted bot -- without it, the engine fires on the first random
+    FVG-zone match instead of waiting for a real touch on the
+    relevant zone.
+
+    Mutates the matched setup's status / touch_bar_time and returns
+    the list of newly touched setups.
+    """
+    bh = bar.high
+    bl = bar.low
+    bc = bar.close
+    touched: list[Setup] = []
+
+    for direction in ("BEARISH", "BULLISH"):
+        candidates = [
+            s for s in setups
+            if s.status == "WATCHING" and s.direction == direction
+        ]
+        if not candidates:
+            continue
+        candidates.sort(key=lambda s: abs(s.fvg_mid - bc))
+        nearest = candidates[0]
+        in_zone = bh >= nearest.fvg_low and bl <= nearest.fvg_high
+        if in_zone:
+            nearest.status = "TOUCHED"
+            nearest.touch_bar_time = bar.ts_event
+            touched.append(nearest)
+
+    return touched
