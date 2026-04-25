@@ -6,6 +6,16 @@
   color-scheme: dark;
 }
 
+/* Default rounding for every full-border element (buttons, inputs, table
+   wrappers, stat cells, badges, etc.). Split borders like `border-b` are
+   unaffected. Explicit `rounded-*` utilities still win — so cards that set
+   `rounded-md` keep their 6px radius. */
+@layer base {
+  .border {
+    border-radius: 0.25rem;
+  }
+}
+
 html,
 body {
   background-color: rgb(9 9 11);
