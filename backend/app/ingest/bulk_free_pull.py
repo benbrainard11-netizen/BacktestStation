@@ -80,6 +80,24 @@ def _all_symbols() -> list[str]:
     return out
 
 
+# Tight-budget routing: 1-second granularity is overkill for assets
+# the user isn't actively trading at high frequency, so OHLCV-1s is
+# narrowed to the equity-index futures Fractal AMD trades. The others
+# get OHLCV-1m which is plenty for backtest research and ~60x smaller.
+HFT_FOCUS_SYMBOLS = ["NQ.c.0", "ES.c.0", "YM.c.0"]
+
+
+def _symbols_for_schema(schema: str) -> list[str]:
+    """Return the symbols to pull for a given schema."""
+    if schema == "ohlcv-1s":
+        return HFT_FOCUS_SYMBOLS
+    if schema == "ohlcv-1m":
+        # The HFT-focus symbols already have 11y of OHLCV-1m on disk
+        # from legacy_ohlcv_import; pull 1m for everyone ELSE.
+        return [s for s in _all_symbols() if s not in HFT_FOCUS_SYMBOLS]
+    return _all_symbols()
+
+
 def _months_back(months: int, today: dt.date | None = None) -> list[tuple[int, int]]:
     """Return (year, month) tuples for the last N months ending at today's
     month, in chronological order."""
@@ -161,22 +179,22 @@ def main(argv: list[str] | None = None) -> int:
 
     data_root = _data_root()
     logger = _setup_logger(data_root)
-    symbols = _all_symbols()
 
-    logger.info(f"bulk pull starting; data_root={data_root} symbols={len(symbols)}")
-    logger.info(f"  symbols: {','.join(symbols)}")
+    logger.info(f"bulk pull starting; data_root={data_root}")
     logger.info(f"  schemas: {schemas}")
 
     for schema in schemas:
+        symbols = _symbols_for_schema(schema)
         if schema.startswith("ohlcv"):
             months = _months_back(args.years * 12)
         else:
             # L1 schemas (tbbo, mbp-1, etc.) are free for last 12 months only.
             months = _months_back(12)
         logger.info(
-            f"--- {schema}: {len(months)} months "
+            f"--- {schema}: {len(months)} months × {len(symbols)} symbols "
             f"({months[0][0]}-{months[0][1]:02d} -> {months[-1][0]}-{months[-1][1]:02d}) ---"
         )
+        logger.info(f"  symbols: {','.join(symbols)}")
         pull_schema(
             schema,
             symbols=symbols,
