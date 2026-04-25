@@ -249,8 +249,16 @@ def _process_one_dbn(
     started_at = now_utc_iso()
 
     # Load DBN once.
+    #
+    # The schema kwarg is required because live.py's DBN files contain a
+    # mix of record types: the TBBO records we care about, plus
+    # databento's internal symbology / system messages. Without an
+    # explicit schema, store.to_df() refuses with
+    #   ValueError: a schema must be specified for mixed DBN data
+    # We always know the intended schema from the filename ("tbbo",
+    # "mbp-1", etc.) so pass it through.
     store = db.DBNStore.from_file(str(dbn_path))
-    df = store.to_df()
+    df = store.to_df(schema=schema_name)
     if df.empty:
         logger.info(f"empty DBN, nothing to write: {dbn_path.name}")
         return 0
