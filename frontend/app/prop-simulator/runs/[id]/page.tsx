@@ -44,12 +44,18 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
 
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
+      <div className="flex items-center justify-between gap-3 px-6 pt-4">
         <Link
           href="/prop-simulator/runs"
           className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
         >
           ← All runs
+        </Link>
+        <Link
+          href={`/prop-simulator/runs/${id}/scope`}
+          className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-100 transition-all duration-150 hover:-translate-y-px hover:border-zinc-600 hover:bg-zinc-800 hover:shadow-dim-hover"
+        >
+          Open tearsheet →
         </Link>
       </div>
       <PageHeader

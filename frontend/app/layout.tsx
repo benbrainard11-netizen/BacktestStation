@@ -10,6 +10,9 @@ import "./globals.css";
 
 const workSans = Work_Sans({
   subsets: ["latin"],
+  // Pull the full weight range so the tearsheet view can use 200 light
+  // for display + 700+ for emphasis without falling back to faux weights.
+  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-work-sans",
 });
 
