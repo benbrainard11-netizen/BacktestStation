@@ -202,6 +202,23 @@ body {
 .flex.flex-col > .panel-enter:nth-child(7) { animation-delay: 240ms; }
 .flex.flex-col > .panel-enter:nth-child(n + 8) { animation-delay: 280ms; }
 
+/* ECG-style horizontal scroll for the live-monitor heartbeat trace.
+   The path is rendered 3x viewport-wide; we scroll one segment-width
+   to the left on a loop so the spike enters/exits cleanly. */
+@keyframes ecg-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+.ecg-scroll {
+  animation: ecg-scroll 4s linear infinite;
+  will-change: transform;
+}
+
 /* Slow Y-axis tilt oscillation for the simulation core — gives the rings
    a subtle dimensional sway without spinning the whole element. */
 @keyframes core-tilt {
@@ -299,7 +316,8 @@ input[type="range"].terminal-slider:focus {
   .orbit-medium,
   .ambient-pulse,
   .panel-enter,
-  .core-tilt {
+  .core-tilt,
+  .ecg-scroll {
     animation: none;
   }
 }

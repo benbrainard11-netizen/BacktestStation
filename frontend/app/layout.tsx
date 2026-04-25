@@ -31,7 +31,9 @@ export default function RootLayout({
           <Sidebar />
           <div className="flex h-screen flex-1 flex-col overflow-hidden">
             <TopBar />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="bg-depth-grid flex-1 overflow-auto">
+              {children}
+            </main>
             <ContextBar />
           </div>
         </div>
