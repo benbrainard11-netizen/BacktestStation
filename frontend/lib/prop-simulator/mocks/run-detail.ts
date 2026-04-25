@@ -2,6 +2,7 @@
 
 import type {
   DistributionBucket,
+  FanBands,
   RiskSweepRow,
   SelectedPath,
   SimulationAggregatedStats,
@@ -270,6 +271,41 @@ const MOCK_RUN_CONFIDENCE: SimulatorConfidenceScore = {
   convergence_stability: 94,
 };
 
+// Synthesize per-day percentile bands. Spread grows with sqrt(day) to
+// mimic Brownian-ish dispersion; drift moves the median toward the
+// observed run mean.
+function generateFanBands(
+  days: number,
+  startingBalance: number,
+  endingMean: number,
+  endingSpread: number,
+): FanBands {
+  const median: number[] = [];
+  const p10: number[] = [];
+  const p25: number[] = [];
+  const p75: number[] = [];
+  const p90: number[] = [];
+  const totalDrift = endingMean - startingBalance;
+  for (let d = 0; d <= days; d++) {
+    const t = d / days;
+    const m = startingBalance + totalDrift * t;
+    const sd = Math.sqrt(t) * (endingSpread / 1.28); // P90 = mean + 1.28σ
+    median.push(m);
+    p10.push(m - 1.28 * sd);
+    p25.push(m - 0.67 * sd);
+    p75.push(m + 0.67 * sd);
+    p90.push(m + 1.28 * sd);
+  }
+  return { starting_balance: startingBalance, median, p10, p25, p75, p90 };
+}
+
+const MOCK_FAN_BANDS: FanBands = generateFanBands(
+  28, // days span on x-axis
+  50_000,
+  FINAL_BALANCE_MEAN,
+  FINAL_BALANCE_P90 - FINAL_BALANCE_MEAN,
+);
+
 const CANONICAL_RUN_DETAIL: SimulationRunDetail = {
   config: MOCK_RUN_CONFIG,
   firm: MOCK_FIRMS[0],
@@ -277,6 +313,7 @@ const CANONICAL_RUN_DETAIL: SimulationRunDetail = {
   aggregated: MOCK_RUN_AGGREGATED,
   risk_sweep: MOCK_RISK_SWEEP,
   selected_paths: MOCK_SELECTED_PATHS,
+  fan_bands: MOCK_FAN_BANDS,
   rule_violation_counts: {
     daily_loss_limit: 1_121,
     trailing_drawdown: 2_014,

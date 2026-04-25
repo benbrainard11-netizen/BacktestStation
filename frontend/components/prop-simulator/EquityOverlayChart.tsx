@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import type { SelectedPath } from "@/lib/prop-simulator/types";
@@ -58,6 +58,16 @@ export default function EquityOverlayChart({
 }: EquityOverlayChartProps) {
   const [hoverDay, setHoverDay] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  // rAF coalesces high-frequency pointermove into one update per frame.
+  const rafRef = useRef<number | null>(null);
+  const pendingPxRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    },
+    [],
+  );
 
   if (paths.length === 0) {
     return (
@@ -91,17 +101,32 @@ export default function EquityOverlayChart({
   function handleMove(e: React.MouseEvent<SVGSVGElement>) {
     const svg = svgRef.current;
     if (!svg) return;
-    const rect = svg.getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    // Convert pixel x → viewBox x
-    const vx = (px / rect.width) * width;
-    if (vx < padLeft || vx > width - padRight) {
-      setHoverDay(null);
-      return;
+    pendingPxRef.current = e.clientX - svg.getBoundingClientRect().left;
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const svgNow = svgRef.current;
+      const px = pendingPxRef.current;
+      if (svgNow === null || px === null) return;
+      const rect = svgNow.getBoundingClientRect();
+      const vx = (px / rect.width) * width;
+      if (vx < padLeft || vx > width - padRight) {
+        setHoverDay(null);
+        return;
+      }
+      const stepX = innerW / Math.max(1, maxLen - 1);
+      const dayIndex = Math.round((vx - padLeft) / stepX);
+      setHoverDay(Math.max(0, Math.min(maxLen - 1, dayIndex)));
+    });
+  }
+
+  function handleLeave() {
+    pendingPxRef.current = null;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
-    const stepX = innerW / Math.max(1, maxLen - 1);
-    const dayIndex = Math.round((vx - padLeft) / stepX);
-    setHoverDay(Math.max(0, Math.min(maxLen - 1, dayIndex)));
+    setHoverDay(null);
   }
 
   const stepX = innerW / Math.max(1, maxLen - 1);
@@ -149,7 +174,7 @@ export default function EquityOverlayChart({
         preserveAspectRatio="none"
         aria-hidden="true"
         onMouseMove={handleMove}
-        onMouseLeave={() => setHoverDay(null)}
+        onMouseLeave={handleLeave}
       >
         {/* horizontal grid */}
         {showAxes

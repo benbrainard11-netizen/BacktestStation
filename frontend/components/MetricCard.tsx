@@ -36,8 +36,10 @@ export default function MetricCard({
       className={cn(
         "panel-enter group flex min-w-0 flex-col gap-3",
         "rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3",
-        "shadow-dim transition-all duration-200 ease-out",
-        "hover:-translate-y-px hover:border-zinc-700 hover:shadow-dim-hover",
+        "transform-gpu shadow-dim",
+        "transition-[transform,border-color,box-shadow] duration-200",
+        "[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
+        "hover:-translate-y-0.5 hover:border-zinc-700 hover:shadow-dim-hover",
       )}
     >
       <div className="flex items-center gap-1.5 text-zinc-500">

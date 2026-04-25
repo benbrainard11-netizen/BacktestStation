@@ -3,6 +3,7 @@
 import type { FirmRuleProfile, PoolBacktestSummary } from "./firm";
 import type {
   FailureReason,
+  FanBands,
   RiskSweepRow,
   RuleViolationEventType,
   SamplingMode,
@@ -54,6 +55,7 @@ export interface SimulationRunDetail {
   aggregated: SimulationAggregatedStats;
   risk_sweep: RiskSweepRow[] | null;
   selected_paths: SelectedPath[];
+  fan_bands: FanBands;
   rule_violation_counts: Record<RuleViolationEventType, number>;
   confidence: SimulatorConfidenceScore;
 }

@@ -35,7 +35,8 @@ export default function PropSimulatorDashboardPage() {
           />
           <SamplePathsPanel
             paths={featuredRun.selected_paths}
-            meta="featured run · sim-001 · 5 buckets"
+            fanBands={featuredRun.fan_bands}
+            meta="featured run · sim-001 · envelope + paths"
           />
         </div>
       ) : null}

@@ -23,11 +23,12 @@ export default function Panel({
   return (
     <section
       className={cn(
-        "panel-enter rounded-md border border-zinc-800 bg-zinc-950",
+        "panel-enter transform-gpu rounded-md border border-zinc-800 bg-zinc-950",
         tone === "hero"
           ? "bg-depth-radial shadow-hero"
           : "shadow-dim",
         "transition-shadow duration-200",
+        "[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
         className,
       )}
     >

@@ -234,3 +234,17 @@ export interface SelectedPath {
   failure_reason: FailureReason;
   equity_curve: number[];
 }
+
+/**
+ * Per-day percentile bands across all simulated sequences. Used to render a
+ * Monte Carlo "fan chart" — the canonical envelope of probable outcomes.
+ * All arrays share the same length; index = day from the run start.
+ */
+export interface FanBands {
+  starting_balance: number;
+  median: number[];
+  p10: number[];
+  p25: number[];
+  p75: number[];
+  p90: number[];
+}
