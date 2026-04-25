@@ -1,35 +1,42 @@
-"""Fractal AMD signal-detection primitives (stubs).
+"""Fractal AMD signal-detection primitives.
 
-This module will hold the pure functions that detect setups, validate
-SMT divergence, build HTF candle bounds, and resolve FVGs. None of
-them depend on the engine -- they take bars + config and return signal
-data, which `strategy.py` translates into OrderIntents.
+Pure functions over `list[Bar]`. No pandas in the hot path -- the
+strategy may build a DataFrame from history when convenient, but
+these primitives accept lists so they're cheap to test and easy to
+reason about.
 
-Stub-only for the scaffold. Each function below is the eventual port
-target from `FractalAMD-/production/live_bot.py`. Filling them in is
-the bulk of the multi-session port; signatures are pinned now so the
-strategy loop in `strategy.py` can be written against them.
+Ported from `C:/Users/benbr/FractalAMD-/src/features/` (smt_detector,
+candle_patterns, stage_detector). Adapted from pd.DataFrame +
+DatetimeIndex inputs to `list[Bar]` + datetime ranges. ROF /
+order-flow logic intentionally omitted -- the trusted strategy
+(per `project_live_bot.md` memory) dropped the ROF gate, so we
+ship without it. Cascade detection deferred to a later chunk; not
+critical for stage-1 setup confirmation.
 """
 
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
+from zoneinfo import ZoneInfo
 
 from app.backtest.strategy import Bar
 
 
+ET = ZoneInfo("America/New_York")
 Direction = Literal["BULLISH", "BEARISH"]
+
+
+# --- Aggregated candle / setup dataclasses ----------------------------
 
 
 @dataclass(frozen=True)
 class HTFCandle:
     """One higher-timeframe candle (session, 1H, 15m, 5m).
 
-    Built by aggregating the underlying 1m bars. The trusted live bot
-    uses `_candle_bounds(day, tf)` to compute these on the fly; the
-    port should mirror that.
+    Built by aggregating the underlying 1m bars for a given
+    [start, end) range.
     """
 
     timeframe: str
@@ -41,12 +48,70 @@ class HTFCandle:
     close: float
 
 
+@dataclass
+class SMTResult:
+    """Result of an SMT divergence check across NQ + ES + YM."""
+
+    has_smt: bool
+    direction: Direction | None = None
+    sweepers: list[str] = field(default_factory=list)
+    holders: list[str] = field(default_factory=list)
+    n_swept: int = 0
+    n_held: int = 0
+    strength: float = 0.0  # 0-1 score (more holders = stronger)
+    leader: str | None = None  # best asset to trade (the one that held)
+
+
+@dataclass
+class RejectionSignal:
+    """Rejection candle: assets swept prior level then closed back within."""
+
+    direction: Direction
+    timeframe: str
+    candle_start: dt.datetime
+    candle_end: dt.datetime
+    reference_start: dt.datetime
+    reference_end: dt.datetime
+    n_swept: int = 0
+    n_rejected: int = 0
+    all_swept: bool = False
+    all_rejected: bool = False
+
+
+@dataclass
+class StageSignal:
+    """A confirmed stage in the fractal chain.
+
+    Mirrors `live_bot.SignalEngine`'s stage-confirmation output.
+    Multiple confirmation types (SMT / rejection) can stack on a
+    single stage -- more = stronger.
+    """
+
+    timeframe: str
+    direction: Direction
+    candle_start: dt.datetime
+    candle_end: dt.datetime
+    ref_start: dt.datetime
+    ref_end: dt.datetime
+    has_smt: bool = False
+    smt_result: SMTResult | None = None
+    smt_level_swept: float = 0.0
+    has_rejection: bool = False
+    rejection: RejectionSignal | None = None
+
+    @property
+    def confirmation_count(self) -> int:
+        """More confirmation types = stronger stage."""
+        return int(self.has_smt) + int(self.has_rejection)
+
+
 @dataclass(frozen=True)
 class Setup:
     """A detected trading setup waiting for entry.
 
-    Mirrors `live_bot.Setup` so the eventual port can copy state
-    machine behavior (WATCHING -> TOUCHED -> FILLED) verbatim.
+    Mirrors `live_bot.Setup` so the eventual port can copy state-
+    machine behavior (WATCHING -> TOUCHED -> FILLED) verbatim. The
+    FVG fields (high/low/mid) are populated by chunk 2 of the port.
     """
 
     direction: Direction
@@ -62,72 +127,321 @@ class Setup:
     touch_bar_time: dt.datetime | None = None
 
 
-def build_htf_candles(
-    bars: list[Bar], timeframe: str, day: dt.date
-) -> list[HTFCandle]:
-    """Aggregate 1m bars into HTF candles for a given day + timeframe.
+# --- Time / candle bounds ---------------------------------------------
 
-    Eventual port target: `_candle_bounds(day, tf)` + the resampling
-    pattern around `nq_candles.loc[(...)]` in live_bot.scan_for_setups.
 
-    Stub: returns empty list. The scaffold's smoke test passes because
-    no candles -> no setups -> no orders.
+def _session_bounds(day_et: dt.datetime) -> list[tuple[str, dt.datetime, dt.datetime]]:
+    """Return the four ET futures sessions for a trading day.
+
+    `day_et` must be timezone-aware ET (America/New_York). Returns a list
+    of (label, start, end) tuples covering the 23-hour Globex day from
+    18:00 ET prior day -> 17:00 ET current day.
     """
-    return []
+    if day_et.tzinfo is None:
+        raise ValueError("day_et must be tz-aware (ET)")
+    prev = day_et - dt.timedelta(days=1)
+    return [
+        ("Asia", prev.replace(hour=18, minute=0, second=0, microsecond=0),
+         day_et.replace(hour=0, minute=0, second=0, microsecond=0)),
+        ("London", day_et.replace(hour=0, minute=0, second=0, microsecond=0),
+         day_et.replace(hour=6, minute=0, second=0, microsecond=0)),
+        ("NY_AM", day_et.replace(hour=6, minute=0, second=0, microsecond=0),
+         day_et.replace(hour=12, minute=0, second=0, microsecond=0)),
+        ("NY_PM", day_et.replace(hour=12, minute=0, second=0, microsecond=0),
+         day_et.replace(hour=17, minute=0, second=0, microsecond=0)),
+    ]
 
 
-def detect_smt_rejection(
-    *,
-    primary: list[Bar],
-    aux: dict[str, list[Bar]],
-    htf_candle: HTFCandle,
-    prior_htf_candle: HTFCandle,
-) -> Direction | None:
-    """Check for SMT divergence between primary (NQ) and aux (ES, YM).
+_TF_MINUTES = {"4H": 240, "1H": 60, "30m": 30, "15m": 15, "10m": 10, "5m": 5}
 
-    Returns the direction the divergence implies, or None if no
-    divergence at this HTF candle.
 
-    Eventual port target: `detect_rejection` in live_bot.py +
-    `SignalEngine.scan_for_setups` SMT logic. The validated rule:
-    sweep outside daily VA at 58.6% WR is the strongest VP signal;
-    PDH SMT is the strongest single reference at 60% WR.
+def candle_bounds(
+    day_et: dt.datetime, timeframe: str
+) -> list[tuple[dt.datetime, dt.datetime]]:
+    """Return [(start, end), ...] for HTF candles in a Globex day.
 
-    Stub: returns None.
+    Trading day boundary is 18:00 ET prior day -> 17:00 ET current day.
+    For "session" timeframe, returns the four session bounds. For
+    other timeframes, slices the day into fixed-minute candles.
     """
+    if day_et.tzinfo is None:
+        raise ValueError("day_et must be tz-aware (ET)")
+    prev = day_et - dt.timedelta(days=1)
+    start = prev.replace(hour=18, minute=0, second=0, microsecond=0)
+    end = day_et.replace(hour=17, minute=0, second=0, microsecond=0)
+
+    if timeframe == "session":
+        return [(s, e) for _, s, e in _session_bounds(day_et)]
+
+    minutes = _TF_MINUTES.get(timeframe, 60)
+    candles: list[tuple[dt.datetime, dt.datetime]] = []
+    cur = start
+    delta = dt.timedelta(minutes=minutes)
+    while cur < end:
+        nxt = cur + delta
+        candles.append((cur, min(nxt, end)))
+        cur = nxt
+    return candles
+
+
+def get_ohlc(
+    bars: list[Bar], start: dt.datetime, end: dt.datetime
+) -> HTFCandle | None:
+    """Aggregate a contiguous range of 1m bars into a single OHLC.
+
+    Half-open interval [start, end). Returns None if no bars in range.
+    The bars list is assumed sorted by ts_event ascending (the engine
+    guarantees this).
+    """
+    sub = [b for b in bars if start <= b.ts_event < end]
+    if not sub:
+        return None
+    return HTFCandle(
+        timeframe="",  # caller annotates
+        start=start,
+        end=end,
+        open=sub[0].open,
+        high=max(b.high for b in sub),
+        low=min(b.low for b in sub),
+        close=sub[-1].close,
+    )
+
+
+# --- SMT divergence ---------------------------------------------------
+
+
+def detect_smt_at_level(
+    bars_by_asset: dict[str, list[Bar]],
+    level_prices: dict[str, float],
+    direction: Literal["high", "low"],
+    window_start: dt.datetime,
+    window_end: dt.datetime,
+) -> SMTResult:
+    """Check if SMT divergence exists at a level across triad members.
+
+    For a HIGH sweep (BEARISH SMT):
+      - Each asset's high in [window_start, window_end) is compared to its level
+      - SMT = at least one swept (high > level), at least one held
+
+    For a LOW sweep (BULLISH SMT):
+      - Each asset's low in [window_start, window_end) is compared to its level
+      - SMT = at least one swept (low < level), at least one held
+
+    Returns SMTResult; check `.has_smt` before consuming.
+    """
+    sweepers: list[str] = []
+    holders: list[str] = []
+
+    for symbol, bars in bars_by_asset.items():
+        if symbol not in level_prices:
+            continue
+        level = level_prices[symbol]
+        in_window = [b for b in bars if window_start <= b.ts_event < window_end]
+        if not in_window:
+            continue
+        if direction == "high":
+            swept = max(b.high for b in in_window) > level
+        else:
+            swept = min(b.low for b in in_window) < level
+        (sweepers if swept else holders).append(symbol)
+
+    n_total = len(sweepers) + len(holders)
+    has_smt = len(sweepers) >= 1 and len(holders) >= 1
+    strength = (len(holders) / n_total) if n_total > 0 else 0.0
+    leader = holders[0] if holders else None
+
+    trade_direction: Direction | None = None
+    if has_smt:
+        trade_direction = "BEARISH" if direction == "high" else "BULLISH"
+
+    return SMTResult(
+        has_smt=has_smt,
+        direction=trade_direction,
+        sweepers=sweepers,
+        holders=holders,
+        n_swept=len(sweepers),
+        n_held=len(holders),
+        strength=strength,
+        leader=leader,
+    )
+
+
+# --- Rejection candle -------------------------------------------------
+
+
+def detect_rejection(
+    bars_by_asset: dict[str, list[Bar]],
+    candle_start: dt.datetime,
+    candle_end: dt.datetime,
+    ref_start: dt.datetime,
+    ref_end: dt.datetime,
+    timeframe: str = "",
+) -> list[RejectionSignal]:
+    """Detect rejection-candle patterns across the triad.
+
+    Bearish rejection: at least 2 of {NQ, ES, YM} sweep above the prior
+    candle's high AND at least 2 close back at-or-below it.
+    Bullish rejection: symmetric for the low.
+
+    Returns 0, 1, or 2 RejectionSignals (could fire both directions
+    on a single doji-like candle, though rare).
+    """
+    ref_ohlc: dict[str, HTFCandle | None] = {}
+    cur_ohlc: dict[str, HTFCandle | None] = {}
+    for sym, bars in bars_by_asset.items():
+        ref_ohlc[sym] = get_ohlc(bars, ref_start, ref_end)
+        cur_ohlc[sym] = get_ohlc(bars, candle_start, candle_end)
+
+    if any(v is None for v in ref_ohlc.values()) or any(
+        v is None for v in cur_ohlc.values()
+    ):
+        return []
+
+    signals: list[RejectionSignal] = []
+
+    # Bearish: sweep high then reject
+    swept_hi = sum(
+        1 for sym in bars_by_asset if cur_ohlc[sym].high > ref_ohlc[sym].high
+    )
+    rejected_hi = sum(
+        1 for sym in bars_by_asset if cur_ohlc[sym].close <= ref_ohlc[sym].high
+    )
+    if swept_hi >= 2 and rejected_hi >= 2:
+        n_total = len(bars_by_asset)
+        signals.append(
+            RejectionSignal(
+                direction="BEARISH",
+                timeframe=timeframe,
+                candle_start=candle_start,
+                candle_end=candle_end,
+                reference_start=ref_start,
+                reference_end=ref_end,
+                n_swept=swept_hi,
+                n_rejected=rejected_hi,
+                all_swept=swept_hi == n_total,
+                all_rejected=rejected_hi == n_total,
+            )
+        )
+
+    # Bullish: sweep low then reject
+    swept_lo = sum(
+        1 for sym in bars_by_asset if cur_ohlc[sym].low < ref_ohlc[sym].low
+    )
+    rejected_lo = sum(
+        1 for sym in bars_by_asset if cur_ohlc[sym].close >= ref_ohlc[sym].low
+    )
+    if swept_lo >= 2 and rejected_lo >= 2:
+        n_total = len(bars_by_asset)
+        signals.append(
+            RejectionSignal(
+                direction="BULLISH",
+                timeframe=timeframe,
+                candle_start=candle_start,
+                candle_end=candle_end,
+                reference_start=ref_start,
+                reference_end=ref_end,
+                n_swept=swept_lo,
+                n_rejected=rejected_lo,
+                all_swept=swept_lo == n_total,
+                all_rejected=rejected_lo == n_total,
+            )
+        )
+
+    return signals
+
+
+# --- Combined stage check ---------------------------------------------
+
+
+def check_candle_pair(
+    bars_by_asset: dict[str, list[Bar]],
+    cur_start: dt.datetime,
+    cur_end: dt.datetime,
+    ref_start: dt.datetime,
+    ref_end: dt.datetime,
+    timeframe: str,
+    direction_filter: Direction | None = None,
+) -> StageSignal | None:
+    """Check a candle pair for any stage-confirmation pattern.
+
+    Combines the SMT + rejection detectors. Returns the first
+    StageSignal that fires (matching `direction_filter` if set), or
+    None.
+
+    SMT alone or rejection alone is sufficient to confirm a stage --
+    PSP would be confluence-only and is omitted from this chunk.
+    Cascade detection (look-back to prior pair's SMT) is also
+    omitted; it's an enhancement, not foundational.
+    """
+    # SMT — high sweep
+    ref_ohlc: dict[str, HTFCandle | None] = {
+        sym: get_ohlc(bars, ref_start, ref_end)
+        for sym, bars in bars_by_asset.items()
+    }
+    if any(v is None for v in ref_ohlc.values()):
+        return None
+
+    smt_bearish: tuple[SMTResult, float] | None = None
+    smt_bullish: tuple[SMTResult, float] | None = None
+
+    hi_levels = {sym: ref_ohlc[sym].high for sym in bars_by_asset}
+    smt_hi = detect_smt_at_level(
+        bars_by_asset, hi_levels, "high", cur_start, cur_end
+    )
+    if smt_hi.has_smt and smt_hi.direction == "BEARISH":
+        # Use NQ's level as the canonical "swept level" reference.
+        smt_bearish = (smt_hi, ref_ohlc["NQ.c.0"].high if "NQ.c.0" in ref_ohlc else 0.0)
+
+    lo_levels = {sym: ref_ohlc[sym].low for sym in bars_by_asset}
+    smt_lo = detect_smt_at_level(
+        bars_by_asset, lo_levels, "low", cur_start, cur_end
+    )
+    if smt_lo.has_smt and smt_lo.direction == "BULLISH":
+        smt_bullish = (smt_lo, ref_ohlc["NQ.c.0"].low if "NQ.c.0" in ref_ohlc else 0.0)
+
+    # Rejection
+    rejections = detect_rejection(
+        bars_by_asset, cur_start, cur_end, ref_start, ref_end, timeframe
+    )
+
+    # Build a signal for each direction, return first match.
+    for direction in ("BEARISH", "BULLISH"):
+        if direction_filter and direction != direction_filter:
+            continue
+        if direction == "BEARISH":
+            has_smt = smt_bearish is not None
+            smt_data = smt_bearish
+        else:
+            has_smt = smt_bullish is not None
+            smt_data = smt_bullish
+
+        matching_rejections = [r for r in rejections if r.direction == direction]
+        has_rej = len(matching_rejections) > 0
+
+        if not has_smt and not has_rej:
+            continue
+
+        signal = StageSignal(
+            timeframe=timeframe,
+            direction=direction,  # type: ignore[arg-type]
+            candle_start=cur_start,
+            candle_end=cur_end,
+            ref_start=ref_start,
+            ref_end=ref_end,
+        )
+        if has_smt and smt_data is not None:
+            signal.has_smt = True
+            signal.smt_result = smt_data[0]
+            signal.smt_level_swept = smt_data[1]
+        if has_rej:
+            signal.has_rejection = True
+            signal.rejection = matching_rejections[0]
+        return signal
+
     return None
 
 
-def detect_fvg(
-    bars: list[Bar], lookback: int = 3
-) -> tuple[float, float, float] | None:
-    """Detect a Fair Value Gap in the most recent N bars.
-
-    Returns (high, low, mid) of the gap, or None if no FVG present.
-    The trusted live bot detects FVGs on resampled LTF bars (5m/15m),
-    not raw 1m -- the caller is responsible for the resampling.
-
-    Eventual port target: live_bot's FVG-detection helper (the
-    `check_touch` function uses these). FVG limit entries are built
-    but not yet in the cascade per project memory.
-
-    Stub: returns None.
-    """
-    return None
-
-
-def check_touch(
-    setup: Setup, bar: Bar
-) -> bool:
-    """Has this 1m bar's [low, high] range crossed into the FVG?
-
-    Sets `setup.touch_bar_time` on first contact (live bot pattern).
-
-    Eventual port target: `check_touch` in live_bot.py.
-
-    Stub: returns False.
-    """
-    return False
+# --- Entry-window helper (already wired in scaffold) ------------------
 
 
 def is_in_entry_window(
@@ -136,8 +450,8 @@ def is_in_entry_window(
     """Is the timestamp inside the strategy's entry window?
 
     Trusted backtest gate: `et.hour < open_hour or et.hour >= close_hour`,
-    combined with `rth_s = (open_hour, open_min)`. Pure function -- the
-    only signal helper that's safe to wire into the scaffold today.
+    combined with `rth_s = (open_hour, open_min)`. Pure function -- safe
+    to call from any context.
     """
     if now_et.hour < open_hour:
         return False
@@ -146,3 +460,18 @@ def is_in_entry_window(
     if now_et.hour >= close_hour:
         return False
     return True
+
+
+# --- FVG / touch / etc — stubs filled in by chunks 2-3 ----------------
+
+
+def detect_fvg(
+    bars: list[Bar], lookback: int = 3
+) -> tuple[float, float, float] | None:
+    """Detect a Fair Value Gap. Stub — filled in by chunk 2."""
+    return None
+
+
+def check_touch(setup: Setup, bar: Bar) -> bool:
+    """Has this bar's [low, high] crossed into the FVG? Stub — chunk 2."""
+    return False

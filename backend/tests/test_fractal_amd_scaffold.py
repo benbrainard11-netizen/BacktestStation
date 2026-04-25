@@ -142,6 +142,118 @@ def test_config_overrides_via_params_dict() -> None:
     assert cfg.min_risk_pts == 8.0
 
 
+def test_engineered_smt_day_detects_one_bearish_setup() -> None:
+    """End-to-end: build an NQ/ES/YM day where NQ sweeps prior 1H high
+    and ES + YM hold. After running through the engine, the strategy
+    should record exactly one BEARISH stage signal at 1H granularity.
+
+    Day boundary: Globex day = 18:00 ET prior day -> 17:00 ET current.
+    We engineer the SMT in the 14:00-15:00 ET 1H candle, so the prior
+    1H candle (13:00-14:00 ET) sets the reference high.
+    """
+    # 14:00 ET on 2026-04-24 in UTC = 18:00 UTC during EDT.
+    et_offset = dt.timedelta(hours=4)  # EDT
+    cur_start_utc = dt.datetime(2026, 4, 24, 18, 0, tzinfo=dt.timezone.utc)
+    ref_start_utc = cur_start_utc - dt.timedelta(hours=1)
+
+    # Build minimal bars: one bar at 13:00 setting reference high,
+    # one bar at 14:00 with NQ sweeping it. Engine processes the
+    # primary's bars chronologically; only the NQ bars trigger
+    # on_bar. Aux bars must be aligned by ts_event.
+    nq_ref = Bar(
+        ts_event=ref_start_utc,
+        symbol="NQ.c.0",
+        open=21000,
+        high=21010,
+        low=20995,
+        close=21005,
+        volume=100,
+        trade_count=10,
+        vwap=21002,
+    )
+    nq_cur = Bar(
+        ts_event=cur_start_utc,
+        symbol="NQ.c.0",
+        open=21005,
+        high=21020,  # SWEEPS 21010
+        low=21000,
+        close=21008,
+        volume=100,
+        trade_count=10,
+        vwap=21012,
+    )
+    # Add a bar after cur_end so the strategy's "completed candle"
+    # check fires on the cur candle.
+    nq_after = Bar(
+        ts_event=cur_start_utc + dt.timedelta(hours=1),
+        symbol="NQ.c.0",
+        open=21008,
+        high=21009,
+        low=21006,
+        close=21007,
+        volume=100,
+        trade_count=10,
+        vwap=21008,
+    )
+    nq_bars = [nq_ref, nq_cur, nq_after]
+
+    # ES + YM: stay below their respective ref highs (no sweep)
+    def _aux_bar(symbol, ts, base):
+        return Bar(
+            ts_event=ts,
+            symbol=symbol,
+            open=base,
+            high=base + 0.5,
+            low=base - 0.5,
+            close=base,
+            volume=50,
+            trade_count=5,
+            vwap=base,
+        )
+    es_bars = [
+        _aux_bar("ES.c.0", ref_start_utc, 5000),  # ref high 5000.5
+        _aux_bar("ES.c.0", cur_start_utc, 5000),  # cur high 5000.5 — DID NOT sweep
+        _aux_bar("ES.c.0", cur_start_utc + dt.timedelta(hours=1), 5000),
+    ]
+    ym_bars = [
+        _aux_bar("YM.c.0", ref_start_utc, 41000),
+        _aux_bar("YM.c.0", cur_start_utc, 41000),
+        _aux_bar("YM.c.0", cur_start_utc + dt.timedelta(hours=1), 41000),
+    ]
+
+    aux_bars = {
+        "ES.c.0": {b.ts_event: b for b in es_bars},
+        "YM.c.0": {b.ts_event: b for b in ym_bars},
+    }
+
+    config = RunConfig(
+        strategy_name="fractal_amd",
+        symbol="NQ.c.0",
+        timeframe="1m",
+        start="2026-04-24",
+        end="2026-04-25",
+        aux_symbols=["ES.c.0", "YM.c.0"],
+    )
+    strategy = FractalAMD(FractalAMDConfig())
+    result = engine_run(strategy, nq_bars, config, aux_bars=aux_bars)
+
+    # No trades yet (chunks 2-3 add FVG + entry). But at least one
+    # BEARISH 1H stage signal must have been recorded.
+    bearish_1h = [
+        s for s in strategy.stage_signals
+        if s.timeframe == "1H" and s.direction == "BEARISH"
+    ]
+    assert len(bearish_1h) >= 1, (
+        f"expected at least one BEARISH 1H stage signal, got "
+        f"{[(s.timeframe, s.direction) for s in strategy.stage_signals]}"
+    )
+    # Setups list should also include the corresponding placeholder.
+    assert any(
+        s.direction == "BEARISH" and s.htf_tf == "1H" for s in strategy.setups
+    )
+    assert result.trades == []
+
+
 def test_entry_window_helper_is_pure() -> None:
     """is_in_entry_window matches the trusted-backtest gate semantics."""
     base = dt.datetime(2026, 4, 24, tzinfo=dt.timezone.utc)
