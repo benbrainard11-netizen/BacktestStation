@@ -70,7 +70,7 @@ export default function ImportPage() {
   }
 
   return (
-    <div>
+    <div className="auto-enter">
       <PageHeader
         title="Import"
         description="Upload existing backtest result files (trades, equity, optional metrics, optional config)"
@@ -78,7 +78,7 @@ export default function ImportPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="mx-auto flex max-w-3xl flex-col gap-6 px-6 pb-12"
+        className="auto-enter mx-auto flex max-w-3xl flex-col gap-6 px-6 pb-12"
       >
         <Section title="Files">
           <FileField

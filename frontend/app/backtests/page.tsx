@@ -13,13 +13,13 @@ export default async function BacktestsPage() {
   const runs = await apiGet<BacktestRun[]>("/api/backtests");
 
   return (
-    <div>
+    <div className="auto-enter">
       <PageHeader
         title="Backtests"
         description="Imported runs from existing backtest result files"
       />
 
-      <div className="flex flex-col gap-3 px-6 pb-10">
+      <div className="auto-enter flex flex-col gap-3 px-6 pb-10">
         {runs.length >= 2 ? (
           <div>
             <Link

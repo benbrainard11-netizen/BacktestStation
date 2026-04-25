@@ -44,7 +44,7 @@ export default async function CommandCenter() {
         });
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div className="auto-enter flex flex-col gap-4 pb-6">
       <PageHeader
         title="Command Center"
         description="Live view of imported runs, the latest strategy metrics, monitor status, and recent journal notes."
