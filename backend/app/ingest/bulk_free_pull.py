@@ -10,11 +10,20 @@ and pulls each schema in monthly chunks, calling the existing
 historical.pull_month() for each (year, month, schema) combination.
 Idempotent: skips dates that already have non-empty DBN on disk.
 
+**IMPORTANT**: historical.py's filename convention is one DBN per
+(schema, date), regardless of which symbols were pulled. So
+splitting your symbol list across multiple batches produces
+DATA LOSS -- the second batch's call sees "file exists, skipping"
+and the symbols-in-batch-2 are never written. Default batch size
+here is 999 so all symbols go in a single call. Don't lower it
+unless you have a specific reason and you're OK with the
+overwrites/skips behavior.
+
 CLI:
     python -m app.ingest.bulk_free_pull
        [--schemas ohlcv-1m,ohlcv-1s,tbbo]   # comma-separated; default = all free
        [--years 8]                          # for OHLCV; TBBO is always 12mo
-       [--max-symbols-per-call 4]           # batch size for the historical API
+       [--max-symbols-per-call 999]         # one batch by default; see warning above
 
 Run in the background; logs to D:/data/logs/bulk_free_pull.log.
 """
@@ -136,8 +145,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--max-symbols-per-call",
         type=int,
-        default=4,
-        help="Symbols per Databento request (default 4 to keep responses small).",
+        default=999,
+        help=(
+            "Symbols per Databento request. Default 999 = one batch "
+            "(required for correctness; see module docstring)."
+        ),
     )
     args = p.parse_args(argv)
 
