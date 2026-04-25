@@ -80,3 +80,91 @@ body {
     rgba(255, 255, 255, 0.015) 12px
   );
 }
+
+/* Depth utilities — used by /prop-simulator and any page that wants the
+   premium terminal feel. Subtle grid + radial vignette behind panels. */
+.bg-depth-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+.bg-depth-radial {
+  background-image: radial-gradient(
+    ellipse at top,
+    rgba(255, 255, 255, 0.025) 0%,
+    transparent 65%
+  );
+}
+
+/* Slow ambient motion — used by the simulation-core hero visual. */
+@keyframes orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-spin-reverse {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes ambient-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.orbit-slow {
+  animation: orbit-spin 80s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.orbit-medium {
+  animation: orbit-spin-reverse 50s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.ambient-pulse {
+  animation: ambient-pulse 7s ease-in-out infinite;
+}
+
+.panel-enter {
+  animation: panel-enter 220ms ease-out both;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-slow,
+  .orbit-medium,
+  .ambient-pulse,
+  .panel-enter {
+    animation: none;
+  }
+}

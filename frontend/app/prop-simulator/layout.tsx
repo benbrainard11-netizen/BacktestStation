@@ -6,7 +6,7 @@ export default function PropSimulatorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="bg-depth-grid bg-depth-radial">
       <MockDataBanner />
       {children}
     </div>

@@ -32,16 +32,27 @@ export default function MetricCard({
   deltaTone = "neutral",
 }: MetricCardProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3">
+    <div
+      className={cn(
+        "panel-enter group flex min-w-0 flex-col gap-3",
+        "rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3",
+        "shadow-dim transition-all duration-200 ease-out",
+        "hover:-translate-y-px hover:border-zinc-700 hover:shadow-dim-hover",
+      )}
+    >
       <div className="flex items-center gap-1.5 text-zinc-500">
         <span className="font-mono text-[10px] uppercase tracking-widest">
           {label}
         </span>
-        <Info className="h-3 w-3 shrink-0 text-zinc-700" strokeWidth={1.5} aria-hidden="true" />
+        <Info
+          className="h-3 w-3 shrink-0 text-zinc-700 transition-colors group-hover:text-zinc-600"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
       </div>
       <p
         className={cn(
-          "font-mono text-2xl leading-none tracking-tight",
+          "font-mono text-2xl leading-none tracking-tight tabular-nums",
           VALUE_TONE[valueTone],
         )}
       >

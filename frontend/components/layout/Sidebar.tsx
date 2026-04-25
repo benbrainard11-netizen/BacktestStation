@@ -30,16 +30,25 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={cn(
-        "flex items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors",
+        "group relative flex items-center gap-3 rounded-sm px-3 py-2 text-sm",
+        "transition-all duration-150 ease-out",
         active
-          ? "bg-zinc-900 text-zinc-100"
-          : "text-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-100",
+          ? "bg-zinc-900 text-zinc-100 shadow-edge-top"
+          : "text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-100",
       )}
     >
+      {active ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-emerald-500/80"
+        />
+      ) : null}
       <Icon
         className={cn(
-          "h-4 w-4 shrink-0",
-          active ? "text-emerald-400" : "text-zinc-500",
+          "h-4 w-4 shrink-0 transition-colors duration-150",
+          active
+            ? "text-emerald-400 drop-shadow-[0_0_4px_rgba(52,211,153,0.35)]"
+            : "text-zinc-500 group-hover:text-zinc-400",
         )}
         strokeWidth={1.5}
         aria-hidden="true"
