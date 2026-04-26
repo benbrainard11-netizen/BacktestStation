@@ -917,6 +917,125 @@
         "title": "DistributionStats",
         "type": "object"
       },
+      "DriftComparisonRead": {
+        "description": "Full drift comparison for a strategy version.",
+        "properties": {
+          "baseline_run_id": {
+            "title": "Baseline Run Id",
+            "type": "integer"
+          },
+          "computed_at": {
+            "format": "date-time",
+            "title": "Computed At",
+            "type": "string"
+          },
+          "live_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Run Id"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/DriftResultRead"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "strategy_version_id": {
+            "title": "Strategy Version Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "strategy_version_id",
+          "baseline_run_id",
+          "live_run_id",
+          "computed_at"
+        ],
+        "title": "DriftComparisonRead",
+        "type": "object"
+      },
+      "DriftResultRead": {
+        "description": "One drift signal computation result.\n\n`signal_type` enumerates which signal this is (currently `win_rate` or\n`entry_time`); each has its own interpretation of `live_value`,\n`baseline_value`, and `deviation`. See `app.services.drift_comparison`\nfor the formulas.\n\n`status` is a tri-color summary: OK / WATCH / WARN. `incomplete` flags\nwhen the sample size was below the threshold for a reliable read \u2014\ncallers should display the result with a \"tentative\" hint.",
+        "properties": {
+          "baseline_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Value"
+          },
+          "deviation": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "live_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Value"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "sample_size_baseline": {
+            "title": "Sample Size Baseline",
+            "type": "integer"
+          },
+          "sample_size_live": {
+            "title": "Sample Size Live",
+            "type": "integer"
+          },
+          "signal_type": {
+            "title": "Signal Type",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "signal_type",
+          "status",
+          "live_value",
+          "baseline_value",
+          "deviation",
+          "sample_size_live",
+          "sample_size_baseline",
+          "incomplete",
+          "message"
+        ],
+        "title": "DriftResultRead",
+        "type": "object"
+      },
       "EquityPointRead": {
         "properties": {
           "backtest_run_id": {
@@ -4103,6 +4222,27 @@
         "title": "StrategyUpdate",
         "type": "object"
       },
+      "StrategyVersionBaselineUpdate": {
+        "description": "Body for PATCH /strategy-versions/{id}/baseline.\n\n`run_id=None` clears the baseline. Otherwise the referenced run must\nexist and must NOT be source=\"live\" \u2014 comparing live against itself\nis meaningless.",
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "StrategyVersionBaselineUpdate",
+        "type": "object"
+      },
       "StrategyVersionCreate": {
         "additionalProperties": false,
         "description": "POST /api/strategies/{id}/versions body.",
@@ -4178,6 +4318,17 @@
               }
             ],
             "title": "Archived At"
+          },
+          "baseline_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Run Id"
           },
           "created_at": {
             "format": "date-time",
@@ -5661,6 +5812,49 @@
         ]
       }
     },
+    "/api/monitor/drift/{strategy_version_id}": {
+      "get": {
+        "description": "Compute Forward Drift Monitor signals for a strategy version.\n\nResolves the version's `baseline_run_id` and most-recent live run,\nthen runs the configured drift signals (win-rate + entry-time).\n\nReturns 404 if the version is missing or has no baseline assigned.\nThe \"no live run yet\" case is NOT a 404 \u2014 it's a valid drift state\nsurfaced as WARN results so the UI can render the panel.",
+        "operationId": "get_drift_for_strategy_version_api_monitor_drift__strategy_version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_version_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Version Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriftComparisonRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Drift For Strategy Version",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
     "/api/monitor/ingester": {
       "get": {
         "description": "Return the live ingester's most recent heartbeat.\n\n404 if the file doesn't exist (ingester not running or never run).\n422 if the file exists but is malformed.",
@@ -6614,6 +6808,59 @@
           }
         },
         "summary": "Archive Strategy Version",
+        "tags": [
+          "strategies"
+        ]
+      }
+    },
+    "/api/strategy-versions/{version_id}/baseline": {
+      "patch": {
+        "description": "Designate (or clear) the baseline run used by the Forward Drift Monitor.\n\nThe baseline is the run we expect live behavior to match. It must be\na non-live run (source=\"imported\" or \"engine\") \u2014 comparing live to\nitself is meaningless, so live runs are rejected with 422.\n\n`run_id=null` clears the baseline.",
+        "operationId": "set_strategy_version_baseline_api_strategy_versions__version_id__baseline_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyVersionBaselineUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyVersionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Strategy Version Baseline",
         "tags": [
           "strategies"
         ]

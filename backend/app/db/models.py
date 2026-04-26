@@ -58,10 +58,22 @@ class StrategyVersion(Base):
     git_commit_sha: Mapped[str | None] = mapped_column(String(40))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     archived_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    # The run that represents the live-trading expectation for this version.
+    # Forward Drift Monitor compares live runs against this baseline. Nullable
+    # because most versions never go to live trading. SET NULL on baseline-run
+    # delete so the version isn't orphaned.
+    baseline_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id", ondelete="SET NULL"), default=None
+    )
 
     strategy: Mapped[Strategy] = relationship(back_populates="versions")
+    # `runs` is the reverse side of BacktestRun.strategy_version_id. With
+    # baseline_run_id now also linking the two tables, the join column
+    # must be disambiguated explicitly.
     runs: Mapped[list["BacktestRun"]] = relationship(
-        back_populates="strategy_version", cascade="all, delete-orphan"
+        back_populates="strategy_version",
+        cascade="all, delete-orphan",
+        foreign_keys="BacktestRun.strategy_version_id",
     )
 
 
@@ -88,7 +100,10 @@ class BacktestRun(Base):
     status: Mapped[str] = mapped_column(String(20), default="imported")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
-    strategy_version: Mapped[StrategyVersion] = relationship(back_populates="runs")
+    strategy_version: Mapped[StrategyVersion] = relationship(
+        back_populates="runs",
+        foreign_keys=[strategy_version_id],
+    )
     trades: Mapped[list["Trade"]] = relationship(
         back_populates="run", cascade="all, delete-orphan"
     )

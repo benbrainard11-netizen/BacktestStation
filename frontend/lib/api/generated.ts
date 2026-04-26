@@ -397,6 +397,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/monitor/drift/{strategy_version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Drift For Strategy Version
+         * @description Compute Forward Drift Monitor signals for a strategy version.
+         *
+         *     Resolves the version's `baseline_run_id` and most-recent live run,
+         *     then runs the configured drift signals (win-rate + entry-time).
+         *
+         *     Returns 404 if the version is missing or has no baseline assigned.
+         *     The "no live run yet" case is NOT a 404 — it's a valid drift state
+         *     surfaced as WARN results so the UI can render the panel.
+         */
+        get: operations["get_drift_for_strategy_version_api_monitor_drift__strategy_version_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/monitor/ingester": {
         parameters: {
             query?: never;
@@ -744,6 +771,32 @@ export interface paths {
          * @description Mark a version archived. Non-destructive — runs/trades/metrics untouched.
          */
         patch: operations["archive_strategy_version_api_strategy_versions__version_id__archive_patch"];
+        trace?: never;
+    };
+    "/api/strategy-versions/{version_id}/baseline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Strategy Version Baseline
+         * @description Designate (or clear) the baseline run used by the Forward Drift Monitor.
+         *
+         *     The baseline is the run we expect live behavior to match. It must be
+         *     a non-live run (source="imported" or "engine") — comparing live to
+         *     itself is meaningless, so live runs are rejected with 422.
+         *
+         *     `run_id=null` clears the baseline.
+         */
+        patch: operations["set_strategy_version_baseline_api_strategy_versions__version_id__baseline_patch"];
         trace?: never;
     };
     "/api/strategy-versions/{version_id}/unarchive": {
@@ -1094,6 +1147,58 @@ export interface components {
             spread: number;
             /** Std Dev */
             std_dev: number;
+        };
+        /**
+         * DriftComparisonRead
+         * @description Full drift comparison for a strategy version.
+         */
+        DriftComparisonRead: {
+            /** Baseline Run Id */
+            baseline_run_id: number;
+            /**
+             * Computed At
+             * Format: date-time
+             */
+            computed_at: string;
+            /** Live Run Id */
+            live_run_id: number | null;
+            /** Results */
+            results?: components["schemas"]["DriftResultRead"][];
+            /** Strategy Version Id */
+            strategy_version_id: number;
+        };
+        /**
+         * DriftResultRead
+         * @description One drift signal computation result.
+         *
+         *     `signal_type` enumerates which signal this is (currently `win_rate` or
+         *     `entry_time`); each has its own interpretation of `live_value`,
+         *     `baseline_value`, and `deviation`. See `app.services.drift_comparison`
+         *     for the formulas.
+         *
+         *     `status` is a tri-color summary: OK / WATCH / WARN. `incomplete` flags
+         *     when the sample size was below the threshold for a reliable read —
+         *     callers should display the result with a "tentative" hint.
+         */
+        DriftResultRead: {
+            /** Baseline Value */
+            baseline_value: number | null;
+            /** Deviation */
+            deviation: number | null;
+            /** Incomplete */
+            incomplete: boolean;
+            /** Live Value */
+            live_value: number | null;
+            /** Message */
+            message: string;
+            /** Sample Size Baseline */
+            sample_size_baseline: number;
+            /** Sample Size Live */
+            sample_size_live: number;
+            /** Signal Type */
+            signal_type: string;
+            /** Status */
+            status: string;
         };
         /** EquityPointRead */
         EquityPointRead: {
@@ -2177,6 +2282,18 @@ export interface components {
             tags?: string[] | null;
         };
         /**
+         * StrategyVersionBaselineUpdate
+         * @description Body for PATCH /strategy-versions/{id}/baseline.
+         *
+         *     `run_id=None` clears the baseline. Otherwise the referenced run must
+         *     exist and must NOT be source="live" — comparing live against itself
+         *     is meaningless.
+         */
+        StrategyVersionBaselineUpdate: {
+            /** Run Id */
+            run_id: number | null;
+        };
+        /**
          * StrategyVersionCreate
          * @description POST /api/strategies/{id}/versions body.
          */
@@ -2196,6 +2313,8 @@ export interface components {
         StrategyVersionRead: {
             /** Archived At */
             archived_at?: string | null;
+            /** Baseline Run Id */
+            baseline_run_id?: number | null;
             /**
              * Created At
              * Format: date-time
@@ -3076,6 +3195,37 @@ export interface operations {
             };
         };
     };
+    get_drift_for_strategy_version_api_monitor_drift__strategy_version_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriftComparisonRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_ingester_status_api_monitor_ingester_get: {
         parameters: {
             query?: never;
@@ -3734,6 +3884,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyVersionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_strategy_version_baseline_api_strategy_versions__version_id__baseline_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyVersionBaselineUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

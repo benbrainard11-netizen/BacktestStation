@@ -20,6 +20,7 @@ class StrategyVersionRead(OrmModel):
     git_commit_sha: str | None
     created_at: datetime
     archived_at: datetime | None = None
+    baseline_run_id: int | None = None
 
 
 class StrategyRead(OrmModel):
