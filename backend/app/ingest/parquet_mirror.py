@@ -338,9 +338,14 @@ def _process_one_dbn(
             )
         )
 
-        # 1m bars (only for tbbo and mbp-1 — both have trade prices we can OHLC).
+        # 1m bars: derived from trade prices for tbbo/mbp-1, or
+        # passed through directly for ohlcv-1m (DBN is already bars).
+        bars_df = None
         if schema_name in {"tbbo", "mbp-1"}:
             bars_df = _compute_1m_bars(raw_df, str(symbol))
+        elif schema_name == "ohlcv-1m":
+            bars_df = _ohlcv_dbn_to_bars(raw_df, str(symbol))
+        if bars_df is not None:
             if not bars_df.empty:
                 bars_path.parent.mkdir(parents=True, exist_ok=True)
                 bars_table = pa.Table.from_pandas(
@@ -530,6 +535,28 @@ def _compute_1m_bars(raw_df: "pd.DataFrame", symbol: str) -> "pd.DataFrame":
     # pa.string() field type at write time.
     bars["symbol"] = bars["symbol"].astype("object")
     return bars
+
+
+def _ohlcv_dbn_to_bars(raw_df: "pd.DataFrame", symbol: str) -> "pd.DataFrame":
+    """Pass-through: ohlcv-1m DBN is already 1m bars. Just shape it
+    to match BARS_1M_SCHEMA (add trade_count + vwap defaults, force
+    types, ensure ts_event is a column not the index)."""
+    if raw_df.empty:
+        return pd.DataFrame()
+    df = raw_df.copy()
+    if "ts_event" not in df.columns:
+        # Some normalization steps may leave ts_event in the index.
+        df = df.reset_index().rename(columns={"index": "ts_event"})
+    keep = ["ts_event", "open", "high", "low", "close", "volume"]
+    df = df[keep].copy()
+    df["symbol"] = symbol
+    df["trade_count"] = 0  # not present in ohlcv-1m DBN
+    df["vwap"] = float("nan")
+    df["volume"] = df["volume"].astype("uint64")
+    df["trade_count"] = df["trade_count"].astype("uint32")
+    df["symbol"] = df["symbol"].astype("object")
+    df = df[list(BARS_1M_SCHEMA.pa_schema.names)]
+    return df.reset_index(drop=True)
 
 
 def _attach_metadata(
