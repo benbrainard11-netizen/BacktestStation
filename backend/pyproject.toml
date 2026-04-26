@@ -42,3 +42,6 @@ target-version = ["py312"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: long-running tests (e.g. multi-month backtest regressions); run explicitly with `pytest -m slow`",
+]

@@ -80,7 +80,7 @@ C:\data\
     └── live_ingester.log
 ```
 
-One DBN file per UTC date. Contains all 4 symbols' TBBO records mixed (sorted by timestamp). The downstream `parquet_mirror.py` (TODO) will split into per-symbol parquet for easy query.
+One DBN file per UTC date. Contains all 4 symbols' TBBO records mixed (sorted by timestamp). The downstream `parquet_mirror.py` splits into per-symbol parquet for easy query — see the [Parquet mirror](#parquet-mirror) section below.
 
 ## Heartbeat schema
 

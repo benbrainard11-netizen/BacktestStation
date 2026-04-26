@@ -4,6 +4,16 @@ A real import bundle for the `Fractal AMD` strategy, `trusted_multiyear` version
 Used by the backend import tests and by the frontend when wiring up the dashboard
 against real data.
 
+> **⚠ Source-code status (2026-04-25):** the script that produced `trades.csv`
+> (`export_trades_tv.py`) is **not in any current repo or git history.** The
+> trusted CSV is preserved here as a historical artifact, but the strategy
+> logic that generated it cannot be re-executed. Do not treat these numbers
+> as a regression target for the in-repo `app.strategies.fractal_amd` plug-in:
+> the plug-in mirrors `production/live_bot.py`, which memory
+> (`project_backtest_divergence.md`, 2026-04-10) already documented as
+> structurally divergent from this CSV's source. Standalone characterization
+> of the engine port lives at `backend/tests/test_fractal_amd_regression.py`.
+
 ## Contents
 
 | File | Kind | Source |
