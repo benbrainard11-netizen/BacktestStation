@@ -12,6 +12,10 @@ order-flow logic intentionally omitted -- the trusted strategy
 (per `project_live_bot.md` memory) dropped the ROF gate, so we
 ship without it. Cascade detection deferred to a later chunk; not
 critical for stage-1 setup confirmation.
+
+Upstream reference: ported from FractalAMD- at SHA
+3d08e2b5108c276f268d7e0b8dce85eacf231f1a (2026-04-12). See
+`docs/FRACTAL_AMD_PORT_REFERENCE.md`.
 """
 
 from __future__ import annotations

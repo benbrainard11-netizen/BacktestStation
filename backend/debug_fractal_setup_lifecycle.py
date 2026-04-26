@@ -120,9 +120,13 @@ class TracingFractalAMD(FractalAMD):
                 "ltf_candle_end": s.ltf_candle_end.isoformat(),
                 "created_at_bar": bar_ts.isoformat(),
                 "first_touch_ts": None,
+                "last_touch_ts": None,
+                "filled_at_bar_ts": None,
                 "n_touches": 0,
                 "first_touch_in_window": None,
                 "n_validation_attempts": 0,
+                "n_transient_waits": 0,
+                "n_terminal_rejections": 0,
                 "rejection_reasons": [],
                 "final_status": s.status,
             },
@@ -144,6 +148,7 @@ class TracingFractalAMD(FractalAMD):
             old = pre_status.get(id(s), s.status)
             if old != "TOUCHED" and s.status == "TOUCHED":
                 rec["n_touches"] += 1
+                rec["last_touch_ts"] = bar.ts_event.isoformat()
                 if rec["first_touch_ts"] is None:
                     rec["first_touch_ts"] = bar.ts_event.isoformat()
                     bar_et = bar.ts_event.astimezone(ET)
@@ -153,6 +158,8 @@ class TracingFractalAMD(FractalAMD):
                         open_min=self.config.rth_open_min,
                         close_hour=self.config.max_entry_hour,
                     )
+            if old != "FILLED" and s.status == "FILLED":
+                rec["filled_at_bar_ts"] = bar.ts_event.isoformat()
             rec["final_status"] = s.status
         return intents
 
@@ -161,6 +168,10 @@ class TracingFractalAMD(FractalAMD):
         rec = self.setup_records.get(id(setup))
         if rec is not None:
             rec["n_validation_attempts"] += 1
+            if result.action == "wait":
+                rec["n_transient_waits"] += 1
+            elif result.action == "reject":
+                rec["n_terminal_rejections"] += 1
         if result.action != "fire":
             reason = _classify_validation_outcome(setup, bar, self.config)
             if rec is not None:
@@ -189,8 +200,20 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         description="Dump Fractal AMD setup lifecycle to CSV."
     )
-    p.add_argument("--start", required=True, help="YYYY-MM-DD")
-    p.add_argument("--end", required=True, help="YYYY-MM-DD")
+    p.add_argument(
+        "--start",
+        required=True,
+        help="YYYY-MM-DD (inclusive — first day to load)",
+    )
+    p.add_argument(
+        "--end",
+        required=True,
+        help=(
+            "YYYY-MM-DD (inclusive — last day to load). The CLI adds 1 day "
+            "before passing to read_bars to make the user-facing semantic "
+            "inclusive."
+        ),
+    )
     p.add_argument(
         "--symbol", default="NQ.c.0", help="primary symbol (default NQ.c.0)"
     )
@@ -207,12 +230,17 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     aux_symbols = [s.strip() for s in args.aux.split(",") if s.strip()]
+    # read_bars treats `end` as exclusive at partition granularity; the
+    # CLI's --end is inclusive so users don't have to think about it.
+    end_exclusive = (
+        dt.date.fromisoformat(args.end) + dt.timedelta(days=1)
+    ).isoformat()
     config = RunConfig(
         strategy_name="fractal_amd",
         symbol=args.symbol,
         timeframe="1m",
         start=args.start,
-        end=args.end,
+        end=end_exclusive,
         history_max=2000,
         aux_symbols=aux_symbols,
         commission_per_contract=0.0,
@@ -220,7 +248,10 @@ def main(argv: list[str] | None = None) -> int:
         flatten_on_last_bar=False,
     )
 
-    print(f"loading bars: {args.symbol} + {aux_symbols} {args.start}..{args.end}")
+    print(
+        f"loading bars: {args.symbol} + {aux_symbols} "
+        f"{args.start}..{args.end} (inclusive)"
+    )
     bars = load_bars(config)
     aux_bars = load_aux_bars(config)
     print(f"  primary={len(bars)} bars; aux: " + ", ".join(
@@ -257,9 +288,13 @@ def main(argv: list[str] | None = None) -> int:
             "ltf_candle_end",
             "created_at_bar",
             "first_touch_ts",
+            "last_touch_ts",
+            "filled_at_bar_ts",
             "first_touch_in_window",
             "n_touches",
             "n_validation_attempts",
+            "n_transient_waits",
+            "n_terminal_rejections",
             "rejection_reasons",
             "final_status",
         ]

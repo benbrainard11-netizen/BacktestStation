@@ -8,6 +8,13 @@ BracketOrders. End-to-end: bars -> setup -> FVG -> touch -> trade.
 Continuation-OF gate is config-controlled; defaults to off until
 the OHLCV-delta proxy is implemented (live_bot computes it from
 order-flow data we don't have at bar level).
+
+Upstream reference: this port targets `FractalAMD-/production/live_bot.py`
+at SHA 3d08e2b5108c276f268d7e0b8dce85eacf231f1a (2026-04-12 23:01,
+"Align live engine with trusted strategy"). Re-pinning process and
+the table of upstream commits we've evaluated since live with
+"in port" / "not relevant — live-execution only" / "deferred"
+annotations live in `docs/FRACTAL_AMD_PORT_REFERENCE.md`.
 """
 
 from __future__ import annotations
