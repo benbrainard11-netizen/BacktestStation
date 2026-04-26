@@ -13,7 +13,8 @@ order-flow data we don't have at bar level).
 from __future__ import annotations
 
 import datetime as dt
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal
 
 from app.backtest.orders import BracketOrder, OrderIntent, Side
 from app.backtest.strategy import Bar, Context, Strategy
@@ -34,6 +35,32 @@ from app.strategies.fractal_amd.signals import (
 
 if TYPE_CHECKING:
     from app.backtest.orders import Fill
+
+
+@dataclass(frozen=True)
+class ValidationResult:
+    """Outcome of validating a TOUCHED setup against the current bar.
+
+    The validator distinguishes three actions so the caller can resize
+    the setup correctly:
+
+    - "fire": entry should emit; setup transitions to FILLED.
+    - "wait": transient blocker (e.g. we're on the touch bar itself
+      and entry happens on the next bar). Keep setup TOUCHED; try
+      again on the next bar.
+    - "reject": terminal blocker (touch too old / risk out of range
+      / dedup collision). Reset setup to WATCHING so its FVG zone
+      can re-touch later.
+
+    The previous version of this strategy treated every None return
+    as terminal, which collapsed transient "wait" cases into
+    immediate WATCHING resets and silently dropped trades the live
+    bot took.
+    """
+
+    action: Literal["fire", "wait", "reject"]
+    intent: OrderIntent | None = None
+    dedup_key: tuple[str, dt.datetime] | None = None
 
 
 class FractalAMD(Strategy):
@@ -225,65 +252,66 @@ class FractalAMD(Strategy):
     def _try_emit_entry(self, bar: Bar) -> OrderIntent | None:
         """Pick the best TOUCHED setup and emit a BracketOrder.
 
-        Validation:
-        - Setup status == TOUCHED
-        - Touched within `entry_max_bars_after_touch` bars
-        - Risk in [min_risk_pts, max_risk_pts]
-        - 15-min direction dedup (entries_today)
+        Validation outcomes (see ValidationResult):
+        - "fire":   emit BracketOrder, mark setup FILLED.
+        - "wait":   transient — keep setup TOUCHED, try again next bar.
+        - "reject": terminal  — reset setup to WATCHING.
 
-        On a successful emit, the setup is marked FILLED (won't re-fire)
-        and `entries_today` is updated. On a failure that's terminal
-        (out-of-window touch / risk fail / dedup hit), the setup is
-        reset to WATCHING so the same FVG can re-touch.
+        Iteration order is most-recently-touched first; on a "wait"
+        we move to the next setup so older TOUCHED setups still get
+        a chance on this bar.
         """
-        # Find candidate touched setups.
         touched = [s for s in self.setups if s.status == "TOUCHED"]
         if not touched:
             return None
 
-        # Pick the most recently touched (live bot semantics: fire on the
-        # bar after the touch).
         touched.sort(key=lambda s: s.touch_bar_time or dt.datetime.min, reverse=True)
 
         for setup in touched:
-            outcome = self._validate_and_build_intent(setup, bar)
-            if outcome is None:
-                # Validation failed terminally -> reset to WATCHING and try the next.
+            result = self._validate_and_build_intent(setup, bar)
+            if result.action == "fire":
+                assert result.intent is not None
+                assert result.dedup_key is not None
+                setup.status = "FILLED"
+                self.entries_today.add(result.dedup_key)
+                self.trades_today += 1
+                return result.intent
+            if result.action == "reject":
                 setup.status = "WATCHING"
                 setup.touch_bar_time = None
-                continue
-            intent, dedup_key = outcome
-            setup.status = "FILLED"
-            self.entries_today.add(dedup_key)
-            self.trades_today += 1
-            return intent
+            # action == "wait": leave setup TOUCHED, try next setup.
         return None
 
     def _validate_and_build_intent(
         self, setup: Setup, bar: Bar
-    ) -> tuple[OrderIntent, tuple[str, dt.datetime]] | None:
+    ) -> ValidationResult:
         """Validate one TOUCHED setup; build a BracketOrder if it passes.
 
-        Returns (intent, dedup_key) on success, None on terminal fail
-        (caller resets setup to WATCHING).
+        Returns a ValidationResult tagged with the action the caller
+        should take (see ValidationResult docstring).
         """
-        # Touch-age cap: if the touch bar is too far behind, treat the
-        # setup as stale and reset.
+        # No touch time recorded — shouldn't happen for a TOUCHED setup,
+        # but bail terminally if it does.
         if setup.touch_bar_time is None:
-            return None
+            return ValidationResult(action="reject")
+
         bars_since_touch = max(
             0,
             int(
                 (bar.ts_event - setup.touch_bar_time).total_seconds() // 60
             ),
         )
-        if bars_since_touch > self.config.entry_max_bars_after_touch:
-            return None
-        # Don't fire on the touch bar itself -- entry happens on the
+        # Don't fire on the touch bar itself — entry happens on the
         # NEXT bar (mirrors live bot's bar-after-touch semantics, and
-        # avoids look-ahead within the touch bar).
+        # avoids look-ahead within the touch bar). This is a TRANSIENT
+        # condition: the next bar should reach bars_since_touch=1.
         if bars_since_touch < 1:
-            return None
+            return ValidationResult(action="wait")
+        # Touch-age cap: if the touch bar is too far behind, the setup
+        # is stale. Terminal — reset to WATCHING so its FVG zone can
+        # re-touch later.
+        if bars_since_touch > self.config.entry_max_bars_after_touch:
+            return ValidationResult(action="reject")
 
         # Compute entry / stop / target.
         # Entry approximates the bar.open since the engine will fill
@@ -301,13 +329,14 @@ class FractalAMD(Strategy):
             risk = entry_price - stop
             target = entry_price + risk * self.config.target_r
 
-        # Risk validation in points.
+        # Risk validation in points (terminal — geometry of the setup
+        # won't change as more bars arrive).
         if risk <= 0 or risk > self.config.max_risk_pts:
-            return None
+            return ValidationResult(action="reject")
         if risk < self.config.min_risk_pts:
-            return None
+            return ValidationResult(action="reject")
 
-        # 15-min direction dedup.
+        # 15-min direction dedup (terminal — already traded this slot).
         bar_et = bar.ts_event.astimezone(ET)
         bucket_minute = (
             bar_et.minute // self.config.entry_dedup_minutes
@@ -315,7 +344,7 @@ class FractalAMD(Strategy):
         bucket = bar_et.replace(minute=bucket_minute, second=0, microsecond=0)
         dedup_key = (setup.direction, bucket)
         if dedup_key in self.entries_today:
-            return None
+            return ValidationResult(action="reject")
 
         intent = BracketOrder(
             side=side,
@@ -323,7 +352,7 @@ class FractalAMD(Strategy):
             stop_price=stop,
             target_price=target,
         )
-        return intent, dedup_key
+        return ValidationResult(action="fire", intent=intent, dedup_key=dedup_key)
 
     def _build_setups_from_ltf(
         self,

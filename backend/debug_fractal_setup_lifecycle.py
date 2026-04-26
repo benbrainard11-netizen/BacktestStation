@@ -43,11 +43,17 @@ if TYPE_CHECKING:
 # --- Rejection classifier ------------------------------------------------
 
 
-def _classify_validation_failure(
+def _classify_validation_outcome(
     setup: Setup, bar: "Bar", cfg: FractalAMDConfig
 ) -> str:
     """Reproduce the gates inside _validate_and_build_intent and report
-    the first failing one. Mirrors strategy.py:262-326 — KEEP IN SYNC.
+    the first non-passing one. Mirrors strategy.py — KEEP IN SYNC.
+
+    Returns one of: "wait_same_bar", "touch_too_old (...)",
+    "risk_negative_or_zero (...)", "risk_too_high (...)",
+    "risk_too_low (...)", "dedup_collision (...)", or "would_fire".
+    "wait_same_bar" is *transient* in the strategy (setup stays
+    TOUCHED); the others are terminal (setup resets to WATCHING).
     """
     if setup.touch_bar_time is None:
         return "no_touch_time"
@@ -55,10 +61,10 @@ def _classify_validation_failure(
     bars_since_touch = max(
         0, int((bar.ts_event - setup.touch_bar_time).total_seconds() // 60)
     )
+    if bars_since_touch < 1:
+        return "wait_same_bar"
     if bars_since_touch > cfg.entry_max_bars_after_touch:
         return f"touch_too_old ({bars_since_touch} > {cfg.entry_max_bars_after_touch})"
-    if bars_since_touch < 1:
-        return "same_bar_as_touch"
 
     if setup.direction == "BEARISH":
         entry = bar.open
@@ -155,10 +161,10 @@ class TracingFractalAMD(FractalAMD):
         rec = self.setup_records.get(id(setup))
         if rec is not None:
             rec["n_validation_attempts"] += 1
-        if result is None:
-            reason = _classify_validation_failure(setup, bar, self.config)
+        if result.action != "fire":
+            reason = _classify_validation_outcome(setup, bar, self.config)
             if rec is not None:
-                rec["rejection_reasons"].append(reason)
+                rec["rejection_reasons"].append(f"{result.action}:{reason}")
             self.rejection_log.append(
                 {
                     "ts": bar.ts_event.isoformat(),
@@ -167,7 +173,7 @@ class TracingFractalAMD(FractalAMD):
                     "ltf_tf": setup.ltf_tf,
                     "fvg_low": setup.fvg_low,
                     "fvg_high": setup.fvg_high,
-                    "reason": reason,
+                    "reason": f"{result.action}:{reason}",
                 }
             )
         return result

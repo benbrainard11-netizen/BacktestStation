@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import logging
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import select
@@ -12,6 +14,7 @@ from sqlalchemy import select
 from app.db import models
 from app.db.session import create_all, make_engine, make_session_factory
 from app.ingest.live_trades_jsonl import (
+    ET,
     RUN_NAME_PREFIX,
     import_jsonl,
     parse_record,
@@ -109,10 +112,12 @@ def test_parse_missing_pnl_dollars_is_optional():
 
 
 def test_parse_v2_exit_time_populates_exit_ts():
-    """v2+ records carry exit_time. Stored UTC tz-naive."""
+    """v2+ records carry exit_time. Naive ET strings are localized then
+    converted to UTC for storage; tz-aware strings are honored as-is.
+    """
     rec = {
         **VALID_RECORD,
-        "exit_time": "2026-04-24T10:30:00",  # naive -> treat as UTC
+        "exit_time": "2026-04-24T10:30:00",  # naive ET -> UTC at storage time
         "session_label": "NY_AM",
         "schema_version": "live_bot_v2",
     }
@@ -120,9 +125,13 @@ def test_parse_v2_exit_time_populates_exit_ts():
     assert parsed is not None
     assert parsed.exit_ts is not None
     assert parsed.exit_ts.tzinfo is None
-    # Stored tz-naive UTC; literal time preserved.
-    assert parsed.exit_ts.hour == 10
-    assert parsed.exit_ts.minute == 30
+    # 10:30 ET on 2026-04-24 = 14:30 UTC (EDT, -4 hours). Stored tz-naive UTC.
+    expected = (
+        dt.datetime(2026, 4, 24, 10, 30, tzinfo=ET)
+        .astimezone(dt.timezone.utc)
+        .replace(tzinfo=None)
+    )
+    assert parsed.exit_ts == expected
     assert parsed.session_label == "NY_AM"
 
 
@@ -154,17 +163,47 @@ def test_parse_missing_symbol_and_contracts_uses_defaults():
     assert parsed.contracts == 1
 
 
-def test_parse_treats_entry_time_as_utc():
-    """The live bot's entry_time is UTC (verified 2026-04-25 by aligning
-    live entry prices against historical bars: a 13:31:00 live record
-    matched the 13:31 UTC bar's open exactly, not 13:31 ET 4 hours later).
-    Importer stores it tz-naive UTC."""
+def test_parse_localizes_entry_time_from_et_to_utc():
+    """The live bot writes entry_time as wall-clock ET. Re-verified
+    2026-04-26 by aligning live entry prices against historical 1m
+    bars: a 2026-04-22 09:31:00 / 26868.75 live record matches the
+    13:31 UTC bar's open exactly (= 09:31 EDT). Importer localizes
+    ET then converts to UTC, stores tz-naive UTC.
+    """
     parsed = parse_record(VALID_RECORD)
     assert parsed is not None
     assert parsed.entry_ts.tzinfo is None  # tz-naive UTC for SQLite
-    # VALID_RECORD has entry_time "10:15:00" -> stored as 10:15 UTC.
-    assert parsed.entry_ts.hour == 10
-    assert parsed.entry_ts.minute == 15
+    # VALID_RECORD: 2026-04-24 10:15 ET -> 14:15 UTC (EDT, -4 hours).
+    expected = (
+        dt.datetime(2026, 4, 24, 10, 15, tzinfo=ET)
+        .astimezone(dt.timezone.utc)
+        .replace(tzinfo=None)
+    )
+    assert parsed.entry_ts == expected
+
+
+def test_parse_with_explicit_utc_tz_preserves_literal_time():
+    """When the bot eventually emits UTC explicitly, callers can pass
+    tz=UTC and the literal HH:MM is stored unchanged (UTC -> UTC)."""
+    parsed = parse_record(VALID_RECORD, tz=ZoneInfo("UTC"))
+    assert parsed is not None
+    # UTC localized + converted to UTC = same wall-clock.
+    assert parsed.entry_ts == dt.datetime(2026, 4, 24, 10, 15)
+
+
+def test_parse_dst_boundary_uses_correct_offset():
+    """Sanity: a 2026-03 record (still EST=-5) and a 2026-04 record
+    (EDT=-4) must produce different UTC times for the same wall-clock.
+    Catches future regressions to a hard-coded -4/-5 offset.
+    """
+    march_rec = {**VALID_RECORD, "date": "2026-03-01", "entry_time": "10:00:00"}
+    april_rec = {**VALID_RECORD, "date": "2026-04-01", "entry_time": "10:00:00"}
+    march = parse_record(march_rec)
+    april = parse_record(april_rec)
+    assert march is not None and april is not None
+    # 2026-03-01 10:00 EST = 15:00 UTC; 2026-04-01 10:00 EDT = 14:00 UTC.
+    assert march.entry_ts.hour == 15
+    assert april.entry_ts.hour == 14
 
 
 # --- read_jsonl --------------------------------------------------------

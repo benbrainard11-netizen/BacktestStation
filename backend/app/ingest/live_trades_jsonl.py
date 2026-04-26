@@ -86,13 +86,20 @@ class ParsedTrade:
     session_label: str | None = None  # v2+: Globex session bucket
 
 
-def parse_record(record: dict) -> ParsedTrade | None:
+def parse_record(record: dict, tz: ZoneInfo = ET) -> ParsedTrade | None:
     """Convert one raw JSONL dict to a ParsedTrade. Returns None if invalid.
 
     Required fields: date, entry_time, direction, entry_price,
     exit_price, stop, target, pnl_r. Older live-bot builds don't emit
     symbol / contracts / pnl_dollars / risk_dollars -- those are
     treated as optional with sensible defaults.
+
+    `tz` is the wall-clock timezone the live bot writes its
+    entry_time / exit_time fields in. Default is ET — verified by
+    aligning live entry prices against historical 1m bars (a 09:31
+    record for 2026-04-22 with entry_price=26868.75 matches the
+    13:31 UTC bar's open exactly, i.e. 09:31 EDT). Pass UTC if the
+    bot ever switches to writing tz-explicit ISO 8601.
     """
     required = (
         "date",
@@ -115,17 +122,17 @@ def parse_record(record: dict) -> ParsedTrade | None:
     else:
         return None
 
-    # date is YYYY-MM-DD, entry_time is HH:MM:SS. The live bot emits
-    # the entry_time field via `trade.entry_time.strftime("%H:%M:%S")`
-    # without explicit tz handling -- and trade.entry_time turns out to
-    # be tz-naive UTC (verified 2026-04-25 by aligning live entry
-    # prices against historical MBP-1: a "13:31:00" record matched the
-    # 13:31 UTC NQ bar exactly, NOT the 13:31 ET bar 4 hours later).
-    # Treat the literal time as UTC.
-    entry_naive = dt.datetime.fromisoformat(
+    # date is YYYY-MM-DD, entry_time is HH:MM:SS — both written by
+    # the live bot's `trade.entry_time.strftime("%H:%M:%S")` without
+    # explicit tz tagging. The literal value is wall-clock in `tz`
+    # (default ET). Re-verified 2026-04-26: a 2026-04-22 09:31:00 /
+    # 26868.75 BEARISH live trade matches the 13:31 UTC bar's open
+    # exactly, i.e. 09:31 EDT. Localize then convert to UTC, store
+    # tz-naive UTC for the SQLAlchemy DateTime column.
+    entry_local = dt.datetime.fromisoformat(
         f"{record['date']}T{record['entry_time']}"
-    )
-    entry_ts = entry_naive  # already UTC; SQLAlchemy column is tz-naive UTC
+    ).replace(tzinfo=tz)
+    entry_ts = entry_local.astimezone(dt.timezone.utc).replace(tzinfo=None)
 
     pnl_dollars: float | None = None
     if "pnl_dollars" in record and record["pnl_dollars"] is not None:
@@ -139,12 +146,13 @@ def parse_record(record: dict) -> ParsedTrade | None:
     if raw_exit:
         try:
             exit_dt = dt.datetime.fromisoformat(str(raw_exit))
-            # Same UTC convention as entry_time. Strip tz if present
-            # (we may emit tz-aware ISO strings going forward; keep
-            # tz-naive UTC at storage time for SQLAlchemy column).
-            if exit_dt.tzinfo is not None:
-                exit_dt = exit_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
-            exit_ts = exit_dt
+            # Same convention as entry_time: bot writes wall-clock in
+            # `tz` (default ET), no explicit tz on the string. If the
+            # string IS tz-aware (forward-compatible with future bot
+            # builds), trust the tag.
+            if exit_dt.tzinfo is None:
+                exit_dt = exit_dt.replace(tzinfo=tz)
+            exit_ts = exit_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
         except (ValueError, TypeError):
             exit_ts = None
 
@@ -171,7 +179,9 @@ def parse_record(record: dict) -> ParsedTrade | None:
     )
 
 
-def read_jsonl(path: Path, logger: logging.Logger) -> list[ParsedTrade]:
+def read_jsonl(
+    path: Path, logger: logging.Logger, tz: ZoneInfo = ET
+) -> list[ParsedTrade]:
     """Read trades.jsonl. Skips malformed lines (logged); returns parsed trades."""
     trades: list[ParsedTrade] = []
     with path.open("r", encoding="utf-8") as fh:
@@ -184,7 +194,7 @@ def read_jsonl(path: Path, logger: logging.Logger) -> list[ParsedTrade]:
             except json.JSONDecodeError as e:
                 logger.warning(f"line {line_no}: not valid JSON ({e})")
                 continue
-            parsed = parse_record(record)
+            parsed = parse_record(record, tz=tz)
             if parsed is None:
                 logger.warning(
                     f"line {line_no}: missing required field or unknown direction"
@@ -201,12 +211,17 @@ def import_jsonl(
     symbol: str,
     db_url: str | None = None,
     logger: logging.Logger | None = None,
+    tz: ZoneInfo = ET,
 ) -> tuple[int, int]:
     """Read jsonl_path and replace any prior live run for it. Returns
-    (run_id, trade_count)."""
+    (run_id, trade_count).
+
+    `tz` is the wall-clock timezone the live bot's JSONL records use
+    (default ET). See `parse_record` for the rationale.
+    """
     log = logger or logging.getLogger("live_trades_jsonl")
 
-    trades = read_jsonl(jsonl_path, log)
+    trades = read_jsonl(jsonl_path, log, tz=tz)
     log.info(f"parsed {len(trades)} trades from {jsonl_path}")
 
     engine = make_engine(db_url) if db_url else make_engine()
@@ -312,7 +327,22 @@ def main(argv: list[str] | None = None) -> int:
         default="NQ.c.0",
         help="Symbol to record on the BacktestRun + each Trade row (default: NQ.c.0).",
     )
+    p.add_argument(
+        "--time-zone",
+        default="America/New_York",
+        help=(
+            "IANA tz name the live bot writes wall-clock entry_time / "
+            "exit_time in. Default America/New_York (ET). The importer "
+            "localizes-then-converts to UTC for storage. Override with "
+            "UTC if a future bot build emits explicit-UTC strings."
+        ),
+    )
     args = p.parse_args(argv)
+    try:
+        bot_tz = ZoneInfo(args.time_zone)
+    except Exception as exc:
+        sys.stderr.write(f"invalid --time-zone {args.time_zone!r}: {exc}\n")
+        return 1
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     log = logging.getLogger("live_trades_jsonl")
@@ -326,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
         strategy_version_id=args.strategy_version_id,
         symbol=args.symbol,
         logger=log,
+        tz=bot_tz,
     )
     print(f"run_id={run_id} trades={count}")
     return 0
