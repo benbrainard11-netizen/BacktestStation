@@ -83,16 +83,40 @@ def _direction_label(side: str) -> str:
     return "BULLISH" if side.lower() == "long" else "BEARISH"
 
 
+def _to_utc(d: dt.datetime) -> dt.datetime:
+    if d.tzinfo is None:
+        return d.replace(tzinfo=dt.timezone.utc)
+    return d.astimezone(dt.timezone.utc)
+
+
 def _matching_setup(
     strat: TracingFractalAMD, live_entry: dt.datetime, live_dir: str
-) -> dict | None:
+) -> tuple[dict, str, int] | None:
     """Find the port setup that best matches a live trade.
 
-    Match priority:
-      1. Same direction, touch_ts within ±10 minutes of live_entry
-      2. Same direction, fvg zone live entry price falls inside (no touch)
-    Returns the underlying setup_record dict, or None.
+    Returns (setup_record, match_kind, match_score) or None. Match
+    score grades how strong the alignment is so PROJECT_STATE-level
+    rollups can distinguish "port saw and fired this trade" from
+    "port saw a touch but never converted":
+
+      3 = filled_within_10m   port FILLED within ±10 min of live entry
+      2 = last_touch_within_10m
+                              port's most recent re-touch was within
+                              ±10 min (not necessarily FILLED)
+      1 = first_touch_within_10m
+                              port's first touch was within ±10 min
+                              (catches setups touched immediately
+                              before live entry)
+      0 = first_touch_within_60m
+                              port saw the zone but the touch was
+                              far from live entry — "candidate
+                              same setup, never converted"
+
+    Higher scores beat lower; ties broken by smallest delta. Same
+    direction is required; opposite-direction setups are filtered
+    out before this function.
     """
+    live_entry = _to_utc(live_entry)
     candidates = [
         rec for rec in strat.setup_records.values()
         if rec["direction"] == live_dir
@@ -100,22 +124,45 @@ def _matching_setup(
     if not candidates:
         return None
 
-    # Touch-time match
-    near: list[tuple[float, dict]] = []
+    # Tier 3: FILLED within 10m.
+    tier3: list[tuple[float, dict]] = []
+    # Tier 2: last_touch within 10m.
+    tier2: list[tuple[float, dict]] = []
+    # Tier 1: first_touch within 10m.
+    tier1: list[tuple[float, dict]] = []
+    # Tier 0: first_touch within 60m.
+    tier0: list[tuple[float, dict]] = []
+
     for rec in candidates:
-        if rec["first_touch_ts"] is None:
-            continue
-        touch_dt = dt.datetime.fromisoformat(rec["first_touch_ts"])
-        if touch_dt.tzinfo is None:
-            touch_dt = touch_dt.replace(tzinfo=dt.timezone.utc)
-        if live_entry.tzinfo is None:
-            live_entry = live_entry.replace(tzinfo=dt.timezone.utc)
-        delta_min = abs((touch_dt - live_entry).total_seconds()) / 60.0
-        if delta_min <= 10:
-            near.append((delta_min, rec))
-    if near:
-        near.sort(key=lambda t: t[0])
-        return near[0][1]
+        if rec.get("filled_at_bar_ts"):
+            f_dt = _to_utc(dt.datetime.fromisoformat(rec["filled_at_bar_ts"]))
+            df = abs((f_dt - live_entry).total_seconds()) / 60.0
+            if df <= 10:
+                tier3.append((df, rec))
+
+        if rec.get("last_touch_ts"):
+            l_dt = _to_utc(dt.datetime.fromisoformat(rec["last_touch_ts"]))
+            dl = abs((l_dt - live_entry).total_seconds()) / 60.0
+            if dl <= 10:
+                tier2.append((dl, rec))
+
+        if rec.get("first_touch_ts"):
+            ft_dt = _to_utc(dt.datetime.fromisoformat(rec["first_touch_ts"]))
+            dft = abs((ft_dt - live_entry).total_seconds()) / 60.0
+            if dft <= 10:
+                tier1.append((dft, rec))
+            elif dft <= 60:
+                tier0.append((dft, rec))
+
+    for tier, kind, score in (
+        (tier3, "filled_within_10m", 3),
+        (tier2, "last_touch_within_10m", 2),
+        (tier1, "first_touch_within_10m", 1),
+        (tier0, "first_touch_within_60m", 0),
+    ):
+        if tier:
+            tier.sort(key=lambda t: t[0])
+            return tier[0][1], kind, score
 
     return None
 
@@ -207,13 +254,18 @@ def main(argv: list[str] | None = None) -> int:
         "live_entry_price",
         "live_pnl",
         "port_match_kind",
+        "port_match_score",
         "port_setup_direction",
         "port_setup_htf_tf",
         "port_setup_fvg_low",
         "port_setup_fvg_high",
         "port_setup_first_touch_ts",
+        "port_setup_last_touch_ts",
+        "port_setup_filled_at_bar_ts",
         "port_setup_first_touch_in_window",
         "port_setup_n_touches",
+        "port_setup_n_transient_waits",
+        "port_setup_n_terminal_rejections",
         "port_setup_final_status",
         "port_setup_rejection_reasons",
         "port_trade_at_same_ts",
@@ -222,9 +274,8 @@ def main(argv: list[str] | None = None) -> int:
     with open(out, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=cols)
         writer.writeheader()
-        n_port_match_touch = 0
+        score_counts = {0: 0, 1: 0, 2: 0, 3: 0}
         n_port_no_match = 0
-        n_port_filled = 0
         for lt in live_trades:
             live_dir = _direction_label(lt.side)
             entry_ts = lt.entry_ts
@@ -237,36 +288,45 @@ def main(argv: list[str] | None = None) -> int:
                 "live_entry_price": lt.entry_price,
                 "live_pnl": lt.pnl,
                 "port_match_kind": "none",
+                "port_match_score": "",
                 "port_setup_direction": "",
                 "port_setup_htf_tf": "",
                 "port_setup_fvg_low": "",
                 "port_setup_fvg_high": "",
                 "port_setup_first_touch_ts": "",
+                "port_setup_last_touch_ts": "",
+                "port_setup_filled_at_bar_ts": "",
                 "port_setup_first_touch_in_window": "",
                 "port_setup_n_touches": "",
+                "port_setup_n_transient_waits": "",
+                "port_setup_n_terminal_rejections": "",
                 "port_setup_final_status": "",
                 "port_setup_rejection_reasons": "",
                 "port_trade_at_same_ts": "",
             }
             if match is not None:
-                row["port_match_kind"] = "touch_within_10m"
-                row["port_setup_direction"] = match["direction"]
-                row["port_setup_htf_tf"] = match["htf_tf"]
-                row["port_setup_fvg_low"] = match["fvg_low"]
-                row["port_setup_fvg_high"] = match["fvg_high"]
-                row["port_setup_first_touch_ts"] = match["first_touch_ts"] or ""
+                rec, kind, score = match
+                row["port_match_kind"] = kind
+                row["port_match_score"] = score
+                row["port_setup_direction"] = rec["direction"]
+                row["port_setup_htf_tf"] = rec["htf_tf"]
+                row["port_setup_fvg_low"] = rec["fvg_low"]
+                row["port_setup_fvg_high"] = rec["fvg_high"]
+                row["port_setup_first_touch_ts"] = rec.get("first_touch_ts") or ""
+                row["port_setup_last_touch_ts"] = rec.get("last_touch_ts") or ""
+                row["port_setup_filled_at_bar_ts"] = rec.get("filled_at_bar_ts") or ""
                 row["port_setup_first_touch_in_window"] = (
-                    "" if match["first_touch_in_window"] is None
-                    else str(match["first_touch_in_window"])
+                    "" if rec.get("first_touch_in_window") is None
+                    else str(rec["first_touch_in_window"])
                 )
-                row["port_setup_n_touches"] = match["n_touches"]
-                row["port_setup_final_status"] = match["final_status"]
-                row["port_setup_rejection_reasons"] = "|".join(
-                    match["rejection_reasons"]
+                row["port_setup_n_touches"] = rec["n_touches"]
+                row["port_setup_n_transient_waits"] = rec.get("n_transient_waits", "")
+                row["port_setup_n_terminal_rejections"] = rec.get(
+                    "n_terminal_rejections", ""
                 )
-                n_port_match_touch += 1
-                if match["final_status"] == "FILLED":
-                    n_port_filled += 1
+                row["port_setup_final_status"] = rec["final_status"]
+                row["port_setup_rejection_reasons"] = "|".join(rec["rejection_reasons"])
+                score_counts[score] += 1
             else:
                 n_port_no_match += 1
 
@@ -279,9 +339,11 @@ def main(argv: list[str] | None = None) -> int:
             writer.writerow(row)
 
     print(
-        f"summary: {n_port_match_touch} live trades had a port-side touch within 10m; "
-        f"{n_port_filled} of those reached FILLED; {n_port_no_match} had no port "
-        f"setup at all."
+        f"summary: filled_within_10m={score_counts[3]} "
+        f"last_touch_within_10m={score_counts[2]} "
+        f"first_touch_within_10m={score_counts[1]} "
+        f"first_touch_within_60m={score_counts[0]} "
+        f"no_match={n_port_no_match}"
     )
     print(f"wrote {out}")
     return 0
