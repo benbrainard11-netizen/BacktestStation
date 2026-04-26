@@ -472,6 +472,11 @@ def _normalize_for_schema(
         "publisher_id": 0,
         "instrument_id": 0,
         "sequence": 0,
+        # ohlcv-1m DBN doesn't carry these; the bars schema requires
+        # them as columns. Inject sane defaults so _normalize doesn't
+        # KeyError before our pass-through path runs.
+        "trade_count": 0,
+        "vwap": float("nan"),
     }
     for col in need:
         if col not in df.columns and col in defaults:
