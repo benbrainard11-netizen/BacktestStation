@@ -177,8 +177,20 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="strategy_version_id whose source='live' run to compare against",
     )
-    p.add_argument("--start", required=True, help="YYYY-MM-DD")
-    p.add_argument("--end", required=True, help="YYYY-MM-DD")
+    p.add_argument(
+        "--start",
+        required=True,
+        help="YYYY-MM-DD (inclusive — first day in the comparison)",
+    )
+    p.add_argument(
+        "--end",
+        required=True,
+        help=(
+            "YYYY-MM-DD (inclusive — last day in the comparison). The CLI "
+            "adds 1 day before passing to read_bars and live-trade lookup "
+            "so the user-facing semantic is inclusive."
+        ),
+    )
     p.add_argument("--symbol", default="NQ.c.0")
     p.add_argument("--aux", default="ES.c.0,YM.c.0")
     p.add_argument("--out-dir", default=str(_ARTIFACT_DIR))
@@ -198,19 +210,23 @@ def main(argv: list[str] | None = None) -> int:
 
     start_d = dt.date.fromisoformat(args.start)
     end_d = dt.date.fromisoformat(args.end)
+    # _live_trades_in_range is inclusive of `end` — matches CLI semantic.
     live_trades = _live_trades_in_range(live_run.id, start_d, end_d)
-    print(f"  {len(live_trades)} live trades in [{args.start}, {args.end}]")
+    print(f"  {len(live_trades)} live trades in [{args.start}, {args.end}] (inclusive)")
     if not live_trades:
         sys.stderr.write("no live trades in range; nothing to compare.\n")
         return 1
 
     aux_symbols = [s.strip() for s in args.aux.split(",") if s.strip()]
+    # read_bars treats `end` as exclusive at partition granularity; convert
+    # the CLI's inclusive end to the right RunConfig.end.
+    end_exclusive = (end_d + dt.timedelta(days=1)).isoformat()
     cfg_engine = RunConfig(
         strategy_name="fractal_amd",
         symbol=args.symbol,
         timeframe="1m",
         start=args.start,
-        end=args.end,
+        end=end_exclusive,
         history_max=2000,
         aux_symbols=aux_symbols,
         commission_per_contract=0.0,

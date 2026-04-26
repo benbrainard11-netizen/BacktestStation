@@ -200,8 +200,20 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         description="Dump Fractal AMD setup lifecycle to CSV."
     )
-    p.add_argument("--start", required=True, help="YYYY-MM-DD")
-    p.add_argument("--end", required=True, help="YYYY-MM-DD")
+    p.add_argument(
+        "--start",
+        required=True,
+        help="YYYY-MM-DD (inclusive — first day to load)",
+    )
+    p.add_argument(
+        "--end",
+        required=True,
+        help=(
+            "YYYY-MM-DD (inclusive — last day to load). The CLI adds 1 day "
+            "before passing to read_bars to make the user-facing semantic "
+            "inclusive."
+        ),
+    )
     p.add_argument(
         "--symbol", default="NQ.c.0", help="primary symbol (default NQ.c.0)"
     )
@@ -218,12 +230,17 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     aux_symbols = [s.strip() for s in args.aux.split(",") if s.strip()]
+    # read_bars treats `end` as exclusive at partition granularity; the
+    # CLI's --end is inclusive so users don't have to think about it.
+    end_exclusive = (
+        dt.date.fromisoformat(args.end) + dt.timedelta(days=1)
+    ).isoformat()
     config = RunConfig(
         strategy_name="fractal_amd",
         symbol=args.symbol,
         timeframe="1m",
         start=args.start,
-        end=args.end,
+        end=end_exclusive,
         history_max=2000,
         aux_symbols=aux_symbols,
         commission_per_contract=0.0,
@@ -231,7 +248,10 @@ def main(argv: list[str] | None = None) -> int:
         flatten_on_last_bar=False,
     )
 
-    print(f"loading bars: {args.symbol} + {aux_symbols} {args.start}..{args.end}")
+    print(
+        f"loading bars: {args.symbol} + {aux_symbols} "
+        f"{args.start}..{args.end} (inclusive)"
+    )
     bars = load_bars(config)
     aux_bars = load_aux_bars(config)
     print(f"  primary={len(bars)} bars; aux: " + ", ".join(
