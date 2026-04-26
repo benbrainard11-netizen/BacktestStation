@@ -66,18 +66,21 @@ Fix: `parse_record` / `read_jsonl` / `import_jsonl` gain a `tz` parameter (defau
 Fix: `_validate_and_build_intent` now returns `ValidationResult` tagged with `action ∈ {"fire", "wait", "reject"}`. Only `"reject"` resets the setup; `"wait"` leaves it TOUCHED for the next bar.
 
 **Diagnostic confirmation (live trade window 2026-04-22..04-24):**
-- Before: 0 port trades / 188 setups / 178 stuck WATCHING
-- After:  4 port trades / 46 setups / 38 WATCHING
-- `port_vs_live` CSV: 3 of 6 live trades had a port-side touch within 10 minutes; 2 of those 3 reached FILLED.
 
-**Follow-up (separate session):** the 3 remaining unmatched live trades. Likely causes (none confirmed):
-- Slight HTF candle-bound differences picking opposite direction.
-- `max_trades_per_day=2` cap blocking later trades on a day where the port already fired earlier.
-- LTF expansion-window timing rounding that misses a setup the live bot caught.
+| Stage | Port trades | Live trades reached FILLED in port |
+|---|---|---|
+| Before either fix | 0 / 188 setups | 0 of 6 |
+| After ET importer + transient-vs-terminal fix | 4 / 46 setups | 2 of 6 |
+| After diagnostic matching upgrade + CLI inclusive-end fix | **6 / 66 setups** | **5 of 6** (1 has port touch but no fire) |
 
-These are tunings, not show-stoppers. Use the same diagnostic CSVs to walk them.
+The remaining unmatched live trade (2026-04-24 13:31 short, entry 27196.83): port detected a same-direction session-tf zone at 27266-27285, touched at 13:11 UTC (pre-RTH), terminally rejected as `touch_too_old` by the time entry window opened at 13:30. Live's bot fired on a different / lower zone the port doesn't surface — a genuine signal-detection difference, not the orchestration / data bugs we'd been chasing.
 
-**Tools** (still valid, kept for the follow-up):
+**Task #80 outcome (closed 2026-04-26):**
+- Real fixes: importer ET conversion (commit `2a831e1`-precursor), transient/terminal validation split (`2a831e1`), tiered diagnostic matching (`2d2904a`), inclusive `--end` semantics on the debug CLIs (`5a73f7d`).
+- Pinned upstream reference: `docs/FRACTAL_AMD_PORT_REFERENCE.md` carries the FractalAMD- baseline SHA and an evaluated-changes table for every commit since.
+- Open: 1 live trade still doesn't fire in port (touch outside window). Not a show-stopper; tracked as "signal-detection nuance" rather than a port bug.
+
+**Tools** (use these whenever the port diverges from live again):
 - `backend/debug_fractal_setup_lifecycle.py`
 - `backend/debug_fractal_compare_to_live.py`
 - `backend/debug_fractal_zero_trades.py` (original characterization)
