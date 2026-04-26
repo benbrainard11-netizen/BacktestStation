@@ -12,6 +12,8 @@ dependencies = [
     # Parquet / dataframes for reading local candle + TBBO files.
     "pandas>=2.2",
     "pyarrow>=17",
+    # Forward Drift Monitor uses chi2_contingency for entry-time drift.
+    "scipy>=1.11",
 ]
 
 [project.optional-dependencies]

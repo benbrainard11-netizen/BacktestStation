@@ -3,6 +3,11 @@
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.data_quality import DataQualityIssue, DataQualityReportRead
 from app.schemas.datasets import DatasetRead, DatasetScanResult
+from app.schemas.drift import (
+    DriftComparisonRead,
+    DriftResultRead,
+    StrategyVersionBaselineUpdate,
+)
 from app.schemas.experiments import (
     ExperimentCreate,
     ExperimentDecisionsRead,
@@ -58,6 +63,8 @@ __all__ = [
     "DataQualityReportRead",
     "DatasetRead",
     "DatasetScanResult",
+    "DriftComparisonRead",
+    "DriftResultRead",
     "EquityPointRead",
     "ExperimentCreate",
     "ExperimentDecisionsRead",
@@ -85,6 +92,7 @@ __all__ = [
     "StrategyRead",
     "StrategyStagesRead",
     "StrategyUpdate",
+    "StrategyVersionBaselineUpdate",
     "StrategyVersionCreate",
     "StrategyVersionRead",
     "StrategyVersionUpdate",

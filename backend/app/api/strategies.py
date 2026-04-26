@@ -20,6 +20,7 @@ from app.schemas import (
     StrategyRead,
     StrategyStagesRead,
     StrategyUpdate,
+    StrategyVersionBaselineUpdate,
     StrategyVersionCreate,
     StrategyVersionRead,
     StrategyVersionUpdate,
@@ -314,4 +315,47 @@ def unarchive_strategy_version(
         version.archived_at = None
         db.commit()
         db.refresh(version)
+    return version
+
+
+@versions_router.patch(
+    "/{version_id}/baseline", response_model=StrategyVersionRead
+)
+def set_strategy_version_baseline(
+    version_id: int,
+    payload: StrategyVersionBaselineUpdate,
+    db: Session = Depends(get_session),
+) -> StrategyVersion:
+    """Designate (or clear) the baseline run used by the Forward Drift Monitor.
+
+    The baseline is the run we expect live behavior to match. It must be
+    a non-live run (source="imported" or "engine") — comparing live to
+    itself is meaningless, so live runs are rejected with 422.
+
+    `run_id=null` clears the baseline.
+    """
+    version = _require_version(db, version_id)
+    if payload.run_id is None:
+        version.baseline_run_id = None
+        db.commit()
+        db.refresh(version)
+        return version
+
+    run = db.get(BacktestRun, payload.run_id)
+    if run is None:
+        raise HTTPException(
+            status_code=404, detail=f"backtest run {payload.run_id} not found"
+        )
+    if run.source == "live":
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "baseline must be a non-live run (source='imported' or "
+                "'engine'); got source='live'. Comparing live against itself "
+                "is meaningless."
+            ),
+        )
+    version.baseline_run_id = run.id
+    db.commit()
+    db.refresh(version)
     return version

@@ -119,6 +119,17 @@ def _run_data_migrations(engine: Engine) -> None:
                 )
             )
 
+        # 2026-04-25: StrategyVersion.baseline_run_id added for the Forward
+        # Drift Monitor — points at the run we expect live behavior to track.
+        # Nullable; existing rows have no baseline until the user picks one.
+        if "baseline_run_id" not in sv_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE strategy_versions ADD COLUMN "
+                    "baseline_run_id INTEGER REFERENCES backtest_runs(id)"
+                )
+            )
+
 
 # Lazily-initialised module globals for the running FastAPI app.
 _engine: Engine | None = None
