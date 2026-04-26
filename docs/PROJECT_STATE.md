@@ -53,26 +53,35 @@
 
 ## In progress
 
-### Task #71 — Fractal AMD strategy port emits 0 trades
+### Task #71 — Fractal AMD strategy port emits 0 trades — **RESOLVED 2026-04-26 (with follow-up)**
 
-The port detects HTF stage signals and builds LTF FVG-bearing setups, but no setup ever flips to FILLED. As of the **2026-04-25 diagnostic run** (smoke window 2026-04-22, single day):
+Two bugs were entangled here; both fixed in `fix/fractal-amd-port-zero-trades` (merged to main 2026-04-26).
 
-- 49 setups detected
-- 12 final-status `TOUCHED` (touched outside the entry window or position-blocked)
-- 37 final-status `WATCHING` (never touched)
-- 103 validation rejections, dominant reasons:
-  - `same_bar_as_touch` (73× — strategy validates on the touch bar itself, before the next-bar entry semantics kick in)
-  - `touch_too_old` (30× — by the time validation runs, the touch is older than `entry_max_bars_after_touch=3` minutes)
+**Bug 1 (data):** `live_trades_jsonl` was treating `entry_time` / `exit_time` as wall-clock UTC. The live bot writes wall-clock **ET**. Verified by aligning live entry prices against historical bars: a 09:31:00 / 26868.75 BEARISH record matches the **13:31 UTC** bar's open exactly (= 09:31 EDT). DB times for `BacktestRun(source="live")` were 4 hours off from any port setup, so port-vs-live pairing always missed.
 
-**Strong hypothesis (unconfirmed):** the bar-after-touch gate is interacting badly with the order-emission flow. The same bar that just executed `check_touch` immediately falls through to `_try_emit_entry`, where `bars_since_touch < 1` rejects it. The next bar's `_try_emit_entry` runs with `bars_since_touch == 1` — that path should succeed. Most rejections happen in subsequent bars when something else (risk gate, dedup) blocks the trade.
+Fix: `parse_record` / `read_jsonl` / `import_jsonl` gain a `tz` parameter (default ET) and localize-then-convert. New CLI flag `--time-zone` for forward compatibility. Live JSONL re-imported.
 
-**Trusted CSV source unrecoverable**, so we can't byte-equal to the trusted backtest. Live trades from the running bot (8 in `BacktestRun(source="live")` row 3) are now the comparison oracle.
+**Bug 2 (strategy — the real "0 trades" bug):** `_validate_and_build_intent` returned `None` for both *transient* ("wait one bar") and *terminal* (risk fail / dedup collision / touch too old) failures. The caller treated every `None` as terminal and reset the setup to WATCHING. So a setup TOUCHED on bar T got reset on bar T itself (failed `bars_since_touch < 1`), and bar T+1 had no TOUCHED setup left to fire.
 
-**Tools to use next session:**
-- `backend/debug_fractal_setup_lifecycle.py` — dumps per-setup CSV with rejection reasons.
-- `backend/debug_fractal_compare_to_live.py` — pairs each live trade with the closest port setup.
-- `backend/debug_fractal_zero_trades.py` — original characterization script.
-- `backend/tests/test_signal_helpers_isolated.py` (20 tests) — isolation check for primitives.
+Fix: `_validate_and_build_intent` now returns `ValidationResult` tagged with `action ∈ {"fire", "wait", "reject"}`. Only `"reject"` resets the setup; `"wait"` leaves it TOUCHED for the next bar.
+
+**Diagnostic confirmation (live trade window 2026-04-22..04-24):**
+- Before: 0 port trades / 188 setups / 178 stuck WATCHING
+- After:  4 port trades / 46 setups / 38 WATCHING
+- `port_vs_live` CSV: 3 of 6 live trades had a port-side touch within 10 minutes; 2 of those 3 reached FILLED.
+
+**Follow-up (separate session):** the 3 remaining unmatched live trades. Likely causes (none confirmed):
+- Slight HTF candle-bound differences picking opposite direction.
+- `max_trades_per_day=2` cap blocking later trades on a day where the port already fired earlier.
+- LTF expansion-window timing rounding that misses a setup the live bot caught.
+
+These are tunings, not show-stoppers. Use the same diagnostic CSVs to walk them.
+
+**Tools** (still valid, kept for the follow-up):
+- `backend/debug_fractal_setup_lifecycle.py`
+- `backend/debug_fractal_compare_to_live.py`
+- `backend/debug_fractal_zero_trades.py` (original characterization)
+- `backend/tests/test_signal_helpers_isolated.py` (20 tests; primitives isolation check)
 
 ### Prop-simulator UI completion (Husky's domain)
 
