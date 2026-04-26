@@ -39,7 +39,7 @@ from app.strategies.fractal_amd.config import FractalAMDConfig
 # the two debug tools stay in sync.
 from debug_fractal_setup_lifecycle import (
     TracingFractalAMD,
-    _classify_validation_failure,
+    _classify_validation_outcome,
 )
 
 

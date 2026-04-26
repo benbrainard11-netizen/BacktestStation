@@ -198,9 +198,12 @@ def test_entry_rejected_on_stale_touch():
     assert s.setups[0].status == "WATCHING"
 
 
-def test_entry_rejected_on_same_bar_as_touch():
-    """Entry must be on the bar AFTER the touch, not the touch bar itself.
-    Prevents lookahead within the touch bar."""
+def test_entry_waits_on_touch_bar_keeps_setup_touched():
+    """Entry must be on the bar AFTER the touch, not the touch bar itself
+    (prevents lookahead within the touch bar). This is a TRANSIENT
+    blocker — the setup stays TOUCHED so the next bar can fire it.
+    Resetting to WATCHING here was the original "0 trades" bug.
+    """
     cfg = FractalAMDConfig(min_co_score=None)
     s = FractalAMD(cfg)
     touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
@@ -212,10 +215,43 @@ def test_entry_rejected_on_same_bar_as_touch():
     cur = _bar(ts=touch_ts, o=21008.0)
     intent = s._try_emit_entry(cur)
     assert intent is None
-    # Still WATCHING -> reset because bars_since_touch < 1 was a terminal fail
-    # in current impl. (If we want to allow re-touch on the next bar, we'd
-    # need to keep it TOUCHED. v1: terminal-fail keeps the loop simple.)
-    assert s.setups[0].status == "WATCHING"
+    # Stays TOUCHED so the next bar can fire it.
+    assert s.setups[0].status == "TOUCHED"
+    assert s.setups[0].touch_bar_time == touch_ts
+
+
+def test_entry_fires_on_bar_after_touch_after_initial_wait():
+    """End-to-end transient sequence: bar T flips a setup to TOUCHED;
+    _try_emit_entry on bar T returns None (wait, status stays TOUCHED);
+    _try_emit_entry on bar T+1 fires the BracketOrder.
+
+    This is the canonical "touched setup fires on the next bar"
+    scenario the strategy port was silently dropping before the
+    transient/terminal validation split landed.
+    """
+    cfg = FractalAMDConfig(min_co_score=None)
+    s = FractalAMD(cfg)
+    touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
+    s.setups.append(
+        _touched_bearish_setup(
+            touch_bar_time=touch_ts, fvg_low=21010, fvg_high=21020
+        )
+    )
+    s.today = touch_ts.astimezone(ET).date()
+
+    # Bar T (same minute as the recorded touch).
+    bar_t = _bar(ts=touch_ts, o=21008.0)
+    intent_t = s._try_emit_entry(bar_t)
+    assert intent_t is None
+    assert s.setups[0].status == "TOUCHED"  # transient — keep waiting
+
+    # Bar T+1 — should now fire.
+    bar_t1 = _bar(ts=touch_ts + dt.timedelta(minutes=1), o=21008.0)
+    intent_t1 = s._try_emit_entry(bar_t1)
+    assert isinstance(intent_t1, BracketOrder)
+    assert intent_t1.side == Side.SHORT
+    assert s.setups[0].status == "FILLED"
+    assert s.trades_today == 1
 
 
 def test_entry_max_trades_per_day_cap_blocks_further_entries():
