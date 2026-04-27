@@ -1,4 +1,4 @@
-# Project State — 2026-04-25
+# Project State — 2026-04-27
 
 > **What this doc is.** A single, scannable snapshot of "what's where, what's working, what's broken" across BacktestStation. Updated as a checkpoint, not on every commit. When in doubt, the code wins — but this saves you 30 minutes of re-discovery before you start.
 
@@ -45,7 +45,7 @@
 
 ### Tests + CI
 
-- 367 backend tests green at the time of this writing (`pytest backend/`).
+- 434 backend tests green at the time of this writing (`pytest backend/`).
 - Lookahead harness (`test_lookahead.py`), determinism check, MBP-1 stop-vs-target race test all green.
 - Pre-commit hooks: ruff + black (Python), prettier (TS).
 
@@ -138,12 +138,18 @@ D:/data/
 └── logs/
 ```
 
-What's actually in the warehouse as of 2026-04-25:
+What's actually in the warehouse as of **2026-04-27** (audited end-to-end on ben-247, not aspirational):
 
-- **OHLCV-1m**: 11 years of NQ.c.0, ES.c.0, YM.c.0 + 8 years for the rest of the universe (25 non-equity-index symbols). ~3,400 days × 28 symbols.
-- **OHLCV-1s**: 8 years for NQ.c.0 + ES.c.0 + YM.c.0 only.
-- **TBBO**: 12 months for the full 28-symbol universe (rolling — Databento free tier is `last 12 months` for L1 schemas).
-- **Live TBBO**: continuously appended day by day as ben-247 ingests.
+- **TBBO (live, parquet)** — 1 trading day so far: 2026-04-27, 4 symbols (NQM6 ~244k rows, ESM6 ~257k rows, RTYM6 ~53k rows, YMM6 ~37k rows; total ~592k rows). Lives at `raw/databento/tbbo/`.
+- **TBBO (live, raw DBN)** — 4 daily files in `raw/live/`, but only 4/27 has market data; 4/24–4/26 are weekend / ingester-respawn-boundary empty.
+- **1m bars (derived)** — 1 trading day, 4 symbols, ~1,050 bars/symbol, at `processed/bars/timeframe=1m/`.
+- **OHLCV-1m, OHLCV-1s, historical MBP-1** — none. The historical puller (`BacktestStationHistorical`) is scheduled to fire on 2026-05-01 02:00 local for April 2026 MBP-1; if a manual `Start-ScheduledTask BacktestStationHistorical` runs first, March 2026 lands instead.
+- **`processed/tbbo/`, `processed/mbp-1/`** — do not currently exist. Live TBBO parquet lives at `raw/databento/tbbo/` instead; layout may be reconciled once historical pulls produce comparable parquet under the same root.
+- **Manifests** — `manifests/ingest_runs/2026-04-27_tbbo_manifest.json` is the first.
+
+> **Doc lifecycle note (2026-04-27):** prior versions of this section claimed "12 months TBBO across the full 28-symbol universe" was already in the warehouse. That was never true — the live ingester only came online 2026-04-24 and the parquet pipeline produced its first partitions on 2026-04-27. When a future audit shows different contents, **edit this section to match the audit**, not to project forward. The Live-pipeline panel on `/monitor` is the live-truth view; this doc is a periodic snapshot.
+
+**Pipeline status (2026-04-27, post-verification):** parquet_mirror is working. Earlier in the day a missing `processed/` tree triggered a "schema-mismatch bug" hypothesis; deeper inspection showed mirror was correctly skipping the actively-written 4/27 DBN due to its 60s freshness guard. After UTC midnight the file closes and the next hourly mirror picks it up automatically. No code change needed in `parquet_mirror` or `app.ingest.live`.
 
 Full schema definitions: see [`SCHEMA_SPEC.md`](SCHEMA_SPEC.md). Additions bump `SCHEMA_VERSION` in `backend/app/data/schema.py`.
 
