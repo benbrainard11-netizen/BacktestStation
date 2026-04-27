@@ -73,11 +73,17 @@ from app.data.schema import (
 SKIP_RECENT_SEC = 60
 GENERATOR_NAME = "parquet_mirror"
 
-# Matches the DBN file naming convention used by both the live ingester
-# and the historical puller: GLBX.MDP3-tbbo-2026-04-24.dbn(.zst)?
+# Matches DBN files in two layouts:
+#   Legacy (live + pre-2026-04-27 historical):   GLBX.MDP3-tbbo-2026-04-24.dbn
+#   Per-symbol (historical from 2026-04-27 on):  GLBX.MDP3-mbp-1-2026-03-06-NQ.c.0.dbn
+# Symbol group is optional. When present, the file already contains a single
+# symbol; when absent, the file may be multi-symbol and the existing
+# group-by-record-symbol code path handles partitioning.
 _DBN_RE = re.compile(
     r"^(?P<dataset>[A-Z]+\.[A-Z0-9]+)-(?P<schema>[a-z0-9-]+)-"
-    r"(?P<date>\d{4}-\d{2}-\d{2})\.dbn(\.zst)?$"
+    r"(?P<date>\d{4}-\d{2}-\d{2})"
+    r"(?:-(?P<symbol>[A-Za-z0-9._]+))?"
+    r"\.dbn(\.zst)?$"
 )
 
 

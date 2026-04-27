@@ -42,6 +42,7 @@ import datetime as dt
 import logging
 import os
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -61,6 +62,14 @@ DEFAULT_SCHEMA = "mbp-1"
 ALLOWED_SCHEMAS = ("mbp-1", "tbbo", "ohlcv-1m", "ohlcv-1s", "ohlcv-1h", "ohlcv-1d")
 SYMBOLS = ["NQ.c.0", "ES.c.0", "YM.c.0", "RTY.c.0"]
 STYPE_IN = "continuous"
+
+# Retry config for transient Databento failures. Empirically (2026-04-27)
+# their MBP-1 endpoint returned "503 <empty message>" or "Response ended
+# prematurely" cascades on consecutive full-day requests; backing off
+# lets the rate-limit window clear. Keys: errors that should retry.
+_TRANSIENT_ERROR_PATTERNS = ("503", "ended prematurely", "Service Unavailable", "timeout", "Connection")
+_RETRY_BACKOFFS_SEC = (5, 30, 120, 600)
+_THROTTLE_BETWEEN_CALLS_SEC = 1.0
 
 
 # --- Result --------------------------------------------------------------
@@ -127,6 +136,8 @@ def days_in_month(year: int, month: int) -> list[dt.date]:
 def file_for_date(
     data_root: Path, day: dt.date, schema: str = DEFAULT_SCHEMA
 ) -> Path:
+    """Legacy per-day path (multi-symbol). Kept for skip-existing checks
+    on files written before the per-symbol refactor."""
     return (
         data_root
         / "raw"
@@ -135,7 +146,65 @@ def file_for_date(
     )
 
 
+def file_for_date_symbol(
+    data_root: Path, day: dt.date, symbol: str, schema: str = DEFAULT_SCHEMA
+) -> Path:
+    """Per-symbol-per-day path. This is the path produced by the current
+    puller; mirror's _DBN_RE accepts both legacy and new layouts."""
+    return (
+        data_root
+        / "raw"
+        / "historical"
+        / f"{DATASET}-{schema}-{day.isoformat()}-{symbol}.dbn"
+    )
+
+
 # --- Core pull -----------------------------------------------------------
+
+
+def _is_transient(exc: BaseException) -> bool:
+    msg = str(exc)
+    return any(pat in msg for pat in _TRANSIENT_ERROR_PATTERNS)
+
+
+def _get_range_with_retry(
+    client: "db.Historical",
+    schema: str,
+    symbol: str,
+    start: dt.datetime,
+    end: dt.datetime,
+    logger: logging.Logger,
+) -> "db.DBNStore":
+    """Call client.timeseries.get_range for ONE symbol with backoff retry
+    on transient Databento errors. Non-transient errors propagate."""
+    last_exc: BaseException | None = None
+    for attempt in range(len(_RETRY_BACKOFFS_SEC) + 1):
+        if attempt > 0:
+            wait = _RETRY_BACKOFFS_SEC[attempt - 1]
+            logger.warning(
+                f"retry {attempt}/{len(_RETRY_BACKOFFS_SEC)} for {symbol} "
+                f"on {start.date().isoformat()} after {wait}s "
+                f"(last error: {type(last_exc).__name__}: {last_exc})"
+            )
+            time.sleep(wait)
+        try:
+            return client.timeseries.get_range(
+                dataset=DATASET,
+                schema=schema,
+                symbols=[symbol],
+                stype_in=STYPE_IN,
+                start=start.isoformat(),
+                end=end.isoformat(),
+            )
+        except Exception as e:
+            last_exc = e
+            if not _is_transient(e):
+                # Permanent failure (auth, schema, etc.) -- don't retry.
+                raise RuntimeError(f"databento get_range failed: {e}") from e
+    raise RuntimeError(
+        f"databento get_range failed after {len(_RETRY_BACKOFFS_SEC)} "
+        f"retries for {symbol} on {start.date().isoformat()}: {last_exc}"
+    ) from last_exc
 
 
 def pull_day(
@@ -146,50 +215,80 @@ def pull_day(
     logger: logging.Logger,
     schema: str = DEFAULT_SCHEMA,
 ) -> tuple[bool, int]:
-    """Fetch one day's worth of `schema` data and write to `out_path`.
+    """Fetch one day of `schema` data, ONE SYMBOL AT A TIME.
 
-    Returns (wrote_file, bytes_written). Empty responses produce no
-    file (returns (False, 0)) — the absence of the file is the signal
-    for "no data on that day".
+    Writes per-symbol DBN files at file_for_date_symbol(...). Each
+    symbol's response is small enough (~30 MB / 1.5M rows for an
+    active CME equity-index future on a busy weekday) that Databento's
+    MBP-1 endpoint serves it cleanly, where a 4-symbol full-day request
+    would 503 on payload size.
+
+    Args:
+        out_path: legacy per-day path (kept in signature for backward
+            compatibility with callers; not actually written to anymore).
+
+    Returns:
+        (any_wrote_file, total_bytes_across_symbols). Empty days for
+        every symbol return (False, 0) -- absence of all per-symbol
+        files is the "no data" signal.
     """
     start = dt.datetime.combine(
         day, dt.time(0, 0, tzinfo=dt.timezone.utc)
     )
     end = start + dt.timedelta(days=1)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger.info(
         f"pulling {day.isoformat()}: "
-        f"dataset={DATASET} schema={schema} symbols={symbols}"
+        f"dataset={DATASET} schema={schema} symbols={symbols} "
+        f"(per-symbol mode)"
     )
 
-    try:
-        response = client.timeseries.get_range(
-            dataset=DATASET,
-            schema=schema,
-            symbols=symbols,
-            stype_in=STYPE_IN,
-            start=start.isoformat(),
-            end=end.isoformat(),
-        )
-    except Exception as e:
-        # Databento raises a variety of exception types; log and bubble
-        # up so the caller can decide whether to keep going.
-        raise RuntimeError(f"databento get_range failed: {e}") from e
+    # Resolve data_root from out_path. Legacy caller passes
+    # file_for_date(data_root, day, schema) which is
+    # data_root/raw/historical/{filename}.dbn -- so data_root is two
+    # parents up from the directory.
+    data_root = out_path.parent.parent.parent
 
-    # The response is a DBNStore. .to_file() writes the DBN bytes to
-    # disk. If the response is empty, write nothing and return.
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    any_wrote = False
+    total_bytes = 0
+    for i, symbol in enumerate(symbols):
+        sym_path = file_for_date_symbol(data_root, day, symbol, schema)
 
-    # Quick empty-check: if the dataframe form has zero rows, skip.
-    df = response.to_df()
-    if df.empty:
-        logger.info(f"no data for {day.isoformat()}, skipping write")
-        return False, 0
+        # Idempotent skip: if this symbol-day file already exists and is
+        # non-empty, leave it alone.
+        if sym_path.exists() and sym_path.stat().st_size > 0:
+            logger.info(f"  skip existing: {sym_path.name}")
+            any_wrote = True  # treat existing files as "we have this day"
+            total_bytes += sym_path.stat().st_size
+            continue
 
-    response.to_file(str(out_path))
-    size = out_path.stat().st_size
-    logger.info(f"wrote {out_path.name} ({size:,} bytes, {len(df)} rows)")
-    return True, size
+        try:
+            response = _get_range_with_retry(
+                client, schema, symbol, start, end, logger
+            )
+        except RuntimeError as e:
+            # Already-formatted error from _get_range_with_retry. Log per-
+            # symbol failure and keep going to the next symbol -- partial
+            # day is better than no day.
+            logger.error(f"  {symbol}: {e}")
+            continue
+
+        df = response.to_df()
+        if df.empty:
+            logger.info(f"  {symbol}: no data, skipping write")
+        else:
+            response.to_file(str(sym_path))
+            sz = sym_path.stat().st_size
+            logger.info(f"  wrote {sym_path.name} ({sz:,} bytes, {len(df)} rows)")
+            any_wrote = True
+            total_bytes += sz
+
+        # Throttle so successive calls don't trip Databento's rate limit.
+        if i < len(symbols) - 1:
+            time.sleep(_THROTTLE_BETWEEN_CALLS_SEC)
+
+    return any_wrote, total_bytes
 
 
 def pull_month(
