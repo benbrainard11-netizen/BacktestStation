@@ -342,6 +342,19 @@ class FractalAMD(Strategy):
         if risk < self.config.min_risk_pts:
             return ValidationResult(action="reject")
 
+        # Dollar-risk cap with MNQ auto-downshift, mirroring live bot.
+        # Default contract is NQ ($20/pt). If risk on 1 NQ would exceed
+        # max_risk_dollars, swap to MNQ ($2/pt) for this single trade
+        # so dollar risk stays inside the cap. If even MNQ would breach
+        # the cap, reject — the stop is too wide to size sensibly.
+        chosen_contract_value = self.config.contract_value
+        if risk * chosen_contract_value > self.config.max_risk_dollars:
+            mnq_value = self.config.micro_contract_value
+            if risk * mnq_value <= self.config.max_risk_dollars:
+                chosen_contract_value = mnq_value
+            else:
+                return ValidationResult(action="reject")
+
         # Wrong-side-stop guard. The BracketOrder fills at the next
         # bar's open and the FVG-based stop is fixed; if price has
         # already drifted past the stop level by the time this bar
@@ -372,6 +385,15 @@ class FractalAMD(Strategy):
             qty=1,
             stop_price=stop,
             target_price=target,
+            # Only carry the override when we actually downshifted —
+            # NQ-default trades leave it None so the engine uses the
+            # run config's value (keeps existing tests + non-fractal
+            # strategies untouched).
+            contract_value=(
+                chosen_contract_value
+                if chosen_contract_value != self.config.contract_value
+                else None
+            ),
         )
         return ValidationResult(action="fire", intent=intent, dedup_key=dedup_key)
 

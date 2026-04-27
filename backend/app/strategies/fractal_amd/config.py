@@ -25,6 +25,18 @@ class FractalAMDConfig:
     target_r: float = 3.0
     max_trades_per_day: int = 2
 
+    # Dollar-risk cap. With contract_value=$20 (NQ default), a 25-pt
+    # stop is the breakeven (25 × 20 = $500). When a setup's FVG-
+    # derived stop would risk more than this on 1 contract, the
+    # strategy downshifts to MNQ for that single trade — mirrors the
+    # live bot's `MAX_RISK_DOLLARS` -> NQ→MNQ swap. MNQ contract value
+    # is 1/10 of NQ, so a 95-pt stop on MNQ risks $190 instead of
+    # $1,900. If even MNQ would breach the cap (e.g. > 250-pt stop),
+    # the trade is rejected outright.
+    max_risk_dollars: float = 500.0
+    contract_value: float = 20.0  # $20/pt for NQ; override for other symbols
+    micro_contract_value: float = 2.0  # MNQ is 1/10 NQ
+
     # Aux symbols required for SMT divergence (NQ vs ES vs YM).
     primary_symbol: str = "NQ.c.0"
     aux_symbols: tuple[str, ...] = ("ES.c.0", "YM.c.0")

@@ -40,7 +40,14 @@ class Bar:
 
 @dataclass
 class Position:
-    """An open position the engine is tracking."""
+    """An open position the engine is tracking.
+
+    `contract_value` is the dollar value of one point for this
+    specific position, overriding the run config's default when the
+    BracketOrder asked for a different instrument (e.g. MNQ for a
+    wide-stop trade in an otherwise-NQ run). `None` means "use the
+    run config's value" — engine helpers fall back accordingly.
+    """
 
     side: "Side"
     qty: int
@@ -49,6 +56,7 @@ class Position:
     stop_price: float | None
     target_price: float | None
     unrealized_pnl: float = 0.0
+    contract_value: float | None = None
 
 
 @dataclass

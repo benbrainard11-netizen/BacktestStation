@@ -274,15 +274,18 @@ def _push_history(context: Context, bar: Bar) -> None:
 def _apply_entry_fill(
     fill: Fill, bar: Bar, context: Context, broker: Broker
 ) -> Position:
-    """Build a Position from an entry Fill. Resolves stop/target from
-    the matching active bracket if there is one (for non-bracket market
-    entries the position has no stop/target)."""
+    """Build a Position from an entry Fill. Resolves stop/target +
+    per-order contract_value override from the matching active bracket
+    if there is one (for non-bracket market entries the position has
+    no stop/target and inherits the run config's contract_value)."""
     stop_price = None
     target_price = None
+    contract_value: float | None = None
     for order in broker.active_brackets:
         if order.id == fill.order_id and isinstance(order.intent, BracketOrder):
             stop_price = order.intent.stop_price
             target_price = order.intent.target_price
+            contract_value = order.intent.contract_value
             break
     return Position(
         side=fill.side,
@@ -291,6 +294,15 @@ def _apply_entry_fill(
         entry_ts=fill.ts,
         stop_price=stop_price,
         target_price=target_price,
+        contract_value=contract_value,
+    )
+
+
+def _position_contract_value(position: Position, config: RunConfig) -> float:
+    return (
+        position.contract_value
+        if position.contract_value is not None
+        else config.contract_value
     )
 
 
@@ -299,7 +311,7 @@ def _mark_to_market(
 ) -> float:
     """Open-position PnL in dollar terms at the bar's close."""
     diff = (bar.close - position.entry_price) * position.side.sign
-    return diff * position.qty * config.contract_value
+    return diff * position.qty * _position_contract_value(position, config)
 
 
 def _close_position_with_fill(
@@ -308,15 +320,15 @@ def _close_position_with_fill(
     """Realize the trade. Returns (trade, dollar_pnl_excluding_commission)."""
     if position is None:
         return None, 0.0
+    cv = _position_contract_value(position, config)
     diff = (fill.price - position.entry_price) * position.side.sign
-    realized_pnl_dollars = diff * position.qty * config.contract_value
+    realized_pnl_dollars = diff * position.qty * cv
 
     # r_multiple: dollar PnL / dollar risk per the position's stop.
     r_multiple = None
     if position.stop_price is not None:
         risk_per_contract = (
-            abs(position.entry_price - position.stop_price)
-            * config.contract_value
+            abs(position.entry_price - position.stop_price) * cv
         )
         if risk_per_contract > 0:
             r_multiple = realized_pnl_dollars / (risk_per_contract * position.qty)

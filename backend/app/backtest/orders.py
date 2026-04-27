@@ -50,12 +50,20 @@ class BracketOrder:
     subsequent bars for stop or target. Per CLAUDE.md §8, when a bar
     contains both stop and target levels, the conservative default is
     that the stop wins and `Fill.fill_confidence = "conservative"`.
+
+    `contract_value` overrides the run-wide `RunConfig.contract_value`
+    for this order's PnL math. Set this when a strategy wants to
+    downshift to a different contract on a per-trade basis (e.g.
+    Fractal AMD switching from NQ at $20/pt to MNQ at $2/pt for
+    wide-stop setups so dollar risk stays inside the configured cap).
+    `None` means use the run config's value.
     """
 
     side: Side
     qty: int
     stop_price: float
     target_price: float
+    contract_value: float | None = None
 
 
 @dataclass(frozen=True)

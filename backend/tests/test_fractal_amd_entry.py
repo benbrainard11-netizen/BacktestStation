@@ -197,6 +197,80 @@ def test_entry_rejected_on_dedup_within_15min_bucket():
     assert s.setups[0].status == "WATCHING"
 
 
+def test_entry_downshifts_to_mnq_when_nq_risk_exceeds_cap():
+    """Wide-stop setup that would risk > $500 on 1 NQ contract gets
+    auto-downshifted to MNQ (1/10 the contract value) instead of
+    being rejected — mirrors the live bot's NQ→MNQ swap.
+
+    Defaults: contract_value=$20/pt, micro_contract_value=$2/pt,
+    max_risk_dollars=$500. 31-pt stop risks $620 on NQ (over cap)
+    but only $62 on MNQ (well under cap) — downshift expected.
+    """
+    cfg = FractalAMDConfig(min_co_score=None)
+    s = FractalAMD(cfg)
+    touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
+    s.setups.append(
+        _touched_bearish_setup(touch_bar_time=touch_ts, fvg_low=21010, fvg_high=21030)
+    )
+    s.today = touch_ts.astimezone(ET).date()
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1), o=21000.0, h=21001.0, l=20999.0,
+        c=21000.0,
+    )
+
+    intent = s._try_emit_entry(cur)
+    assert isinstance(intent, BracketOrder)
+    # Order carries the MNQ contract value override.
+    assert intent.contract_value == 2.0
+    assert intent.side == Side.SHORT
+    assert s.setups[0].status == "FILLED"
+
+
+def test_entry_rejected_when_even_mnq_risk_exceeds_cap():
+    """Stop too wide for MNQ as well — reject. Catches the case
+    where downshifting wouldn't bring dollar risk under the cap.
+
+    300-pt stop on MNQ ($2/pt) = $600, over $500 cap. Should reject.
+    NB: max_risk_pts=400 so the points-cap doesn't fire first.
+    """
+    cfg = FractalAMDConfig(min_co_score=None, max_risk_pts=400.0)
+    s = FractalAMD(cfg)
+    touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
+    s.setups.append(
+        _touched_bearish_setup(touch_bar_time=touch_ts, fvg_low=20710, fvg_high=21300)
+    )
+    s.today = touch_ts.astimezone(ET).date()
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1), o=21000.0, h=21001.0, l=20999.0,
+        c=21000.0,
+    )
+
+    intent = s._try_emit_entry(cur)
+    assert intent is None
+    assert s.setups[0].status == "WATCHING"
+
+
+def test_entry_keeps_nq_when_risk_fits_cap():
+    """Tight-stop setup stays on NQ — no downshift needed."""
+    cfg = FractalAMDConfig(min_co_score=None)
+    s = FractalAMD(cfg)
+    touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
+    # 12-pt stop = $260 on NQ. Well under cap.
+    s.setups.append(
+        _touched_bearish_setup(touch_bar_time=touch_ts, fvg_low=21000, fvg_high=21012)
+    )
+    s.today = touch_ts.astimezone(ET).date()
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1), o=21000.0, h=21002.0, l=20999.0,
+        c=21000.0,
+    )
+
+    intent = s._try_emit_entry(cur)
+    assert isinstance(intent, BracketOrder)
+    # No override — engine will use RunConfig.contract_value (=NQ).
+    assert intent.contract_value is None
+
+
 def test_entry_rejected_when_fill_proxy_lands_on_wrong_side_of_stop_short():
     """Bearish setup where bar.close has rallied THROUGH fvg_high+buffer
     by the time the validation bar closes — i.e., the bracket's stop
