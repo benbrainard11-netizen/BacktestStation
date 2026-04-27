@@ -12,6 +12,7 @@ import MetricsGrid from "@/components/backtests/MetricsGrid";
 import PropFirmSimulator from "@/components/backtests/PropFirmSimulator";
 import RMultipleHistogram from "@/components/backtests/RMultipleHistogram";
 import RenameRunButton from "@/components/backtests/RenameRunButton";
+import RiskProfileViolationsPanel from "@/components/backtests/RiskProfileViolationsPanel";
 import RunNotesSection from "@/components/backtests/RunNotesSection";
 import TagEditor from "@/components/backtests/TagEditor";
 import TradeTable from "@/components/backtests/TradeTable";
@@ -197,6 +198,13 @@ export default async function BacktestDetailPage({
             config={configResult.config}
             loadError={configResult.error}
           />
+        </Panel>
+
+        <Panel
+          title="Risk profile checks"
+          meta="profiles applied retroactively · live links into /risk-profiles"
+        >
+          <RiskProfileViolationsPanel runId={run.id} />
         </Panel>
 
         <Panel title="Trades" meta={`${trades.length} total`}>
