@@ -55,6 +55,11 @@ from app.schemas.results import (
     StrategyVersionUpdate,
     TradeRead,
 )
+from app.schemas.replay import (
+    ReplayBar,
+    ReplayEntry,
+    ReplayPayload,
+)
 from app.schemas.risk_profile import (
     RISK_PROFILE_STATUSES,
     RiskEvaluationRead,
@@ -99,6 +104,9 @@ __all__ = [
     "PropFirmPresetRead",
     "PropFirmResultRead",
     "RISK_PROFILE_STATUSES",
+    "ReplayBar",
+    "ReplayEntry",
+    "ReplayPayload",
     "RiskEvaluationRead",
     "RiskProfileCreate",
     "RiskProfileRead",

@@ -2785,6 +2785,206 @@
         "title": "PropFirmResultRead",
         "type": "object"
       },
+      "ReplayBar": {
+        "description": "One OHLCV bar in the replay timeline. ts is ISO-8601 UTC.",
+        "properties": {
+          "close": {
+            "title": "Close",
+            "type": "number"
+          },
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "open": {
+            "title": "Open",
+            "type": "number"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          },
+          "volume": {
+            "title": "Volume",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ts",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "title": "ReplayBar",
+        "type": "object"
+      },
+      "ReplayEntry": {
+        "description": "One entry/exit pair from a backtest run, anchored to the\ncorresponding bars on the timeline.\n\n`entry_ts` and `exit_ts` are timestamps the chart can use to draw\nmarkers at the right candle. `pnl` is in dollars, `r_multiple` if\navailable; both are nullable because some imports leave them blank.",
+        "properties": {
+          "entry_price": {
+            "title": "Entry Price",
+            "type": "number"
+          },
+          "entry_ts": {
+            "format": "date-time",
+            "title": "Entry Ts",
+            "type": "string"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "exit_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Reason"
+          },
+          "exit_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Ts"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl"
+          },
+          "r_multiple": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R Multiple"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "stop_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Price"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price"
+          },
+          "trade_id": {
+            "title": "Trade Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "trade_id",
+          "entry_ts",
+          "exit_ts",
+          "side",
+          "entry_price",
+          "exit_price",
+          "stop_price",
+          "target_price",
+          "pnl",
+          "r_multiple",
+          "exit_reason"
+        ],
+        "title": "ReplayEntry",
+        "type": "object"
+      },
+      "ReplayPayload": {
+        "description": "Full payload for one (symbol, date) replay request.",
+        "properties": {
+          "backtest_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backtest Run Id"
+          },
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayBar"
+            },
+            "title": "Bars",
+            "type": "array"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "date"
+        ],
+        "title": "ReplayPayload",
+        "type": "object"
+      },
       "RiskEvaluationRead": {
         "description": "Result of applying a profile to a backtest run.",
         "properties": {
@@ -6950,6 +7150,75 @@
         "summary": "Get Simulation",
         "tags": [
           "prop-firm"
+        ]
+      }
+    },
+    "/api/replay/{symbol}/{date}": {
+      "get": {
+        "description": "Return 1m bars for `symbol` on `date` + optional run entries.\n\n`date` is the trading day (UTC, inclusive). The bar window is\n`[date 00:00, date+1 00:00)` \u2014 same convention as `read_bars`.",
+        "operationId": "get_replay_api_replay__symbol___date__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "title": "Symbol",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "backtest_run_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Backtest Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayPayload"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Replay",
+        "tags": [
+          "replay"
         ]
       }
     },

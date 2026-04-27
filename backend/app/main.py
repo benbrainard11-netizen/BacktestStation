@@ -15,6 +15,7 @@ from app.api import (
     notes,
     prompts,
     prop_firm,
+    replay,
     risk_profiles,
     strategies,
 )
@@ -49,3 +50,4 @@ app.include_router(prompts.router, prefix="/api")
 app.include_router(prop_firm.router, prefix="/api")
 app.include_router(prop_firm.backtest_router, prefix="/api")
 app.include_router(risk_profiles.router, prefix="/api")
+app.include_router(replay.router, prefix="/api")

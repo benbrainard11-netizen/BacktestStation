@@ -124,7 +124,16 @@ export default async function BacktestDetailPage({
       </div>
 
       <div className="flex flex-col gap-4 px-6">
-        <ExportButtons runId={run.id} hasMetrics={metrics !== null} />
+        <div className="flex flex-wrap items-center gap-3">
+          <ExportButtons runId={run.id} hasMetrics={metrics !== null} />
+          <Link
+            href={replayUrl(run)}
+            className="border border-zinc-700 bg-zinc-900 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-100 hover:bg-zinc-800"
+            title="Open this run in the per-day chart replay"
+          >
+            ▶ Chart replay
+          </Link>
+        </div>
 
         <MetricsGrid metrics={metrics} />
 
@@ -203,6 +212,18 @@ export default async function BacktestDetailPage({
       </div>
     </div>
   );
+}
+
+function replayUrl(run: BacktestRun): string {
+  const params = new URLSearchParams();
+  params.set("symbol", run.symbol);
+  // Default to the run's start date — the replay page can step forward.
+  if (run.start_ts) {
+    const day = new Date(run.start_ts).toISOString().slice(0, 10);
+    params.set("date", day);
+  }
+  params.set("backtest_run_id", String(run.id));
+  return `/replay?${params.toString()}`;
 }
 
 function formatDate(iso: string | null): string {

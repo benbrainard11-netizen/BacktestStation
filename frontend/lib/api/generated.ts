@@ -642,6 +642,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/replay/{symbol}/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Replay
+         * @description Return 1m bars for `symbol` on `date` + optional run entries.
+         *
+         *     `date` is the trading day (UTC, inclusive). The bar window is
+         *     `[date 00:00, date+1 00:00)` — same convention as `read_bars`.
+         */
+        get: operations["get_replay_api_replay__symbol___date__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/risk-profiles": {
         parameters: {
             query?: never;
@@ -1911,6 +1934,82 @@ export interface components {
             /** Total Trades */
             total_trades: number;
             worst_day: components["schemas"]["PropFirmDayRow"] | null;
+        };
+        /**
+         * ReplayBar
+         * @description One OHLCV bar in the replay timeline. ts is ISO-8601 UTC.
+         */
+        ReplayBar: {
+            /** Close */
+            close: number;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Open */
+            open: number;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Volume */
+            volume: number;
+        };
+        /**
+         * ReplayEntry
+         * @description One entry/exit pair from a backtest run, anchored to the
+         *     corresponding bars on the timeline.
+         *
+         *     `entry_ts` and `exit_ts` are timestamps the chart can use to draw
+         *     markers at the right candle. `pnl` is in dollars, `r_multiple` if
+         *     available; both are nullable because some imports leave them blank.
+         */
+        ReplayEntry: {
+            /** Entry Price */
+            entry_price: number;
+            /**
+             * Entry Ts
+             * Format: date-time
+             */
+            entry_ts: string;
+            /** Exit Price */
+            exit_price: number | null;
+            /** Exit Reason */
+            exit_reason: string | null;
+            /** Exit Ts */
+            exit_ts: string | null;
+            /** Pnl */
+            pnl: number | null;
+            /** R Multiple */
+            r_multiple: number | null;
+            /** Side */
+            side: string;
+            /** Stop Price */
+            stop_price: number | null;
+            /** Target Price */
+            target_price: number | null;
+            /** Trade Id */
+            trade_id: number;
+        };
+        /**
+         * ReplayPayload
+         * @description Full payload for one (symbol, date) replay request.
+         */
+        ReplayPayload: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Bars */
+            bars?: components["schemas"]["ReplayBar"][];
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Entries */
+            entries?: components["schemas"]["ReplayEntry"][];
+            /** Symbol */
+            symbol: string;
         };
         /**
          * RiskEvaluationRead
@@ -3874,6 +3973,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SimulationRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_replay_api_replay__symbol___date__get: {
+        parameters: {
+            query?: {
+                backtest_run_id?: number | null;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplayPayload"];
                 };
             };
             /** @description Validation Error */
