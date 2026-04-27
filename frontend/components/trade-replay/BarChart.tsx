@@ -3,29 +3,28 @@
 import {
   CandlestickSeries,
   ColorType,
-  LineSeries,
   createChart,
   createSeriesMarkers,
   type CandlestickData,
   type IChartApi,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
-  type LineData,
   type SeriesMarker,
   type Time,
 } from "lightweight-charts";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { components } from "@/lib/api/generated";
-import {
-  binTicksToMicroCandles,
-  bidLine,
-  askLine,
-  tickIndexAtMs,
-} from "@/lib/trade-replay/binTicks";
 import { chartTimeFormatter, etHMS } from "@/lib/trade-replay/etFormat";
+import {
+  type ResampledBar,
+  type Timeframe,
+  barIndexAtSec,
+  resample,
+} from "@/lib/trade-replay/resampleBars";
 
-type Window = components["schemas"]["TradeReplayWindowRead"];
+type ReplayBar = components["schemas"]["ReplayBar"];
+type Anchor = components["schemas"]["TradeReplayAnchor"];
 
 const SPEED_PRESETS = [
   { label: "1x", ms: 1000 },
@@ -35,57 +34,54 @@ const SPEED_PRESETS = [
 ] as const;
 
 interface Props {
-  payload: Window;
+  bars: ReplayBar[];
+  anchor: Anchor;
+  timeframe: Timeframe;
 }
 
-export default function TickChart({ payload }: Props) {
+export default function BarChart({ bars, anchor, timeframe }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const bidRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const askRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const tickHandleRef = useRef<number | null>(null);
 
-  const ticks = payload.ticks ?? [];
-  const anchor = payload.anchor;
-
-  const candles = useMemo<CandlestickData[]>(
+  const candles = useMemo<ResampledBar[]>(
+    () => resample(bars, timeframe),
+    [bars, timeframe],
+  );
+  const candleData = useMemo<CandlestickData[]>(
     () =>
-      binTicksToMicroCandles(ticks).map((c) => ({
+      candles.map((c) => ({
         time: c.time as Time,
         open: c.open,
         high: c.high,
         low: c.low,
         close: c.close,
       })),
-    [ticks],
+    [candles],
   );
 
-  const bidLineData = useMemo<LineData[]>(
-    () => bidLine(ticks).map((p) => ({ time: p.time as Time, value: p.value })),
-    [ticks],
-  );
-  const askLineData = useMemo<LineData[]>(
-    () => askLine(ticks).map((p) => ({ time: p.time as Time, value: p.value })),
-    [ticks],
-  );
-
-  const tickCount = ticks.length;
-  const entryMs = useMemo(
-    () => new Date(anchor.entry_ts).getTime(),
+  const entrySec = useMemo(
+    () => Math.floor(new Date(anchor.entry_ts).getTime() / 1000),
     [anchor.entry_ts],
   );
+
+  // Cursor starts on the bar containing the trade entry — that's the
+  // whole point of "review old trade." We initialize once per timeframe
+  // change so resampling resets the index appropriately.
   const initialCursor = useMemo(() => {
-    if (tickCount === 0) return 0;
-    return Math.min(tickCount - 1, tickIndexAtMs(ticks, entryMs));
-  }, [ticks, tickCount, entryMs]);
+    const idx = barIndexAtSec(candles, entrySec);
+    // Show a few bars after entry by default so user sees the immediate
+    // outcome bars without scrubbing.
+    return Math.min(candles.length - 1, idx + 5);
+  }, [candles, entrySec]);
 
   const [cursorIndex, setCursorIndex] = useState(initialCursor);
   const [playing, setPlaying] = useState(false);
   const [speedMs, setSpeedMs] = useState<number>(SPEED_PRESETS[1].ms);
 
-  // Reset cursor to entry whenever new payload loads.
+  // Reset cursor whenever data or timeframe changes.
   useEffect(() => {
     setCursorIndex(initialCursor);
     setPlaying(false);
@@ -106,73 +102,45 @@ export default function TickChart({ payload }: Props) {
       },
       timeScale: {
         timeVisible: true,
-        secondsVisible: true,
+        secondsVisible: false,
         borderColor: "#27272a",
       },
       rightPriceScale: { borderColor: "#27272a" },
-      localization: { timeFormatter: chartTimeFormatter },
+      localization: {
+        timeFormatter: chartTimeFormatter,
+      },
     });
-    const candle = chart.addSeries(CandlestickSeries, {
+    const series = chart.addSeries(CandlestickSeries, {
       upColor: "#22c55e",
       downColor: "#ef4444",
       wickUpColor: "#22c55e",
       wickDownColor: "#ef4444",
       borderVisible: false,
     });
-    const bid = chart.addSeries(LineSeries, {
-      color: "rgba(34, 197, 94, 0.6)",
-      lineWidth: 1,
-      lastValueVisible: false,
-      priceLineVisible: false,
-    });
-    const ask = chart.addSeries(LineSeries, {
-      color: "rgba(239, 68, 68, 0.6)",
-      lineWidth: 1,
-      lastValueVisible: false,
-      priceLineVisible: false,
-    });
-
     chartRef.current = chart;
-    candleRef.current = candle;
-    bidRef.current = bid;
-    askRef.current = ask;
-    markersRef.current = createSeriesMarkers(candle, []);
-
+    seriesRef.current = series;
+    markersRef.current = createSeriesMarkers(series, []);
     return () => {
       markersRef.current?.detach();
       markersRef.current = null;
       chart.remove();
       chartRef.current = null;
-      candleRef.current = null;
-      bidRef.current = null;
-      askRef.current = null;
+      seriesRef.current = null;
     };
   }, []);
 
-  // Visible slice up to the cursor (in tick time).
+  // Visible slice of candles up to cursor.
   useEffect(() => {
-    if (!candleRef.current || !bidRef.current || !askRef.current) return;
-    if (ticks.length === 0) return;
-    const cutoffMs = new Date(
-      ticks[Math.min(cursorIndex, ticks.length - 1)].ts,
-    ).getTime();
-    const cutoffSec = Math.floor(cutoffMs / 1000);
-
-    candleRef.current.setData(
-      candles.filter((c) => (c.time as number) <= cutoffSec),
-    );
-    bidRef.current.setData(
-      bidLineData.filter((p) => (p.time as number) <= cutoffSec),
-    );
-    askRef.current.setData(
-      askLineData.filter((p) => (p.time as number) <= cutoffSec),
-    );
+    if (!seriesRef.current) return;
+    seriesRef.current.setData(candleData.slice(0, Math.max(1, cursorIndex + 1)));
     chartRef.current?.timeScale().fitContent();
-  }, [candles, bidLineData, askLineData, cursorIndex, ticks]);
+  }, [candleData, cursorIndex]);
 
-  // Anchor lines on the candle series.
+  // Anchor lines on the candle series — entry, stop, target stay
+  // visible regardless of cursor position. Drawn as price lines so
+  // they're labeled.
   useEffect(() => {
-    const series = candleRef.current;
+    const series = seriesRef.current;
     if (!series) return;
     const lines = [
       series.createPriceLine({
@@ -216,27 +184,34 @@ export default function TickChart({ payload }: Props) {
     };
   }, [anchor]);
 
-  // Entry/exit markers.
+  // Entry / exit markers. Entry maps to the bar that contains entry_ts;
+  // exit similarly. Both stay visible on the chart at all times.
   useEffect(() => {
-    if (!candleRef.current) return;
-    const candleTimes = new Set(candles.map((c) => c.time as number));
+    if (!seriesRef.current) return;
+    const candleTimes: Time[] = candles.map((c) => c.time as Time);
+    if (candleTimes.length === 0) {
+      markersRef.current?.setMarkers([]);
+      return;
+    }
+
+    const entryBucket = bucketAt(candleTimes, entrySec);
     const markers: SeriesMarker<Time>[] = [];
-    const entrySec = Math.floor(entryMs / 1000);
-    if (candleTimes.has(entrySec)) {
+    if (entryBucket !== null) {
       const isLong = anchor.side.toLowerCase() === "long";
       markers.push({
-        time: entrySec as Time,
+        time: entryBucket as Time,
         position: isLong ? "belowBar" : "aboveBar",
         color: isLong ? "#22c55e" : "#ef4444",
         shape: isLong ? "arrowUp" : "arrowDown",
-        text: `${anchor.side.toUpperCase()} @${anchor.entry_price.toFixed(2)} · ${etHMS(entryMs)}`,
+        text: `${anchor.side.toUpperCase()} @${anchor.entry_price.toFixed(2)} · ${etHMS(new Date(anchor.entry_ts).getTime())}`,
       });
     }
     if (anchor.exit_ts && anchor.exit_price !== null && anchor.exit_price !== undefined) {
       const exitSec = Math.floor(new Date(anchor.exit_ts).getTime() / 1000);
-      if (candleTimes.has(exitSec)) {
+      const exitBucket = bucketAt(candleTimes, exitSec);
+      if (exitBucket !== null) {
         markers.push({
-          time: exitSec as Time,
+          time: exitBucket as Time,
           position: "aboveBar",
           color: "#a1a1aa",
           shape: "circle",
@@ -245,9 +220,9 @@ export default function TickChart({ payload }: Props) {
       }
     }
     markersRef.current?.setMarkers(markers);
-  }, [anchor, candles, entryMs]);
+  }, [anchor, candles, entrySec]);
 
-  // Playback. 1x = 1 wall-clock-second of data per UI second.
+  // Playback tick — advances 1 candle per setInterval fire.
   useEffect(() => {
     if (!playing) {
       if (tickHandleRef.current !== null) {
@@ -256,19 +231,14 @@ export default function TickChart({ payload }: Props) {
       }
       return;
     }
-    if (tickCount === 0) return;
-    const advanceMsPerFrame = 1000;
+    if (candles.length === 0) return;
     tickHandleRef.current = window.setInterval(() => {
       setCursorIndex((prev) => {
-        if (prev >= tickCount - 1) {
+        if (prev >= candles.length - 1) {
           setPlaying(false);
           return prev;
         }
-        const curMs = new Date(ticks[prev].ts).getTime();
-        const targetMs = curMs + advanceMsPerFrame;
-        const next = tickIndexAtMs(ticks, targetMs);
-        if (next <= prev) return Math.min(prev + 1, tickCount - 1);
-        return Math.min(next, tickCount - 1);
+        return prev + 1;
       });
     }, speedMs);
     return () => {
@@ -277,22 +247,18 @@ export default function TickChart({ payload }: Props) {
         tickHandleRef.current = null;
       }
     };
-  }, [playing, speedMs, tickCount, ticks]);
+  }, [playing, speedMs, candles.length]);
 
-  if (tickCount === 0) {
+  if (candles.length === 0) {
     return (
       <div className="border border-zinc-800 bg-zinc-950 p-6 font-mono text-xs text-zinc-500">
-        No TBBO ticks in the trade window for {payload.symbol}.
+        No bars in the warehouse for this trade's date.
       </div>
     );
   }
 
-  const cursorTick = ticks[Math.min(cursorIndex, tickCount - 1)];
-  const cursorMs = new Date(cursorTick.ts).getTime();
-  const cursorMid =
-    cursorTick.bid_px !== null && cursorTick.ask_px !== null
-      ? (cursorTick.bid_px + cursorTick.ask_px) / 2
-      : null;
+  const cursorBar = candles[Math.min(cursorIndex, candles.length - 1)];
+  const cursorMs = cursorBar.time * 1000;
 
   return (
     <div className="flex flex-col gap-3">
@@ -300,7 +266,7 @@ export default function TickChart({ payload }: Props) {
         <div
           ref={containerRef}
           className="h-[480px] w-full"
-          aria-label={`Tick chart for ${payload.symbol} around trade ${payload.trade_id}`}
+          aria-label={`Trade replay chart, ${timeframe} candles`}
         />
       </div>
       <div className="flex flex-wrap items-center gap-3 border border-zinc-800 bg-zinc-950 p-3 font-mono text-xs">
@@ -308,7 +274,7 @@ export default function TickChart({ payload }: Props) {
           type="button"
           onClick={() => setCursorIndex(0)}
           className="border border-zinc-800 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
-          title="Reset to first tick"
+          title="Reset to first bar"
         >
           ⏮
         </button>
@@ -322,17 +288,18 @@ export default function TickChart({ payload }: Props) {
         <button
           type="button"
           onClick={() =>
-            setCursorIndex((prev) => Math.min(tickCount - 1, prev + 1))
+            setCursorIndex((prev) => Math.min(candles.length - 1, prev + 1))
           }
           className="border border-zinc-800 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
-          title="Step forward 1 tick"
+          title="Step forward 1 bar"
         >
           ⏭
         </button>
         <button
           type="button"
           onClick={() => {
-            setCursorIndex(initialCursor);
+            const idx = barIndexAtSec(candles, entrySec);
+            setCursorIndex(Math.min(candles.length - 1, idx + 5));
             setPlaying(false);
           }}
           className="border border-zinc-700 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
@@ -358,23 +325,36 @@ export default function TickChart({ payload }: Props) {
         <input
           type="range"
           min={0}
-          max={Math.max(0, tickCount - 1)}
+          max={Math.max(0, candles.length - 1)}
           value={cursorIndex}
           onChange={(e) => {
             setPlaying(false);
             setCursorIndex(Number.parseInt(e.target.value, 10));
           }}
           className="ml-2 flex-1 accent-zinc-500"
-          aria-label="Scrub tick timeline"
+          aria-label="Scrub timeline"
         />
         <span className="ml-2 tabular-nums text-zinc-500">
-          {cursorIndex + 1}/{tickCount}
+          {cursorIndex + 1}/{candles.length}
         </span>
         <span className="tabular-nums text-zinc-300">
-          {etHMS(cursorMs)} ET
-          {cursorMid !== null ? ` · mid ${cursorMid.toFixed(2)}` : ""}
+          {etHMS(cursorMs)} ET · {cursorBar.close.toFixed(2)}
         </span>
       </div>
     </div>
   );
+}
+
+/**
+ * Given a sorted list of candle epoch-seconds and a target epoch-second,
+ * find the candle whose bucket contains the target. Returns the candle's
+ * `time` (its bucket open second) or null if outside the range.
+ */
+function bucketAt(candleTimes: Time[], targetSec: number): Time | null {
+  let last: Time | null = null;
+  for (const t of candleTimes) {
+    if ((t as number) > targetSec) break;
+    last = t;
+  }
+  return last;
 }

@@ -3,29 +3,38 @@
 import { useEffect, useMemo, useState } from "react";
 
 import PageHeader from "@/components/PageHeader";
-import GhostOrderPanel from "@/components/trade-replay/GhostOrderPanel";
+import BarChart from "@/components/trade-replay/BarChart";
 import TickChart from "@/components/trade-replay/TickChart";
 import TradePicker from "@/components/trade-replay/TradePicker";
 import type { components } from "@/lib/api/generated";
-import {
-  type GhostOrder,
-  type GhostResolution,
-  resolveGhost,
-} from "@/lib/trade-replay/resolveGhost";
+import type { Timeframe } from "@/lib/trade-replay/resampleBars";
 
 type Run = components["schemas"]["TradeReplayRunRead"];
-type Window = components["schemas"]["TradeReplayWindowRead"];
+type Trade = components["schemas"]["TradeReplayTradeRead"];
+type TickWindow = components["schemas"]["TradeReplayWindowRead"];
+type ReplayPayload = components["schemas"]["ReplayPayload"];
+type Anchor = components["schemas"]["TradeReplayAnchor"];
+
+type Mode = "1s" | Timeframe;
+const MODES: Mode[] = ["1s", "1m", "5m", "15m", "30m"];
+const DEFAULT_MODE: Mode = "1m";
 
 type RunsState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "data"; runs: Run[] };
 
-type WindowState =
+type TickState =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "data"; payload: Window };
+  | { kind: "data"; payload: TickWindow };
+
+type BarsState =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "error"; message: string }
+  | { kind: "data"; payload: ReplayPayload; anchor: Anchor };
 
 export default function TradeReplayPage() {
   const [runs, setRuns] = useState<RunsState>({ kind: "loading" });
@@ -33,24 +42,12 @@ export default function TradeReplayPage() {
     runId: number;
     tradeId: number;
   } | null>(null);
-  const [window, setWindow] = useState<WindowState>({ kind: "idle" });
-  const [draft, setDraft] = useState<{
-    placedAtMs: number;
-    midPrice: number;
-  } | null>(null);
-  const [ghost, setGhost] = useState<GhostOrder | null>(null);
+  const [mode, setMode] = useState<Mode>(DEFAULT_MODE);
 
-  // Reset ghost state whenever the user picks a different trade.
-  useEffect(() => {
-    setDraft(null);
-    setGhost(null);
-  }, [selected?.runId, selected?.tradeId]);
+  const [tickState, setTickState] = useState<TickState>({ kind: "idle" });
+  const [barsState, setBarsState] = useState<BarsState>({ kind: "idle" });
 
-  const resolution = useMemo<GhostResolution | null>(() => {
-    if (ghost === null || window.kind !== "data") return null;
-    return resolveGhost(window.payload.ticks ?? [], ghost);
-  }, [ghost, window]);
-
+  // Load all live runs once.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -81,27 +78,44 @@ export default function TradeReplayPage() {
     };
   }, []);
 
+  const selectedTrade = useMemo<{
+    run: Run;
+    trade: Trade;
+  } | null>(() => {
+    if (selected === null || runs.kind !== "data") return null;
+    const run = runs.runs.find((r) => r.run_id === selected.runId);
+    if (!run) return null;
+    const trade = run.trades.find((t) => t.trade_id === selected.tradeId);
+    if (!trade) return null;
+    return { run, trade };
+  }, [selected, runs]);
+
+  // Fetch ticks (1s mode).
   useEffect(() => {
-    if (selected === null) return;
+    if (selected === null || mode !== "1s") {
+      setTickState({ kind: "idle" });
+      return;
+    }
     let cancelled = false;
-    setWindow({ kind: "loading" });
+    setTickState({ kind: "loading" });
     (async () => {
       try {
-        const url = `/api/trade-replay/${selected.runId}/${selected.tradeId}/ticks`;
+        // 1s mode: ±15 min around entry. Cap is 30 min each side.
+        const url = `/api/trade-replay/${selected.runId}/${selected.tradeId}/ticks?lead_seconds=900&trail_seconds=900`;
         const res = await fetch(url, { cache: "no-store" });
         if (!res.ok) {
           if (!cancelled)
-            setWindow({
+            setTickState({
               kind: "error",
               message: `${res.status} ${res.statusText}`,
             });
           return;
         }
-        const data = (await res.json()) as Window;
-        if (!cancelled) setWindow({ kind: "data", payload: data });
+        const data = (await res.json()) as TickWindow;
+        if (!cancelled) setTickState({ kind: "data", payload: data });
       } catch (err) {
         if (!cancelled)
-          setWindow({
+          setTickState({
             kind: "error",
             message: err instanceof Error ? err.message : "Network error",
           });
@@ -110,14 +124,62 @@ export default function TradeReplayPage() {
     return () => {
       cancelled = true;
     };
-  }, [selected]);
+  }, [selected, mode]);
+
+  // Fetch bars (1m+ modes). One fetch per (symbol, date); resample
+  // happens client-side in BarChart.
+  useEffect(() => {
+    if (selected === null || mode === "1s" || selectedTrade === null) {
+      setBarsState({ kind: "idle" });
+      return;
+    }
+    let cancelled = false;
+    setBarsState({ kind: "loading" });
+    const { run, trade } = selectedTrade;
+    const date = new Date(trade.entry_ts).toISOString().slice(0, 10);
+    const url = `/api/replay/${encodeURIComponent(run.symbol)}/${date}?backtest_run_id=${run.run_id}`;
+    (async () => {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) {
+          if (!cancelled)
+            setBarsState({
+              kind: "error",
+              message: `${res.status} ${res.statusText}`,
+            });
+          return;
+        }
+        const payload = (await res.json()) as ReplayPayload;
+        const anchor: Anchor = {
+          entry_ts: trade.entry_ts,
+          exit_ts: trade.exit_ts,
+          side: trade.side,
+          entry_price: trade.entry_price,
+          exit_price: trade.exit_price,
+          stop_price: trade.stop_price,
+          target_price: trade.target_price,
+          r_multiple: trade.r_multiple,
+        };
+        if (!cancelled) setBarsState({ kind: "data", payload, anchor });
+      } catch (err) {
+        if (!cancelled)
+          setBarsState({
+            kind: "error",
+            message: err instanceof Error ? err.message : "Network error",
+          });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, mode, selectedTrade]);
 
   return (
     <div className="pb-10">
       <PageHeader
         title="Trade replay"
-        description="TBBO-tick playback of live trades. Pick a trade, replay tick-by-tick, place ghost orders to compare alternatives."
-        meta="research · tick-level"
+        description="Replay live trades for review and analysis. Times in ET. Pick a trade, scrub through the day at any timeframe."
+        meta="research · review-only"
       />
       <div className="flex flex-col gap-4 px-6 pb-6">
         {runs.kind === "loading" ? (
@@ -136,46 +198,102 @@ export default function TradeReplayPage() {
           />
         )}
 
-        {window.kind === "loading" ? (
-          <div className="border border-zinc-800 bg-zinc-950 p-4 font-mono text-xs text-zinc-500">
-            Loading TBBO window…
-          </div>
-        ) : window.kind === "error" ? (
-          <div className="border border-rose-900 bg-rose-950/20 p-4 font-mono text-xs text-rose-300">
-            Failed to load window: {window.message}
-          </div>
-        ) : window.kind === "data" ? (
-          <>
-            <TickChart
-              payload={window.payload}
-              ghost={ghost}
-              resolution={resolution}
-              onChartClick={({ tsMs, midPrice }) => {
-                setDraft({ placedAtMs: tsMs, midPrice });
-                setGhost(null);
-              }}
-            />
-            <GhostOrderPanel
-              anchor={window.payload.anchor}
-              draft={draft}
-              ghost={ghost}
-              resolution={resolution}
-              onSubmit={(g) => {
-                setGhost(g);
-                setDraft(null);
-              }}
-              onClear={() => {
-                setGhost(null);
-                setDraft(null);
-              }}
-            />
-          </>
-        ) : selected !== null ? null : (
+        {selected !== null ? (
+          <TimeframePicker mode={mode} onChange={setMode} />
+        ) : null}
+
+        {selected === null ? (
           <div className="border border-zinc-800 bg-zinc-950 p-6 font-mono text-xs text-zinc-500">
-            Pick a trade above to load its TBBO window.
+            Pick a trade above to load its replay.
           </div>
+        ) : mode === "1s" ? (
+          <TickPanel state={tickState} />
+        ) : (
+          <BarsPanel state={barsState} timeframe={mode as Timeframe} />
         )}
       </div>
     </div>
   );
+}
+
+function TimeframePicker({
+  mode,
+  onChange,
+}: {
+  mode: Mode;
+  onChange: (m: Mode) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3 border border-zinc-800 bg-zinc-950 p-3 font-mono text-xs">
+      <span className="text-zinc-500">Timeframe</span>
+      {MODES.map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => onChange(m)}
+          className={
+            mode === m
+              ? "border border-zinc-100 bg-zinc-100 px-3 py-1 text-zinc-950"
+              : "border border-zinc-800 bg-zinc-900 px-3 py-1 text-zinc-300 hover:bg-zinc-800"
+          }
+        >
+          {m}
+        </button>
+      ))}
+      <span className="ml-3 text-zinc-600">
+        {mode === "1s"
+          ? "Tick-level (TBBO) · ±15 min around entry"
+          : "Full-day 1m bars resampled to selected timeframe"}
+      </span>
+    </div>
+  );
+}
+
+function TickPanel({ state }: { state: TickState }) {
+  if (state.kind === "loading")
+    return (
+      <div className="border border-zinc-800 bg-zinc-950 p-4 font-mono text-xs text-zinc-500">
+        Loading TBBO window…
+      </div>
+    );
+  if (state.kind === "error")
+    return (
+      <div className="border border-rose-900 bg-rose-950/20 p-4 font-mono text-xs text-rose-300">
+        Failed to load ticks: {state.message}
+      </div>
+    );
+  if (state.kind === "idle") return null;
+  return <TickChart payload={state.payload} />;
+}
+
+function BarsPanel({
+  state,
+  timeframe,
+}: {
+  state: BarsState;
+  timeframe: Timeframe;
+}) {
+  if (state.kind === "loading")
+    return (
+      <div className="border border-zinc-800 bg-zinc-950 p-4 font-mono text-xs text-zinc-500">
+        Loading bars…
+      </div>
+    );
+  if (state.kind === "error")
+    return (
+      <div className="border border-rose-900 bg-rose-950/20 p-4 font-mono text-xs text-rose-300">
+        Failed to load bars: {state.message}
+      </div>
+    );
+  if (state.kind === "idle") return null;
+  const bars = state.payload.bars ?? [];
+  if (bars.length === 0) {
+    return (
+      <div className="border border-zinc-800 bg-zinc-950 p-6 font-mono text-xs text-zinc-500">
+        No 1m bars in the warehouse for this trade's date. The bars
+        partition may not be backfilled yet.
+      </div>
+    );
+  }
+  return <BarChart bars={bars} anchor={state.anchor} timeframe={timeframe} />;
 }
