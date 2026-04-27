@@ -129,21 +129,23 @@ D:/data/
 ├── raw/
 │   ├── live/                  GLBX.MDP3-tbbo-{YYYY-MM-DD}.dbn        (live ingester)
 │   └── historical/            GLBX.MDP3-{schema}-{YYYY-MM-DD}.dbn    (historical pulls)
-├── processed/
+├── raw/databento/             # parquet mirror of raw/ DBN files
 │   ├── tbbo/symbol={X}/date={Y}/part-000.parquet
-│   ├── mbp-1/symbol={X}/date={Y}/part-000.parquet
+│   └── mbp-1/symbol={X}/date={Y}/part-000.parquet
+├── processed/
 │   └── bars/timeframe=1m/symbol={X}/date={Y}/part-000.parquet
 ├── manifests/                 per-file kv-metadata + integrity hashes
 ├── heartbeat/live_ingester.json
 └── logs/
 ```
 
-What's actually in the warehouse as of 2026-04-25:
+What's actually in the warehouse as of 2026-04-27 (audited on ben-247 — the empirical state, not aspirational):
 
-- **OHLCV-1m**: 11 years of NQ.c.0, ES.c.0, YM.c.0 + 8 years for the rest of the universe (25 non-equity-index symbols). ~3,400 days × 28 symbols.
-- **OHLCV-1s**: 8 years for NQ.c.0 + ES.c.0 + YM.c.0 only.
-- **TBBO**: 12 months for the full 28-symbol universe (rolling — Databento free tier is `last 12 months` for L1 schemas).
-- **Live TBBO**: continuously appended day by day as ben-247 ingests.
+- **Live TBBO**: 4 days of `GLBX.MDP3-tbbo-{date}.dbn` files in `raw/live/` (2026-04-24 → 2026-04-27). Only 2026-04-27 contains real market data — 592k MBP1Msg records / 9 MB parquet across 4 symbols (NQ/ES/YM/RTY M6). The 4/24-4/26 files contain only Databento control messages (Saturday + ingester respawn boundary before Sunday's 6 PM ET CME open).
+- **Historical MBP-1**: backfill in progress (kicked off 2026-04-27 10:41 via `BacktestStationHistorical` scheduled task) — pulling 2026-03 day-by-day to `raw/historical/`. ~13 MB DBN per day, 4 symbols. Mirror will convert these to `raw/databento/mbp-1/` on next hourly run.
+- **OHLCV-1m**: derived bars in `processed/bars/timeframe=1m/`. As of 2026-04-27, only 2026-04-27 partitions exist (4 symbols × ~1,050 1m bars each = 4,213 bars total). Prior dates absent because the source DBN files were empty of market data.
+- **OHLCV-1s**: not collected. Defer until needed.
+- **Universe**: actively NQ/ES/YM/RTY only. The four CME equity-index futures the live bot watches. The `28-symbol universe` referenced in some older docs is aspirational and was never on disk; we'll expand by adding subscriptions to the live ingester + corresponding historical pulls when the strategies that need them get scoped.
 
 Full schema definitions: see [`SCHEMA_SPEC.md`](SCHEMA_SPEC.md). Additions bump `SCHEMA_VERSION` in `backend/app/data/schema.py`.
 
