@@ -21,6 +21,38 @@ class LiveMonitorStatus(BaseModel):
     raw: dict[str, Any] | None
 
 
+class LiveTradesPipelineStatus(BaseModel):
+    """Health snapshot of the daily live-trades import pipeline.
+
+    Composed from three local sources on benpc:
+    - latest `BacktestRun(source="live")` row (what the importer last wrote)
+    - the JSONL in the Taildrop inbox (what the next import will read)
+    - the import log tail (what the scheduled task did on its last fire)
+    """
+
+    # Latest imported live run.
+    last_run_id: int | None
+    last_run_name: str | None
+    last_run_imported_at: datetime | None
+    last_trade_ts: datetime | None
+    trade_count: int | None
+
+    # Inbox JSONL file (next import will pick this up).
+    inbox_dir: str
+    inbox_jsonl_exists: bool
+    inbox_jsonl_size_bytes: int | None
+    inbox_jsonl_modified_at: datetime | None
+
+    # Daily scheduled task's import log.
+    import_log_path: str
+    import_log_exists: bool
+    import_log_modified_at: datetime | None
+    # Parsed from the most recent "=== run ..." section of the log.
+    # "ok" | "failed" | "no_jsonl" | "running" | "unknown"
+    import_log_last_status: str
+    import_log_tail: list[str]
+
+
 class IngesterStatus(BaseModel):
     """Live ingester heartbeat — mirror of {DATA_ROOT}/heartbeat/live_ingester.json.
 

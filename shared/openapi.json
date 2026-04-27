@@ -2030,6 +2030,148 @@
         "title": "LiveMonitorStatus",
         "type": "object"
       },
+      "LiveTradesPipelineStatus": {
+        "description": "Health snapshot of the daily live-trades import pipeline.\n\nComposed from three local sources on benpc:\n- latest `BacktestRun(source=\"live\")` row (what the importer last wrote)\n- the JSONL in the Taildrop inbox (what the next import will read)\n- the import log tail (what the scheduled task did on its last fire)",
+        "properties": {
+          "import_log_exists": {
+            "title": "Import Log Exists",
+            "type": "boolean"
+          },
+          "import_log_last_status": {
+            "title": "Import Log Last Status",
+            "type": "string"
+          },
+          "import_log_modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Log Modified At"
+          },
+          "import_log_path": {
+            "title": "Import Log Path",
+            "type": "string"
+          },
+          "import_log_tail": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Import Log Tail",
+            "type": "array"
+          },
+          "inbox_dir": {
+            "title": "Inbox Dir",
+            "type": "string"
+          },
+          "inbox_jsonl_exists": {
+            "title": "Inbox Jsonl Exists",
+            "type": "boolean"
+          },
+          "inbox_jsonl_modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inbox Jsonl Modified At"
+          },
+          "inbox_jsonl_size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inbox Jsonl Size Bytes"
+          },
+          "last_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Id"
+          },
+          "last_run_imported_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Imported At"
+          },
+          "last_run_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Name"
+          },
+          "last_trade_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Trade Ts"
+          },
+          "trade_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Count"
+          }
+        },
+        "required": [
+          "last_run_id",
+          "last_run_name",
+          "last_run_imported_at",
+          "last_trade_ts",
+          "trade_count",
+          "inbox_dir",
+          "inbox_jsonl_exists",
+          "inbox_jsonl_size_bytes",
+          "inbox_jsonl_modified_at",
+          "import_log_path",
+          "import_log_exists",
+          "import_log_modified_at",
+          "import_log_last_status",
+          "import_log_tail"
+        ],
+        "title": "LiveTradesPipelineStatus",
+        "type": "object"
+      },
       "NoteCreate": {
         "additionalProperties": false,
         "properties": {
@@ -6673,6 +6815,28 @@
           }
         },
         "summary": "Get Live Monitor Status",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
+    "/api/monitor/live-trades": {
+      "get": {
+        "description": "Snapshot of the live-trades pipeline (DB latest live run + inbox + import log).\n\nUsed by the /monitor page to surface silent failures of the daily\nTaildrop + import scheduled task \u2014 silent because the importer can\nlog \"errors=0\" while producing nothing (lesson from the parquet_mirror\nschema-mismatch bug, 2026-04-27).",
+        "operationId": "get_live_trades_pipeline_status_api_monitor_live_trades_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveTradesPipelineStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Live Trades Pipeline Status",
         "tags": [
           "monitor"
         ]

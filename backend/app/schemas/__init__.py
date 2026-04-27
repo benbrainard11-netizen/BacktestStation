@@ -14,7 +14,11 @@ from app.schemas.experiments import (
     ExperimentRead,
     ExperimentUpdate,
 )
-from app.schemas.monitor import IngesterStatus, LiveMonitorStatus
+from app.schemas.monitor import (
+    IngesterStatus,
+    LiveMonitorStatus,
+    LiveTradesPipelineStatus,
+)
 from app.schemas.notes import NoteCreate, NoteRead, NoteTypesRead, NoteUpdate
 from app.schemas.prompts import (
     PromptGenerateRequest,
@@ -92,6 +96,7 @@ __all__ = [
     "ImportBacktestResponse",
     "IngesterStatus",
     "LiveMonitorStatus",
+    "LiveTradesPipelineStatus",
     "NoteCreate",
     "NoteRead",
     "NoteTypesRead",

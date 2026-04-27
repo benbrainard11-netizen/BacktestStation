@@ -488,6 +488,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/monitor/live-trades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Live Trades Pipeline Status
+         * @description Snapshot of the live-trades pipeline (DB latest live run + inbox + import log).
+         *
+         *     Used by the /monitor page to surface silent failures of the daily
+         *     Taildrop + import scheduled task — silent because the importer can
+         *     log "errors=0" while producing nothing (lesson from the parquet_mirror
+         *     schema-mismatch bug, 2026-04-27).
+         */
+        get: operations["get_live_trades_pipeline_status_api_monitor_live_trades_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notes": {
         parameters: {
             query?: never;
@@ -1682,6 +1707,45 @@ export interface components {
             today_r: number | null;
             /** Trades Today */
             trades_today: number | null;
+        };
+        /**
+         * LiveTradesPipelineStatus
+         * @description Health snapshot of the daily live-trades import pipeline.
+         *
+         *     Composed from three local sources on benpc:
+         *     - latest `BacktestRun(source="live")` row (what the importer last wrote)
+         *     - the JSONL in the Taildrop inbox (what the next import will read)
+         *     - the import log tail (what the scheduled task did on its last fire)
+         */
+        LiveTradesPipelineStatus: {
+            /** Import Log Exists */
+            import_log_exists: boolean;
+            /** Import Log Last Status */
+            import_log_last_status: string;
+            /** Import Log Modified At */
+            import_log_modified_at: string | null;
+            /** Import Log Path */
+            import_log_path: string;
+            /** Import Log Tail */
+            import_log_tail: string[];
+            /** Inbox Dir */
+            inbox_dir: string;
+            /** Inbox Jsonl Exists */
+            inbox_jsonl_exists: boolean;
+            /** Inbox Jsonl Modified At */
+            inbox_jsonl_modified_at: string | null;
+            /** Inbox Jsonl Size Bytes */
+            inbox_jsonl_size_bytes: number | null;
+            /** Last Run Id */
+            last_run_id: number | null;
+            /** Last Run Imported At */
+            last_run_imported_at: string | null;
+            /** Last Run Name */
+            last_run_name: string | null;
+            /** Last Trade Ts */
+            last_trade_ts: string | null;
+            /** Trade Count */
+            trade_count: number | null;
         };
         /** NoteCreate */
         NoteCreate: {
@@ -3672,6 +3736,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LiveMonitorStatus"];
+                };
+            };
+        };
+    };
+    get_live_trades_pipeline_status_api_monitor_live_trades_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveTradesPipelineStatus"];
                 };
             };
         };

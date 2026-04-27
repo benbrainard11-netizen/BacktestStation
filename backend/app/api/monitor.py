@@ -5,11 +5,24 @@ from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.paths import LIVE_STATUS_PATH, ingester_heartbeat_path
+from app.core.paths import (
+    LIVE_INBOX_DIR,
+    LIVE_INBOX_JSONL_PATH,
+    LIVE_INBOX_LOG_PATH,
+    LIVE_STATUS_PATH,
+    ingester_heartbeat_path,
+)
+from app.db.models import BacktestRun, Trade
 from app.db.session import get_session
-from app.schemas import DriftComparisonRead, IngesterStatus, LiveMonitorStatus
+from app.schemas import (
+    DriftComparisonRead,
+    IngesterStatus,
+    LiveMonitorStatus,
+    LiveTradesPipelineStatus,
+)
 from app.services.drift_comparison import compute_drift_for_strategy
 from app.services.live_monitor import LiveStatusError, read_live_status
 
@@ -66,6 +79,123 @@ def get_ingester_status(
             status_code=422,
             detail=f"heartbeat malformed: {e}",
         ) from e
+
+
+@router.get("/live-trades", response_model=LiveTradesPipelineStatus)
+def get_live_trades_pipeline_status(
+    db: Session = Depends(get_session),
+) -> LiveTradesPipelineStatus:
+    """Snapshot of the live-trades pipeline (DB latest live run + inbox + import log).
+
+    Used by the /monitor page to surface silent failures of the daily
+    Taildrop + import scheduled task — silent because the importer can
+    log "errors=0" while producing nothing (lesson from the parquet_mirror
+    schema-mismatch bug, 2026-04-27).
+    """
+    latest = db.scalars(
+        select(BacktestRun)
+        .where(BacktestRun.source == "live")
+        .order_by(BacktestRun.created_at.desc())
+        .limit(1)
+    ).first()
+
+    if latest is not None:
+        trade_count = db.scalar(
+            select(func.count(Trade.id)).where(Trade.backtest_run_id == latest.id)
+        )
+        last_trade_ts = db.scalar(
+            select(func.max(Trade.entry_ts)).where(
+                Trade.backtest_run_id == latest.id
+            )
+        )
+        run_id = latest.id
+        run_name = latest.name
+        run_imported_at = latest.created_at
+    else:
+        trade_count = None
+        last_trade_ts = None
+        run_id = None
+        run_name = None
+        run_imported_at = None
+
+    inbox_jsonl = LIVE_INBOX_JSONL_PATH
+    inbox_exists = inbox_jsonl.exists()
+    inbox_size = inbox_jsonl.stat().st_size if inbox_exists else None
+    inbox_mtime = (
+        _utc_from_mtime(inbox_jsonl.stat().st_mtime) if inbox_exists else None
+    )
+
+    log_path = LIVE_INBOX_LOG_PATH
+    log_exists = log_path.exists()
+    if log_exists:
+        log_mtime = _utc_from_mtime(log_path.stat().st_mtime)
+        tail, status = _read_log_tail_and_status(log_path)
+    else:
+        log_mtime = None
+        tail, status = [], "unknown"
+
+    return LiveTradesPipelineStatus(
+        last_run_id=run_id,
+        last_run_name=run_name,
+        last_run_imported_at=run_imported_at,
+        last_trade_ts=last_trade_ts,
+        trade_count=trade_count,
+        inbox_dir=str(LIVE_INBOX_DIR),
+        inbox_jsonl_exists=inbox_exists,
+        inbox_jsonl_size_bytes=inbox_size,
+        inbox_jsonl_modified_at=inbox_mtime,
+        import_log_path=str(log_path),
+        import_log_exists=log_exists,
+        import_log_modified_at=log_mtime,
+        import_log_last_status=status,
+        import_log_tail=tail,
+    )
+
+
+def _utc_from_mtime(mtime: float):
+    from datetime import datetime, timezone
+
+    return datetime.fromtimestamp(mtime, tz=timezone.utc)
+
+
+def _read_log_tail_and_status(
+    log_path: Path, *, max_lines: int = 30
+) -> tuple[list[str], str]:
+    """Return (tail_lines, last_run_status) from import.log.
+
+    Status is derived from the lines after the last `=== run start ===`
+    marker:
+      - any line containing "=== run ok ==="    -> "ok"
+      - any line containing "FAILED"            -> "failed"
+      - any "no trades.jsonl in inbox" line     -> "no_jsonl"
+      - "=== run start ===" with no terminator  -> "running"
+      - log empty / unparseable                 -> "unknown"
+    """
+    try:
+        with open(log_path, encoding="utf-8", errors="replace") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return [], "unknown"
+
+    tail = lines[-max_lines:]
+
+    last_start_idx = -1
+    for i in range(len(lines) - 1, -1, -1):
+        if "=== run start ===" in lines[i]:
+            last_start_idx = i
+            break
+    if last_start_idx == -1:
+        return tail, "unknown"
+
+    section = lines[last_start_idx:]
+    section_text = "\n".join(section)
+    if "=== run ok ===" in section_text:
+        return tail, "ok"
+    if "FAILED" in section_text:
+        return tail, "failed"
+    if "no trades.jsonl in inbox" in section_text:
+        return tail, "no_jsonl"
+    return tail, "running"
 
 
 @router.get(

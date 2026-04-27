@@ -15,6 +15,9 @@ REPO_ROOT: Path = Path(__file__).resolve().parents[3]
 DATA_DIR: Path = REPO_ROOT / "data"
 META_DB_PATH: Path = DATA_DIR / "meta.sqlite"
 LIVE_STATUS_PATH: Path = DATA_DIR / "live_status.json"
+LIVE_INBOX_DIR: Path = DATA_DIR / "live_inbox"
+LIVE_INBOX_JSONL_PATH: Path = LIVE_INBOX_DIR / "trades.jsonl"
+LIVE_INBOX_LOG_PATH: Path = LIVE_INBOX_DIR / "import.log"
 
 # External market-data sources (Fractal AMD local parquet archive).
 # Read-only — BacktestStation never writes here.
