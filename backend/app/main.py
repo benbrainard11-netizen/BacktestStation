@@ -18,6 +18,7 @@ from app.api import (
     replay,
     risk_profiles,
     strategies,
+    trade_replay,
 )
 
 app = FastAPI(
@@ -51,3 +52,4 @@ app.include_router(prop_firm.router, prefix="/api")
 app.include_router(prop_firm.backtest_router, prefix="/api")
 app.include_router(risk_profiles.router, prefix="/api")
 app.include_router(replay.router, prefix="/api")
+app.include_router(trade_replay.router, prefix="/api")

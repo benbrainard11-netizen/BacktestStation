@@ -972,6 +972,54 @@ export interface paths {
         patch: operations["unarchive_strategy_version_api_strategy_versions__version_id__unarchive_patch"];
         trace?: never;
     };
+    "/api/trade-replay/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Live Runs
+         * @description List live runs + their trades for the picker.
+         *
+         *     `tbbo_available` is computed per trade by checking the TBBO partition
+         *     on disk. Cheap dir-stat — no parquet read.
+         */
+        get: operations["list_live_runs_api_trade_replay_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/trade-replay/{run_id}/{trade_id}/ticks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Trade Ticks
+         * @description Return TBBO ticks within the configured window around a trade.
+         *
+         *     404 if run/trade not found or if the TBBO partition for the trade's
+         *     date doesn't exist on disk. The frontend picker should already
+         *     prevent this case (it disables trades with `tbbo_available=False`),
+         *     but the endpoint enforces it for honesty.
+         */
+        get: operations["get_trade_ticks_api_trade_replay__run_id___trade_id__ticks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2841,6 +2889,134 @@ export interface components {
             /** Target Price */
             target_price: number | null;
         };
+        /**
+         * TradeReplayAnchor
+         * @description The actual trade being replayed — drawn as fixed lines on the chart.
+         */
+        TradeReplayAnchor: {
+            /** Entry Price */
+            entry_price: number;
+            /**
+             * Entry Ts
+             * Format: date-time
+             */
+            entry_ts: string;
+            /** Exit Price */
+            exit_price: number | null;
+            /** Exit Ts */
+            exit_ts: string | null;
+            /** R Multiple */
+            r_multiple: number | null;
+            /** Side */
+            side: string;
+            /** Stop Price */
+            stop_price: number | null;
+            /** Target Price */
+            target_price: number | null;
+        };
+        /**
+         * TradeReplayRunRead
+         * @description A live backtest run with its trades, for the /trade-replay picker.
+         */
+        TradeReplayRunRead: {
+            /** End Ts */
+            end_ts: string | null;
+            /** Run Id */
+            run_id: number;
+            /** Run Name */
+            run_name: string | null;
+            /** Start Ts */
+            start_ts: string | null;
+            /** Symbol */
+            symbol: string;
+            /** Trades */
+            trades: components["schemas"]["TradeReplayTradeRead"][];
+        };
+        /**
+         * TradeReplayTickRead
+         * @description One TBBO tick payload sent to the chart.
+         *
+         *     `ts` is the event time (`ts_event`). Trade-print fields are nullable
+         *     since only `action="T"` rows carry a trade size + side; quote-only
+         *     rows still update bid/ask.
+         */
+        TradeReplayTickRead: {
+            /** Ask Px */
+            ask_px: number | null;
+            /** Bid Px */
+            bid_px: number | null;
+            /** Side */
+            side: string | null;
+            /** Trade Px */
+            trade_px: number | null;
+            /** Trade Size */
+            trade_size: number | null;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+        };
+        /**
+         * TradeReplayTradeRead
+         * @description One trade in the picker.
+         *
+         *     `tbbo_available` is the gate — true if the TBBO partition for this
+         *     trade's entry date exists on disk. Trades without TBBO render as
+         *     disabled rows in the picker.
+         */
+        TradeReplayTradeRead: {
+            /** Entry Price */
+            entry_price: number;
+            /**
+             * Entry Ts
+             * Format: date-time
+             */
+            entry_ts: string;
+            /** Exit Price */
+            exit_price: number | null;
+            /** Exit Reason */
+            exit_reason: string | null;
+            /** Exit Ts */
+            exit_ts: string | null;
+            /** Pnl */
+            pnl: number | null;
+            /** R Multiple */
+            r_multiple: number | null;
+            /** Side */
+            side: string;
+            /** Stop Price */
+            stop_price: number | null;
+            /** Target Price */
+            target_price: number | null;
+            /** Tbbo Available */
+            tbbo_available: boolean;
+            /** Trade Id */
+            trade_id: number;
+        };
+        /**
+         * TradeReplayWindowRead
+         * @description Windowed TBBO payload for one anchored trade.
+         */
+        TradeReplayWindowRead: {
+            anchor: components["schemas"]["TradeReplayAnchor"];
+            /** Symbol */
+            symbol: string;
+            /** Ticks */
+            ticks: components["schemas"]["TradeReplayTickRead"][];
+            /** Trade Id */
+            trade_id: number;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -4687,6 +4863,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StrategyVersionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_live_runs_api_trade_replay_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeReplayRunRead"][];
+                };
+            };
+        };
+    };
+    get_trade_ticks_api_trade_replay__run_id___trade_id__ticks_get: {
+        parameters: {
+            query?: {
+                lead_seconds?: number;
+                trail_seconds?: number;
+            };
+            header?: never;
+            path: {
+                run_id: number;
+                trade_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeReplayWindowRead"];
                 };
             };
             /** @description Validation Error */

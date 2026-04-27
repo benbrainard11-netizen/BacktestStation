@@ -5508,6 +5508,395 @@
         "title": "TradeRead",
         "type": "object"
       },
+      "TradeReplayAnchor": {
+        "description": "The actual trade being replayed \u2014 drawn as fixed lines on the chart.",
+        "properties": {
+          "entry_price": {
+            "title": "Entry Price",
+            "type": "number"
+          },
+          "entry_ts": {
+            "format": "date-time",
+            "title": "Entry Ts",
+            "type": "string"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "exit_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Ts"
+          },
+          "r_multiple": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R Multiple"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "stop_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Price"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price"
+          }
+        },
+        "required": [
+          "entry_ts",
+          "exit_ts",
+          "side",
+          "entry_price",
+          "exit_price",
+          "stop_price",
+          "target_price",
+          "r_multiple"
+        ],
+        "title": "TradeReplayAnchor",
+        "type": "object"
+      },
+      "TradeReplayRunRead": {
+        "description": "A live backtest run with its trades, for the /trade-replay picker.",
+        "properties": {
+          "end_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Ts"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "integer"
+          },
+          "run_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Name"
+          },
+          "start_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Ts"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "trades": {
+            "items": {
+              "$ref": "#/components/schemas/TradeReplayTradeRead"
+            },
+            "title": "Trades",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "run_name",
+          "symbol",
+          "start_ts",
+          "end_ts",
+          "trades"
+        ],
+        "title": "TradeReplayRunRead",
+        "type": "object"
+      },
+      "TradeReplayTickRead": {
+        "description": "One TBBO tick payload sent to the chart.\n\n`ts` is the event time (`ts_event`). Trade-print fields are nullable\nsince only `action=\"T\"` rows carry a trade size + side; quote-only\nrows still update bid/ask.",
+        "properties": {
+          "ask_px": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ask Px"
+          },
+          "bid_px": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bid Px"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "trade_px": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Px"
+          },
+          "trade_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Size"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ts",
+          "bid_px",
+          "ask_px",
+          "trade_px",
+          "trade_size",
+          "side"
+        ],
+        "title": "TradeReplayTickRead",
+        "type": "object"
+      },
+      "TradeReplayTradeRead": {
+        "description": "One trade in the picker.\n\n`tbbo_available` is the gate \u2014 true if the TBBO partition for this\ntrade's entry date exists on disk. Trades without TBBO render as\ndisabled rows in the picker.",
+        "properties": {
+          "entry_price": {
+            "title": "Entry Price",
+            "type": "number"
+          },
+          "entry_ts": {
+            "format": "date-time",
+            "title": "Entry Ts",
+            "type": "string"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "exit_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Reason"
+          },
+          "exit_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Ts"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl"
+          },
+          "r_multiple": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R Multiple"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "stop_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Price"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price"
+          },
+          "tbbo_available": {
+            "title": "Tbbo Available",
+            "type": "boolean"
+          },
+          "trade_id": {
+            "title": "Trade Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "trade_id",
+          "entry_ts",
+          "exit_ts",
+          "side",
+          "entry_price",
+          "exit_price",
+          "stop_price",
+          "target_price",
+          "r_multiple",
+          "pnl",
+          "exit_reason",
+          "tbbo_available"
+        ],
+        "title": "TradeReplayTradeRead",
+        "type": "object"
+      },
+      "TradeReplayWindowRead": {
+        "description": "Windowed TBBO payload for one anchored trade.",
+        "properties": {
+          "anchor": {
+            "$ref": "#/components/schemas/TradeReplayAnchor"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "ticks": {
+            "items": {
+              "$ref": "#/components/schemas/TradeReplayTickRead"
+            },
+            "title": "Ticks",
+            "type": "array"
+          },
+          "trade_id": {
+            "title": "Trade Id",
+            "type": "integer"
+          },
+          "window_end": {
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_id",
+          "symbol",
+          "window_start",
+          "window_end",
+          "anchor",
+          "ticks"
+        ],
+        "title": "TradeReplayWindowRead",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -8182,6 +8571,108 @@
         "summary": "Unarchive Strategy Version",
         "tags": [
           "strategies"
+        ]
+      }
+    },
+    "/api/trade-replay/runs": {
+      "get": {
+        "description": "List live runs + their trades for the picker.\n\n`tbbo_available` is computed per trade by checking the TBBO partition\non disk. Cheap dir-stat \u2014 no parquet read.",
+        "operationId": "list_live_runs_api_trade_replay_runs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TradeReplayRunRead"
+                  },
+                  "title": "Response List Live Runs Api Trade Replay Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Live Runs",
+        "tags": [
+          "trade_replay"
+        ]
+      }
+    },
+    "/api/trade-replay/{run_id}/{trade_id}/ticks": {
+      "get": {
+        "description": "Return TBBO ticks within the configured window around a trade.\n\n404 if run/trade not found or if the TBBO partition for the trade's\ndate doesn't exist on disk. The frontend picker should already\nprevent this case (it disables trades with `tbbo_available=False`),\nbut the endpoint enforces it for honesty.",
+        "operationId": "get_trade_ticks_api_trade_replay__run_id___trade_id__ticks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "trade_id",
+            "required": true,
+            "schema": {
+              "title": "Trade Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lead_seconds",
+            "required": false,
+            "schema": {
+              "default": 300,
+              "maximum": 1800,
+              "minimum": 0,
+              "title": "Lead Seconds",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "trail_seconds",
+            "required": false,
+            "schema": {
+              "default": 300,
+              "maximum": 1800,
+              "minimum": 0,
+              "title": "Trail Seconds",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeReplayWindowRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Trade Ticks",
+        "tags": [
+          "trade_replay"
         ]
       }
     }

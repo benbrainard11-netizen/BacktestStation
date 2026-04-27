@@ -73,6 +73,13 @@ from app.schemas.risk_profile import (
     RiskProfileUpdate,
     RiskViolation,
 )
+from app.schemas.trade_replay import (
+    TradeReplayAnchor,
+    TradeReplayRunRead,
+    TradeReplayTickRead,
+    TradeReplayTradeRead,
+    TradeReplayWindowRead,
+)
 
 __all__ = [
     "AutopsyConditionSlice",
@@ -134,4 +141,9 @@ __all__ = [
     "StrategyVersionRead",
     "StrategyVersionUpdate",
     "TradeRead",
+    "TradeReplayAnchor",
+    "TradeReplayRunRead",
+    "TradeReplayTickRead",
+    "TradeReplayTradeRead",
+    "TradeReplayWindowRead",
 ]
