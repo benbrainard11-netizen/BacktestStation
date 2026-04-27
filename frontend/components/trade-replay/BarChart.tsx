@@ -129,12 +129,24 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
     };
   }, []);
 
-  // Visible slice of candles up to cursor.
+  // Visible slice of candles up to cursor. Do NOT auto-fit on every
+  // cursor change — that fights the user's pan/zoom. We fit once when
+  // the data first lands (below) and let the user drive after that.
   useEffect(() => {
     if (!seriesRef.current) return;
     seriesRef.current.setData(candleData.slice(0, Math.max(1, cursorIndex + 1)));
-    chartRef.current?.timeScale().fitContent();
   }, [candleData, cursorIndex]);
+
+  // Fit content once when a new dataset loads — focused around the
+  // trade entry rather than the whole day, so the relevant action is
+  // immediately visible. After this, user pan/zoom is preserved.
+  const lastDatasetRef = useRef<CandlestickData[] | null>(null);
+  useEffect(() => {
+    if (!chartRef.current || candleData.length === 0) return;
+    if (lastDatasetRef.current === candleData) return;
+    lastDatasetRef.current = candleData;
+    centerOnEntry(chartRef.current, candleData, entrySec);
+  }, [candleData, entrySec]);
 
   // Anchor lines on the candle series — entry, stop, target stay
   // visible regardless of cursor position. Drawn as price lines so
@@ -301,11 +313,22 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
             const idx = barIndexAtSec(candles, entrySec);
             setCursorIndex(Math.min(candles.length - 1, idx + 5));
             setPlaying(false);
+            if (chartRef.current) {
+              centerOnEntry(chartRef.current, candleData, entrySec);
+            }
           }}
           className="border border-zinc-700 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
-          title="Jump to trade entry"
+          title="Jump cursor + viewport back to trade entry"
         >
           ↺ Entry
+        </button>
+        <button
+          type="button"
+          onClick={() => chartRef.current?.timeScale().fitContent()}
+          className="border border-zinc-800 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
+          title="Fit all bars in view (TradingView 'A')"
+        >
+          Fit
         </button>
         <span className="text-zinc-500">Speed</span>
         {SPEED_PRESETS.map((preset) => (
@@ -357,4 +380,35 @@ function bucketAt(candleTimes: Time[], targetSec: number): Time | null {
     last = t;
   }
   return last;
+}
+
+/**
+ * Center the visible time range around the trade entry. Tries to show
+ * a few bars before + a few hours after entry so the user can scrub
+ * the post-entry action without panning. Falls back to fitContent()
+ * if entry is outside the dataset.
+ */
+function centerOnEntry(
+  chart: IChartApi,
+  candles: CandlestickData[],
+  entrySec: number,
+) {
+  if (candles.length === 0) {
+    chart.timeScale().fitContent();
+    return;
+  }
+  const firstSec = candles[0].time as number;
+  const lastSec = candles[candles.length - 1].time as number;
+  if (entrySec < firstSec || entrySec > lastSec) {
+    chart.timeScale().fitContent();
+    return;
+  }
+  // Show ~30 min before entry through end-of-day (or 4hrs after,
+  // whichever is sooner) by default.
+  const fromSec = Math.max(firstSec, entrySec - 30 * 60);
+  const toSec = Math.min(lastSec, entrySec + 4 * 60 * 60);
+  chart.timeScale().setVisibleRange({
+    from: fromSec as Time,
+    to: toSec as Time,
+  });
 }

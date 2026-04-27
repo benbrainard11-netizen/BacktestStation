@@ -149,7 +149,9 @@ export default function TickChart({ payload }: Props) {
     };
   }, []);
 
-  // Visible slice up to the cursor (in tick time).
+  // Visible slice up to the cursor (in tick time). Don't auto-fit on
+  // every cursor change; the user's pan/zoom takes precedence after
+  // the initial layout below.
   useEffect(() => {
     if (!candleRef.current || !bidRef.current || !askRef.current) return;
     if (ticks.length === 0) return;
@@ -167,8 +169,16 @@ export default function TickChart({ payload }: Props) {
     askRef.current.setData(
       askLineData.filter((p) => (p.time as number) <= cutoffSec),
     );
-    chartRef.current?.timeScale().fitContent();
   }, [candles, bidLineData, askLineData, cursorIndex, ticks]);
+
+  // Initial / on-data-change viewport: fit content once.
+  const lastDatasetRef = useRef<CandlestickData[] | null>(null);
+  useEffect(() => {
+    if (!chartRef.current || candles.length === 0) return;
+    if (lastDatasetRef.current === candles) return;
+    lastDatasetRef.current = candles;
+    chartRef.current.timeScale().fitContent();
+  }, [candles]);
 
   // Anchor lines on the candle series.
   useEffect(() => {
@@ -334,11 +344,20 @@ export default function TickChart({ payload }: Props) {
           onClick={() => {
             setCursorIndex(initialCursor);
             setPlaying(false);
+            chartRef.current?.timeScale().fitContent();
           }}
           className="border border-zinc-700 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
-          title="Jump to trade entry"
+          title="Jump cursor + viewport back to trade entry"
         >
           ↺ Entry
+        </button>
+        <button
+          type="button"
+          onClick={() => chartRef.current?.timeScale().fitContent()}
+          className="border border-zinc-800 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
+          title="Fit all ticks in view (TradingView 'A')"
+        >
+          Fit
         </button>
         <span className="text-zinc-500">Speed</span>
         {SPEED_PRESETS.map((preset) => (
