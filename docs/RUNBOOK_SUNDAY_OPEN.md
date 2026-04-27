@@ -47,14 +47,14 @@ At least 10 GB free on the data drive. A weekend of TBBO is roughly 2-4 GB depen
 
 ### Manually trigger the parquet mirror once
 
-This confirms the mixed-schema fix (commit `aa7cc82`) works on real data:
+This confirms the mirror works on real data:
 
 ```powershell
 cd C:\Users\benbr\BacktestStation\backend
 .venv\Scripts\python.exe -m app.ingest.parquet_mirror --rebuild
 ```
 
-Should report `errors=0`. If it reports `errors=N`, check `$env:BS_DATA_ROOT\logs\parquet_mirror.log` and stop — do not let the open run with a broken mirror, you won't have queryable data.
+Should report `errors=0` AND the partition count should be non-zero (verified during the 2026-04-27 audit: empty `processed/` after run = mirror is silently doing nothing — not a healthy state). If it reports `errors=N`, check `$env:BS_DATA_ROOT\logs\parquet_mirror.log` and stop — do not let the open run with a broken mirror, you won't have queryable data.
 
 ### Monitor page (run from main PC)
 
@@ -101,7 +101,7 @@ Get-ScheduledTaskInfo -TaskName BacktestStationParquetMirror | Select LastRunTim
 
 ### Parquet mirror erroring on every file
 
-Likely a new schema appearing in the DBN stream that `to_df()` doesn't know how to flatten. The fix from `aa7cc82` passes the schema name from the filename — if a file is named with an unknown schema, that's the bug. Check `$env:BS_DATA_ROOT\logs\parquet_mirror.log` for the offending file.
+Likely a new schema appearing in the DBN stream that `to_df()` doesn't know how to flatten. The mirror passes the schema name from the filename — if a file is named with an unknown schema, that's the bug. Check `$env:BS_DATA_ROOT\logs\parquet_mirror.log` for the offending file.
 
 ### Disk filling up faster than expected
 

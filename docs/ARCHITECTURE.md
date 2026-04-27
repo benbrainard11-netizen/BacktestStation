@@ -1,15 +1,11 @@
 # BacktestStation — Architecture
 
-> **⚠ Roadmap override (current).** This document was written assuming an **engine-first** Phase 1 (build the MBP-1 backtester before anything else). That ordering has been **superseded**.
+> **⚠ Status (2026-04-27).** This doc has two halves:
 >
-> For current Phase 1 work, the source of truth is:
-> - [`AGENTS.md`](../AGENTS.md) — agent rules and current build order
-> - [`docs/PHASE_1_SCOPE.md`](PHASE_1_SCOPE.md) — explicit Phase 1 scope and done-criteria
-> - [`docs/PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) — project context
+> - **Sections 0-3** describe the architecture as it actually exists and is shipping today (Strategy Workstation, imported + engine-generated runs, replay, monitor, prop-firm sim, drift monitor v1, live ingester).
+> - **Sections 4-12** describe a *future* end-state of the engine, Databento ingestion, event ordering, and lookahead enforcement. They are reference material, not the current sprint, and were written assuming an engine-first ordering that's been superseded.
 >
-> **Phase 1 is now "Imported Results Command Center"**: import existing backtest/live result files (CSV/JSON) and surface them through the dashboard. The Databento ingestion pipeline and the event-driven MBP-1 engine described below are deferred until that vertical slice is working.
->
-> Sections 4–7 (database schema, Databento ingestion, engine design) and the §12 phase ordering still describe the eventual end-state — useful as long-term reference, not as the next step.
+> For *current direction* (what we're building, what we're explicitly not), see [`ROADMAP.md`](ROADMAP.md). For *what's running today*, see [`PROJECT_STATE.md`](PROJECT_STATE.md). For *engineering rules*, see [`../CLAUDE.md`](../CLAUDE.md).
 
 ---
 
@@ -194,6 +190,14 @@ BacktestStation/
 ├── README.md
 └── CLAUDE.md
 ```
+
+---
+
+# Future system design (not Phase 1, not current focus)
+
+> The sections below (4 through 14) describe the eventual end-state of the engine, Databento ingestion, event ordering, and lookahead enforcement. They are **reference material** for when the relevant tier in [`ROADMAP.md`](ROADMAP.md) becomes Current Focus — not the current sprint.
+>
+> What's actually shipped today is described in [`PROJECT_STATE.md`](PROJECT_STATE.md); current direction is in [`ROADMAP.md`](ROADMAP.md).
 
 ---
 

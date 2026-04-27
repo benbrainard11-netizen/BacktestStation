@@ -59,6 +59,18 @@ Before opening a PR that touches the engine:
 
 If you touched API shapes: regenerate `shared/openapi.json` and the TS client, and commit both.
 
+## Discipline rules (engineering)
+
+For *direction* rules ("should we build X?"), see [`docs/ROADMAP.md`](docs/ROADMAP.md). These are the *engineering* rules — how we build whatever's currently in scope.
+
+1. **Mocked pages declare themselves.** A page rendering hardcoded data must show `[MOCK]` in its header (visible text in the page, not just a comment). If you find a page violating this, fix it before adding features.
+2. **No experimental work in core routes.** Warehouse experiments, ML tinkering, and one-off research go in dedicated routes (`/experiments`, `/data-health`, etc.), never in `/`, `/backtests`, `/monitor`, `/replay`, or `/trade-replay`.
+3. **Schema changes update the doc trail.** If you bump `SCHEMA_VERSION` in `app/data/schema.py`, update [`docs/SCHEMA_SPEC.md`](docs/SCHEMA_SPEC.md) AND the warehouse-contents section in [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) in the same PR.
+4. **Stale doc claims = bug.** If a doc claims a feature does X but the code shows it doesn't, the doc is wrong; fix it. Don't leave it for "later." (Saw this 2026-04-27 with `PROJECT_STATE.md`'s false "12 months TBBO across 28 symbols" claim.)
+5. **Type-check + tests + smoke-test before commit.** `npx tsc --noEmit` clean (frontend), `pytest -q` green (backend), and for UI changes: open the page in the desktop app and confirm the change. UI features are NOT verified by type-check or tests alone.
+6. **Pipeline silent failures = active problem.** When a daily-fire scheduled task or live ingester logs `errors=0` but produces no output, that's a bug, not "expected idle." Add the silent-failure case to `/monitor` so it surfaces visually.
+7. **Raw data is append-only.** `D:\data\raw\` files are never modified after creation. New pulls write new files. The parquet mirror reads but never writes to `raw/`. See [`docs/LOCAL_INFRASTRUCTURE.md`](docs/LOCAL_INFRASTRUCTURE.md) for full data ownership rules.
+
 ## When in doubt
 
-Re-read `docs/ARCHITECTURE.md`. If the plan doesn't answer your question, ask the user before inventing a convention.
+Re-read [`docs/ROADMAP.md`](docs/ROADMAP.md) for direction or [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for system design. If those don't answer your question, ask the user before inventing a convention.

@@ -1,6 +1,6 @@
 # Forward Drift Monitor — design starting points
 
-> Status (2026-04-24): **design notes for Ben + Husky to review**, not a build spec yet. Don't write code from this — discuss first, then write a real plan.
+> **Status (2026-04-27): v1 backend shipped 2026-04-25.** This doc is the design notes that informed v1; the original "don't write code yet" framing is historical. Frontend panels are deferred to Current Focus tier B (see [`ROADMAP.md`](ROADMAP.md)). When v2 is needed, write a separate v2 design doc rather than editing this one.
 
 ## What we're trying to answer
 
