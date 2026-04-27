@@ -11,6 +11,7 @@ import {
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   type LineData,
+  type MouseEventParams,
   type SeriesMarker,
   type Time,
 } from "lightweight-charts";
@@ -23,6 +24,10 @@ import {
   askLine,
   tickIndexAtMs,
 } from "@/lib/trade-replay/binTicks";
+import type {
+  GhostOrder,
+  GhostResolution,
+} from "@/lib/trade-replay/resolveGhost";
 
 type Window = components["schemas"]["TradeReplayWindowRead"];
 
@@ -35,9 +40,17 @@ const SPEED_PRESETS = [
 
 interface Props {
   payload: Window;
+  ghost?: GhostOrder | null;
+  resolution?: GhostResolution | null;
+  onChartClick?: (sample: { tsMs: number; midPrice: number }) => void;
 }
 
-export default function TickChart({ payload }: Props) {
+export default function TickChart({
+  payload,
+  ghost = null,
+  resolution = null,
+  onChartClick,
+}: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -191,11 +204,74 @@ export default function TickChart({ payload }: Props) {
     };
   }, [anchor]);
 
-  // Entry marker (and exit if available) on the candle series.
+  // Click-to-place: while paused, a click on the chart captures
+  // (timestamp, midprice) and bubbles up to the page so it can open the
+  // ghost-order form. Subscribed/unsubscribed when `playing` or
+  // `onChartClick` change.
+  useEffect(() => {
+    if (!chartRef.current || !candleRef.current || !onChartClick) return;
+    if (playing) return;
+    const handler = (params: MouseEventParams) => {
+      if (params.time === undefined || params.point === undefined) return;
+      const series = candleRef.current;
+      if (series === null) return;
+      const price = series.coordinateToPrice(params.point.y);
+      if (price === null) return;
+      // params.time for time-series charts is a UTCTimestamp (number = epoch s).
+      const tsSec = params.time as number;
+      onChartClick({ tsMs: tsSec * 1000, midPrice: Number(price) });
+    };
+    chartRef.current.subscribeClick(handler);
+    return () => {
+      chartRef.current?.unsubscribeClick(handler);
+    };
+  }, [onChartClick, playing]);
+
+  // Ghost order: stop / target as price lines on the candle series, plus
+  // a placement marker. Resolution: an exit marker.
+  useEffect(() => {
+    const series = candleRef.current;
+    if (!series || !ghost) return;
+    const lines = [
+      series.createPriceLine({
+        price: ghost.entryPrice,
+        color: "#fde047",
+        lineStyle: 0,
+        lineWidth: 1 as const,
+        title: `ghost entry ${ghost.entryPrice.toFixed(2)}`,
+      }),
+      series.createPriceLine({
+        price: ghost.stopPrice,
+        color: "#fb7185",
+        lineStyle: 1,
+        lineWidth: 1 as const,
+        title: `ghost stop ${ghost.stopPrice.toFixed(2)}`,
+      }),
+      series.createPriceLine({
+        price: ghost.targetPrice,
+        color: "#86efac",
+        lineStyle: 1,
+        lineWidth: 1 as const,
+        title: `ghost target ${ghost.targetPrice.toFixed(2)}`,
+      }),
+    ];
+    return () => {
+      for (const line of lines) {
+        try {
+          series.removePriceLine(line);
+        } catch {
+          /* chart torn down */
+        }
+      }
+    };
+  }, [ghost]);
+
+  // Combined markers: anchor entry + exit, plus ghost placement + resolution.
   useEffect(() => {
     if (!candleRef.current || !anchor) return;
     const candleTimes = new Set(candles.map((c) => c.time as number));
     const markers: SeriesMarker<Time>[] = [];
+
     const entrySec = Math.floor(new Date(anchor.entry_ts).getTime() / 1000);
     if (candleTimes.has(entrySec)) {
       const isLong = anchor.side.toLowerCase() === "long";
@@ -223,8 +299,36 @@ export default function TickChart({ payload }: Props) {
         });
       }
     }
+
+    if (ghost) {
+      const placedSec = Math.floor(ghost.placedAtMs / 1000);
+      if (candleTimes.has(placedSec)) {
+        markers.push({
+          time: placedSec as Time,
+          position: ghost.side === "long" ? "belowBar" : "aboveBar",
+          color: "#fde047",
+          shape: ghost.side === "long" ? "arrowUp" : "arrowDown",
+          text: `ghost ${ghost.side} @${ghost.entryPrice.toFixed(2)}`,
+        });
+      }
+    }
+    if (resolution && resolution.reason !== "no_fill") {
+      const exitSec = Math.floor(resolution.exitMs / 1000);
+      if (candleTimes.has(exitSec)) {
+        markers.push({
+          time: exitSec as Time,
+          position: "aboveBar",
+          color: resolution.reason === "target" ? "#86efac" : "#fb7185",
+          shape: "circle",
+          text: `ghost ${resolution.reason} @${resolution.exitPrice.toFixed(2)}`,
+        });
+      }
+    }
+
+    // Sort by time so lightweight-charts renders them cleanly.
+    markers.sort((a, b) => (a.time as number) - (b.time as number));
     markersRef.current?.setMarkers(markers);
-  }, [anchor, candles]);
+  }, [anchor, candles, ghost, resolution]);
 
   // Playback tick. Each interval advances cursor by the number of ticks
   // covered in the last `speedMs * (1000 / SPEED_PRESETS[0].ms)`

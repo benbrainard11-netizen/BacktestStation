@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import PageHeader from "@/components/PageHeader";
+import GhostOrderPanel from "@/components/trade-replay/GhostOrderPanel";
 import TickChart from "@/components/trade-replay/TickChart";
 import TradePicker from "@/components/trade-replay/TradePicker";
 import type { components } from "@/lib/api/generated";
+import {
+  type GhostOrder,
+  type GhostResolution,
+  resolveGhost,
+} from "@/lib/trade-replay/resolveGhost";
 
 type Run = components["schemas"]["TradeReplayRunRead"];
 type Window = components["schemas"]["TradeReplayWindowRead"];
@@ -28,6 +34,22 @@ export default function TradeReplayPage() {
     tradeId: number;
   } | null>(null);
   const [window, setWindow] = useState<WindowState>({ kind: "idle" });
+  const [draft, setDraft] = useState<{
+    placedAtMs: number;
+    midPrice: number;
+  } | null>(null);
+  const [ghost, setGhost] = useState<GhostOrder | null>(null);
+
+  // Reset ghost state whenever the user picks a different trade.
+  useEffect(() => {
+    setDraft(null);
+    setGhost(null);
+  }, [selected?.runId, selected?.tradeId]);
+
+  const resolution = useMemo<GhostResolution | null>(() => {
+    if (ghost === null || window.kind !== "data") return null;
+    return resolveGhost(window.payload.ticks ?? [], ghost);
+  }, [ghost, window]);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +145,31 @@ export default function TradeReplayPage() {
             Failed to load window: {window.message}
           </div>
         ) : window.kind === "data" ? (
-          <TickChart payload={window.payload} />
+          <>
+            <TickChart
+              payload={window.payload}
+              ghost={ghost}
+              resolution={resolution}
+              onChartClick={({ tsMs, midPrice }) => {
+                setDraft({ placedAtMs: tsMs, midPrice });
+                setGhost(null);
+              }}
+            />
+            <GhostOrderPanel
+              anchor={window.payload.anchor}
+              draft={draft}
+              ghost={ghost}
+              resolution={resolution}
+              onSubmit={(g) => {
+                setGhost(g);
+                setDraft(null);
+              }}
+              onClear={() => {
+                setGhost(null);
+                setDraft(null);
+              }}
+            />
+          </>
         ) : selected !== null ? null : (
           <div className="border border-zinc-800 bg-zinc-950 p-6 font-mono text-xs text-zinc-500">
             Pick a trade above to load its TBBO window.
