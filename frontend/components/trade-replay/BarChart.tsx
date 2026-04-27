@@ -157,28 +157,19 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
     centerOnEntry(chartRef.current, candleData, entrySec);
   }, [candleData, entrySec]);
 
-  // Stop / target / entry segments — drawn ONLY from the entry bar
-  // through the exit bar (or end of dataset for open trades). Pre-entry
-  // candles render clean. Each is a 2-point LineSeries; price lines
-  // would span full chart width and confuse "is the trade active?"
+  // Stop / target / entry as line segments. They reveal as the cursor
+  // passes the entry bar — pre-entry the chart shows just candles,
+  // matching how a real trade plays out. Once the cursor reaches
+  // entry, segments draw from entry to current cursor (capped at
+  // exit). Series are mounted once on data change; data updates on
+  // cursor change.
+  const entrySeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stopSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const targetSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart || candles.length === 0) return;
-
-    const startSec = bucketSecForEntry(candleData, entrySec);
-    if (startSec === null) return;
-    const exitSec =
-      anchor.exit_ts !== null && anchor.exit_ts !== undefined
-        ? Math.floor(utcMs(anchor.exit_ts) / 1000)
-        : null;
-    const endSec = bucketSecForExit(candleData, exitSec);
-
-    const seg = (price: number): LineData[] => [
-      { time: startSec as Time, value: price },
-      { time: endSec as Time, value: price },
-    ];
-
-    const series: ISeriesApi<"Line">[] = [];
 
     const entrySeries = chart.addSeries(LineSeries, {
       color: "#fde047",
@@ -187,44 +178,102 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
       priceLineVisible: false,
       crosshairMarkerVisible: false,
     });
-    entrySeries.setData(seg(anchor.entry_price));
-    series.push(entrySeries);
+    const stopSeries =
+      anchor.stop_price !== null && anchor.stop_price !== undefined
+        ? chart.addSeries(LineSeries, {
+            color: "#fb7185",
+            lineWidth: 1,
+            lineStyle: 2,
+            lastValueVisible: false,
+            priceLineVisible: false,
+            crosshairMarkerVisible: false,
+          })
+        : null;
+    const targetSeries =
+      anchor.target_price !== null && anchor.target_price !== undefined
+        ? chart.addSeries(LineSeries, {
+            color: "#86efac",
+            lineWidth: 1,
+            lineStyle: 2,
+            lastValueVisible: false,
+            priceLineVisible: false,
+            crosshairMarkerVisible: false,
+          })
+        : null;
 
-    if (anchor.stop_price !== null && anchor.stop_price !== undefined) {
-      const stopSeries = chart.addSeries(LineSeries, {
-        color: "#fb7185",
-        lineWidth: 1,
-        lineStyle: 2,
-        lastValueVisible: false,
-        priceLineVisible: false,
-        crosshairMarkerVisible: false,
-      });
-      stopSeries.setData(seg(anchor.stop_price));
-      series.push(stopSeries);
-    }
-    if (anchor.target_price !== null && anchor.target_price !== undefined) {
-      const targetSeries = chart.addSeries(LineSeries, {
-        color: "#86efac",
-        lineWidth: 1,
-        lineStyle: 2,
-        lastValueVisible: false,
-        priceLineVisible: false,
-        crosshairMarkerVisible: false,
-      });
-      targetSeries.setData(seg(anchor.target_price));
-      series.push(targetSeries);
-    }
+    entrySeriesRef.current = entrySeries;
+    stopSeriesRef.current = stopSeries;
+    targetSeriesRef.current = targetSeries;
 
     return () => {
-      for (const s of series) {
-        try {
-          chart.removeSeries(s);
-        } catch {
-          /* chart torn down */
-        }
+      try {
+        chart.removeSeries(entrySeries);
+        if (stopSeries) chart.removeSeries(stopSeries);
+        if (targetSeries) chart.removeSeries(targetSeries);
+      } catch {
+        /* chart torn down */
       }
+      entrySeriesRef.current = null;
+      stopSeriesRef.current = null;
+      targetSeriesRef.current = null;
     };
-  }, [anchor, candles, entrySec]);
+  }, [anchor, candleData]);
+
+  // Update segment data whenever cursor advances. Empty data while
+  // cursor is pre-entry, then 2-point segment growing to current
+  // cursor (capped at exit bar).
+  useEffect(() => {
+    const entrySeries = entrySeriesRef.current;
+    if (!entrySeries) return;
+    if (candleData.length === 0) {
+      entrySeries.setData([]);
+      stopSeriesRef.current?.setData([]);
+      targetSeriesRef.current?.setData([]);
+      return;
+    }
+
+    const startSec = bucketSecForEntry(candleData, entrySec);
+    const cursorBarSec = candleData[Math.min(cursorIndex, candleData.length - 1)]
+      .time as number;
+
+    if (startSec === null || cursorBarSec < startSec) {
+      // Cursor hasn't reached entry yet → don't draw anything.
+      entrySeries.setData([]);
+      stopSeriesRef.current?.setData([]);
+      targetSeriesRef.current?.setData([]);
+      return;
+    }
+
+    const exitSec =
+      anchor.exit_ts !== null && anchor.exit_ts !== undefined
+        ? Math.floor(utcMs(anchor.exit_ts) / 1000)
+        : null;
+    const exitBarSec = bucketSecForExit(candleData, exitSec);
+    // Cap the right end at the cursor; once cursor passes exit, segment
+    // freezes at exit (the trade is closed).
+    const rightEndSec = Math.min(cursorBarSec, exitBarSec);
+
+    const seg = (price: number): LineData[] => [
+      { time: startSec as Time, value: price },
+      { time: rightEndSec as Time, value: price },
+    ];
+
+    entrySeries.setData(seg(anchor.entry_price));
+    if (
+      stopSeriesRef.current &&
+      anchor.stop_price !== null &&
+      anchor.stop_price !== undefined
+    ) {
+      stopSeriesRef.current.setData(seg(anchor.stop_price));
+    }
+    if (
+      targetSeriesRef.current &&
+      anchor.target_price !== null &&
+      anchor.target_price !== undefined
+    ) {
+      targetSeriesRef.current.setData(seg(anchor.target_price));
+    }
+  }, [anchor, candleData, cursorIndex, entrySec]);
 
   // Entry / exit markers. Entry maps to the bar that contains entry_ts;
   // exit similarly. Both stay visible on the chart at all times.

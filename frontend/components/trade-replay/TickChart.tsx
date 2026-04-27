@@ -197,27 +197,15 @@ export default function TickChart({ payload }: Props) {
     chartRef.current.timeScale().fitContent();
   }, [candles]);
 
-  // Entry / stop / target as 2-point line segments — drawn from the
-  // entry tick onwards (to exit tick or last tick) so pre-entry view
-  // doesn't pretend the trade is active.
+  // Entry / stop / target reveal as cursor passes entry. Series are
+  // mounted on data change; their data updates on cursor change.
+  const entrySeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stopSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const targetSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart || candles.length === 0) return;
-
-    const entryCandleSec = nearestCandleSec(candles, Math.floor(entryMs / 1000));
-    if (entryCandleSec === null) return;
-    const exitMs = anchor.exit_ts ? utcMs(anchor.exit_ts) : null;
-    const exitCandleSec =
-      exitMs !== null
-        ? nearestCandleSec(candles, Math.floor(exitMs / 1000))
-        : (candles[candles.length - 1].time as number);
-
-    const seg = (price: number): LineData[] => [
-      { time: entryCandleSec as Time, value: price },
-      { time: (exitCandleSec ?? entryCandleSec) as Time, value: price },
-    ];
-
-    const series: ISeriesApi<"Line">[] = [];
 
     const entrySeries = chart.addSeries(LineSeries, {
       color: "#fde047",
@@ -226,44 +214,99 @@ export default function TickChart({ payload }: Props) {
       priceLineVisible: false,
       crosshairMarkerVisible: false,
     });
-    entrySeries.setData(seg(anchor.entry_price));
-    series.push(entrySeries);
+    const stopSeries =
+      anchor.stop_price !== null && anchor.stop_price !== undefined
+        ? chart.addSeries(LineSeries, {
+            color: "#fb7185",
+            lineWidth: 1,
+            lineStyle: 2,
+            lastValueVisible: false,
+            priceLineVisible: false,
+            crosshairMarkerVisible: false,
+          })
+        : null;
+    const targetSeries =
+      anchor.target_price !== null && anchor.target_price !== undefined
+        ? chart.addSeries(LineSeries, {
+            color: "#86efac",
+            lineWidth: 1,
+            lineStyle: 2,
+            lastValueVisible: false,
+            priceLineVisible: false,
+            crosshairMarkerVisible: false,
+          })
+        : null;
 
-    if (anchor.stop_price !== null && anchor.stop_price !== undefined) {
-      const stopSeries = chart.addSeries(LineSeries, {
-        color: "#fb7185",
-        lineWidth: 1,
-        lineStyle: 2,
-        lastValueVisible: false,
-        priceLineVisible: false,
-        crosshairMarkerVisible: false,
-      });
-      stopSeries.setData(seg(anchor.stop_price));
-      series.push(stopSeries);
-    }
-    if (anchor.target_price !== null && anchor.target_price !== undefined) {
-      const targetSeries = chart.addSeries(LineSeries, {
-        color: "#86efac",
-        lineWidth: 1,
-        lineStyle: 2,
-        lastValueVisible: false,
-        priceLineVisible: false,
-        crosshairMarkerVisible: false,
-      });
-      targetSeries.setData(seg(anchor.target_price));
-      series.push(targetSeries);
-    }
+    entrySeriesRef.current = entrySeries;
+    stopSeriesRef.current = stopSeries;
+    targetSeriesRef.current = targetSeries;
 
     return () => {
-      for (const s of series) {
-        try {
-          chart.removeSeries(s);
-        } catch {
-          /* chart torn down */
-        }
+      try {
+        chart.removeSeries(entrySeries);
+        if (stopSeries) chart.removeSeries(stopSeries);
+        if (targetSeries) chart.removeSeries(targetSeries);
+      } catch {
+        /* chart torn down */
       }
+      entrySeriesRef.current = null;
+      stopSeriesRef.current = null;
+      targetSeriesRef.current = null;
     };
-  }, [anchor, candles, entryMs]);
+  }, [anchor, candles]);
+
+  useEffect(() => {
+    const entrySeries = entrySeriesRef.current;
+    if (!entrySeries) return;
+    if (candles.length === 0 || ticks.length === 0) {
+      entrySeries.setData([]);
+      stopSeriesRef.current?.setData([]);
+      targetSeriesRef.current?.setData([]);
+      return;
+    }
+
+    const entryCandleSec = nearestCandleSec(candles, Math.floor(entryMs / 1000));
+    const cursorMsLocal = new Date(
+      ticks[Math.min(cursorIndex, ticks.length - 1)].ts,
+    ).getTime();
+    const cursorSec = Math.floor(cursorMsLocal / 1000);
+
+    if (entryCandleSec === null || cursorSec < entryCandleSec) {
+      entrySeries.setData([]);
+      stopSeriesRef.current?.setData([]);
+      targetSeriesRef.current?.setData([]);
+      return;
+    }
+
+    const exitMs = anchor.exit_ts ? utcMs(anchor.exit_ts) : null;
+    const exitCandleSec =
+      exitMs !== null
+        ? (nearestCandleSec(candles, Math.floor(exitMs / 1000)) ??
+          (candles[candles.length - 1].time as number))
+        : (candles[candles.length - 1].time as number);
+    const rightEndSec = Math.min(cursorSec, exitCandleSec);
+
+    const seg = (price: number): LineData[] => [
+      { time: entryCandleSec as Time, value: price },
+      { time: rightEndSec as Time, value: price },
+    ];
+
+    entrySeries.setData(seg(anchor.entry_price));
+    if (
+      stopSeriesRef.current &&
+      anchor.stop_price !== null &&
+      anchor.stop_price !== undefined
+    ) {
+      stopSeriesRef.current.setData(seg(anchor.stop_price));
+    }
+    if (
+      targetSeriesRef.current &&
+      anchor.target_price !== null &&
+      anchor.target_price !== undefined
+    ) {
+      targetSeriesRef.current.setData(seg(anchor.target_price));
+    }
+  }, [anchor, candles, cursorIndex, ticks, entryMs]);
 
   // Entry/exit markers.
   useEffect(() => {
