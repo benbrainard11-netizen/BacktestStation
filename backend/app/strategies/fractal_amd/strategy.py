@@ -320,18 +320,17 @@ class FractalAMD(Strategy):
         if bars_since_touch > self.config.entry_max_bars_after_touch:
             return ValidationResult(action="reject")
 
-        # Compute entry / stop / target.
-        # Entry approximates the bar.open since the engine will fill
-        # the bracket order at next bar's open + slippage anyway.
+        # Compute entry / stop / target. entry_price uses bar.open as
+        # the live bot does; the engine then fills the BracketOrder at
+        # the NEXT bar's open + slippage.
+        entry_price = bar.open
         if setup.direction == "BEARISH":
             side = Side.SHORT
-            entry_price = bar.open
             stop = setup.fvg_high + self.config.stop_buffer_pts
             risk = stop - entry_price
             target = entry_price - risk * self.config.target_r
         else:
             side = Side.LONG
-            entry_price = bar.open
             stop = setup.fvg_low - self.config.stop_buffer_pts
             risk = entry_price - stop
             target = entry_price + risk * self.config.target_r
@@ -341,6 +340,21 @@ class FractalAMD(Strategy):
         if risk <= 0 or risk > self.config.max_risk_pts:
             return ValidationResult(action="reject")
         if risk < self.config.min_risk_pts:
+            return ValidationResult(action="reject")
+
+        # Wrong-side-stop guard. The BracketOrder fills at the next
+        # bar's open and the FVG-based stop is fixed; if price has
+        # already drifted past the stop level by the time this bar
+        # closes, the actual fill will land on the wrong side of the
+        # stop and the engine will treat the "stop" as a near-target
+        # (exits profitably immediately on small moves OR rides un-
+        # capped if price runs further away). bar.close is a better
+        # proxy than bar.open for the next-bar fill price; reject the
+        # trade if close is already on the wrong side. Terminal —
+        # geometry won't change.
+        if setup.direction == "BEARISH" and stop <= bar.close:
+            return ValidationResult(action="reject")
+        if setup.direction == "BULLISH" and stop >= bar.close:
             return ValidationResult(action="reject")
 
         # 15-min direction dedup (terminal — already traded this slot).
