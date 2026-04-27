@@ -1,231 +1,111 @@
-# BacktestStation Roadmap
+# BacktestStation — Roadmap
 
-> Source of truth for **product direction**. Update when a decision changes.
-> Paired with [`AGENTS.md`](../AGENTS.md) (agent rules), [`PHASE_1_SCOPE.md`](PHASE_1_SCOPE.md) (frozen Phase 1 spec), and [`ARCHITECTURE.md`](ARCHITECTURE.md) (system design / eventual end-state).
->
-> Last updated: 2026-04-24 (Phase 2 closed)
+> Source of truth for *direction*. For "what's running right now," see [`PROJECT_STATE.md`](PROJECT_STATE.md). For *engineering* discipline ("how do we build it?"), see [`../CLAUDE.md`](../CLAUDE.md). For machine roles + data ownership, see [`LOCAL_INFRASTRUCTURE.md`](LOCAL_INFRASTRUCTURE.md).
 
 ---
 
-## 1. What this is
+## Vision (long-term)
 
-BacktestStation is a local-first futures-strategy research and control terminal.
+BacktestStation is a personal local quant/trading lab — eventually a mini-institution research environment for one trader (Ben), with one contributor (Husky). The full vision:
 
-Plug any strategy into it, import that strategy's result files (trades, equity, metrics, config), inspect them through a dark quant dashboard, replay individual trades, and monitor a live instance. A real event-driven backtest engine on Databento tick data comes later — the first goal is making the strategy results you *already have* easy to look at, compare, and trust.
+- Local-first trading research terminal
+- Imported + engine-generated backtest results
+- Replay and review system across multiple timeframes + tick depth
+- Live monitoring of bots and pipelines
+- Historical futures data warehouse (L1 / L2 / L3 / tick)
+- Personal model training + AI research agents
+- GPU-powered local ML/LLM workflows
+- Full decision-support system feeding live trading
 
-Personal tool first. Productization is a possible future — not a committed path.
-
----
-
-## 2. Vision
-
-1. **Any strategy plugs in.** Same dashboard, same import workflow, same analytics — whether the strategy is Fractal AMD, ORB, VWAP mean-reversion, or a future ML-based thing.
-2. **Live and backtest live on the same surface.** Imported backtest results and live-bot output flow into the same tables, charts, and pages. Divergence between the two is obvious because they're compared in the same UI.
-3. **Engine perfection later, imported-data correctness now.** The first priority is correctly importing, storing, displaying, and comparing existing strategy outputs. Do not fake data or hide mock behavior. The deterministic engine answers "is my strategy actually doing what the backtest said?" — but it's built *after* the imported-results loop feels solid, not before.
-
----
-
-## 3. Where we are (as of 2026-04-23)
-
-### Backend
-- FastAPI + SQLAlchemy + SQLite. Python 3.12+.
-- 10 endpoints live: health, import/backtest, strategies list/detail, backtests list/detail/trades/equity/metrics, monitor/live.
-- 16 passing pytest tests, including one end-to-end test that imports the real Fractal sample bundle.
-- 10 DB tables created. 3 of them (`live_signals`, `live_heartbeats`, `notes`) are schema-only — no writes yet.
-- Importer handles `trades.csv`, `equity.csv`, `metrics.json`, `config.json`, `live_status.json`. Tolerates Fractal-specific quirks (BEARISH/BULLISH side, pnl_r, date+time split columns, missing symbol via config).
-
-### Frontend
-- Next.js 15 + React 19 + TypeScript + Tailwind + Tauri 2.
-- Real data on: `/import`, `/backtests`, `/backtests/[id]`, `/backtests/[id]/replay`, `/backtests/compare`, `/monitor`, `/strategies`, `/strategies/[id]`.
-- Placeholders remaining: `/data-health` and `/settings` — both now clearly labeled "PHASE 3 · NOT STARTED" with descriptive copy. All Phase 1-2 spec pages (`/`, `/import`, `/backtests*`, `/strategies*`, `/monitor`, `/journal`) are wired to real API data. Root `/replay` was deleted 2026-04-24.
-- Built-in charts: equity curve, drawdown curve, R-multiple histogram, overlaid two-run equity comparison. Replay chart intentionally absent until Databento ticks land.
-
-### Data
-- `samples/fractal_trusted_multiyear/` — committed sample bundle derived from a real 586-trade Fractal AMD backtest.
-- Local DB has 2 imported runs:
-  - BT-1: Fractal AMD `trusted_multiyear` — 586 trades, +274.4R, 40.8% WR, 2024-01 → 2026-03.
-  - BT-2: Fractal AMD `live_match_2022_2026` — 929 trades, +307R, 33.3% WR, 2022-01 → 2026-03. Matches live-bot config (MIN_RISK=8, no MAX_HOLD, BLOCK_OVERLAP applied).
-
-### Scope discipline
-None of these have been built yet, intentionally:
-- Databento ingestion
-- Event-driven backtest engine
-- Live broker execution
-- ML models
-- Auth / billing / multi-tenant
-- Mobile / cloud / Docker
+The vision is **the destination**, not permission to build the whole stack at once. The whole point of having tiers below is preventing scope creep into "everything at once."
 
 ---
 
-## 4. Phase 2: Close out + polish — ✅ COMPLETE (2026-04-24)
+## Build tiers
 
-All "Imported Results Command Center" edges have been sanded. Remaining convenience features (bulk import, delete, rename, CSV export) moved to Phase 3 scope since they're not structural.
+### CURRENT FOCUS (next ~30 days)
 
-### Shipped
-- **`/journal` page** — `POST /api/notes` + `GET /api/notes` with optional run_id/trade_id filters, FK validation. Frontend page lists + creates notes, no mock data.
-- **`/` Command Center real KPIs** — fetches `/api/backtests`, `/api/backtests/{latest}/metrics`, `/api/monitor/live`, `/api/notes` in parallel. Summary row, latest metrics panel, monitor panel, recent runs + notes. MockDataBanner and all 9 mock components deleted.
-- **Root `/replay` deleted** — `/backtests/[id]/replay` is the only replay surface.
-- **`/data-health` and `/settings`** — kept as EmptyState placeholders with clear "PHASE 3 · NOT STARTED" labels.
-- **Graceful panel degradation** — a failed API endpoint now degrades the affected Command Center panel, not the whole page.
-- **Sidebar/TopBar chrome** — fake CPU/MEM/DISK sparklines and "DB READY" pill removed. Version shown as static "Local build · v0.1.0" (honest about being hardcoded).
+Three lanes running in parallel — pick whichever has momentum on a given day.
 
-### Deferred to Phase 3 (see §5)
-- Bulk import / re-import / overwrite-existing.
-- Delete run, rename run, run favoriting/tagging.
-- Export trades/metrics back to CSV.
-- Shared `<ChartPlaceholder />` component.
-- Pydantic → OpenAPI → TS type generation (biggest structural risk; promote to early Phase 3).
+#### A. Fractal AMD live-readiness
 
----
+The headline goal. The whole system exists to put real money on a validated strategy.
 
-## 5. Phase 3: Databento ingestion
+- Paper-trade the live bot for at least 2 weeks; track via Forward Drift v1 + the live-trades pipeline (already feeding `meta.sqlite` daily 17:00 ET).
+- Close the one remaining port↔live signal-detection gap (1 of 6 live trades doesn't fire in the port).
+- Define a "ready for capital" gate. Concrete proposal: ≥40% WR over ≥30 paper trades, max DD < 10R, no entries fired outside 09:30-14:00 ET (the validated window).
+- Until the gate is met: paper-only, no real capital.
 
-First "big" chunk. Turns the app from "analyze imported files" into "ingest tick data for yourself." Per [`ARCHITECTURE.md §6`](ARCHITECTURE.md).
+#### B. Warehouse stabilization
 
-### What gets built
-- **CLI + API:** `POST /api/ingest/databento` — dataset code, symbol, date range → streams DBN to `data/raw/`, converts to Parquet per-day, registers in SQLite.
-- **New tables:** `datasets` (id, symbol, schema_kind, start/end_ts, file_path, sha256, row_count), `data_quality_reports` (gaps, duplicates, out-of-order, halt detection).
-- **`/data` page** — Data Vault showing what's been ingested, with quality reports visible.
-- **Scripts:** `scripts/generate-types.sh` for Pydantic → OpenAPI → TS type codegen (promised by `ARCHITECTURE.md` but never written).
+The data layer the rest of the system depends on. Already mostly built; needs to be verified and rounded out.
 
-### Opens the door for
-Phase 4's real backtests, since those need tick data to run against.
+- Manually trigger the first historical MBP-1 pull (NQ.c.0); verify `parquet_mirror` handles MBP-1 correctly end-to-end (it works for TBBO; MBP-1 is untested at scale).
+- Build the weekly gap-filler discussed earlier: NQ/ES/YM only, MBP-1 1mo + TBBO 12mo, Sundays 03:00 local, $0-cost guardrail (skip+warn if a missing month estimates >$0).
+- Ship Forward Drift v1 frontend panels in `/monitor` (backend exists since 2026-04-25; this is just surfacing it).
+- Live-trades pipeline: confirm daily fire works for 2 consecutive weeks without manual intervention. The `/monitor` panel turns red if it doesn't.
 
-### Risks
-- MBP-1 data is ~1 GB/month per symbol. Plan for 10-50 GB of local storage. Parquet partitioning is the only lever.
-- The existing `lib/api/types.ts` hand-authored types will need to migrate to generated ones when a real codegen pipeline exists.
+#### C. Husky's prop-firm UI
 
----
+Parallel lane, Husky-owned. Don't stomp his WIP.
 
-## 6. Phase 4: Event-driven backtest engine
+- Un-mock `/prop-simulator` dashboard, `/prop-simulator/firms`, `/prop-simulator/compare`. Backend already exists (`app/services/prop_firm.py` + endpoints). This is wiring + UX work.
+- The simulator runs page (`/prop-simulator/runs`) is already on real data; only the pages above are mocked.
 
-The actual correctness goal. Per [`ARCHITECTURE.md §7 and §14`](ARCHITECTURE.md).
+### DEFERRED — do not build until current focus is done
 
-### What gets built
-- Pure Python engine under `backend/app/engine/`. No I/O dependencies. No imports from `api/`, `db/`, `storage/`, `ingest/`.
-- Event types: `TickEvent`, `BarEvent`, `SignalEvent`, `OrderEvent`, `FillEvent`.
-- Strategy base with `on_tick` / `on_bar` and `emit_bracket(side, size, stop, target)` as the primary API.
-- **Conservative-fill broker** with OCO bracket handling (see rules below).
-- **Fractal AMD port** as the first concrete strategy. One real strategy validates the abstraction exists because it has something to abstract over.
+These are explicit no's. If you find yourself building one, stop and re-read the discipline rules below.
 
-### Stop-vs-target fill rules
-The backtester must not pretend it knows something it doesn't.
+- **ML / model training layer.** Gated by ≥6 months of own-collected TBBO/MBP-1 data AND a concrete falsifiable trading hypothesis. ML is research, not infrastructure — building the registry/tracker before the models is putting carts before horses.
+- **A 2nd custom strategy.** Don't add until Fractal AMD is real-money. Custom strategies are a maintenance commitment; one is enough until one is profitable.
+- **New warehouse schemas** (L3 book depth, imbalance, options chains). The existing four (TBBO, MBP-1, OHLCV-1m, OHLCV-1s) need to be queryable + trusted in real workflows first. Don't ingest data the app can't actually use.
+- **Institutional automation, multi-account orchestration, agent crews.** When the lab has more than two users, this conversation reopens.
+- **Cloud / SaaS / sharing features.** This is a personal lab.
+- **Docker / containerization.** The Tauri + uvicorn sidecar setup works for two machines. Revisit only if cross-machine deploys become painful.
+- **Folder restructure of `D:\data\`.** The current layout is canonical per [`SCHEMA_SPEC.md`](SCHEMA_SPEC.md). Renaming for aesthetics breaks every downstream tool.
 
-1. **If trade-level sequence is available** (e.g., MBP-1 trades print in exact order within the window) — use it. The side that printed first wins.
-2. **If the data is ambiguous** (both stop and target are reachable in the same window but trade order can't be determined, e.g., OHLC bars only) — resolve conservatively.
-3. **Default conservative rule: stop wins.** Never pick the more-favorable outcome when it's not supported by the data.
+### RECENTLY SHIPPED — for context (last ~3 weeks)
 
-Every trade must store a `fill_confidence` field:
-- `exact` — trade-level sequence used, unambiguous resolution.
-- `conservative` — ambiguous window, default-stop rule applied.
-- `ambiguous` — flagged for review, stop used.
+What's in `main` already, so you don't accidentally re-build it:
 
-Every run summary records `ambiguous_fill_count` so runs with a lot of ambiguous fills are visible without digging into trades.
-
-### Schema changes this introduces
-- **`backtest_runs.source_type`** — `imported | internal_engine | live_replay`. One table serves all three so the dashboard is unified. Imported runs (Phase 1) use `imported`; engine runs use `internal_engine`; live-bot replay comparisons use `live_replay`.
-- **`trades.fill_confidence`** — `exact | conservative | ambiguous`. Imported trades from Phase 1 source files get `exact` (we trust what the source produced). Engine-produced trades get whichever the broker determined.
-- **`run_metrics.ambiguous_fill_count`** — integer count of `ambiguous` fills in the run.
-
-### Correctness tests (all blocking)
-- **Known-result fixture** — synthetic 200-tick dataset, hand-calculated expected trades.
-- **Lookahead harness** — strategy that tries to peek ahead → engine raises.
-- **Determinism** — run same backtest twice → byte-identical `equity.parquet` + `trades.parquet`.
-- **Stop-vs-target fill decisions** —
-  - Trade-level sequence available → `fill_confidence=exact`, correct side wins.
-  - Ambiguous OHLC-only window with both levels reachable → `fill_confidence=conservative`, stop wins by default.
-- **EOD flatten** — open position at session close → forced exit.
-
-### What this resolves
-The "3+ backtest files disagree, none call live bot's SignalEngine" divergence. When the engine is authoritative and the live bot runs the same strategy code, results converge.
+- **Backtest engine v1** — pure, deterministic, lookahead-tested.
+- **Fractal AMD strategy port** — matches the live bot on 5 of 6 fills (the unmatched one is a signal-detection difference, tracked).
+- **Live TBBO ingester** on ben-247 → `D:\data\raw\live\`. Online since 2026-04-24.
+- **Strategy-aware Run-a-Backtest UI** — Fractal AMD selectable, typed param fields per strategy.
+- **Risk Profile manager** — CRUD + retroactive evaluator + dossier panel.
+- **Per-day chart replay** at `/replay` — 1m candles, entry markers, 4-speed playback.
+- **Trade replay** at `/trade-replay` — TBBO + bars at 1s/1m/5m/15m/30m, ET time axis, anchor lines that reveal as cursor passes entry.
+- **Live-trades pipeline** — daily 17:00 ET, ben-247 reconciles + Taildrops `trades.jsonl` → benpc imports.
+- **Live-trades pipeline health panel** on `/monitor` — surfaces silent failures.
+- **Forward Drift Monitor v1 backend** — WR + entry-time chi-square against a baseline run.
+- **`merge-review` subagent** at `.claude/agents/merge-review.md` — run before merging a branch.
+- **444 backend tests**, all green.
 
 ---
 
-## 7. Phase 5: Tick-level replay + validation lab
+## Discipline rules (direction)
 
-Payoff of Phases 3 + 4.
+These are the rules for *should we build X?* — engineering rules ("how do we build it?") live in [`../CLAUDE.md`](../CLAUDE.md).
 
-### What gets built
-- **Real candle chart** on `/backtests/[id]/replay?trade=N`. Replaces the current "chart lands when Databento pipeline is wired" placeholder. Uses TradingView Lightweight Charts over Parquet bars.
-- **Validation lab** (`/backtests/[id]/validation` or similar) — side-by-side live-vs-backtest for the same day. If the live bot took a trade the backtest didn't (or vice versa), the UI flags it.
-
-### Why this matters
-Answers the question the whole app exists to answer: "is my strategy actually doing what the backtest said?" — at the per-trade, per-tick level.
-
----
-
-## 8. Phase 6+: Aspirational
-
-Items that aren't committed, just flagged so they don't get re-invented. Park until earlier phases are solid.
-
-- **Embedded LLM assistant.** Ben raised this. Could be any of:
-  - Strategy research chatbot ("what was my win rate in Q2 2024 BEARISH setups?")
-  - Auto-journal generator ("summarize what went wrong on April 19")
-  - Divergence explainer ("why did the live bot skip this trade?")
-  - Config-tuning suggester ("given these losses, what parameters would have helped?")
-
-  Each is a different-sized project with different cost/latency trade-offs. Decide scope when we're ready to touch it.
-
-- **Multi-asset.** ES, YM, MES, MNQ or other futures. Strategy/broker abstractions should already tolerate this; the work is more about data ingestion and symbol/tick-size config per instrument.
-- **Walk-forward / Monte Carlo / overfitting detection.**
-- **Strategy marketplace or plugin framework.** Not until at least 3 concrete strategies exist (per [`AGENTS.md`](../AGENTS.md) "no premature abstraction").
-- **Productization.** Multi-tenant, auth, billing, hosted vs desktop-only. Only if Ben decides to sell it.
+1. **Vision is destination, not permission.** Default answer to "should we add X?" is **no** unless X serves Current Focus tier (A, B, or C). When the vision tempts a future-tier build, point at this doc and ask Ben before writing code.
+2. **No 2nd custom strategy until Fractal AMD trades real money.** One at a time. A 2nd strategy is a 2x maintenance load on tests, drift comparisons, and dossier UI.
+3. **No ML / model-training work** until both: ≥6 months of own-collected TBBO/MBP-1 data, AND a concrete falsifiable hypothesis. ML is research, not infrastructure.
+4. **Mocked pages must declare themselves.** A page rendering hardcoded data must show `[MOCK]` in its visible header (not just a code comment) so future sessions don't read it as functional. Applies retroactively to `/prop-simulator/*` pages until Husky un-mocks them.
+5. **New warehouse schemas don't ship until existing schemas are queryable in a UI flow** — i.e., you can run a backtest from them or render a chart from them. Don't ingest data the app can't actually use.
+6. **One feature per PR per lane.** Don't bundle warehouse work into a UI PR or strategy work into a data PR. The merge-review agent flags this.
+7. **Daily command center stability is sacred.** Experimental ML, warehouse experiments, and one-off research go in dedicated routes (`/experiments`, `/data-health`), never in `/`, `/backtests`, `/monitor`, `/replay`, or `/trade-replay`.
+8. **The roadmap is a living doc.** When something ships, move it from Current Focus → Recently Shipped in the same PR. When something becomes Current Focus, move it from Deferred → Current Focus in a deliberate, Ben-approved PR.
 
 ---
 
-## 9. Work division
+## How to use this doc
 
-Five contributors, clear lanes.
+- **"What should we build next?"** → Current Focus tier. Pick A, B, or C based on momentum.
+- **"Can I add X?"** → if X isn't in Current Focus, default no; ask Ben.
+- **"Is X done?"** → check Recently Shipped here, or [`PROJECT_STATE.md`](PROJECT_STATE.md) (the live-state mirror).
+- **"What's the long game?"** → Vision section. Don't translate vision into PRs without Ben's explicit say-so.
+- **"How do I build it cleanly?"** → [`../CLAUDE.md`](../CLAUDE.md) (engineering rules).
+- **"Which machine does this belong on?"** → [`LOCAL_INFRASTRUCTURE.md`](LOCAL_INFRASTRUCTURE.md).
+- **"Is this branch safe to merge?"** → invoke the [`merge-review`](../.claude/agents/merge-review.md) subagent.
 
-| Who | Primary role | Also does |
-|---|---|---|
-| **Ben** | Product decisions, strategy logic, live trading validation. Approves merges. Calls scope. | Spots aesthetic problems ("looks like shit"), final judge on ship/no-ship. |
-| **Husky** | Frontend polish, visual components, layout. | Backend tasks when needed — full-stack capable. |
-| **Claude Code** | Backend, pipelines, wiring, tests, planning docs. Narrow per-branch tasks. | Writes documentation. Flags risks. |
-| **Codex** | Audit mode — skeptical reviewer, spaghetti detector, scope enforcer. | Suggests exact next patches. Not a primary author. |
-| **GPT-5.5 Chat** | Prompt drafter, spec writer. Turns Ben's ideas into exact Claude Code prompts. | Stress-tests assumptions. Reviews outputs. |
-
-### Working loop
-```
-Ben (idea)
-  → GPT-5.5 Chat (spec)
-    → Claude Code (build on a new task/ branch)
-      → Codex (audit)
-        → Ben (decide merge)
-```
-
-Husky fills in parallel frontend work on his own task branches and hands them back for merge review the same way.
-
-### Branch discipline
-- One task per branch. Name: `task/<short-description>`.
-- Fast-forward merge to `main` when tests + Ben approval are in.
-- If two branches touch the same file, whoever lands first wins the fast-forward; the other rebases before their own merge.
-
----
-
-## 10. Open questions
-
-Decisions that aren't made yet. Capture them here instead of letting them drift between sessions.
-
-1. **Embedded LLM — Phase 6 commitment or "someday"?** Until this is answered, skip it entirely.
-2. ~~**Engine runs vs imported runs.**~~ **Resolved 2026-04-24:** one `backtest_runs` table for everything, with a `source_type` column (`imported | internal_engine | live_replay`). Same dashboard, same list, same detail page. See Phase 4 schema changes.
-3. **Productization.** If Ben ever decides to sell it, what's the first step — marketing site, auth system, hosted-vs-desktop decision? Until that's answered, skip anything that only matters for paying customers.
-4. **Sunday live test truth arbiter.** If Sunday's live Fractal bot diverges from the `live_match_2022_2026` backtest, which one is the source of truth for next iteration? Current best answer: live is truth; backtest is the parallel estimate.
-5. ~~**Replay route structure.**~~ **Resolved 2026-04-24:** `/backtests/[id]/replay` is the only replay surface. The root `/replay` page is a leftover placeholder — do not build it, and delete the file next time it's touched. A future `/backtests/[id]/validation` stays a separate route (different purpose: live-vs-backtest diff, not trade replay).
-6. **Default branch.** Renamed to `main` on 2026-04-23. Anything else drifted from the old branch name? (Check CI, deploy configs, README links once we add any.)
-
----
-
-## 11. Non-goals
-
-What we will **not** build, and why. Mirrors [`ARCHITECTURE.md §13`](ARCHITECTURE.md) and [`AGENTS.md`](../AGENTS.md) "Do Not Build Yet" but in one place with current context.
-
-- **No broker execution inside BacktestStation.** The Fractal live bot stays standalone in `C:\Fractal-AMD\production\live_bot.py`. This app is for research and monitoring, not order routing.
-- **No auth, billing, SSO, multi-tenant** until Ben signals productization.
-- **No ML** before the import/analyze/backtest/compare loop is solid (Phase 4 done). When ML does land, use it for regime labeling / setup scoring / degradation detection — *not* for direct price prediction or strategy replacement.
-- **No mobile UI, no cloud deploy, no Kubernetes, no Postgres.**
-- **No premature abstractions.** Don't build a plugin framework until ≥3 concrete strategies exist. Don't build a generic "connector" layer for non-Fractal files until at least two strategies are imported.
-- **No hand-written frontend API clients** once [`scripts/generate-types.sh`](../scripts/generate-types.sh) exists (Phase 3+).
-- **No websockets** for Phase 1-3. Polling is fine. Upgrade to websockets only when we can name a user-facing reason.
-- **No root `/replay` page.** `/backtests/[id]/replay` is the only replay surface. The leftover `frontend/app/replay/page.tsx` should be deleted the next time someone is in that directory.
-- **No favorable-outcome assumptions in the backtester.** If the data can't resolve a stop-vs-target race, the fill is conservative (stop wins). See Phase 4 stop-vs-target fill rules. Every trade records `fill_confidence`; every run summary records `ambiguous_fill_count`. Never let the backtester silently pick the better of two outcomes.
+Last updated: 2026-04-27.
