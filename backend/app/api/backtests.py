@@ -34,10 +34,23 @@ from app.schemas import (
     ConfigSnapshotRead,
     EquityPointRead,
     RunMetricsRead,
+    StrategyDefinitionRead,
     TradeRead,
 )
+from app.services.strategy_registry import STRATEGY_DEFINITIONS
 
 router = APIRouter(prefix="/backtests", tags=["backtests"])
+
+
+@router.get("/strategies", response_model=list[StrategyDefinitionRead])
+def list_runnable_strategies() -> list[dict]:
+    """Strategies the engine resolver knows how to run, with their
+    parameter schemas (frontend-friendly JSON Schema-ish) so the
+    Run-a-Backtest form can render typed fields per strategy. The
+    list is hand-maintained in `app.services.strategy_registry` to
+    mirror `runner._resolve_strategy`.
+    """
+    return STRATEGY_DEFINITIONS
 
 
 def _require_run(db: Session, backtest_id: int) -> BacktestRun:

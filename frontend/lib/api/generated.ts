@@ -42,6 +42,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/strategies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runnable Strategies
+         * @description Strategies the engine resolver knows how to run, with their
+         *     parameter schemas (frontend-friendly JSON Schema-ish) so the
+         *     Run-a-Backtest form can render typed fields per strategy. The
+         *     list is hand-maintained in `app.services.strategy_registry` to
+         *     mirror `runner._resolve_strategy`.
+         */
+        get: operations["list_runnable_strategies_api_backtests_strategies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}": {
         parameters: {
             query?: never;
@@ -2232,6 +2256,61 @@ export interface components {
             /** Tags */
             tags?: string[] | null;
         };
+        /**
+         * StrategyDefinitionRead
+         * @description One runnable strategy + the metadata the form needs to render.
+         */
+        StrategyDefinitionRead: {
+            /** Default Params */
+            default_params?: {
+                [key: string]: unknown;
+            };
+            /** Description */
+            description?: string | null;
+            /** Label */
+            label: string;
+            /** Name */
+            name: string;
+            param_schema: components["schemas"]["StrategyParamSchema"];
+        };
+        /**
+         * StrategyParamFieldSchema
+         * @description One field of a strategy's params, in a frontend-friendly shape.
+         *
+         *     `type` mirrors JSON Schema's primitive types we actually use today;
+         *     `label` is the form-row title; `min`/`max`/`step` are optional UI
+         *     hints for number inputs; `description` is a one-line hint shown
+         *     under the field. `enum` lets a strategy expose dropdown choices in
+         *     the future (unused so far).
+         */
+        StrategyParamFieldSchema: {
+            /** Description */
+            description?: string | null;
+            /** Enum */
+            enum?: unknown[] | null;
+            /** Label */
+            label: string;
+            /** Max */
+            max?: number | null;
+            /** Min */
+            min?: number | null;
+            /** Step */
+            step?: number | null;
+            /** Type */
+            type: string;
+        };
+        /** StrategyParamSchema */
+        StrategyParamSchema: {
+            /** Properties */
+            properties?: {
+                [key: string]: components["schemas"]["StrategyParamFieldSchema"];
+            };
+            /**
+             * Type
+             * @default object
+             */
+            type: string;
+        };
         /** StrategyRead */
         StrategyRead: {
             /**
@@ -2458,6 +2537,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runnable_strategies_api_backtests_strategies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyDefinitionRead"][];
                 };
             };
         };

@@ -4084,6 +4084,147 @@
         "title": "StrategyCreate",
         "type": "object"
       },
+      "StrategyDefinitionRead": {
+        "description": "One runnable strategy + the metadata the form needs to render.",
+        "properties": {
+          "default_params": {
+            "additionalProperties": true,
+            "title": "Default Params",
+            "type": "object"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "param_schema": {
+            "$ref": "#/components/schemas/StrategyParamSchema"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "param_schema"
+        ],
+        "title": "StrategyDefinitionRead",
+        "type": "object"
+      },
+      "StrategyParamFieldSchema": {
+        "description": "One field of a strategy's params, in a frontend-friendly shape.\n\n`type` mirrors JSON Schema's primitive types we actually use today;\n`label` is the form-row title; `min`/`max`/`step` are optional UI\nhints for number inputs; `description` is a one-line hint shown\nunder the field. `enum` lets a strategy expose dropdown choices in\nthe future (unused so far).",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enum": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "step": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "label"
+        ],
+        "title": "StrategyParamFieldSchema",
+        "type": "object"
+      },
+      "StrategyParamSchema": {
+        "properties": {
+          "properties": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StrategyParamFieldSchema"
+            },
+            "title": "Properties",
+            "type": "object"
+          },
+          "type": {
+            "default": "object",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "StrategyParamSchema",
+        "type": "object"
+      },
       "StrategyRead": {
         "properties": {
           "created_at": {
@@ -4723,6 +4864,32 @@
           }
         },
         "summary": "Run Engine Backtest",
+        "tags": [
+          "backtests"
+        ]
+      }
+    },
+    "/api/backtests/strategies": {
+      "get": {
+        "description": "Strategies the engine resolver knows how to run, with their\nparameter schemas (frontend-friendly JSON Schema-ish) so the\nRun-a-Backtest form can render typed fields per strategy. The\nlist is hand-maintained in `app.services.strategy_registry` to\nmirror `runner._resolve_strategy`.",
+        "operationId": "list_runnable_strategies_api_backtests_strategies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StrategyDefinitionRead"
+                  },
+                  "title": "Response List Runnable Strategies Api Backtests Strategies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Runnable Strategies",
         "tags": [
           "backtests"
         ]

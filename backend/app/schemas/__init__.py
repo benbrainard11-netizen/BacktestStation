@@ -32,6 +32,11 @@ from app.schemas.prop_simulator import (
     SimulationRunListRow,
     SimulationRunRequest,
 )
+from app.schemas.strategy_registry import (
+    StrategyDefinitionRead,
+    StrategyParamFieldSchema,
+    StrategyParamSchema,
+)
 from app.schemas.results import (
     BacktestRunRead,
     BacktestRunRequest,
@@ -92,6 +97,9 @@ __all__ = [
     "StrategyRead",
     "StrategyStagesRead",
     "StrategyUpdate",
+    "StrategyDefinitionRead",
+    "StrategyParamFieldSchema",
+    "StrategyParamSchema",
     "StrategyVersionBaselineUpdate",
     "StrategyVersionCreate",
     "StrategyVersionRead",
