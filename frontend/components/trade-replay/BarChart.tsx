@@ -3,19 +3,26 @@
 import {
   CandlestickSeries,
   ColorType,
+  LineSeries,
   createChart,
   createSeriesMarkers,
   type CandlestickData,
   type IChartApi,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
+  type LineData,
   type SeriesMarker,
   type Time,
 } from "lightweight-charts";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { components } from "@/lib/api/generated";
-import { chartTimeFormatter, etHMS, utcMs } from "@/lib/trade-replay/etFormat";
+import {
+  chartTimeFormatter,
+  etHM,
+  etHMS,
+  utcMs,
+} from "@/lib/trade-replay/etFormat";
 import {
   type ResampledBar,
   type Timeframe,
@@ -102,6 +109,10 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
         timeVisible: true,
         secondsVisible: false,
         borderColor: "#27272a",
+        // Format axis ticks in ET. Without this, ticks default to UTC
+        // while the crosshair tooltip uses our localization formatter,
+        // and the two times disagree by the user's UTC offset.
+        tickMarkFormatter: (time: Time) => etHM(Number(time) * 1000),
       },
       rightPriceScale: { borderColor: "#27272a" },
       localization: {
@@ -146,53 +157,74 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
     centerOnEntry(chartRef.current, candleData, entrySec);
   }, [candleData, entrySec]);
 
-  // Anchor lines on the candle series — entry, stop, target stay
-  // visible regardless of cursor position. Drawn as price lines so
-  // they're labeled.
+  // Stop / target / entry segments — drawn ONLY from the entry bar
+  // through the exit bar (or end of dataset for open trades). Pre-entry
+  // candles render clean. Each is a 2-point LineSeries; price lines
+  // would span full chart width and confuse "is the trade active?"
   useEffect(() => {
-    const series = seriesRef.current;
-    if (!series) return;
-    const lines = [
-      series.createPriceLine({
-        price: anchor.entry_price,
-        color: "#fde047",
-        lineStyle: 0,
-        lineWidth: 2 as const,
-        title: `entry ${anchor.entry_price.toFixed(2)}`,
-      }),
+    const chart = chartRef.current;
+    if (!chart || candles.length === 0) return;
+
+    const startSec = bucketSecForEntry(candleData, entrySec);
+    if (startSec === null) return;
+    const exitSec =
+      anchor.exit_ts !== null && anchor.exit_ts !== undefined
+        ? Math.floor(utcMs(anchor.exit_ts) / 1000)
+        : null;
+    const endSec = bucketSecForExit(candleData, exitSec);
+
+    const seg = (price: number): LineData[] => [
+      { time: startSec as Time, value: price },
+      { time: endSec as Time, value: price },
     ];
+
+    const series: ISeriesApi<"Line">[] = [];
+
+    const entrySeries = chart.addSeries(LineSeries, {
+      color: "#fde047",
+      lineWidth: 2,
+      lastValueVisible: false,
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
+    });
+    entrySeries.setData(seg(anchor.entry_price));
+    series.push(entrySeries);
+
     if (anchor.stop_price !== null && anchor.stop_price !== undefined) {
-      lines.push(
-        series.createPriceLine({
-          price: anchor.stop_price,
-          color: "#fb7185",
-          lineStyle: 2,
-          lineWidth: 1 as const,
-          title: `stop ${anchor.stop_price.toFixed(2)}`,
-        }),
-      );
+      const stopSeries = chart.addSeries(LineSeries, {
+        color: "#fb7185",
+        lineWidth: 1,
+        lineStyle: 2,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      stopSeries.setData(seg(anchor.stop_price));
+      series.push(stopSeries);
     }
     if (anchor.target_price !== null && anchor.target_price !== undefined) {
-      lines.push(
-        series.createPriceLine({
-          price: anchor.target_price,
-          color: "#86efac",
-          lineStyle: 2,
-          lineWidth: 1 as const,
-          title: `target ${anchor.target_price.toFixed(2)}`,
-        }),
-      );
+      const targetSeries = chart.addSeries(LineSeries, {
+        color: "#86efac",
+        lineWidth: 1,
+        lineStyle: 2,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      targetSeries.setData(seg(anchor.target_price));
+      series.push(targetSeries);
     }
+
     return () => {
-      for (const l of lines) {
+      for (const s of series) {
         try {
-          series.removePriceLine(l);
+          chart.removeSeries(s);
         } catch {
           /* chart torn down */
         }
       }
     };
-  }, [anchor]);
+  }, [anchor, candles, entrySec]);
 
   // Entry / exit markers. Entry maps to the bar that contains entry_ts;
   // exit similarly. Both stay visible on the chart at all times.
@@ -378,6 +410,43 @@ function bucketAt(candleTimes: Time[], targetSec: number): Time | null {
     last = t;
   }
   return last;
+}
+
+/**
+ * Find the bucket-aligned epoch second for the entry. Lightweight-charts
+ * line segments need to land on existing candle times to render cleanly,
+ * so we snap to the nearest <= entry_sec candle.
+ */
+function bucketSecForEntry(
+  candles: CandlestickData[],
+  entrySec: number,
+): number | null {
+  let last: number | null = null;
+  for (const c of candles) {
+    const t = c.time as number;
+    if (t > entrySec) break;
+    last = t;
+  }
+  return last;
+}
+
+/**
+ * Bucket-aligned exit second. If exit is missing or past the dataset,
+ * use the last candle so the line extends to the right edge.
+ */
+function bucketSecForExit(
+  candles: CandlestickData[],
+  exitSec: number | null,
+): number {
+  const lastCandleSec = candles[candles.length - 1].time as number;
+  if (exitSec === null) return lastCandleSec;
+  let last: number | null = null;
+  for (const c of candles) {
+    const t = c.time as number;
+    if (t > exitSec) break;
+    last = t;
+  }
+  return last ?? lastCandleSec;
 }
 
 /**

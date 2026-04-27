@@ -23,9 +23,28 @@ import {
   askLine,
   tickIndexAtMs,
 } from "@/lib/trade-replay/binTicks";
-import { chartTimeFormatter, etHMS, utcMs } from "@/lib/trade-replay/etFormat";
+import {
+  chartTimeFormatter,
+  etHM,
+  etHMS,
+  utcMs,
+} from "@/lib/trade-replay/etFormat";
 
 type Window = components["schemas"]["TradeReplayWindowRead"];
+
+/** Snap a target second to the nearest candle time at or before it. */
+function nearestCandleSec(
+  candles: CandlestickData[],
+  targetSec: number,
+): number | null {
+  let last: number | null = null;
+  for (const c of candles) {
+    const t = c.time as number;
+    if (t > targetSec) break;
+    last = t;
+  }
+  return last;
+}
 
 const SPEED_PRESETS = [
   { label: "1x", ms: 1000 },
@@ -105,6 +124,7 @@ export default function TickChart({ payload }: Props) {
         timeVisible: true,
         secondsVisible: true,
         borderColor: "#27272a",
+        tickMarkFormatter: (time: Time) => etHM(Number(time) * 1000),
       },
       rightPriceScale: { borderColor: "#27272a" },
       localization: { timeFormatter: chartTimeFormatter },
@@ -177,51 +197,73 @@ export default function TickChart({ payload }: Props) {
     chartRef.current.timeScale().fitContent();
   }, [candles]);
 
-  // Anchor lines on the candle series.
+  // Entry / stop / target as 2-point line segments — drawn from the
+  // entry tick onwards (to exit tick or last tick) so pre-entry view
+  // doesn't pretend the trade is active.
   useEffect(() => {
-    const series = candleRef.current;
-    if (!series) return;
-    const lines = [
-      series.createPriceLine({
-        price: anchor.entry_price,
-        color: "#fde047",
-        lineStyle: 0,
-        lineWidth: 2 as const,
-        title: `entry ${anchor.entry_price.toFixed(2)}`,
-      }),
+    const chart = chartRef.current;
+    if (!chart || candles.length === 0) return;
+
+    const entryCandleSec = nearestCandleSec(candles, Math.floor(entryMs / 1000));
+    if (entryCandleSec === null) return;
+    const exitMs = anchor.exit_ts ? utcMs(anchor.exit_ts) : null;
+    const exitCandleSec =
+      exitMs !== null
+        ? nearestCandleSec(candles, Math.floor(exitMs / 1000))
+        : (candles[candles.length - 1].time as number);
+
+    const seg = (price: number): LineData[] => [
+      { time: entryCandleSec as Time, value: price },
+      { time: (exitCandleSec ?? entryCandleSec) as Time, value: price },
     ];
+
+    const series: ISeriesApi<"Line">[] = [];
+
+    const entrySeries = chart.addSeries(LineSeries, {
+      color: "#fde047",
+      lineWidth: 2,
+      lastValueVisible: false,
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
+    });
+    entrySeries.setData(seg(anchor.entry_price));
+    series.push(entrySeries);
+
     if (anchor.stop_price !== null && anchor.stop_price !== undefined) {
-      lines.push(
-        series.createPriceLine({
-          price: anchor.stop_price,
-          color: "#fb7185",
-          lineStyle: 2,
-          lineWidth: 1 as const,
-          title: `stop ${anchor.stop_price.toFixed(2)}`,
-        }),
-      );
+      const stopSeries = chart.addSeries(LineSeries, {
+        color: "#fb7185",
+        lineWidth: 1,
+        lineStyle: 2,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      stopSeries.setData(seg(anchor.stop_price));
+      series.push(stopSeries);
     }
     if (anchor.target_price !== null && anchor.target_price !== undefined) {
-      lines.push(
-        series.createPriceLine({
-          price: anchor.target_price,
-          color: "#86efac",
-          lineStyle: 2,
-          lineWidth: 1 as const,
-          title: `target ${anchor.target_price.toFixed(2)}`,
-        }),
-      );
+      const targetSeries = chart.addSeries(LineSeries, {
+        color: "#86efac",
+        lineWidth: 1,
+        lineStyle: 2,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      targetSeries.setData(seg(anchor.target_price));
+      series.push(targetSeries);
     }
+
     return () => {
-      for (const l of lines) {
+      for (const s of series) {
         try {
-          series.removePriceLine(l);
+          chart.removeSeries(s);
         } catch {
           /* chart torn down */
         }
       }
     };
-  }, [anchor]);
+  }, [anchor, candles, entryMs]);
 
   // Entry/exit markers.
   useEffect(() => {
