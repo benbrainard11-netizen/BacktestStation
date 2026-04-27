@@ -42,6 +42,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/strategies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runnable Strategies
+         * @description Strategies the engine resolver knows how to run, with their
+         *     parameter schemas (frontend-friendly JSON Schema-ish) so the
+         *     Run-a-Backtest form can render typed fields per strategy. The
+         *     list is hand-maintained in `app.services.strategy_registry` to
+         *     mirror `runner._resolve_strategy`.
+         */
+        get: operations["list_runnable_strategies_api_backtests_strategies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/{backtest_id}": {
         parameters: {
             query?: never;
@@ -612,6 +636,113 @@ export interface paths {
         get: operations["get_simulation_api_prop_firm_simulations__sim_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/replay/{symbol}/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Replay
+         * @description Return 1m bars for `symbol` on `date` + optional run entries.
+         *
+         *     `date` is the trading day (UTC, inclusive). The bar window is
+         *     `[date 00:00, date+1 00:00)` — same convention as `read_bars`.
+         */
+        get: operations["get_replay_api_replay__symbol___date__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risk-profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Profiles */
+        get: operations["list_profiles_api_risk_profiles_get"];
+        put?: never;
+        /** Create Profile */
+        post: operations["create_profile_api_risk_profiles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risk-profiles/statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Statuses
+         * @description Vocabulary endpoint — same pattern as /strategies/stages.
+         */
+        get: operations["list_statuses_api_risk_profiles_statuses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risk-profiles/{profile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Profile */
+        get: operations["get_profile_api_risk_profiles__profile_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Profile */
+        delete: operations["delete_profile_api_risk_profiles__profile_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Profile
+         * @description PATCH applies only the fields the caller actually sent.
+         */
+        patch: operations["update_profile_api_risk_profiles__profile_id__patch"];
+        trace?: never;
+    };
+    "/api/risk-profiles/{profile_id}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Evaluate Profile Endpoint
+         * @description Walk a run's trades through the profile and report violations.
+         *
+         *     `run_id` is a query parameter so this is a simple POST without a
+         *     body (no fields needed). 404 when either the profile or run is
+         *     missing.
+         */
+        post: operations["evaluate_profile_endpoint_api_risk_profiles__profile_id__evaluate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1804,6 +1935,196 @@ export interface components {
             total_trades: number;
             worst_day: components["schemas"]["PropFirmDayRow"] | null;
         };
+        /**
+         * ReplayBar
+         * @description One OHLCV bar in the replay timeline. ts is ISO-8601 UTC.
+         */
+        ReplayBar: {
+            /** Close */
+            close: number;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Open */
+            open: number;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Volume */
+            volume: number;
+        };
+        /**
+         * ReplayEntry
+         * @description One entry/exit pair from a backtest run, anchored to the
+         *     corresponding bars on the timeline.
+         *
+         *     `entry_ts` and `exit_ts` are timestamps the chart can use to draw
+         *     markers at the right candle. `pnl` is in dollars, `r_multiple` if
+         *     available; both are nullable because some imports leave them blank.
+         */
+        ReplayEntry: {
+            /** Entry Price */
+            entry_price: number;
+            /**
+             * Entry Ts
+             * Format: date-time
+             */
+            entry_ts: string;
+            /** Exit Price */
+            exit_price: number | null;
+            /** Exit Reason */
+            exit_reason: string | null;
+            /** Exit Ts */
+            exit_ts: string | null;
+            /** Pnl */
+            pnl: number | null;
+            /** R Multiple */
+            r_multiple: number | null;
+            /** Side */
+            side: string;
+            /** Stop Price */
+            stop_price: number | null;
+            /** Target Price */
+            target_price: number | null;
+            /** Trade Id */
+            trade_id: number;
+        };
+        /**
+         * ReplayPayload
+         * @description Full payload for one (symbol, date) replay request.
+         */
+        ReplayPayload: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Bars */
+            bars?: components["schemas"]["ReplayBar"][];
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Entries */
+            entries?: components["schemas"]["ReplayEntry"][];
+            /** Symbol */
+            symbol: string;
+        };
+        /**
+         * RiskEvaluationRead
+         * @description Result of applying a profile to a backtest run.
+         */
+        RiskEvaluationRead: {
+            /** Profile Id */
+            profile_id: number;
+            /** Run Id */
+            run_id: number;
+            /** Total Trades Evaluated */
+            total_trades_evaluated: number;
+            /** Violations */
+            violations: components["schemas"]["RiskViolation"][];
+        };
+        /**
+         * RiskProfileCreate
+         * @description POST /risk-profiles body.
+         */
+        RiskProfileCreate: {
+            /** Allowed Hours */
+            allowed_hours?: number[] | null;
+            /** Max Consecutive Losses */
+            max_consecutive_losses?: number | null;
+            /** Max Daily Loss R */
+            max_daily_loss_r?: number | null;
+            /** Max Drawdown R */
+            max_drawdown_r?: number | null;
+            /** Max Position Size */
+            max_position_size?: number | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Status
+             * @default active
+             */
+            status: string;
+            /** Strategy Params */
+            strategy_params?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * RiskProfileRead
+         * @description Profile as returned to the client.
+         *
+         *     `allowed_hours` is parsed back from `RiskProfile.allowed_hours_json`
+         *     in the API endpoint before serialization. `strategy_params` is the
+         *     dict of default strategy params this profile prefills on the
+         *     Run-a-Backtest form (None = no opinion).
+         */
+        RiskProfileRead: {
+            /** Allowed Hours */
+            allowed_hours: number[] | null;
+            /** Created At */
+            created_at: unknown;
+            /** Id */
+            id: number;
+            /** Max Consecutive Losses */
+            max_consecutive_losses: number | null;
+            /** Max Daily Loss R */
+            max_daily_loss_r: number | null;
+            /** Max Drawdown R */
+            max_drawdown_r: number | null;
+            /** Max Position Size */
+            max_position_size: number | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes: string | null;
+            /** Status */
+            status: string;
+            /** Strategy Params */
+            strategy_params?: {
+                [key: string]: unknown;
+            } | null;
+            /** Updated At */
+            updated_at: unknown;
+        };
+        /**
+         * RiskProfileStatusesRead
+         * @description Vocabulary endpoint payload — mirrors STRATEGY_STAGES exposure.
+         */
+        RiskProfileStatusesRead: {
+            /** Statuses */
+            statuses: string[];
+        };
+        /**
+         * RiskProfileUpdate
+         * @description PATCH body — fields are optional; endpoint applies only those set.
+         */
+        RiskProfileUpdate: {
+            /** Allowed Hours */
+            allowed_hours?: number[] | null;
+            /** Max Consecutive Losses */
+            max_consecutive_losses?: number | null;
+            /** Max Daily Loss R */
+            max_daily_loss_r?: number | null;
+            /** Max Drawdown R */
+            max_drawdown_r?: number | null;
+            /** Max Position Size */
+            max_position_size?: number | null;
+            /** Name */
+            name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Strategy Params */
+            strategy_params?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** RiskSweepRow */
         RiskSweepRow: {
             /** Average Dd Usage Percent */
@@ -1822,6 +2143,20 @@ export interface components {
             payout_rate: number;
             /** Risk Per Trade */
             risk_per_trade: number;
+        };
+        /**
+         * RiskViolation
+         * @description One cap-crossing recorded during evaluation.
+         */
+        RiskViolation: {
+            /** At Trade Id */
+            at_trade_id: number;
+            /** At Trade Index */
+            at_trade_index: number;
+            /** Kind */
+            kind: string;
+            /** Message */
+            message: string;
         };
         /** RunMetricsRead */
         RunMetricsRead: {
@@ -2232,6 +2567,61 @@ export interface components {
             /** Tags */
             tags?: string[] | null;
         };
+        /**
+         * StrategyDefinitionRead
+         * @description One runnable strategy + the metadata the form needs to render.
+         */
+        StrategyDefinitionRead: {
+            /** Default Params */
+            default_params?: {
+                [key: string]: unknown;
+            };
+            /** Description */
+            description?: string | null;
+            /** Label */
+            label: string;
+            /** Name */
+            name: string;
+            param_schema: components["schemas"]["StrategyParamSchema"];
+        };
+        /**
+         * StrategyParamFieldSchema
+         * @description One field of a strategy's params, in a frontend-friendly shape.
+         *
+         *     `type` mirrors JSON Schema's primitive types we actually use today;
+         *     `label` is the form-row title; `min`/`max`/`step` are optional UI
+         *     hints for number inputs; `description` is a one-line hint shown
+         *     under the field. `enum` lets a strategy expose dropdown choices in
+         *     the future (unused so far).
+         */
+        StrategyParamFieldSchema: {
+            /** Description */
+            description?: string | null;
+            /** Enum */
+            enum?: unknown[] | null;
+            /** Label */
+            label: string;
+            /** Max */
+            max?: number | null;
+            /** Min */
+            min?: number | null;
+            /** Step */
+            step?: number | null;
+            /** Type */
+            type: string;
+        };
+        /** StrategyParamSchema */
+        StrategyParamSchema: {
+            /** Properties */
+            properties?: {
+                [key: string]: components["schemas"]["StrategyParamFieldSchema"];
+            };
+            /**
+             * Type
+             * @default object
+             */
+            type: string;
+        };
         /** StrategyRead */
         StrategyRead: {
             /**
@@ -2458,6 +2848,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runnable_strategies_api_backtests_strategies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyDefinitionRead"][];
                 };
             };
         };
@@ -3563,6 +3973,241 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SimulationRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_replay_api_replay__symbol___date__get: {
+        parameters: {
+            query?: {
+                backtest_run_id?: number | null;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplayPayload"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_profiles_api_risk_profiles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskProfileRead"][];
+                };
+            };
+        };
+    };
+    create_profile_api_risk_profiles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskProfileCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_statuses_api_risk_profiles_statuses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskProfileStatusesRead"];
+                };
+            };
+        };
+    };
+    get_profile_api_risk_profiles__profile_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_profile_api_risk_profiles__profile_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_profile_api_risk_profiles__profile_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluate_profile_endpoint_api_risk_profiles__profile_id__evaluate_post: {
+        parameters: {
+            query: {
+                run_id: number;
+            };
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskEvaluationRead"];
                 };
             };
             /** @description Validation Error */

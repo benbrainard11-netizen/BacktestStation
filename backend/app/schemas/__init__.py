@@ -32,6 +32,11 @@ from app.schemas.prop_simulator import (
     SimulationRunListRow,
     SimulationRunRequest,
 )
+from app.schemas.strategy_registry import (
+    StrategyDefinitionRead,
+    StrategyParamFieldSchema,
+    StrategyParamSchema,
+)
 from app.schemas.results import (
     BacktestRunRead,
     BacktestRunRequest,
@@ -49,6 +54,20 @@ from app.schemas.results import (
     StrategyVersionRead,
     StrategyVersionUpdate,
     TradeRead,
+)
+from app.schemas.replay import (
+    ReplayBar,
+    ReplayEntry,
+    ReplayPayload,
+)
+from app.schemas.risk_profile import (
+    RISK_PROFILE_STATUSES,
+    RiskEvaluationRead,
+    RiskProfileCreate,
+    RiskProfileRead,
+    RiskProfileStatusesRead,
+    RiskProfileUpdate,
+    RiskViolation,
 )
 
 __all__ = [
@@ -84,6 +103,16 @@ __all__ = [
     "PropFirmDayRow",
     "PropFirmPresetRead",
     "PropFirmResultRead",
+    "RISK_PROFILE_STATUSES",
+    "ReplayBar",
+    "ReplayEntry",
+    "ReplayPayload",
+    "RiskEvaluationRead",
+    "RiskProfileCreate",
+    "RiskProfileRead",
+    "RiskProfileStatusesRead",
+    "RiskProfileUpdate",
+    "RiskViolation",
     "SimulationRunDetail",
     "SimulationRunListRow",
     "SimulationRunRequest",
@@ -92,6 +121,9 @@ __all__ = [
     "StrategyRead",
     "StrategyStagesRead",
     "StrategyUpdate",
+    "StrategyDefinitionRead",
+    "StrategyParamFieldSchema",
+    "StrategyParamSchema",
     "StrategyVersionBaselineUpdate",
     "StrategyVersionCreate",
     "StrategyVersionRead",

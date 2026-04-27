@@ -2785,6 +2785,590 @@
         "title": "PropFirmResultRead",
         "type": "object"
       },
+      "ReplayBar": {
+        "description": "One OHLCV bar in the replay timeline. ts is ISO-8601 UTC.",
+        "properties": {
+          "close": {
+            "title": "Close",
+            "type": "number"
+          },
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "open": {
+            "title": "Open",
+            "type": "number"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          },
+          "volume": {
+            "title": "Volume",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ts",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "title": "ReplayBar",
+        "type": "object"
+      },
+      "ReplayEntry": {
+        "description": "One entry/exit pair from a backtest run, anchored to the\ncorresponding bars on the timeline.\n\n`entry_ts` and `exit_ts` are timestamps the chart can use to draw\nmarkers at the right candle. `pnl` is in dollars, `r_multiple` if\navailable; both are nullable because some imports leave them blank.",
+        "properties": {
+          "entry_price": {
+            "title": "Entry Price",
+            "type": "number"
+          },
+          "entry_ts": {
+            "format": "date-time",
+            "title": "Entry Ts",
+            "type": "string"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "exit_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Reason"
+          },
+          "exit_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Ts"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl"
+          },
+          "r_multiple": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R Multiple"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "stop_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Price"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price"
+          },
+          "trade_id": {
+            "title": "Trade Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "trade_id",
+          "entry_ts",
+          "exit_ts",
+          "side",
+          "entry_price",
+          "exit_price",
+          "stop_price",
+          "target_price",
+          "pnl",
+          "r_multiple",
+          "exit_reason"
+        ],
+        "title": "ReplayEntry",
+        "type": "object"
+      },
+      "ReplayPayload": {
+        "description": "Full payload for one (symbol, date) replay request.",
+        "properties": {
+          "backtest_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backtest Run Id"
+          },
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayBar"
+            },
+            "title": "Bars",
+            "type": "array"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "date"
+        ],
+        "title": "ReplayPayload",
+        "type": "object"
+      },
+      "RiskEvaluationRead": {
+        "description": "Result of applying a profile to a backtest run.",
+        "properties": {
+          "profile_id": {
+            "title": "Profile Id",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "integer"
+          },
+          "total_trades_evaluated": {
+            "title": "Total Trades Evaluated",
+            "type": "integer"
+          },
+          "violations": {
+            "items": {
+              "$ref": "#/components/schemas/RiskViolation"
+            },
+            "title": "Violations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "profile_id",
+          "run_id",
+          "total_trades_evaluated",
+          "violations"
+        ],
+        "title": "RiskEvaluationRead",
+        "type": "object"
+      },
+      "RiskProfileCreate": {
+        "additionalProperties": false,
+        "description": "POST /risk-profiles body.",
+        "properties": {
+          "allowed_hours": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Hours"
+          },
+          "max_consecutive_losses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Consecutive Losses"
+          },
+          "max_daily_loss_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Daily Loss R"
+          },
+          "max_drawdown_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown R"
+          },
+          "max_position_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Size"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "default": "active",
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Params"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RiskProfileCreate",
+        "type": "object"
+      },
+      "RiskProfileRead": {
+        "description": "Profile as returned to the client.\n\n`allowed_hours` is parsed back from `RiskProfile.allowed_hours_json`\nin the API endpoint before serialization. `strategy_params` is the\ndict of default strategy params this profile prefills on the\nRun-a-Backtest form (None = no opinion).",
+        "properties": {
+          "allowed_hours": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Hours"
+          },
+          "created_at": {
+            "title": "Created At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "max_consecutive_losses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Consecutive Losses"
+          },
+          "max_daily_loss_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Daily Loss R"
+          },
+          "max_drawdown_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown R"
+          },
+          "max_position_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Size"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Params"
+          },
+          "updated_at": {
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "max_daily_loss_r",
+          "max_drawdown_r",
+          "max_consecutive_losses",
+          "max_position_size",
+          "allowed_hours",
+          "notes",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RiskProfileRead",
+        "type": "object"
+      },
+      "RiskProfileStatusesRead": {
+        "description": "Vocabulary endpoint payload \u2014 mirrors STRATEGY_STAGES exposure.",
+        "properties": {
+          "statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Statuses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "statuses"
+        ],
+        "title": "RiskProfileStatusesRead",
+        "type": "object"
+      },
+      "RiskProfileUpdate": {
+        "additionalProperties": false,
+        "description": "PATCH body \u2014 fields are optional; endpoint applies only those set.",
+        "properties": {
+          "allowed_hours": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Hours"
+          },
+          "max_consecutive_losses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Consecutive Losses"
+          },
+          "max_daily_loss_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Daily Loss R"
+          },
+          "max_drawdown_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown R"
+          },
+          "max_position_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Size"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "strategy_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Params"
+          }
+        },
+        "title": "RiskProfileUpdate",
+        "type": "object"
+      },
       "RiskSweepRow": {
         "properties": {
           "average_dd_usage_percent": {
@@ -2849,6 +3433,35 @@
           "main_failure_reason"
         ],
         "title": "RiskSweepRow",
+        "type": "object"
+      },
+      "RiskViolation": {
+        "description": "One cap-crossing recorded during evaluation.",
+        "properties": {
+          "at_trade_id": {
+            "title": "At Trade Id",
+            "type": "integer"
+          },
+          "at_trade_index": {
+            "title": "At Trade Index",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "at_trade_id",
+          "at_trade_index",
+          "message"
+        ],
+        "title": "RiskViolation",
         "type": "object"
       },
       "RunMetricsRead": {
@@ -4084,6 +4697,147 @@
         "title": "StrategyCreate",
         "type": "object"
       },
+      "StrategyDefinitionRead": {
+        "description": "One runnable strategy + the metadata the form needs to render.",
+        "properties": {
+          "default_params": {
+            "additionalProperties": true,
+            "title": "Default Params",
+            "type": "object"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "param_schema": {
+            "$ref": "#/components/schemas/StrategyParamSchema"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "param_schema"
+        ],
+        "title": "StrategyDefinitionRead",
+        "type": "object"
+      },
+      "StrategyParamFieldSchema": {
+        "description": "One field of a strategy's params, in a frontend-friendly shape.\n\n`type` mirrors JSON Schema's primitive types we actually use today;\n`label` is the form-row title; `min`/`max`/`step` are optional UI\nhints for number inputs; `description` is a one-line hint shown\nunder the field. `enum` lets a strategy expose dropdown choices in\nthe future (unused so far).",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enum": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "step": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "label"
+        ],
+        "title": "StrategyParamFieldSchema",
+        "type": "object"
+      },
+      "StrategyParamSchema": {
+        "properties": {
+          "properties": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StrategyParamFieldSchema"
+            },
+            "title": "Properties",
+            "type": "object"
+          },
+          "type": {
+            "default": "object",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "StrategyParamSchema",
+        "type": "object"
+      },
       "StrategyRead": {
         "properties": {
           "created_at": {
@@ -4723,6 +5477,32 @@
           }
         },
         "summary": "Run Engine Backtest",
+        "tags": [
+          "backtests"
+        ]
+      }
+    },
+    "/api/backtests/strategies": {
+      "get": {
+        "description": "Strategies the engine resolver knows how to run, with their\nparameter schemas (frontend-friendly JSON Schema-ish) so the\nRun-a-Backtest form can render typed fields per strategy. The\nlist is hand-maintained in `app.services.strategy_registry` to\nmirror `runner._resolve_strategy`.",
+        "operationId": "list_runnable_strategies_api_backtests_strategies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StrategyDefinitionRead"
+                  },
+                  "title": "Response List Runnable Strategies Api Backtests Strategies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Runnable Strategies",
         "tags": [
           "backtests"
         ]
@@ -6370,6 +7150,339 @@
         "summary": "Get Simulation",
         "tags": [
           "prop-firm"
+        ]
+      }
+    },
+    "/api/replay/{symbol}/{date}": {
+      "get": {
+        "description": "Return 1m bars for `symbol` on `date` + optional run entries.\n\n`date` is the trading day (UTC, inclusive). The bar window is\n`[date 00:00, date+1 00:00)` \u2014 same convention as `read_bars`.",
+        "operationId": "get_replay_api_replay__symbol___date__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "title": "Symbol",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "backtest_run_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Backtest Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayPayload"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Replay",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/risk-profiles": {
+      "get": {
+        "operationId": "list_profiles_api_risk_profiles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskProfileRead"
+                  },
+                  "title": "Response List Profiles Api Risk Profiles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Profiles",
+        "tags": [
+          "risk_profiles"
+        ]
+      },
+      "post": {
+        "operationId": "create_profile_api_risk_profiles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskProfileCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      }
+    },
+    "/api/risk-profiles/statuses": {
+      "get": {
+        "description": "Vocabulary endpoint \u2014 same pattern as /strategies/stages.",
+        "operationId": "list_statuses_api_risk_profiles_statuses_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileStatusesRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Statuses",
+        "tags": [
+          "risk_profiles"
+        ]
+      }
+    },
+    "/api/risk-profiles/{profile_id}": {
+      "delete": {
+        "operationId": "delete_profile_api_risk_profiles__profile_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      },
+      "get": {
+        "operationId": "get_profile_api_risk_profiles__profile_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      },
+      "patch": {
+        "description": "PATCH applies only the fields the caller actually sent.",
+        "operationId": "update_profile_api_risk_profiles__profile_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      }
+    },
+    "/api/risk-profiles/{profile_id}/evaluate": {
+      "post": {
+        "description": "Walk a run's trades through the profile and report violations.\n\n`run_id` is a query parameter so this is a simple POST without a\nbody (no fields needed). 404 when either the profile or run is\nmissing.",
+        "operationId": "evaluate_profile_endpoint_api_risk_profiles__profile_id__evaluate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskEvaluationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluate Profile Endpoint",
+        "tags": [
+          "risk_profiles"
         ]
       }
     },

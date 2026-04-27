@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
@@ -10,10 +10,9 @@ import { cn } from "@/lib/utils";
 type Strategy = components["schemas"]["StrategyRead"];
 type StrategyVersion = components["schemas"]["StrategyVersionRead"];
 type BacktestRunRead = components["schemas"]["BacktestRunRead"];
-
-// Engine resolver knows just one strategy today. As more land, surface
-// them here (or fetch from the backend if it ever exposes the registry).
-const ENGINE_STRATEGIES = ["moving_average_crossover"] as const;
+type StrategyDefinition = components["schemas"]["StrategyDefinitionRead"];
+type ParamFieldSchema = components["schemas"]["StrategyParamFieldSchema"];
+type RiskProfile = components["schemas"]["RiskProfileRead"];
 
 type SubmitState =
   | { kind: "idle" }
@@ -22,30 +21,38 @@ type SubmitState =
 
 interface Props {
   strategies: Strategy[];
+  definitions: StrategyDefinition[];
+  riskProfiles?: RiskProfile[];
 }
 
-export default function RunBacktestForm({ strategies }: Props) {
+export default function RunBacktestForm({
+  strategies,
+  definitions,
+  riskProfiles = [],
+}: Props) {
   const router = useRouter();
 
   const [strategyName, setStrategyName] = useState<string>(
-    ENGINE_STRATEGIES[0],
+    definitions[0]?.name ?? "",
   );
   const [versionId, setVersionId] = useState<number | null>(
     pickFirstVersionId(strategies),
   );
   const [symbol, setSymbol] = useState("NQ.c.0");
-  const [auxSymbolsRaw, setAuxSymbolsRaw] = useState("");
+  const [auxSymbolsRaw, setAuxSymbolsRaw] = useState("ES.c.0, YM.c.0");
   const [start, setStart] = useState(defaultStart());
   const [end, setEnd] = useState(defaultEnd());
   const [qty, setQty] = useState("1");
   const [initialEquity, setInitialEquity] = useState("25000");
-  const [paramsRaw, setParamsRaw] = useState(
-    JSON.stringify(
-      { fast_period: 5, slow_period: 20, stop_ticks: 8, target_ticks: 16 },
-      null,
-      2,
-    ),
-  );
+  const [params, setParams] = useState<Record<string, unknown>>({});
+  // Toggle so power users can drop down to raw JSON when needed; the
+  // typed fields above still drive the request body unless this is set.
+  const [advancedJson, setAdvancedJson] = useState<string | null>(null);
+  // Optional risk-profile selection. When set, picking a profile
+  // prefills the typed param fields (with the profile's strategy_params
+  // dict). The profile id ride-along to the backend isn't wired today —
+  // post-run rule evaluation is still a separate, explicit POST.
+  const [riskProfileId, setRiskProfileId] = useState<string>("");
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
 
   const versions = useMemo(() => {
@@ -59,6 +66,45 @@ export default function RunBacktestForm({ strategies }: Props) {
     return flat;
   }, [strategies]);
 
+  const currentDef = useMemo(
+    () => definitions.find((d) => d.name === strategyName) ?? null,
+    [definitions, strategyName],
+  );
+
+  // When the strategy changes, reset params to the new strategy's defaults
+  // and drop the advanced-JSON override (if any). Also clear any active
+  // risk profile (its prefilled keys may not match the new strategy).
+  useEffect(() => {
+    if (currentDef) {
+      setParams({ ...(currentDef.default_params as Record<string, unknown>) });
+      setAdvancedJson(null);
+      setRiskProfileId("");
+    }
+  }, [currentDef]);
+
+  // Picking a risk profile overlays its strategy_params on top of the
+  // current strategy's defaults. Unknown keys are still sent (backend
+  // ignores extras safely); known keys override defaults.
+  function applyRiskProfile(profileIdStr: string) {
+    setRiskProfileId(profileIdStr);
+    if (profileIdStr === "") {
+      // Reset to defaults.
+      if (currentDef) {
+        setParams({
+          ...(currentDef.default_params as Record<string, unknown>),
+        });
+      }
+      return;
+    }
+    const profile = riskProfiles.find((p) => String(p.id) === profileIdStr);
+    if (!profile || !profile.strategy_params) return;
+    setAdvancedJson(null);
+    setParams((prev) => ({
+      ...prev,
+      ...(profile.strategy_params as Record<string, unknown>),
+    }));
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (versionId === null) {
@@ -69,10 +115,10 @@ export default function RunBacktestForm({ strategies }: Props) {
       return;
     }
 
-    let parsedParams: Record<string, unknown> = {};
-    if (paramsRaw.trim().length > 0) {
+    let parsedParams: Record<string, unknown>;
+    if (advancedJson !== null) {
       try {
-        parsedParams = JSON.parse(paramsRaw) as Record<string, unknown>;
+        parsedParams = JSON.parse(advancedJson) as Record<string, unknown>;
       } catch (err) {
         setState({
           kind: "error",
@@ -82,6 +128,8 @@ export default function RunBacktestForm({ strategies }: Props) {
         });
         return;
       }
+    } else {
+      parsedParams = params;
     }
 
     const auxSymbols = auxSymbolsRaw
@@ -130,6 +178,10 @@ export default function RunBacktestForm({ strategies }: Props) {
   const canSubmit =
     state.kind !== "running" && versionId !== null && symbol.trim().length > 0;
 
+  const fields = currentDef
+    ? Object.entries(currentDef.param_schema.properties ?? {})
+    : [];
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -140,11 +192,16 @@ export default function RunBacktestForm({ strategies }: Props) {
           label="Strategy (engine resolver)"
           value={strategyName}
           onChange={setStrategyName}
-          options={ENGINE_STRATEGIES.map((name) => ({
-            value: name,
-            label: name,
+          options={definitions.map((d) => ({
+            value: d.name,
+            label: d.label,
           }))}
         />
+        {currentDef?.description ? (
+          <p className="font-mono text-[11px] text-zinc-500">
+            {currentDef.description}
+          </p>
+        ) : null}
         <SelectField
           label="Strategy version (DB)"
           value={versionId !== null ? String(versionId) : ""}
@@ -198,14 +255,77 @@ export default function RunBacktestForm({ strategies }: Props) {
         </div>
       </Section>
 
-      <Section title="Strategy params (JSON)">
-        <textarea
-          value={paramsRaw}
-          onChange={(e) => setParamsRaw(e.target.value)}
-          rows={6}
-          spellCheck={false}
-          className="border border-zinc-800 bg-zinc-950 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
-        />
+      {riskProfiles.length > 0 ? (
+        <Section title="Risk profile (optional)">
+          <SelectField
+            label="Prefill strategy params from a profile"
+            value={riskProfileId}
+            onChange={applyRiskProfile}
+            options={[
+              { value: "", label: "— none (use strategy defaults) —" },
+              ...riskProfiles
+                .filter((p) => p.status === "active")
+                .map((p) => ({
+                  value: String(p.id),
+                  label: p.strategy_params
+                    ? `${p.name} — ${Object.keys(p.strategy_params).length} param(s)`
+                    : `${p.name} — rule caps only`,
+                })),
+            ]}
+          />
+        </Section>
+      ) : null}
+
+      <Section title="Strategy params">
+        {advancedJson === null ? (
+          <>
+            {fields.length === 0 ? (
+              <p className="font-mono text-[11px] text-zinc-500">
+                This strategy has no configurable params.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {fields.map(([key, schema]) => (
+                  <ParamField
+                    key={key}
+                    name={key}
+                    schema={schema as ParamFieldSchema}
+                    value={params[key]}
+                    onChange={(next) =>
+                      setParams((prev) => ({ ...prev, [key]: next }))
+                    }
+                  />
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() =>
+                setAdvancedJson(JSON.stringify(params, null, 2))
+              }
+              className="self-start font-mono text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300"
+            >
+              Switch to raw JSON →
+            </button>
+          </>
+        ) : (
+          <>
+            <textarea
+              value={advancedJson}
+              onChange={(e) => setAdvancedJson(e.target.value)}
+              rows={10}
+              spellCheck={false}
+              className="border border-zinc-800 bg-zinc-950 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setAdvancedJson(null)}
+              className="self-start font-mono text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300"
+            >
+              ← Back to typed fields
+            </button>
+          </>
+        )}
       </Section>
 
       <div className="flex items-center gap-4">
@@ -267,6 +387,62 @@ function Section({
       </p>
       <div className="flex flex-col gap-3">{children}</div>
     </section>
+  );
+}
+
+function ParamField({
+  name,
+  schema,
+  value,
+  onChange,
+}: {
+  name: string;
+  schema: ParamFieldSchema;
+  value: unknown;
+  onChange: (next: unknown) => void;
+}) {
+  const stringValue = value === undefined || value === null ? "" : String(value);
+  return (
+    <label className="flex flex-col gap-1 text-xs">
+      <span className="font-mono uppercase tracking-widest text-zinc-500">
+        {schema.label || name}
+      </span>
+      <input
+        type={
+          schema.type === "number" || schema.type === "integer"
+            ? "number"
+            : "text"
+        }
+        value={stringValue}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "") {
+            onChange("");
+            return;
+          }
+          if (schema.type === "integer") {
+            const parsed = Number.parseInt(raw, 10);
+            onChange(Number.isFinite(parsed) ? parsed : raw);
+            return;
+          }
+          if (schema.type === "number") {
+            const parsed = Number.parseFloat(raw);
+            onChange(Number.isFinite(parsed) ? parsed : raw);
+            return;
+          }
+          onChange(raw);
+        }}
+        min={schema.min ?? undefined}
+        max={schema.max ?? undefined}
+        step={schema.step ?? undefined}
+        className="border border-zinc-800 bg-zinc-950 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
+      />
+      {schema.description ? (
+        <span className="font-mono text-[10px] text-zinc-600">
+          {schema.description}
+        </span>
+      ) : null}
+    </label>
   );
 }
 
