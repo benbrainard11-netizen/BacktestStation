@@ -129,23 +129,23 @@ D:/data/
 ├── raw/
 │   ├── live/                  GLBX.MDP3-tbbo-{YYYY-MM-DD}.dbn        (live ingester)
 │   └── historical/            GLBX.MDP3-{schema}-{YYYY-MM-DD}.dbn    (historical pulls)
-├── processed/
+├── raw/databento/             # parquet mirror of raw/ DBN files
 │   ├── tbbo/symbol={X}/date={Y}/part-000.parquet
-│   ├── mbp-1/symbol={X}/date={Y}/part-000.parquet
+│   └── mbp-1/symbol={X}/date={Y}/part-000.parquet
+├── processed/
 │   └── bars/timeframe=1m/symbol={X}/date={Y}/part-000.parquet
 ├── manifests/                 per-file kv-metadata + integrity hashes
 ├── heartbeat/live_ingester.json
 └── logs/
 ```
 
-What's actually in the warehouse as of **2026-04-27** (audited end-to-end on ben-247, not aspirational):
+What's actually in the warehouse as of 2026-04-27 (audited on ben-247 — the empirical state, not aspirational):
 
-- **TBBO (live, parquet)** — 1 trading day so far: 2026-04-27, 4 symbols (NQM6 ~244k rows, ESM6 ~257k rows, RTYM6 ~53k rows, YMM6 ~37k rows; total ~592k rows). Lives at `raw/databento/tbbo/`.
-- **TBBO (live, raw DBN)** — 4 daily files in `raw/live/`, but only 4/27 has market data; 4/24–4/26 are weekend / ingester-respawn-boundary empty.
-- **1m bars (derived)** — 1 trading day, 4 symbols, ~1,050 bars/symbol, at `processed/bars/timeframe=1m/`.
-- **OHLCV-1m, OHLCV-1s, historical MBP-1** — none. The historical puller (`BacktestStationHistorical`) is scheduled to fire on 2026-05-01 02:00 local for April 2026 MBP-1; if a manual `Start-ScheduledTask BacktestStationHistorical` runs first, March 2026 lands instead.
-- **`processed/tbbo/`, `processed/mbp-1/`** — do not currently exist. Live TBBO parquet lives at `raw/databento/tbbo/` instead; layout may be reconciled once historical pulls produce comparable parquet under the same root.
-- **Manifests** — `manifests/ingest_runs/2026-04-27_tbbo_manifest.json` is the first.
+- **Live TBBO**: 4 days of `GLBX.MDP3-tbbo-{date}.dbn` files in `raw/live/` (2026-04-24 → 2026-04-27). Only 2026-04-27 contains real market data — 592k MBP1Msg records / 9 MB parquet across 4 symbols (NQ/ES/YM/RTY M6). The 4/24-4/26 files contain only Databento control messages (Saturday + ingester respawn boundary before Sunday's 6 PM ET CME open).
+- **Historical MBP-1**: 2026-04-27 backfill brought all 27 trading days of March 2026 onto disk. 63 DBN files / 13.2 GB raw across NQ/ES/YM/RTY at `raw/historical/`. Mirror catchup in progress to `raw/databento/mbp-1/`. Going forward: monthly fires via `BacktestStationHistorical` scheduled task on day 1 at 02:00 local.
+- **OHLCV-1m**: derived bars in `processed/bars/timeframe=1m/`. As of 2026-04-27, only 2026-04-27 live-source partitions exist (4 symbols × ~1,050 1m bars each = 4,213 bars total). Prior live dates absent because the source DBN files were empty of market data; historical-derived 1m bars land as the mirror catchup completes.
+- **OHLCV-1s**: not collected. Defer until needed.
+- **Universe**: actively NQ/ES/YM/RTY only. The four CME equity-index futures the live bot watches. The `28-symbol universe` referenced in some older docs is aspirational and was never on disk; we'll expand by adding subscriptions to the live ingester + corresponding historical pulls when the strategies that need them get scoped.
 
 > **Doc lifecycle note (2026-04-27):** prior versions of this section claimed "12 months TBBO across the full 28-symbol universe" was already in the warehouse. That was never true — the live ingester only came online 2026-04-24 and the parquet pipeline produced its first partitions on 2026-04-27. When a future audit shows different contents, **edit this section to match the audit**, not to project forward. The Live-pipeline panel on `/monitor` is the live-truth view; this doc is a periodic snapshot.
 
