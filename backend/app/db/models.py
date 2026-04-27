@@ -358,3 +358,37 @@ class Note(Base):
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+
+
+class RiskProfile(Base):
+    """A named bundle of risk caps applied retroactively to a run.
+
+    Lets you ask "if I'd been running profile X (max_daily_loss_r=5,
+    max_drawdown_r=20, allowed_hours [13,14,15]), would strategy Y
+    have hit any cap on day Z?". Evaluation is computed by
+    `app.services.risk_evaluator.evaluate_profile`; profiles
+    themselves are pure metadata and can be freely created, archived,
+    and deleted without touching trade data.
+
+    Caps in R-multiples; None = no cap. allowed_hours_json is a JSON
+    list of ints (UTC hours of day) or null = any hour allowed.
+    """
+
+    __tablename__ = "risk_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    # "active" | "archived"
+    status: Mapped[str] = mapped_column(
+        String(20), default="active", server_default="active", index=True
+    )
+    max_daily_loss_r: Mapped[float | None] = mapped_column(Float)
+    max_drawdown_r: Mapped[float | None] = mapped_column(Float)
+    max_consecutive_losses: Mapped[int | None] = mapped_column(Integer)
+    max_position_size: Mapped[int | None] = mapped_column(Integer)
+    allowed_hours_json: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

@@ -55,6 +55,15 @@ from app.schemas.results import (
     StrategyVersionUpdate,
     TradeRead,
 )
+from app.schemas.risk_profile import (
+    RISK_PROFILE_STATUSES,
+    RiskEvaluationRead,
+    RiskProfileCreate,
+    RiskProfileRead,
+    RiskProfileStatusesRead,
+    RiskProfileUpdate,
+    RiskViolation,
+)
 
 __all__ = [
     "AutopsyConditionSlice",
@@ -89,6 +98,13 @@ __all__ = [
     "PropFirmDayRow",
     "PropFirmPresetRead",
     "PropFirmResultRead",
+    "RISK_PROFILE_STATUSES",
+    "RiskEvaluationRead",
+    "RiskProfileCreate",
+    "RiskProfileRead",
+    "RiskProfileStatusesRead",
+    "RiskProfileUpdate",
+    "RiskViolation",
     "SimulationRunDetail",
     "SimulationRunListRow",
     "SimulationRunRequest",

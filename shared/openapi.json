@@ -2785,6 +2785,354 @@
         "title": "PropFirmResultRead",
         "type": "object"
       },
+      "RiskEvaluationRead": {
+        "description": "Result of applying a profile to a backtest run.",
+        "properties": {
+          "profile_id": {
+            "title": "Profile Id",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "integer"
+          },
+          "total_trades_evaluated": {
+            "title": "Total Trades Evaluated",
+            "type": "integer"
+          },
+          "violations": {
+            "items": {
+              "$ref": "#/components/schemas/RiskViolation"
+            },
+            "title": "Violations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "profile_id",
+          "run_id",
+          "total_trades_evaluated",
+          "violations"
+        ],
+        "title": "RiskEvaluationRead",
+        "type": "object"
+      },
+      "RiskProfileCreate": {
+        "additionalProperties": false,
+        "description": "POST /risk-profiles body.",
+        "properties": {
+          "allowed_hours": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Hours"
+          },
+          "max_consecutive_losses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Consecutive Losses"
+          },
+          "max_daily_loss_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Daily Loss R"
+          },
+          "max_drawdown_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown R"
+          },
+          "max_position_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Size"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "default": "active",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RiskProfileCreate",
+        "type": "object"
+      },
+      "RiskProfileRead": {
+        "description": "Profile as returned to the client.\n\n`allowed_hours` is parsed back from `RiskProfile.allowed_hours_json`\nin the API endpoint before serialization.",
+        "properties": {
+          "allowed_hours": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Hours"
+          },
+          "created_at": {
+            "title": "Created At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "max_consecutive_losses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Consecutive Losses"
+          },
+          "max_daily_loss_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Daily Loss R"
+          },
+          "max_drawdown_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown R"
+          },
+          "max_position_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Size"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "max_daily_loss_r",
+          "max_drawdown_r",
+          "max_consecutive_losses",
+          "max_position_size",
+          "allowed_hours",
+          "notes",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RiskProfileRead",
+        "type": "object"
+      },
+      "RiskProfileStatusesRead": {
+        "description": "Vocabulary endpoint payload \u2014 mirrors STRATEGY_STAGES exposure.",
+        "properties": {
+          "statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Statuses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "statuses"
+        ],
+        "title": "RiskProfileStatusesRead",
+        "type": "object"
+      },
+      "RiskProfileUpdate": {
+        "additionalProperties": false,
+        "description": "PATCH body \u2014 fields are optional; endpoint applies only those set.",
+        "properties": {
+          "allowed_hours": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Hours"
+          },
+          "max_consecutive_losses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Consecutive Losses"
+          },
+          "max_daily_loss_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Daily Loss R"
+          },
+          "max_drawdown_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown R"
+          },
+          "max_position_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Size"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "RiskProfileUpdate",
+        "type": "object"
+      },
       "RiskSweepRow": {
         "properties": {
           "average_dd_usage_percent": {
@@ -2849,6 +3197,35 @@
           "main_failure_reason"
         ],
         "title": "RiskSweepRow",
+        "type": "object"
+      },
+      "RiskViolation": {
+        "description": "One cap-crossing recorded during evaluation.",
+        "properties": {
+          "at_trade_id": {
+            "title": "At Trade Id",
+            "type": "integer"
+          },
+          "at_trade_index": {
+            "title": "At Trade Index",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "at_trade_id",
+          "at_trade_index",
+          "message"
+        ],
+        "title": "RiskViolation",
         "type": "object"
       },
       "RunMetricsRead": {
@@ -6537,6 +6914,270 @@
         "summary": "Get Simulation",
         "tags": [
           "prop-firm"
+        ]
+      }
+    },
+    "/api/risk-profiles": {
+      "get": {
+        "operationId": "list_profiles_api_risk_profiles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskProfileRead"
+                  },
+                  "title": "Response List Profiles Api Risk Profiles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Profiles",
+        "tags": [
+          "risk_profiles"
+        ]
+      },
+      "post": {
+        "operationId": "create_profile_api_risk_profiles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskProfileCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      }
+    },
+    "/api/risk-profiles/statuses": {
+      "get": {
+        "description": "Vocabulary endpoint \u2014 same pattern as /strategies/stages.",
+        "operationId": "list_statuses_api_risk_profiles_statuses_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileStatusesRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Statuses",
+        "tags": [
+          "risk_profiles"
+        ]
+      }
+    },
+    "/api/risk-profiles/{profile_id}": {
+      "delete": {
+        "operationId": "delete_profile_api_risk_profiles__profile_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      },
+      "get": {
+        "operationId": "get_profile_api_risk_profiles__profile_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      },
+      "patch": {
+        "description": "PATCH applies only the fields the caller actually sent.",
+        "operationId": "update_profile_api_risk_profiles__profile_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Profile",
+        "tags": [
+          "risk_profiles"
+        ]
+      }
+    },
+    "/api/risk-profiles/{profile_id}/evaluate": {
+      "post": {
+        "description": "Walk a run's trades through the profile and report violations.\n\n`run_id` is a query parameter so this is a simple POST without a\nbody (no fields needed). 404 when either the profile or run is\nmissing.",
+        "operationId": "evaluate_profile_endpoint_api_risk_profiles__profile_id__evaluate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskEvaluationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluate Profile Endpoint",
+        "tags": [
+          "risk_profiles"
         ]
       }
     },
