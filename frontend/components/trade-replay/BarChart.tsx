@@ -253,10 +253,16 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
     // freezes at exit (the trade is closed).
     const rightEndSec = Math.min(cursorBarSec, exitBarSec);
 
-    const seg = (price: number): LineData[] => [
-      { time: startSec as Time, value: price },
-      { time: rightEndSec as Time, value: price },
-    ];
+    // lightweight-charts requires strictly ascending unique times.
+    // When cursor sits exactly on the entry bar, start === end —
+    // emit a single point so the dot still renders.
+    const seg = (price: number): LineData[] =>
+      rightEndSec > startSec
+        ? [
+            { time: startSec as Time, value: price },
+            { time: rightEndSec as Time, value: price },
+          ]
+        : [{ time: startSec as Time, value: price }];
 
     entrySeries.setData(seg(anchor.entry_price));
     if (

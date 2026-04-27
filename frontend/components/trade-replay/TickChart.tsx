@@ -286,10 +286,13 @@ export default function TickChart({ payload }: Props) {
         : (candles[candles.length - 1].time as number);
     const rightEndSec = Math.min(cursorSec, exitCandleSec);
 
-    const seg = (price: number): LineData[] => [
-      { time: entryCandleSec as Time, value: price },
-      { time: rightEndSec as Time, value: price },
-    ];
+    const seg = (price: number): LineData[] =>
+      rightEndSec > entryCandleSec
+        ? [
+            { time: entryCandleSec as Time, value: price },
+            { time: rightEndSec as Time, value: price },
+          ]
+        : [{ time: entryCandleSec as Time, value: price }];
 
     entrySeries.setData(seg(anchor.entry_price));
     if (
