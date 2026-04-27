@@ -57,6 +57,7 @@ def _to_read(profile: RiskProfile) -> RiskProfileRead:
         max_position_size=profile.max_position_size,
         allowed_hours=parse_allowed_hours(profile.allowed_hours_json),
         notes=profile.notes,
+        strategy_params=profile.strategy_params,
         created_at=profile.created_at,
         updated_at=profile.updated_at,
     )
@@ -101,6 +102,7 @@ def create_profile(
         max_position_size=payload.max_position_size,
         allowed_hours_json=serialize_allowed_hours(payload.allowed_hours),
         notes=payload.notes,
+        strategy_params=payload.strategy_params,
     )
     db.add(profile)
     try:
@@ -148,6 +150,8 @@ def update_profile(
         profile.allowed_hours_json = serialize_allowed_hours(payload.allowed_hours)
     if "notes" in touched:
         profile.notes = payload.notes
+    if "strategy_params" in touched:
+        profile.strategy_params = payload.strategy_params
     try:
         db.commit()
     except IntegrityError:

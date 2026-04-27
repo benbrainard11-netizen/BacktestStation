@@ -1950,13 +1950,19 @@ export interface components {
              * @default active
              */
             status: string;
+            /** Strategy Params */
+            strategy_params?: {
+                [key: string]: unknown;
+            } | null;
         };
         /**
          * RiskProfileRead
          * @description Profile as returned to the client.
          *
          *     `allowed_hours` is parsed back from `RiskProfile.allowed_hours_json`
-         *     in the API endpoint before serialization.
+         *     in the API endpoint before serialization. `strategy_params` is the
+         *     dict of default strategy params this profile prefills on the
+         *     Run-a-Backtest form (None = no opinion).
          */
         RiskProfileRead: {
             /** Allowed Hours */
@@ -1979,6 +1985,10 @@ export interface components {
             notes: string | null;
             /** Status */
             status: string;
+            /** Strategy Params */
+            strategy_params?: {
+                [key: string]: unknown;
+            } | null;
             /** Updated At */
             updated_at: unknown;
         };
@@ -2011,6 +2021,10 @@ export interface components {
             notes?: string | null;
             /** Status */
             status?: string | null;
+            /** Strategy Params */
+            strategy_params?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** RiskSweepRow */
         RiskSweepRow: {

@@ -388,6 +388,12 @@ class RiskProfile(Base):
     max_position_size: Mapped[int | None] = mapped_column(Integer)
     allowed_hours_json: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
+    # Default strategy params this profile prefills on the Run-a-Backtest
+    # form. Stored as a free-form dict so each strategy's keys can vary;
+    # only keys recognized by the chosen strategy are honored. None means
+    # "this profile has no opinion on strategy params; only enforces the
+    # post-run rule caps above."
+    strategy_params: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()

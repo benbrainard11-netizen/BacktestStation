@@ -130,6 +130,118 @@ def _run_data_migrations(engine: Engine) -> None:
                 )
             )
 
+        # 2026-04-26: RiskProfile.strategy_params added so a profile can
+        # prefill the Run-a-Backtest form with default strategy params.
+        # Nullable; existing rows have no opinion on params and only
+        # enforce the post-run caps already on the row.
+        if inspector.has_table("risk_profiles"):
+            rp_columns = {
+                c["name"] for c in inspector.get_columns("risk_profiles")
+            }
+            if "strategy_params" not in rp_columns:
+                connection.execute(
+                    text("ALTER TABLE risk_profiles ADD COLUMN strategy_params JSON")
+                )
+
+            # Seed default profiles once. Idempotent — INSERT only when
+            # no row with the same name already exists, so the user can
+            # rename / delete / edit them freely without us re-creating
+            # the originals on every app restart.
+            _seed_default_risk_profiles(connection)
+
+
+def _seed_default_risk_profiles(connection) -> None:
+    """Insert Conservative / Live-mirror / Aggressive defaults if missing.
+
+    Profiles are user-editable; we only seed names that don't already
+    exist. Caps are R-multiples (so size-independent); strategy_params
+    are fractal_amd-specific (the only strategy we trade today).
+    """
+    import json as _json
+    from sqlalchemy import text as _text
+
+    defaults = [
+        {
+            "name": "Conservative",
+            "status": "active",
+            "max_daily_loss_r": 2.0,
+            "max_drawdown_r": 5.0,
+            "max_consecutive_losses": 2,
+            "max_position_size": 1,
+            "allowed_hours_json": _json.dumps([13, 14, 15, 16, 17]),  # UTC
+            "notes": (
+                "Tight per-trade risk, single contract, RTH only. Caps a "
+                "drawdown at 5R."
+            ),
+            "strategy_params": _json.dumps(
+                {
+                    "max_risk_dollars": 300.0,
+                    "max_trades_per_day": 1,
+                    "target_r": 2.0,
+                }
+            ),
+        },
+        {
+            "name": "Live-mirror",
+            "status": "active",
+            "max_daily_loss_r": 4.0,
+            "max_drawdown_r": 10.0,
+            "max_consecutive_losses": 3,
+            "max_position_size": 1,
+            "allowed_hours_json": _json.dumps([13, 14, 15, 16, 17]),
+            "notes": (
+                "Mirrors the live bot's risk gates: $300 dollar cap, "
+                "max 2 trades/day, 3R target."
+            ),
+            "strategy_params": _json.dumps(
+                {
+                    "max_risk_dollars": 300.0,
+                    "max_trades_per_day": 2,
+                    "target_r": 3.0,
+                }
+            ),
+        },
+        {
+            "name": "Aggressive",
+            "status": "active",
+            "max_daily_loss_r": 8.0,
+            "max_drawdown_r": 20.0,
+            "max_consecutive_losses": 4,
+            "max_position_size": 1,
+            "allowed_hours_json": None,
+            "notes": (
+                "$500 dollar cap, up to 3 trades/day, 3R target. Wider "
+                "caps; intended for stress-testing the strategy."
+            ),
+            "strategy_params": _json.dumps(
+                {
+                    "max_risk_dollars": 500.0,
+                    "max_trades_per_day": 3,
+                    "target_r": 3.0,
+                }
+            ),
+        },
+    ]
+    for profile in defaults:
+        existing = connection.execute(
+            _text("SELECT id FROM risk_profiles WHERE name = :name"),
+            {"name": profile["name"]},
+        ).first()
+        if existing:
+            continue
+        connection.execute(
+            _text(
+                "INSERT INTO risk_profiles "
+                "(name, status, max_daily_loss_r, max_drawdown_r, "
+                " max_consecutive_losses, max_position_size, "
+                " allowed_hours_json, notes, strategy_params) "
+                "VALUES (:name, :status, :max_daily_loss_r, :max_drawdown_r, "
+                " :max_consecutive_losses, :max_position_size, "
+                " :allowed_hours_json, :notes, :strategy_params)"
+            ),
+            profile,
+        )
+
 
 # Lazily-initialised module globals for the running FastAPI app.
 _engine: Engine | None = None

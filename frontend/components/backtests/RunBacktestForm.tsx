@@ -12,6 +12,7 @@ type StrategyVersion = components["schemas"]["StrategyVersionRead"];
 type BacktestRunRead = components["schemas"]["BacktestRunRead"];
 type StrategyDefinition = components["schemas"]["StrategyDefinitionRead"];
 type ParamFieldSchema = components["schemas"]["StrategyParamFieldSchema"];
+type RiskProfile = components["schemas"]["RiskProfileRead"];
 
 type SubmitState =
   | { kind: "idle" }
@@ -21,9 +22,14 @@ type SubmitState =
 interface Props {
   strategies: Strategy[];
   definitions: StrategyDefinition[];
+  riskProfiles?: RiskProfile[];
 }
 
-export default function RunBacktestForm({ strategies, definitions }: Props) {
+export default function RunBacktestForm({
+  strategies,
+  definitions,
+  riskProfiles = [],
+}: Props) {
   const router = useRouter();
 
   const [strategyName, setStrategyName] = useState<string>(
@@ -42,6 +48,11 @@ export default function RunBacktestForm({ strategies, definitions }: Props) {
   // Toggle so power users can drop down to raw JSON when needed; the
   // typed fields above still drive the request body unless this is set.
   const [advancedJson, setAdvancedJson] = useState<string | null>(null);
+  // Optional risk-profile selection. When set, picking a profile
+  // prefills the typed param fields (with the profile's strategy_params
+  // dict). The profile id ride-along to the backend isn't wired today —
+  // post-run rule evaluation is still a separate, explicit POST.
+  const [riskProfileId, setRiskProfileId] = useState<string>("");
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
 
   const versions = useMemo(() => {
@@ -61,13 +72,38 @@ export default function RunBacktestForm({ strategies, definitions }: Props) {
   );
 
   // When the strategy changes, reset params to the new strategy's defaults
-  // and drop the advanced-JSON override (if any).
+  // and drop the advanced-JSON override (if any). Also clear any active
+  // risk profile (its prefilled keys may not match the new strategy).
   useEffect(() => {
     if (currentDef) {
       setParams({ ...(currentDef.default_params as Record<string, unknown>) });
       setAdvancedJson(null);
+      setRiskProfileId("");
     }
   }, [currentDef]);
+
+  // Picking a risk profile overlays its strategy_params on top of the
+  // current strategy's defaults. Unknown keys are still sent (backend
+  // ignores extras safely); known keys override defaults.
+  function applyRiskProfile(profileIdStr: string) {
+    setRiskProfileId(profileIdStr);
+    if (profileIdStr === "") {
+      // Reset to defaults.
+      if (currentDef) {
+        setParams({
+          ...(currentDef.default_params as Record<string, unknown>),
+        });
+      }
+      return;
+    }
+    const profile = riskProfiles.find((p) => String(p.id) === profileIdStr);
+    if (!profile || !profile.strategy_params) return;
+    setAdvancedJson(null);
+    setParams((prev) => ({
+      ...prev,
+      ...(profile.strategy_params as Record<string, unknown>),
+    }));
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -218,6 +254,27 @@ export default function RunBacktestForm({ strategies, definitions }: Props) {
           />
         </div>
       </Section>
+
+      {riskProfiles.length > 0 ? (
+        <Section title="Risk profile (optional)">
+          <SelectField
+            label="Prefill strategy params from a profile"
+            value={riskProfileId}
+            onChange={applyRiskProfile}
+            options={[
+              { value: "", label: "— none (use strategy defaults) —" },
+              ...riskProfiles
+                .filter((p) => p.status === "active")
+                .map((p) => ({
+                  value: String(p.id),
+                  label: p.strategy_params
+                    ? `${p.name} — ${Object.keys(p.strategy_params).length} param(s)`
+                    : `${p.name} — rule caps only`,
+                })),
+            ]}
+          />
+        </Section>
+      ) : null}
 
       <Section title="Strategy params">
         {advancedJson === null ? (

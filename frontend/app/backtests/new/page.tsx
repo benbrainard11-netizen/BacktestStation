@@ -5,14 +5,19 @@ import type { components } from "@/lib/api/generated";
 
 type Strategy = components["schemas"]["StrategyRead"];
 type StrategyDefinition = components["schemas"]["StrategyDefinitionRead"];
+type RiskProfile = components["schemas"]["RiskProfileRead"];
 
 export const dynamic = "force-dynamic";
 
 export default async function NewBacktestPage() {
-  // Fetched in parallel because the two are independent.
-  const [strategies, definitions] = await Promise.all([
+  // Fetched in parallel because the three are independent. Risk
+  // profiles tolerate a 4xx (e.g. fresh DB) by falling back to [].
+  const [strategies, definitions, profiles] = await Promise.all([
     apiGet<Strategy[]>("/api/strategies"),
     apiGet<StrategyDefinition[]>("/api/backtests/strategies"),
+    apiGet<RiskProfile[]>("/api/risk-profiles").catch(
+      () => [] as RiskProfile[],
+    ),
   ]);
 
   return (
@@ -25,6 +30,7 @@ export default async function NewBacktestPage() {
         <RunBacktestForm
           strategies={strategies}
           definitions={definitions}
+          riskProfiles={profiles}
         />
       </div>
     </div>

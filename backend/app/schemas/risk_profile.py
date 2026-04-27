@@ -28,7 +28,9 @@ class RiskProfileRead(OrmModel):
     """Profile as returned to the client.
 
     `allowed_hours` is parsed back from `RiskProfile.allowed_hours_json`
-    in the API endpoint before serialization.
+    in the API endpoint before serialization. `strategy_params` is the
+    dict of default strategy params this profile prefills on the
+    Run-a-Backtest form (None = no opinion).
     """
 
     id: int
@@ -40,6 +42,7 @@ class RiskProfileRead(OrmModel):
     max_position_size: int | None
     allowed_hours: list[int] | None
     notes: str | None
+    strategy_params: dict | None = None
     created_at: object  # datetime, intentionally loose for FastAPI serialization
     updated_at: object
 
@@ -57,6 +60,7 @@ class RiskProfileCreate(BaseModel):
     max_position_size: int | None = None
     allowed_hours: list[int] | None = None
     notes: str | None = None
+    strategy_params: dict | None = None
 
     @field_validator("status", mode="after")
     @classmethod
@@ -91,6 +95,7 @@ class RiskProfileUpdate(BaseModel):
     max_position_size: int | None = None
     allowed_hours: list[int] | None = None
     notes: str | None = None
+    strategy_params: dict | None = None
 
     @field_validator("status", mode="after")
     @classmethod

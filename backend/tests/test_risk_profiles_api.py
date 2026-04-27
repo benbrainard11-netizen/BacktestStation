@@ -56,10 +56,13 @@ def test_statuses_endpoint_returns_vocabulary(client: TestClient) -> None:
 
 
 def test_post_creates_profile_with_all_caps(client: TestClient) -> None:
+    # Avoid colliding with the auto-seeded "Conservative" profile by
+    # using a unique name. The point of this test is the round-trip,
+    # not the name itself.
     response = client.post(
         "/api/risk-profiles",
         json={
-            "name": "Conservative",
+            "name": "Custom-Conservative",
             "max_daily_loss_r": 5.0,
             "max_drawdown_r": 20.0,
             "max_consecutive_losses": 3,
@@ -70,7 +73,7 @@ def test_post_creates_profile_with_all_caps(client: TestClient) -> None:
     )
     assert response.status_code == 201, response.text
     body = response.json()
-    assert body["name"] == "Conservative"
+    assert body["name"] == "Custom-Conservative"
     assert body["status"] == "active"
     assert body["max_daily_loss_r"] == 5.0
     assert body["allowed_hours"] == [13, 14, 15]
@@ -125,7 +128,9 @@ def test_get_list_returns_all_profiles(client: TestClient) -> None:
     response = client.get("/api/risk-profiles")
     assert response.status_code == 200
     names = {p["name"] for p in response.json()}
-    assert names == {"A", "B"}
+    # Test-added names must be present alongside the auto-seeded
+    # defaults (Conservative / Live-mirror / Aggressive).
+    assert {"A", "B"} <= names
 
 
 def test_get_one_returns_profile(client: TestClient) -> None:

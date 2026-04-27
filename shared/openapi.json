@@ -2900,6 +2900,18 @@
             "default": "active",
             "title": "Status",
             "type": "string"
+          },
+          "strategy_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Params"
           }
         },
         "required": [
@@ -2909,7 +2921,7 @@
         "type": "object"
       },
       "RiskProfileRead": {
-        "description": "Profile as returned to the client.\n\n`allowed_hours` is parsed back from `RiskProfile.allowed_hours_json`\nin the API endpoint before serialization.",
+        "description": "Profile as returned to the client.\n\n`allowed_hours` is parsed back from `RiskProfile.allowed_hours_json`\nin the API endpoint before serialization. `strategy_params` is the\ndict of default strategy params this profile prefills on the\nRun-a-Backtest form (None = no opinion).",
         "properties": {
           "allowed_hours": {
             "anyOf": [
@@ -2994,6 +3006,18 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "strategy_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Params"
           },
           "updated_at": {
             "title": "Updated At"
@@ -3128,6 +3152,18 @@
               }
             ],
             "title": "Status"
+          },
+          "strategy_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Params"
           }
         },
         "title": "RiskProfileUpdate",
