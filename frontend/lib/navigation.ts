@@ -11,6 +11,7 @@ import {
   History,
   LayoutDashboard,
   Notebook,
+  Rewind,
   Settings as SettingsIcon,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/import", label: "Import", group: "research", icon: Download },
   { href: "/strategies", label: "Strategies", group: "research", icon: BookOpen },
   { href: "/backtests", label: "Backtests", group: "research", icon: BarChart3 },
+  { href: "/trade-replay", label: "Trade Replay", group: "research", icon: Rewind },
 
   { href: "/prop-simulator", label: "Simulator", group: "prop_firm", icon: Dices },
   { href: "/prop-simulator/firms", label: "Firm Rules", group: "prop_firm", icon: Building2 },
