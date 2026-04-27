@@ -59,7 +59,12 @@ def _touched_bearish_setup(
 
 
 def test_entry_emits_bearish_bracket_order_with_correct_stop_target():
-    """Within window, valid risk, fresh touch -> emits BracketOrder."""
+    """Within window, valid risk, fresh touch -> emits BracketOrder.
+
+    Strategy uses bar.open as entry-price proxy (the engine fills at
+    NEXT bar's open + slippage; bar.open is the live-bot reference
+    point). bar.close is consulted only by the wrong-side-stop guard.
+    """
     cfg = FractalAMDConfig(min_co_score=None)
     s = FractalAMD(cfg)
     # Touch on the prior bar (UTC). Entry window 9:30 ET.
@@ -70,8 +75,11 @@ def test_entry_emits_bearish_bracket_order_with_correct_stop_target():
     )
     s.today = touch_ts.astimezone(ET).date()  # day already rolled
 
-    # Current bar is one minute later (1 bar after touch).
-    cur = _bar(ts=touch_ts + dt.timedelta(minutes=1), o=21008.0)
+    # bar.open=21008 (entry proxy). bar.close=21015 < stop=21021 — guard ok.
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1), o=21008.0, h=21016.0, l=21006.0,
+        c=21015.0,
+    )
     intent = s._try_emit_entry(cur)
     assert isinstance(intent, BracketOrder)
     assert intent.side == Side.SHORT
@@ -94,7 +102,11 @@ def test_entry_emits_bullish_bracket_order():
     s.setups.append(bull)
     s.today = touch_ts.astimezone(ET).date()
 
-    cur = _bar(ts=touch_ts + dt.timedelta(minutes=1), o=21015.0)
+    # bar.open=21015. bar.close=21010 > stop=20999 — guard ok.
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1), o=21015.0, h=21018.0, l=21008.0,
+        c=21010.0,
+    )
     intent = s._try_emit_entry(cur)
     assert isinstance(intent, BracketOrder)
     assert intent.side == Side.LONG
@@ -152,12 +164,15 @@ def test_entry_rejected_when_risk_below_min():
     cfg = FractalAMDConfig(min_co_score=None, min_risk_pts=10.0)
     s = FractalAMD(cfg)
     touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
-    # Entry at 21015, fvg_high=21020 -> stop=21021, risk=6pt < 10
+    # bar.open=21015, fvg_high=21020 -> stop=21021, risk=6pt < 10
     s.setups.append(
         _touched_bearish_setup(touch_bar_time=touch_ts, fvg_low=21010, fvg_high=21020)
     )
     s.today = touch_ts.astimezone(ET).date()
-    cur = _bar(ts=touch_ts + dt.timedelta(minutes=1), o=21015.0)
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1), o=21015.0, h=21016.0, l=21014.0,
+        c=21015.0,
+    )
     intent = s._try_emit_entry(cur)
     assert intent is None
     assert s.setups[0].status == "WATCHING"
@@ -177,6 +192,60 @@ def test_entry_rejected_on_dedup_within_15min_bucket():
     )
     s.today = touch_ts.astimezone(ET).date()
     cur = _bar(ts=touch_ts + dt.timedelta(minutes=1), o=21008.0)
+    intent = s._try_emit_entry(cur)
+    assert intent is None
+    assert s.setups[0].status == "WATCHING"
+
+
+def test_entry_rejected_when_fill_proxy_lands_on_wrong_side_of_stop_short():
+    """Bearish setup where bar.close has rallied THROUGH fvg_high+buffer
+    by the time the validation bar closes — i.e., the bracket's stop
+    would land BELOW the actual fill, acting as a near-target instead
+    of a loss cap.
+
+    Pre-fix this trade fired with risk computed against bar.open and
+    silently produced a wrong-side stop. Post-fix the risk gate uses
+    bar.close as the entry-price proxy, so risk goes non-positive and
+    the trade is rejected.
+
+    Concrete numbers: fvg_high=21020 -> stop=21021. bar.close=21030
+    (price has rallied past the stop level). risk = 21021 - 21030 = -9.
+    """
+    cfg = FractalAMDConfig(min_co_score=None)
+    s = FractalAMD(cfg)
+    touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
+    s.setups.append(
+        _touched_bearish_setup(touch_bar_time=touch_ts, fvg_low=21010, fvg_high=21020)
+    )
+    s.today = touch_ts.astimezone(ET).date()
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1),
+        o=21010.0, h=21035.0, l=21010.0, c=21030.0,
+    )
+
+    intent = s._try_emit_entry(cur)
+    assert intent is None
+    # Terminal — setup reset to WATCHING (geometry won't change).
+    assert s.setups[0].status == "WATCHING"
+
+
+def test_entry_rejected_when_fill_proxy_lands_on_wrong_side_of_stop_long():
+    """Bullish-mirror of the wrong-side guard. fvg_low=21010 ->
+    stop=21009. bar.close=21000 (price has fallen below the stop level).
+    risk = 21000 - 21009 = -9. Trade must reject.
+    """
+    cfg = FractalAMDConfig(min_co_score=None)
+    s = FractalAMD(cfg)
+    touch_ts = dt.datetime(2026, 4, 24, 17, 30, tzinfo=dt.timezone.utc)
+    bull = _touched_bearish_setup(touch_bar_time=touch_ts, fvg_low=21010, fvg_high=21020)
+    bull.direction = "BULLISH"
+    s.setups.append(bull)
+    s.today = touch_ts.astimezone(ET).date()
+    cur = _bar(
+        ts=touch_ts + dt.timedelta(minutes=1),
+        o=21015.0, h=21015.0, l=20995.0, c=21000.0,
+    )
+
     intent = s._try_emit_entry(cur)
     assert intent is None
     assert s.setups[0].status == "WATCHING"
