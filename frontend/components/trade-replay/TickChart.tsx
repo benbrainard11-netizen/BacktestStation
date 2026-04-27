@@ -23,7 +23,7 @@ import {
   askLine,
   tickIndexAtMs,
 } from "@/lib/trade-replay/binTicks";
-import { chartTimeFormatter, etHMS } from "@/lib/trade-replay/etFormat";
+import { chartTimeFormatter, etHMS, utcMs } from "@/lib/trade-replay/etFormat";
 
 type Window = components["schemas"]["TradeReplayWindowRead"];
 
@@ -72,10 +72,7 @@ export default function TickChart({ payload }: Props) {
   );
 
   const tickCount = ticks.length;
-  const entryMs = useMemo(
-    () => new Date(anchor.entry_ts).getTime(),
-    [anchor.entry_ts],
-  );
+  const entryMs = useMemo(() => utcMs(anchor.entry_ts), [anchor.entry_ts]);
   const initialCursor = useMemo(() => {
     if (tickCount === 0) return 0;
     return Math.min(tickCount - 1, tickIndexAtMs(ticks, entryMs));
@@ -243,7 +240,7 @@ export default function TickChart({ payload }: Props) {
       });
     }
     if (anchor.exit_ts && anchor.exit_price !== null && anchor.exit_price !== undefined) {
-      const exitSec = Math.floor(new Date(anchor.exit_ts).getTime() / 1000);
+      const exitSec = Math.floor(utcMs(anchor.exit_ts) / 1000);
       if (candleTimes.has(exitSec)) {
         markers.push({
           time: exitSec as Time,

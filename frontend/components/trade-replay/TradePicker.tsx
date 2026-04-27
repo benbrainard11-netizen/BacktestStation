@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { components } from "@/lib/api/generated";
+import { etDate, etHMS, parseUtcLoose } from "@/lib/trade-replay/etFormat";
 
 type Run = components["schemas"]["TradeReplayRunRead"];
 type Trade = components["schemas"]["TradeReplayTradeRead"];
@@ -101,9 +102,9 @@ function TradeRow({
         ? "text-emerald-300"
         : "text-rose-300";
 
-  const entryTime = new Date(trade.entry_ts);
-  const dateStr = entryTime.toISOString().slice(0, 10);
-  const timeStr = entryTime.toISOString().slice(11, 19);
+  const entryMs = parseUtcLoose(trade.entry_ts).getTime();
+  const dateStr = etDate(entryMs);
+  const timeStr = etHMS(entryMs);
 
   return (
     <li>

@@ -7,6 +7,7 @@ import BarChart from "@/components/trade-replay/BarChart";
 import TickChart from "@/components/trade-replay/TickChart";
 import TradePicker from "@/components/trade-replay/TradePicker";
 import type { components } from "@/lib/api/generated";
+import { parseUtcLoose } from "@/lib/trade-replay/etFormat";
 import type { Timeframe } from "@/lib/trade-replay/resampleBars";
 
 type Run = components["schemas"]["TradeReplayRunRead"];
@@ -136,7 +137,9 @@ export default function TradeReplayPage() {
     let cancelled = false;
     setBarsState({ kind: "loading" });
     const { run, trade } = selectedTrade;
-    const date = new Date(trade.entry_ts).toISOString().slice(0, 10);
+    // Parse as UTC (entry_ts comes through tz-naive); local-time
+    // parsing would shift the date for late-day trades.
+    const date = parseUtcLoose(trade.entry_ts).toISOString().slice(0, 10);
     const url = `/api/replay/${encodeURIComponent(run.symbol)}/${date}?backtest_run_id=${run.run_id}`;
     (async () => {
       try {

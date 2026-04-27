@@ -32,6 +32,33 @@ const ET_DATE = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 });
 
+/**
+ * Parse an ISO 8601 timestamp from the BacktestStation API as **UTC**.
+ *
+ * Tz-naive Pydantic datetimes serialize without a `Z` suffix
+ * (`"2026-04-22T13:37:00"`). The native `new Date()` parser interprets
+ * such strings as the browser's *local* time, which silently shifts
+ * every trade timestamp by the user's UTC offset — that produced the
+ * "entry marker is 7 hours past where the trade happened" bug. The
+ * DB stores tz-naive UTC by convention, so we append `Z` when no zone
+ * marker is present and let the parser do the right thing.
+ *
+ * Strings that already have `Z` or a `+HH:MM` / `-HH:MM` offset pass
+ * through unchanged.
+ */
+export function parseUtcLoose(iso: string): Date {
+  if (!iso) return new Date(NaN);
+  if (iso.endsWith("Z") || /[+-]\d{2}:?\d{2}$/.test(iso)) {
+    return new Date(iso);
+  }
+  return new Date(`${iso}Z`);
+}
+
+/** Same as parseUtcLoose, returning ms. Convenience for arithmetic. */
+export function utcMs(iso: string): number {
+  return parseUtcLoose(iso).getTime();
+}
+
 /** "13:31:24" given a millisecond epoch. */
 export function etHMS(ms: number): string {
   return ET_TIME_HMS.format(new Date(ms));

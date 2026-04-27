@@ -15,7 +15,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { components } from "@/lib/api/generated";
-import { chartTimeFormatter, etHMS } from "@/lib/trade-replay/etFormat";
+import { chartTimeFormatter, etHMS, utcMs } from "@/lib/trade-replay/etFormat";
 import {
   type ResampledBar,
   type Timeframe,
@@ -62,10 +62,8 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
     [candles],
   );
 
-  const entrySec = useMemo(
-    () => Math.floor(new Date(anchor.entry_ts).getTime() / 1000),
-    [anchor.entry_ts],
-  );
+  const entryMs = useMemo(() => utcMs(anchor.entry_ts), [anchor.entry_ts]);
+  const entrySec = useMemo(() => Math.floor(entryMs / 1000), [entryMs]);
 
   // Cursor starts on the bar containing the trade entry — that's the
   // whole point of "review old trade." We initialize once per timeframe
@@ -215,11 +213,11 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
         position: isLong ? "belowBar" : "aboveBar",
         color: isLong ? "#22c55e" : "#ef4444",
         shape: isLong ? "arrowUp" : "arrowDown",
-        text: `${anchor.side.toUpperCase()} @${anchor.entry_price.toFixed(2)} · ${etHMS(new Date(anchor.entry_ts).getTime())}`,
+        text: `${anchor.side.toUpperCase()} @${anchor.entry_price.toFixed(2)} · ${etHMS(entryMs)}`,
       });
     }
     if (anchor.exit_ts && anchor.exit_price !== null && anchor.exit_price !== undefined) {
-      const exitSec = Math.floor(new Date(anchor.exit_ts).getTime() / 1000);
+      const exitSec = Math.floor(utcMs(anchor.exit_ts) / 1000);
       const exitBucket = bucketAt(candleTimes, exitSec);
       if (exitBucket !== null) {
         markers.push({
