@@ -20,6 +20,10 @@ Override gates:
     --max-dd 10.0
     --window-open  "09:30"
     --window-close "14:00"
+
+Exclude trades before a strategy-version cutover (e.g. when the live bot's
+entry window was widened then narrowed back):
+    --ignore-before 2026-04-12
 """
 
 from __future__ import annotations
@@ -112,11 +116,17 @@ def evaluate_gate(
     max_dd_r: float = DEFAULT_MAX_DD_R,
     window_open: tuple[int, int] = DEFAULT_WINDOW_OPEN,
     window_close: tuple[int, int] = DEFAULT_WINDOW_CLOSE,
+    ignore_before: dt.date | None = None,
 ) -> GateReport:
     """Pure(ish): run the gate and return a structured report.
 
     Reads from `session` (any SQLAlchemy session bound to a meta DB).
     No prints, no side effects. The CLI wrapper formats + exits.
+
+    `ignore_before` (UTC date) excludes trades with entry_ts.date() <
+    that cutover. Use when the live bot's behavior changed on a known
+    date (e.g. 2026-04-12 window-fix) and earlier trades shouldn't count
+    against the current strategy version's gate.
     """
     # All live runs for this strategy_version, with their trades.
     live_run_ids = list(
@@ -137,6 +147,9 @@ def evaluate_gate(
         if live_run_ids
         else []
     )
+
+    if ignore_before is not None:
+        trades = [t for t in trades if t.entry_ts.date() >= ignore_before]
 
     n = len(trades)
 
@@ -263,10 +276,29 @@ def main(argv: list[str] | None = None) -> int:
         help="ET entry-window close as HH:MM (default: 14:00).",
     )
     parser.add_argument(
+        "--ignore-before", type=str, default=None,
+        help=(
+            "ISO date (YYYY-MM-DD). Trades with entry_ts before this UTC "
+            "date are excluded. Use when the live bot's behavior changed "
+            "on a known cutover (e.g. 2026-04-12 window-fix) and earlier "
+            "trades shouldn't count against the current version's gate."
+        ),
+    )
+    parser.add_argument(
         "--db-url", type=str, default=None,
         help="Override the default meta DB URL (testing).",
     )
     args = parser.parse_args(argv)
+
+    ignore_before: dt.date | None = None
+    if args.ignore_before is not None:
+        try:
+            ignore_before = dt.date.fromisoformat(args.ignore_before)
+        except ValueError:
+            sys.stderr.write(
+                f"invalid --ignore-before {args.ignore_before!r}: expected YYYY-MM-DD\n"
+            )
+            return 2
 
     engine = make_engine(args.db_url) if args.db_url else make_engine()
     SessionLocal = make_session_factory(engine)
@@ -279,6 +311,7 @@ def main(argv: list[str] | None = None) -> int:
             max_dd_r=args.max_dd,
             window_open=_parse_hm(args.window_open),
             window_close=_parse_hm(args.window_close),
+            ignore_before=ignore_before,
         )
 
     print(_format_report(report))

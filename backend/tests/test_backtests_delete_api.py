@@ -153,3 +153,92 @@ def test_delete_only_removes_target_run(
 
     assert client.get(f"/api/backtests/{run_a_id}").status_code == 404
     assert client.get(f"/api/backtests/{run_b_id}").status_code == 200
+
+
+def test_delete_clears_baseline_run_id_on_strategy_versions(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Pin the 2026-04-28 fix: deleting a run that's a Forward Drift baseline
+    must NULL out StrategyVersion.baseline_run_id, otherwise /drift/latest
+    renders an empty panel because the FK is stale (SQLite FK cascades are
+    off in this app)."""
+    run_id, _ = _seed_full_run(session_factory, slug="baseline-deleter")
+
+    with session_factory() as session:
+        version = session.scalars(select(models.StrategyVersion)).one()
+        version.baseline_run_id = run_id
+        session.commit()
+        version_id = version.id
+
+    response = client.delete(f"/api/backtests/{run_id}")
+    assert response.status_code == 204
+
+    with session_factory() as session:
+        version = session.get(models.StrategyVersion, version_id)
+        assert version is not None
+        assert version.baseline_run_id is None
+
+
+def test_delete_clears_experiment_baseline_and_variant_run_ids(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Same fix for Experiment.baseline_run_id and Experiment.variant_run_id.
+    Both columns FK to backtest_runs.id without ON DELETE SET NULL in SQLite,
+    so we have to clear them explicitly in the delete handler."""
+    baseline_id, _ = _seed_full_run(session_factory, slug="exp-baseline")
+    variant_id, _ = _seed_full_run(session_factory, slug="exp-variant")
+
+    with session_factory() as session:
+        version = session.scalars(
+            select(models.StrategyVersion).where(
+                models.StrategyVersion.id == 1
+            )
+        ).one()
+        exp = models.Experiment(
+            strategy_version_id=version.id,
+            hypothesis="does X help?",
+            baseline_run_id=baseline_id,
+            variant_run_id=variant_id,
+        )
+        session.add(exp)
+        session.commit()
+        exp_id = exp.id
+
+    client.delete(f"/api/backtests/{baseline_id}")
+    with session_factory() as session:
+        exp = session.get(models.Experiment, exp_id)
+        assert exp is not None
+        assert exp.baseline_run_id is None
+        assert exp.variant_run_id == variant_id
+
+    client.delete(f"/api/backtests/{variant_id}")
+    with session_factory() as session:
+        exp = session.get(models.Experiment, exp_id)
+        assert exp is not None
+        assert exp.variant_run_id is None
+
+
+def test_delete_doesnt_clear_unrelated_baselines(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Deleting run A must NOT clear baseline_run_id on a version pointing at
+    run B."""
+    run_a_id, _ = _seed_full_run(session_factory, slug="a")
+    run_b_id, _ = _seed_full_run(session_factory, slug="b")
+
+    with session_factory() as session:
+        version_b = session.scalars(
+            select(models.StrategyVersion).join(models.Strategy).where(
+                models.Strategy.slug == "b"
+            )
+        ).one()
+        version_b.baseline_run_id = run_b_id
+        session.commit()
+        version_b_id = version_b.id
+
+    client.delete(f"/api/backtests/{run_a_id}")
+
+    with session_factory() as session:
+        version_b = session.get(models.StrategyVersion, version_b_id)
+        assert version_b is not None
+        assert version_b.baseline_run_id == run_b_id

@@ -229,3 +229,82 @@ def test_gate_with_no_live_runs_for_this_version_ignores_other_versions(
     report = evaluate_gate(session, version_a.id)
     assert report.trade_count == 0
     assert not report.passed
+
+
+# --- ignore_before cutover ---------------------------------------------
+
+
+def test_ignore_before_excludes_pre_cutover_trades(session: Session) -> None:
+    """The 2026-04-09 12:21/12:30 ET pre-window-fix bot misfires (real
+    behavior on 2026-04-12) shouldn't count against the post-fix gate.
+    --ignore-before 2026-04-12 drops them.
+    """
+    version = _make_version(session)
+    run = _make_live_run(session, version)
+
+    # Pre-cutover: 2 trades at ET 08:21 and 08:30 (outside post-fix window).
+    _add_trade(
+        session,
+        run,
+        et_hour=8,
+        et_minute=21,
+        day=dt.date(2026, 4, 9),
+        pnl=-50.0,
+        r_multiple=-1.0,
+    )
+    _add_trade(
+        session,
+        run,
+        et_hour=8,
+        et_minute=30,
+        day=dt.date(2026, 4, 9),
+        pnl=-50.0,
+        r_multiple=-1.0,
+    )
+    # Post-cutover: 8 trades at ET 09:31, all in-window winners.
+    for _ in range(8):
+        _add_trade(
+            session,
+            run,
+            et_hour=9,
+            et_minute=31,
+            day=dt.date(2026, 4, 22),
+            pnl=100.0,
+            r_multiple=1.0,
+        )
+    session.commit()
+
+    # Without filter: window gate fails (2 outside), 10 trades.
+    no_filter = evaluate_gate(session, version.id)
+    assert no_filter.trade_count == 10
+    window_crit = next(c for c in no_filter.criteria if c.name == "entry_window")
+    assert not window_crit.passed
+    assert "2/10" in window_crit.actual
+
+    # With filter: 8 trades, all in window, window gate passes.
+    filtered = evaluate_gate(
+        session, version.id, ignore_before=dt.date(2026, 4, 12)
+    )
+    assert filtered.trade_count == 8
+    window_crit = next(c for c in filtered.criteria if c.name == "entry_window")
+    assert window_crit.passed
+
+
+def test_ignore_before_is_inclusive_of_cutover_date(session: Session) -> None:
+    """Trades on the cutover date itself are KEPT (>= comparison)."""
+    version = _make_version(session)
+    run = _make_live_run(session, version)
+    _add_trade(
+        session,
+        run,
+        et_hour=10,
+        day=dt.date(2026, 4, 12),  # exactly the cutover
+        pnl=100.0,
+        r_multiple=1.0,
+    )
+    session.commit()
+
+    report = evaluate_gate(
+        session, version.id, ignore_before=dt.date(2026, 4, 12)
+    )
+    assert report.trade_count == 1

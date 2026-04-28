@@ -19,7 +19,8 @@ const ENDPOINT = "/api/monitor/drift/latest";
 type FetchState =
   | { kind: "loading" }
   | { kind: "no_live_run" }
-  | { kind: "no_baseline" }
+  | { kind: "no_baseline"; detail: string }
+  | { kind: "stale_baseline"; detail: string }
   | { kind: "error"; message: string }
   | { kind: "data"; data: DriftComparison; fetchedAt: number };
 
@@ -100,6 +101,29 @@ function Body({ state }: { state: FetchState }) {
         >
           /strategies →
         </Link>
+        <p className="font-mono text-[10px] text-zinc-600">{state.detail}</p>
+      </div>
+    );
+  }
+
+  if (state.kind === "stale_baseline") {
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-amber-300">
+          <AlertTriangle className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+          <span>Baseline run deleted</span>
+        </div>
+        <p className="font-mono text-xs text-zinc-200">
+          The strategy version&apos;s baseline points at a backtest run that
+          no longer exists. Pick a new baseline run:
+        </p>
+        <Link
+          href="/strategies"
+          className="font-mono text-[11px] uppercase tracking-widest text-zinc-300 underline-offset-2 hover:underline"
+        >
+          /strategies →
+        </Link>
+        <p className="font-mono text-[10px] text-zinc-600">{state.detail}</p>
       </div>
     );
   }
@@ -145,6 +169,7 @@ function metaLabel(state: FetchState): string {
   if (state.kind === "loading") return "loading…";
   if (state.kind === "no_live_run") return "awaiting live run · 30s";
   if (state.kind === "no_baseline") return "needs baseline · 30s";
+  if (state.kind === "stale_baseline") return "baseline deleted · 30s";
   if (state.kind === "error") return "error · retry 30s";
   return `polling ${POLL_INTERVAL_MS / 1000}s`;
 }
@@ -155,7 +180,13 @@ async function fetchDrift(): Promise<FetchState> {
     if (response.status === 404) {
       const detail = await readDetail(response);
       if (/no live runs/i.test(detail)) return { kind: "no_live_run" };
-      if (/baseline/i.test(detail)) return { kind: "no_baseline" };
+      // The "stale baseline" service-layer message says
+      // "baseline_run_id N for version M no longer exists" — distinguish
+      // from "never set" so the UI renders the right empty state.
+      if (/no longer exists/i.test(detail)) {
+        return { kind: "stale_baseline", detail };
+      }
+      if (/baseline/i.test(detail)) return { kind: "no_baseline", detail };
       return { kind: "error", message: detail || "Not found" };
     }
     if (!response.ok) {
