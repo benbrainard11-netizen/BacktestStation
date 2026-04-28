@@ -580,6 +580,18 @@ class FractalAMD(Strategy):
         """Reset per-day state on the first bar of a new ET trading day.
 
         Trading day rolls at 18:00 ET (Globex open).
+
+        Setup expiry: at the day boundary we drop all in-flight setups
+        (WATCHING + TOUCHED) plus the per-candle `_fully_scanned`
+        markers, mirroring the live bot's `reset_day()` (FractalAMD-/
+        production/live_bot.py:336-343 — sets `self.setups = []` on the
+        boundary). Without this, setups built on day N's HTF candles
+        could touch days later when price drifts back through the FVG,
+        firing a stale entry that the live bot would never take. Stage
+        signals are kept for diagnostic/debug purposes (no behavior
+        depends on them across days). Listed as one of the two
+        un-fixed strategy items in `project_backtest_divergence.md`
+        memory (2026-04-25).
         """
         et_now = now.astimezone(ET)
         # Trading day = the calendar day of the 17:00 ET close.
@@ -591,6 +603,8 @@ class FractalAMD(Strategy):
             self.today = trading_day
             self.trades_today = 0
             self.entries_today = set()
+            self.setups = []
+            self._fully_scanned = set()
 
     @classmethod
     def from_config(
