@@ -50,7 +50,7 @@
 
 ### Tests + CI
 
-- **506 backend tests green** at the time of this writing (`pytest backend/`). Last refreshed 2026-04-28; grew from 470 → 506 with the overnight tasks (drift latest endpoint, ready-for-capital, gap-filler, FVG zones) plus today's data-health + settings backends.
+- **507 backend tests green** at the time of this writing (`pytest backend/`). Last refreshed 2026-04-28 PM; grew from 470 → 507 over today's overnight tasks (drift latest endpoint, ready-for-capital, gap-filler, FVG zones) plus data-health + settings backends. Two PR-pending branches add 5 more tests (drift baseline-FK cleanup, gate cutover flag) — see `OVERNIGHT_2026-04-28-PM.md`.
 - Lookahead harness, determinism check, and MBP-1 stop-vs-target race test (all inside `test_backtest_engine.py`) green.
 - Pre-commit hooks: ruff + black (Python), prettier (TS).
 
