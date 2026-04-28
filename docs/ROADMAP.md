@@ -41,7 +41,7 @@ The headline goal. The whole system exists to put real money on a validated stra
 The data layer the rest of the system depends on. Already mostly built; needs to be verified and rounded out.
 
 - Manually trigger the first historical MBP-1 pull (NQ.c.0); verify `parquet_mirror` handles MBP-1 correctly end-to-end (it works for TBBO; MBP-1 is untested at scale).
-- Build the weekly gap-filler discussed earlier: NQ/ES/YM only, MBP-1 1mo + TBBO 12mo, Sundays 03:00 local, $0-cost guardrail (skip+warn if a missing month estimates >$0).
+- Build the weekly gap-filler discussed earlier: NQ/ES/YM/RTY (matching the historical puller's 4-index-future scope), MBP-1 1mo + TBBO 12mo, Sundays 03:00 local, $0-cost guardrail (skip+warn if a missing month estimates >$0).
 - Ship Forward Drift v1 frontend panels in `/monitor` (backend exists since 2026-04-25; this is just surfacing it).
 - Live-trades pipeline: confirm daily fire works for 2 consecutive weeks without manual intervention. The `/monitor` panel turns red if it doesn't.
 
