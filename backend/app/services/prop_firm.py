@@ -10,8 +10,13 @@ pnl_r only), so dollars are derived from `pnl_r * risk_per_trade_dollars`
 at sim time. The user picks the risk size — that's the lever you'd pull
 on a real account.
 
-Presets here are pragmatic approximations of real prop firms, not the
-firms' official rules. They're starting points users tweak per account.
+Presets here are practitioner-recall approximations of real prop firms,
+NOT the firms' official rules of record. They reflect knowledge as of
+late 2025; prop firms change rules constantly. Every preset includes a
+`source_url` and `last_known_at` so a user can verify against the firm
+site before trusting any of these numbers, plus the rendered firm
+profile is flagged `verification_status: "unverified"` everywhere it's
+shown in the UI.
 """
 
 from __future__ import annotations
@@ -25,6 +30,15 @@ from app.db.models import Trade
 
 @dataclass(frozen=True)
 class PropFirmPreset:
+    """Lean schema the deterministic simulator + Monte Carlo engine read.
+
+    The first eight fields drive simulator math. The remaining fields are
+    passthrough metadata used to render an honest FirmRuleProfile on the
+    wizard + firms page — they do NOT affect simulator pass/fail logic.
+    Adding a metadata field never breaks an existing simulation.
+    """
+
+    # --- Simulator-relevant (used in pass/fail math) -------------------
     key: str
     name: str
     notes: str
@@ -36,36 +50,74 @@ class PropFirmPreset:
     consistency_pct: float | None  # 0.5 means no day > 50% of total profit
     max_trades_per_day: int | None
     risk_per_trade_dollars: float  # default; user can override
+    # --- Display metadata (passthrough into FirmRuleProfile) -----------
+    trailing_drawdown_type: str = "none"  # "intraday" | "end_of_day" | "static" | "none"
+    minimum_trading_days: int | None = None
+    payout_split: float = 0.9  # 0.9 = 90/10
+    payout_min_days: int | None = None
+    payout_min_profit: float | None = None
+    eval_fee: float = 0.0
+    activation_fee: float = 0.0
+    reset_fee: float = 0.0
+    monthly_fee: float = 0.0
+    source_url: str | None = None
+    last_known_at: str | None = None  # ISO yyyy-mm-dd of when these values were sourced
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
+# ---------------------------------------------------------------------------
+# Presets — approximations as of training cutoff (late 2025). Every entry's
+# notes opens with a verification reminder. Source URLs let a human go check
+# current rules at any time. The first eight fields are sim-correctness
+# critical; the rest is display metadata.
+# ---------------------------------------------------------------------------
+
+_VERIFY_PREFIX = (
+    "Approximation as of late 2025 — verify current rules at the source URL "
+    "before trusting. "
+)
+
+
 PRESETS: dict[str, PropFirmPreset] = {
     "topstep_50k": PropFirmPreset(
         key="topstep_50k",
-        name="Topstep-style $50K",
-        notes=(
-            "Approximation of Topstep's $50K Combine. Trailing drawdown, "
-            "$1,000 daily loss limit, 50% consistency target. Adjust to the "
-            "program you actually subscribed to."
-        ),
+        name="Topstep 50K Combine",
+        notes=_VERIFY_PREFIX
+        + "Topstep's $50K Trading Combine: $3K profit target, $2K trailing "
+        "EOD drawdown, $1K daily loss limit, 50% best-day consistency rule. "
+        "Min 5 winning days for payout. 90/10 split. Subscription ~$165/mo, "
+        "no separate activation/reset.",
         starting_balance=50_000.0,
         profit_target=3_000.0,
-        max_drawdown=2_500.0,
+        max_drawdown=2_000.0,
         trailing_drawdown=True,
         daily_loss_limit=1_000.0,
         consistency_pct=0.5,
         max_trades_per_day=None,
-        risk_per_trade_dollars=250.0,
+        risk_per_trade_dollars=200.0,
+        trailing_drawdown_type="end_of_day",
+        minimum_trading_days=5,
+        payout_split=0.9,
+        payout_min_days=5,
+        payout_min_profit=None,
+        eval_fee=165.0,
+        activation_fee=0.0,
+        reset_fee=0.0,
+        monthly_fee=165.0,
+        source_url="https://www.topstep.com/",
+        last_known_at="2025-12-01",
     ),
     "apex_50k": PropFirmPreset(
         key="apex_50k",
-        name="Apex-style $50K",
-        notes=(
-            "Approximation of Apex's $50K Eval. Trailing drawdown, "
-            "no daily loss limit, looser consistency. Adjust to your plan."
-        ),
+        name="Apex 50K Eval",
+        notes=_VERIFY_PREFIX
+        + "Apex Trader Funding $50K Evaluation: $3K profit target, $2.5K "
+        "intraday trailing drawdown, NO daily loss limit, NO consistency "
+        "rule (removed late 2024). Min 8 trading days for payout. 100% of "
+        "first $25K then 90/10 above. Eval ~$167 first month, ~$97/mo "
+        "after; ~$130 activation for funded.",
         starting_balance=50_000.0,
         profit_target=3_000.0,
         max_drawdown=2_500.0,
@@ -74,13 +126,245 @@ PRESETS: dict[str, PropFirmPreset] = {
         consistency_pct=None,
         max_trades_per_day=None,
         risk_per_trade_dollars=250.0,
+        trailing_drawdown_type="intraday",
+        minimum_trading_days=8,
+        payout_split=0.9,
+        payout_min_days=8,
+        payout_min_profit=None,
+        eval_fee=167.0,
+        activation_fee=130.0,
+        reset_fee=80.0,
+        monthly_fee=97.0,
+        source_url="https://apextraderfunding.com/",
+        last_known_at="2025-12-01",
+    ),
+    "alpha_futures_50k": PropFirmPreset(
+        key="alpha_futures_50k",
+        name="Alpha Futures 50K",
+        notes=_VERIFY_PREFIX
+        + "Alpha Futures $50K evaluation: $3K profit target, $2.5K EOD "
+        "trailing drawdown, $1.25K daily loss limit, 30-40% consistency "
+        "(varies by program). Min 5 trading days. ~$140 eval, low monthly. "
+        "90/10 split.",
+        starting_balance=50_000.0,
+        profit_target=3_000.0,
+        max_drawdown=2_500.0,
+        trailing_drawdown=True,
+        daily_loss_limit=1_250.0,
+        consistency_pct=0.4,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=250.0,
+        trailing_drawdown_type="end_of_day",
+        minimum_trading_days=5,
+        payout_split=0.9,
+        payout_min_days=5,
+        payout_min_profit=1_000.0,
+        eval_fee=140.0,
+        activation_fee=99.0,
+        reset_fee=49.0,
+        monthly_fee=0.0,
+        source_url="https://www.alphafutures.com/",
+        last_known_at="2025-12-01",
+    ),
+    "take_profit_trader_50k": PropFirmPreset(
+        key="take_profit_trader_50k",
+        name="Take Profit Trader 50K PRO",
+        notes=_VERIFY_PREFIX
+        + "Take Profit Trader $50K PRO: $3K profit target, $2K STATIC "
+        "drawdown (no trail), $1.2K daily loss limit, 50% consistency. "
+        "Min 5 trading days. ~$150 eval. 80% then 90% split after first "
+        "$10K paid. Min 7 days for payout, $500 min profit per payout.",
+        starting_balance=50_000.0,
+        profit_target=3_000.0,
+        max_drawdown=2_000.0,
+        trailing_drawdown=False,
+        daily_loss_limit=1_200.0,
+        consistency_pct=0.5,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=200.0,
+        trailing_drawdown_type="static",
+        minimum_trading_days=5,
+        payout_split=0.8,
+        payout_min_days=7,
+        payout_min_profit=500.0,
+        eval_fee=150.0,
+        activation_fee=130.0,
+        reset_fee=99.0,
+        monthly_fee=0.0,
+        source_url="https://www.takeprofittrader.com/",
+        last_known_at="2025-12-01",
+    ),
+    "my_funded_futures_50k": PropFirmPreset(
+        key="my_funded_futures_50k",
+        name="MyFundedFutures Starter 50K",
+        notes=_VERIFY_PREFIX
+        + "MyFundedFutures Starter $50K: $3K profit target, $2K trailing "
+        "drawdown, no daily loss limit, no consistency rule. Min 1 trading "
+        "day for eval. Cheap ~$80/mo subscription. 100% of first $10K then "
+        "90/10. Min 5 days + $500 min for payout.",
+        starting_balance=50_000.0,
+        profit_target=3_000.0,
+        max_drawdown=2_000.0,
+        trailing_drawdown=True,
+        daily_loss_limit=None,
+        consistency_pct=None,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=200.0,
+        trailing_drawdown_type="intraday",
+        minimum_trading_days=1,
+        payout_split=0.9,
+        payout_min_days=5,
+        payout_min_profit=500.0,
+        eval_fee=80.0,
+        activation_fee=0.0,
+        reset_fee=65.0,
+        monthly_fee=80.0,
+        source_url="https://myfundedfutures.com/",
+        last_known_at="2025-12-01",
+    ),
+    "tradeify_50k": PropFirmPreset(
+        key="tradeify_50k",
+        name="Tradeify 50K Growth",
+        notes=_VERIFY_PREFIX
+        + "Tradeify $50K Growth: $3K profit target, $2K EOD trailing "
+        "drawdown, $1.25K daily loss limit, ~40% consistency. Min 5 days. "
+        "~$125 eval. 90/10 split. Min 7 days + $750 for payout.",
+        starting_balance=50_000.0,
+        profit_target=3_000.0,
+        max_drawdown=2_000.0,
+        trailing_drawdown=True,
+        daily_loss_limit=1_250.0,
+        consistency_pct=0.4,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=200.0,
+        trailing_drawdown_type="end_of_day",
+        minimum_trading_days=5,
+        payout_split=0.9,
+        payout_min_days=7,
+        payout_min_profit=750.0,
+        eval_fee=125.0,
+        activation_fee=100.0,
+        reset_fee=80.0,
+        monthly_fee=0.0,
+        source_url="https://tradeify.co/",
+        last_known_at="2025-12-01",
+    ),
+    "earn2trade_50k": PropFirmPreset(
+        key="earn2trade_50k",
+        name="Earn2Trade TCP 50K",
+        notes=_VERIFY_PREFIX
+        + "Earn2Trade Trader Career Path $50K equivalent: $3K profit "
+        "target, $2.5K EOD trailing, $1.1K daily loss limit, ~40% "
+        "consistency. Multi-stage. Min 10 days. ~$130/mo subscription, "
+        "$150 activation. 80/20 split.",
+        starting_balance=50_000.0,
+        profit_target=3_000.0,
+        max_drawdown=2_500.0,
+        trailing_drawdown=True,
+        daily_loss_limit=1_100.0,
+        consistency_pct=0.4,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=200.0,
+        trailing_drawdown_type="end_of_day",
+        minimum_trading_days=10,
+        payout_split=0.8,
+        payout_min_days=15,
+        payout_min_profit=1_000.0,
+        eval_fee=130.0,
+        activation_fee=150.0,
+        reset_fee=0.0,
+        monthly_fee=130.0,
+        source_url="https://earn2trade.com/",
+        last_known_at="2025-12-01",
+    ),
+    "bulenox_50k": PropFirmPreset(
+        key="bulenox_50k",
+        name="Bulenox 50K",
+        notes=_VERIFY_PREFIX
+        + "Bulenox $50K Evaluation: $3K profit target, $2.5K intraday "
+        "trailing drawdown, no daily loss limit, no consistency rule. "
+        "Min 5 days. ~$115 eval. 90/10 split.",
+        starting_balance=50_000.0,
+        profit_target=3_000.0,
+        max_drawdown=2_500.0,
+        trailing_drawdown=True,
+        daily_loss_limit=None,
+        consistency_pct=None,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=250.0,
+        trailing_drawdown_type="intraday",
+        minimum_trading_days=5,
+        payout_split=0.9,
+        payout_min_days=5,
+        payout_min_profit=None,
+        eval_fee=115.0,
+        activation_fee=0.0,
+        reset_fee=55.0,
+        monthly_fee=0.0,
+        source_url="https://bulenox.com/",
+        last_known_at="2025-12-01",
+    ),
+    "fast_track_trading_50k": PropFirmPreset(
+        key="fast_track_trading_50k",
+        name="Fast Track Trading 50K",
+        notes=_VERIFY_PREFIX
+        + "Fast Track Trading $50K Accelerator: $2.5K profit target "
+        "(notably lower), $2K static drawdown, $1K daily loss limit, "
+        "50% consistency. Min 3 days. ~$99 eval — among the cheapest. "
+        "85/15 split.",
+        starting_balance=50_000.0,
+        profit_target=2_500.0,
+        max_drawdown=2_000.0,
+        trailing_drawdown=False,
+        daily_loss_limit=1_000.0,
+        consistency_pct=0.5,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=200.0,
+        trailing_drawdown_type="static",
+        minimum_trading_days=3,
+        payout_split=0.85,
+        payout_min_days=5,
+        payout_min_profit=500.0,
+        eval_fee=99.0,
+        activation_fee=75.0,
+        reset_fee=60.0,
+        monthly_fee=0.0,
+        source_url="https://fasttracktrading.com/",
+        last_known_at="2025-12-01",
+    ),
+    "ticktick_trader_50k": PropFirmPreset(
+        key="ticktick_trader_50k",
+        name="TickTickTrader 50K Classic",
+        notes=_VERIFY_PREFIX
+        + "TickTickTrader $50K Classic: $3K profit target, $2.5K EOD "
+        "trailing drawdown, $1.25K daily loss limit, ~40% consistency. "
+        "Min 5 days. ~$110 eval. 80/20 split. Min 10 days for payout.",
+        starting_balance=50_000.0,
+        profit_target=3_000.0,
+        max_drawdown=2_500.0,
+        trailing_drawdown=True,
+        daily_loss_limit=1_250.0,
+        consistency_pct=0.4,
+        max_trades_per_day=None,
+        risk_per_trade_dollars=200.0,
+        trailing_drawdown_type="end_of_day",
+        minimum_trading_days=5,
+        payout_split=0.8,
+        payout_min_days=10,
+        payout_min_profit=750.0,
+        eval_fee=110.0,
+        activation_fee=90.0,
+        reset_fee=70.0,
+        monthly_fee=0.0,
+        source_url="https://tickticktrader.com/",
+        last_known_at="2025-12-01",
     ),
     "custom_25k": PropFirmPreset(
         key="custom_25k",
         name="Custom $25K",
         notes=(
-            "Tighter $25K account with $1,500 DD, $500 daily stop, small risk. "
-            "Edit any field before running."
+            "Generic $25K starter with $1,500 DD, $500 daily stop, small risk. "
+            "Not a real firm — edit any field before running."
         ),
         starting_balance=25_000.0,
         profit_target=1_500.0,
@@ -90,6 +374,9 @@ PRESETS: dict[str, PropFirmPreset] = {
         consistency_pct=0.5,
         max_trades_per_day=3,
         risk_per_trade_dollars=100.0,
+        trailing_drawdown_type="intraday",
+        minimum_trading_days=None,
+        payout_split=0.9,
     ),
 }
 

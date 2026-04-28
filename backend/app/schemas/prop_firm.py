@@ -15,6 +15,19 @@ class PropFirmPresetRead(BaseModel):
     consistency_pct: float | None
     max_trades_per_day: int | None
     risk_per_trade_dollars: float
+    # Display metadata — passthrough into the rendered FirmRuleProfile.
+    # Defaults preserve backwards-compat for any preset that doesn't set them.
+    trailing_drawdown_type: str = "none"
+    minimum_trading_days: int | None = None
+    payout_split: float = 0.9
+    payout_min_days: int | None = None
+    payout_min_profit: float | None = None
+    eval_fee: float = 0.0
+    activation_fee: float = 0.0
+    reset_fee: float = 0.0
+    monthly_fee: float = 0.0
+    source_url: str | None = None
+    last_known_at: str | None = None
 
 
 class PropFirmConfigIn(BaseModel):

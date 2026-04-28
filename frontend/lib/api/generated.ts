@@ -1993,28 +1993,68 @@ export interface components {
         };
         /** PropFirmPresetRead */
         PropFirmPresetRead: {
+            /**
+             * Activation Fee
+             * @default 0
+             */
+            activation_fee: number;
             /** Consistency Pct */
             consistency_pct: number | null;
             /** Daily Loss Limit */
             daily_loss_limit: number | null;
+            /**
+             * Eval Fee
+             * @default 0
+             */
+            eval_fee: number;
             /** Key */
             key: string;
+            /** Last Known At */
+            last_known_at?: string | null;
             /** Max Drawdown */
             max_drawdown: number;
             /** Max Trades Per Day */
             max_trades_per_day: number | null;
+            /** Minimum Trading Days */
+            minimum_trading_days?: number | null;
+            /**
+             * Monthly Fee
+             * @default 0
+             */
+            monthly_fee: number;
             /** Name */
             name: string;
             /** Notes */
             notes: string;
+            /** Payout Min Days */
+            payout_min_days?: number | null;
+            /** Payout Min Profit */
+            payout_min_profit?: number | null;
+            /**
+             * Payout Split
+             * @default 0.9
+             */
+            payout_split: number;
             /** Profit Target */
             profit_target: number;
+            /**
+             * Reset Fee
+             * @default 0
+             */
+            reset_fee: number;
             /** Risk Per Trade Dollars */
             risk_per_trade_dollars: number;
+            /** Source Url */
+            source_url?: string | null;
             /** Starting Balance */
             starting_balance: number;
             /** Trailing Drawdown */
             trailing_drawdown: boolean;
+            /**
+             * Trailing Drawdown Type
+             * @default none
+             */
+            trailing_drawdown_type: string;
         };
         /** PropFirmResultRead */
         PropFirmResultRead: {

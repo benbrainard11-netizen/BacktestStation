@@ -2719,6 +2719,11 @@
       },
       "PropFirmPresetRead": {
         "properties": {
+          "activation_fee": {
+            "default": 0.0,
+            "title": "Activation Fee",
+            "type": "number"
+          },
           "consistency_pct": {
             "anyOf": [
               {
@@ -2741,9 +2746,25 @@
             ],
             "title": "Daily Loss Limit"
           },
+          "eval_fee": {
+            "default": 0.0,
+            "title": "Eval Fee",
+            "type": "number"
+          },
           "key": {
             "title": "Key",
             "type": "string"
+          },
+          "last_known_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Known At"
           },
           "max_drawdown": {
             "title": "Max Drawdown",
@@ -2760,6 +2781,22 @@
             ],
             "title": "Max Trades Per Day"
           },
+          "minimum_trading_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Trading Days"
+          },
+          "monthly_fee": {
+            "default": 0.0,
+            "title": "Monthly Fee",
+            "type": "number"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -2768,13 +2805,56 @@
             "title": "Notes",
             "type": "string"
           },
+          "payout_min_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Days"
+          },
+          "payout_min_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Profit"
+          },
+          "payout_split": {
+            "default": 0.9,
+            "title": "Payout Split",
+            "type": "number"
+          },
           "profit_target": {
             "title": "Profit Target",
+            "type": "number"
+          },
+          "reset_fee": {
+            "default": 0.0,
+            "title": "Reset Fee",
             "type": "number"
           },
           "risk_per_trade_dollars": {
             "title": "Risk Per Trade Dollars",
             "type": "number"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
           },
           "starting_balance": {
             "title": "Starting Balance",
@@ -2783,6 +2863,11 @@
           "trailing_drawdown": {
             "title": "Trailing Drawdown",
             "type": "boolean"
+          },
+          "trailing_drawdown_type": {
+            "default": "none",
+            "title": "Trailing Drawdown Type",
+            "type": "string"
           }
         },
         "required": [

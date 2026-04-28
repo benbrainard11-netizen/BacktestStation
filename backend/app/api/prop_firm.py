@@ -241,11 +241,21 @@ def _preset_to_firm_rule_profile(
     preset, payload: SimulationRunRequest
 ) -> dict:
     """Convert a PropFirmPreset to the FirmRuleProfile shape the
-    frontend expects. Trailing-drawdown / consistency are translated
-    from the loose preset fields."""
+    frontend expects. Reads display metadata (fees, payout, min days,
+    trailing type) directly from the preset rather than hardcoding
+    defaults — falls back to safe defaults only when the preset omits
+    a field."""
+    # Firm name = everything before the first space-separated number/size
+    # in the preset name. Falls back to the full name if no split point.
+    firm_name = preset.name.split(" ")[0] or preset.name
+    # Heuristic: "intraday" trailing if preset trailing is on but type
+    # field is "none" (legacy presets that don't set the new field).
+    trailing_type = preset.trailing_drawdown_type
+    if preset.trailing_drawdown and trailing_type == "none":
+        trailing_type = "intraday"
     return {
         "profile_id": preset.key,
-        "firm_name": preset.name.split("-")[0].strip() or preset.name,
+        "firm_name": firm_name,
         "account_name": preset.name,
         "account_size": preset.starting_balance,
         "phase_type": "evaluation",
@@ -253,11 +263,9 @@ def _preset_to_firm_rule_profile(
         "max_drawdown": preset.max_drawdown,
         "daily_loss_limit": preset.daily_loss_limit,
         "trailing_drawdown_enabled": preset.trailing_drawdown,
-        "trailing_drawdown_type": (
-            "intraday" if preset.trailing_drawdown else "none"
-        ),
+        "trailing_drawdown_type": trailing_type,
         "trailing_drawdown_stop_level": None,
-        "minimum_trading_days": None,
+        "minimum_trading_days": preset.minimum_trading_days,
         "maximum_trading_days": None,
         "max_contracts": preset.max_trades_per_day,
         "scaling_plan_enabled": False,
@@ -273,20 +281,22 @@ def _preset_to_firm_rule_profile(
         "overnight_holding_allowed": False,
         "weekend_holding_allowed": False,
         "copy_trading_allowed": True,
-        "payout_min_days": None,
-        "payout_min_profit": None,
+        "payout_min_days": preset.payout_min_days,
+        "payout_min_profit": preset.payout_min_profit,
         "payout_cap": None,
-        "payout_split": 0.9,
+        "payout_split": preset.payout_split,
         "first_payout_rules": None,
         "recurring_payout_rules": None,
-        "eval_fee": 0.0,
-        "activation_fee": 0.0,
-        "reset_fee": 0.0,
-        "monthly_fee": 0.0,
+        "eval_fee": preset.eval_fee,
+        "activation_fee": preset.activation_fee,
+        "reset_fee": preset.reset_fee,
+        "monthly_fee": preset.monthly_fee,
         "refund_rules": None,
-        "rule_source_url": None,
-        "rule_last_verified_at": None,
-        "verification_status": "demo",
+        "rule_source_url": preset.source_url,
+        "rule_last_verified_at": preset.last_known_at,
+        # All seeded presets are honest approximations — flag accordingly so
+        # the firm-rule status badge in the UI never shows "Verified".
+        "verification_status": "unverified",
         "notes": preset.notes,
         "version": 1,
         "active": True,
