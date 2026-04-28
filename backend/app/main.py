@@ -18,6 +18,7 @@ from app.api import (
     prop_firm,
     replay,
     risk_profiles,
+    settings as settings_api,
     strategies,
     trade_replay,
 )
@@ -53,5 +54,6 @@ app.include_router(prompts.router, prefix="/api")
 app.include_router(prop_firm.router, prefix="/api")
 app.include_router(prop_firm.backtest_router, prefix="/api")
 app.include_router(risk_profiles.router, prefix="/api")
+app.include_router(settings_api.router, prefix="/api")
 app.include_router(replay.router, prefix="/api")
 app.include_router(trade_replay.router, prefix="/api")
