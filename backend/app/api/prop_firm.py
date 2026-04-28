@@ -8,13 +8,21 @@ from sqlalchemy.orm import Session
 
 from app.db.models import (
     BacktestRun,
+    FirmRuleProfile,
     PropFirmSimulation,
     Strategy,
     StrategyVersion,
     Trade,
 )
 from app.db.session import get_session
-from app.schemas import PropFirmConfigIn, PropFirmPresetRead, PropFirmResultRead
+from app.schemas import (
+    FirmRuleProfileCreate,
+    FirmRuleProfilePatch,
+    FirmRuleProfileRead,
+    PropFirmConfigIn,
+    PropFirmPresetRead,
+    PropFirmResultRead,
+)
 from app.schemas.prop_simulator import (
     SimulationRunDetail,
     SimulationRunListRow,
@@ -26,9 +34,290 @@ from app.services.monte_carlo import run_monte_carlo
 router = APIRouter(prefix="/prop-firm", tags=["prop-firm"])
 
 
+# Fields that, when changed, invalidate verification (force back to
+# "unverified" + clear verified_at). Editing notes / source_url /
+# verified_by alone keeps a verified profile verified.
+_RULE_FIELDS_THAT_INVALIDATE_VERIFICATION = frozenset(
+    {
+        "firm_name",
+        "account_name",
+        "account_size",
+        "phase_type",
+        "profit_target",
+        "max_drawdown",
+        "daily_loss_limit",
+        "trailing_drawdown_enabled",
+        "trailing_drawdown_type",
+        "consistency_pct",
+        "consistency_rule_type",
+        "max_trades_per_day",
+        "minimum_trading_days",
+        "risk_per_trade_dollars",
+        "payout_split",
+        "payout_min_days",
+        "payout_min_profit",
+        "eval_fee",
+        "activation_fee",
+        "reset_fee",
+        "monthly_fee",
+        "last_known_at",
+    }
+)
+
+
+# --- Editable firm rule profiles --------------------------------------
+
+
+@router.get("/profiles", response_model=list[FirmRuleProfileRead])
+def list_firm_profiles(
+    include_archived: bool = False,
+    db: Session = Depends(get_session),
+) -> list[FirmRuleProfile]:
+    """List firm rule profiles. Active by default; pass
+    `?include_archived=true` to include soft-deleted ones too."""
+    stmt = select(FirmRuleProfile)
+    if not include_archived:
+        stmt = stmt.where(FirmRuleProfile.is_archived.is_(False))
+    stmt = stmt.order_by(FirmRuleProfile.firm_name.asc(), FirmRuleProfile.id.asc())
+    return list(db.scalars(stmt).all())
+
+
+@router.get("/profiles/{profile_id}", response_model=FirmRuleProfileRead)
+def get_firm_profile(
+    profile_id: str, db: Session = Depends(get_session)
+) -> FirmRuleProfile:
+    profile = _resolve_profile(db, profile_id)
+    return profile
+
+
+@router.post(
+    "/profiles", response_model=FirmRuleProfileRead, status_code=201
+)
+def create_firm_profile(
+    payload: FirmRuleProfileCreate, db: Session = Depends(get_session)
+) -> FirmRuleProfile:
+    """Create a custom firm profile. `is_seed=False` so it's never
+    overwritten by the seed-on-empty pass and isn't eligible for
+    `/reset`."""
+    existing = db.scalars(
+        select(FirmRuleProfile).where(
+            FirmRuleProfile.profile_id == payload.profile_id
+        )
+    ).first()
+    if existing is not None:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Profile {payload.profile_id!r} already exists.",
+        )
+    profile = FirmRuleProfile(
+        is_seed=False,
+        is_archived=False,
+        verification_status="unverified",
+        **payload.model_dump(),
+    )
+    db.add(profile)
+    db.flush()
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.patch("/profiles/{profile_id}", response_model=FirmRuleProfileRead)
+def patch_firm_profile(
+    profile_id: str,
+    payload: FirmRuleProfilePatch,
+    db: Session = Depends(get_session),
+) -> FirmRuleProfile:
+    """Partial update. Pydantic v2's `exclude_unset=True` distinguishes
+    "field omitted" from "field set to null", which matters for
+    nullable rule fields like `daily_loss_limit`."""
+    profile = _resolve_profile(db, profile_id)
+    updates = payload.model_dump(exclude_unset=True)
+    if not updates:
+        return profile
+
+    explicit_status_change = "verification_status" in updates
+    rule_changed = bool(
+        set(updates.keys()) & _RULE_FIELDS_THAT_INVALIDATE_VERIFICATION
+    )
+
+    for key, value in updates.items():
+        setattr(profile, key, value)
+
+    now = datetime.now(timezone.utc)
+    if explicit_status_change:
+        if profile.verification_status == "verified":
+            profile.verified_at = now
+        else:
+            profile.verified_at = None
+            profile.verified_by = None
+    elif rule_changed and profile.verification_status == "verified":
+        # Editing a rule field on a verified profile invalidates the
+        # verification stamp — the user has to re-verify the new values.
+        profile.verification_status = "unverified"
+        profile.verified_at = None
+        profile.verified_by = None
+
+    db.flush()
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.post(
+    "/profiles/{profile_id}/reset", response_model=FirmRuleProfileRead
+)
+def reset_firm_profile(
+    profile_id: str, db: Session = Depends(get_session)
+) -> FirmRuleProfile:
+    """Restore a seed profile to its `app.services.prop_firm.PRESETS`
+    factory values. Returns 404 if the profile isn't a seed (user-
+    created profiles have no factory to revert to)."""
+    profile = _resolve_profile(db, profile_id)
+    if not profile.is_seed:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Profile {profile_id!r} is user-created — no seed values "
+                "to restore. Edit fields directly or delete the profile."
+            ),
+        )
+    seed = prop_firm.PRESETS.get(profile_id)
+    if seed is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Profile {profile_id!r} is marked is_seed=True but no "
+                "PRESETS entry exists. The seed key may have been removed."
+            ),
+        )
+    _apply_seed_to_profile(profile, seed)
+    db.flush()
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.post(
+    "/profiles/{profile_id}/archive", response_model=FirmRuleProfileRead
+)
+def archive_firm_profile(
+    profile_id: str, db: Session = Depends(get_session)
+) -> FirmRuleProfile:
+    profile = _resolve_profile(db, profile_id)
+    profile.is_archived = True
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.post(
+    "/profiles/{profile_id}/unarchive", response_model=FirmRuleProfileRead
+)
+def unarchive_firm_profile(
+    profile_id: str, db: Session = Depends(get_session)
+) -> FirmRuleProfile:
+    profile = _resolve_profile(db, profile_id)
+    profile.is_archived = False
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+def _resolve_profile(db: Session, profile_id: str) -> FirmRuleProfile:
+    profile = db.scalars(
+        select(FirmRuleProfile).where(FirmRuleProfile.profile_id == profile_id)
+    ).first()
+    if profile is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Firm profile {profile_id!r} not found.",
+        )
+    return profile
+
+
+def _apply_seed_to_profile(
+    profile: FirmRuleProfile, seed: "prop_firm.PropFirmPreset"
+) -> None:
+    """Overwrite every editable field on `profile` with the values from
+    `seed`. Preserves identity (id, profile_id, created_at, is_seed)."""
+    firm_name = seed.name.split(" ")[0] or seed.name
+    trailing_type = seed.trailing_drawdown_type
+    if seed.trailing_drawdown and trailing_type == "none":
+        trailing_type = "intraday"
+    profile.firm_name = firm_name
+    profile.account_name = seed.name
+    profile.account_size = seed.starting_balance
+    profile.phase_type = "evaluation"
+    profile.profit_target = seed.profit_target
+    profile.max_drawdown = seed.max_drawdown
+    profile.daily_loss_limit = seed.daily_loss_limit
+    profile.trailing_drawdown_enabled = seed.trailing_drawdown
+    profile.trailing_drawdown_type = trailing_type
+    profile.consistency_pct = seed.consistency_pct
+    profile.consistency_rule_type = (
+        "best_day_pct_of_total"
+        if seed.consistency_pct is not None
+        else "none"
+    )
+    profile.max_trades_per_day = seed.max_trades_per_day
+    profile.minimum_trading_days = seed.minimum_trading_days
+    profile.risk_per_trade_dollars = seed.risk_per_trade_dollars
+    profile.payout_split = seed.payout_split
+    profile.payout_min_days = seed.payout_min_days
+    profile.payout_min_profit = seed.payout_min_profit
+    profile.eval_fee = seed.eval_fee
+    profile.activation_fee = seed.activation_fee
+    profile.reset_fee = seed.reset_fee
+    profile.monthly_fee = seed.monthly_fee
+    profile.source_url = seed.source_url
+    profile.last_known_at = seed.last_known_at
+    profile.notes = seed.notes
+    profile.verification_status = "unverified"
+    profile.verified_at = None
+    profile.verified_by = None
+    profile.is_archived = False
+
+
+# --- Backwards-compat presets endpoint ---------------------------------
+
+
 @router.get("/presets", response_model=list[PropFirmPresetRead])
-def list_presets() -> list[dict]:
-    return [preset.as_dict() for preset in prop_firm.PRESETS.values()]
+def list_presets(db: Session = Depends(get_session)) -> list[dict]:
+    """Legacy shape for the deterministic single-path checker embedded
+    on /backtests/[id]. Reads from the DB now (so user edits flow
+    through), maps each row to the lean PropFirmPreset shape."""
+    rows = db.scalars(
+        select(FirmRuleProfile).where(FirmRuleProfile.is_archived.is_(False))
+        .order_by(FirmRuleProfile.firm_name.asc(), FirmRuleProfile.id.asc())
+    ).all()
+    return [
+        {
+            "key": row.profile_id,
+            "name": row.account_name,
+            "notes": row.notes or "",
+            "starting_balance": row.account_size,
+            "profit_target": row.profit_target,
+            "max_drawdown": row.max_drawdown,
+            "trailing_drawdown": row.trailing_drawdown_enabled,
+            "daily_loss_limit": row.daily_loss_limit,
+            "consistency_pct": row.consistency_pct,
+            "max_trades_per_day": row.max_trades_per_day,
+            "risk_per_trade_dollars": row.risk_per_trade_dollars,
+            "trailing_drawdown_type": row.trailing_drawdown_type,
+            "minimum_trading_days": row.minimum_trading_days,
+            "payout_split": row.payout_split,
+            "payout_min_days": row.payout_min_days,
+            "payout_min_profit": row.payout_min_profit,
+            "eval_fee": row.eval_fee,
+            "activation_fee": row.activation_fee,
+            "reset_fee": row.reset_fee,
+            "monthly_fee": row.monthly_fee,
+            "source_url": row.source_url,
+            "last_known_at": row.last_known_at,
+        }
+        for row in rows
+    ]
 
 
 # --- Monte Carlo simulator: list / detail / create ---------------------
@@ -139,18 +428,30 @@ def create_simulation(
             detail="Selected backtests have no trades to bootstrap from.",
         )
 
-    # 3. Resolve firm profile from preset key (v1: presets only;
-    # custom-rule UI is a follow-up).
-    preset = prop_firm.PRESETS.get(payload.firm_profile_id)
-    if preset is None:
-        raise HTTPException(
-            status_code=404,
-            detail=(
-                f"Firm profile {payload.firm_profile_id!r} not found. "
-                f"Available: {list(prop_firm.PRESETS.keys())}"
-            ),
+    # 3. Resolve firm profile from the editable DB table (the user can
+    # edit any field on the /prop-simulator/firms page; those edits flow
+    # through here on the next simulation). Falls back to the static
+    # PRESETS dict only when a profile_id matches a seed key but the
+    # row hasn't been created yet (rare — seed-on-empty handles new DBs).
+    profile_row = db.scalars(
+        select(FirmRuleProfile).where(
+            FirmRuleProfile.profile_id == payload.firm_profile_id,
+            FirmRuleProfile.is_archived.is_(False),
         )
-    firm_profile = _preset_to_firm_rule_profile(preset, payload)
+    ).first()
+    if profile_row is not None:
+        firm_profile = _row_to_firm_rule_profile(profile_row)
+    else:
+        legacy_preset = prop_firm.PRESETS.get(payload.firm_profile_id)
+        if legacy_preset is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"Firm profile {payload.firm_profile_id!r} not found. "
+                    "Edit available profiles at /prop-simulator/firms."
+                ),
+            )
+        firm_profile = _preset_to_firm_rule_profile(legacy_preset, payload)
 
     # 4. Resolve strategy name (use the first run's strategy).
     first_run = runs[0]
@@ -300,6 +601,56 @@ def _preset_to_firm_rule_profile(
         "notes": preset.notes,
         "version": 1,
         "active": True,
+    }
+
+
+def _row_to_firm_rule_profile(row: FirmRuleProfile) -> dict:
+    """Convert a FirmRuleProfile row to the FirmRuleProfile dict shape
+    the simulator + frontend expect. Mirrors `_preset_to_firm_rule_profile`
+    field-for-field but reads from the editable DB row."""
+    return {
+        "profile_id": row.profile_id,
+        "firm_name": row.firm_name,
+        "account_name": row.account_name,
+        "account_size": row.account_size,
+        "phase_type": row.phase_type,
+        "profit_target": row.profit_target,
+        "max_drawdown": row.max_drawdown,
+        "daily_loss_limit": row.daily_loss_limit,
+        "trailing_drawdown_enabled": row.trailing_drawdown_enabled,
+        "trailing_drawdown_type": row.trailing_drawdown_type,
+        "trailing_drawdown_stop_level": None,
+        "minimum_trading_days": row.minimum_trading_days,
+        "maximum_trading_days": None,
+        "max_contracts": row.max_trades_per_day,
+        "scaling_plan_enabled": False,
+        "scaling_plan_rules": [],
+        "consistency_rule_enabled": row.consistency_pct is not None,
+        "consistency_rule_type": row.consistency_rule_type,
+        "consistency_rule_value": row.consistency_pct,
+        "news_trading_allowed": True,
+        "overnight_holding_allowed": False,
+        "weekend_holding_allowed": False,
+        "copy_trading_allowed": True,
+        "payout_min_days": row.payout_min_days,
+        "payout_min_profit": row.payout_min_profit,
+        "payout_cap": None,
+        "payout_split": row.payout_split,
+        "first_payout_rules": None,
+        "recurring_payout_rules": None,
+        "eval_fee": row.eval_fee,
+        "activation_fee": row.activation_fee,
+        "reset_fee": row.reset_fee,
+        "monthly_fee": row.monthly_fee,
+        "refund_rules": None,
+        "rule_source_url": row.source_url,
+        "rule_last_verified_at": (
+            row.verified_at.isoformat() if row.verified_at else row.last_known_at
+        ),
+        "verification_status": row.verification_status,
+        "notes": row.notes or "",
+        "version": 1,
+        "active": not row.is_archived,
     }
 
 

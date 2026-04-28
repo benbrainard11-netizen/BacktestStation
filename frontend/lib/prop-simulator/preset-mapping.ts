@@ -1,8 +1,15 @@
-// Convert a backend PropFirmPresetRead to the richer FirmRuleProfile
-// shape the frontend Firm Rules page + wizard expect. Lives in one place
-// so /prop-simulator/new and /prop-simulator/firms agree on the mapping.
+// Convert a backend preset / profile to the richer FirmRuleProfile
+// shape the frontend Firm Rules page + wizard expect. Two helpers:
 //
-// Mirrors backend/app/api/prop_firm.py :: _preset_to_firm_rule_profile.
+// - presetToFirmProfile() — for the legacy `/api/prop-firm/presets`
+//   endpoint shape. Used by the deterministic single-path checker
+//   embedded on /backtests/[id].
+// - profileToFirmProfile() — for the new `/api/prop-firm/profiles`
+//   endpoint shape. Used by /prop-simulator/firms (editable) and the
+//   /prop-simulator/new wizard (live data).
+//
+// Both mirror backend/app/api/prop_firm.py :: _preset_to_firm_rule_
+// profile / _row_to_firm_rule_profile.
 
 import type { components } from "@/lib/api/generated";
 import type {
@@ -11,6 +18,7 @@ import type {
 } from "@/lib/prop-simulator/types";
 
 type Preset = components["schemas"]["PropFirmPresetRead"];
+type ProfileRead = components["schemas"]["FirmRuleProfileRead"];
 
 const VALID_TRAILING: ReadonlyArray<TrailingDrawdownType> = [
   "intraday",
@@ -73,5 +81,79 @@ export function presetToFirmProfile(preset: Preset): FirmRuleProfile {
     notes: preset.notes,
     version: 1,
     active: true,
+  };
+}
+
+const VALID_VERIFY_STATUS: ReadonlyArray<FirmRuleProfile["verification_status"]> =
+  ["verified", "unverified", "demo"];
+
+function resolveProfileTrailing(
+  enabled: boolean,
+  raw: string | null | undefined,
+): TrailingDrawdownType {
+  const cast = (raw ?? "none") as TrailingDrawdownType;
+  const valid = VALID_TRAILING.includes(cast) ? cast : "none";
+  if (enabled && valid === "none") return "intraday";
+  return valid;
+}
+
+export function profileToFirmProfile(p: ProfileRead): FirmRuleProfile {
+  // verified_at (datetime) wins over last_known_at (date) for the
+  // displayed verification timestamp — that's the rule_last_verified_at
+  // contract on the frontend type.
+  const verifiedAt = p.verified_at ?? p.last_known_at ?? null;
+  const status = (
+    VALID_VERIFY_STATUS.includes(
+      p.verification_status as FirmRuleProfile["verification_status"],
+    )
+      ? p.verification_status
+      : "unverified"
+  ) as FirmRuleProfile["verification_status"];
+  return {
+    profile_id: p.profile_id,
+    firm_name: p.firm_name,
+    account_name: p.account_name,
+    account_size: p.account_size,
+    phase_type: (p.phase_type as FirmRuleProfile["phase_type"]) ?? "evaluation",
+    profit_target: p.profit_target,
+    max_drawdown: p.max_drawdown,
+    daily_loss_limit: p.daily_loss_limit,
+    trailing_drawdown_enabled: p.trailing_drawdown_enabled,
+    trailing_drawdown_type: resolveProfileTrailing(
+      p.trailing_drawdown_enabled,
+      p.trailing_drawdown_type,
+    ),
+    trailing_drawdown_stop_level: null,
+    minimum_trading_days: p.minimum_trading_days ?? null,
+    maximum_trading_days: null,
+    max_contracts: p.max_trades_per_day ?? null,
+    scaling_plan_enabled: false,
+    scaling_plan_rules: [],
+    consistency_rule_enabled: p.consistency_pct !== null,
+    consistency_rule_type:
+      (p.consistency_rule_type as FirmRuleProfile["consistency_rule_type"]) ??
+      "none",
+    consistency_rule_value: p.consistency_pct ?? null,
+    news_trading_allowed: true,
+    overnight_holding_allowed: false,
+    weekend_holding_allowed: false,
+    copy_trading_allowed: true,
+    payout_min_days: p.payout_min_days ?? null,
+    payout_min_profit: p.payout_min_profit ?? null,
+    payout_cap: null,
+    payout_split: p.payout_split ?? 0.9,
+    first_payout_rules: null,
+    recurring_payout_rules: null,
+    eval_fee: p.eval_fee ?? 0,
+    activation_fee: p.activation_fee ?? 0,
+    reset_fee: p.reset_fee ?? 0,
+    monthly_fee: p.monthly_fee ?? 0,
+    refund_rules: null,
+    rule_source_url: p.source_url ?? null,
+    rule_last_verified_at: verifiedAt,
+    verification_status: status,
+    notes: p.notes ?? "",
+    version: 1,
+    active: !p.is_archived,
   };
 }

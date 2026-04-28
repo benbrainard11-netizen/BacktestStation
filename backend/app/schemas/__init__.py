@@ -26,6 +26,9 @@ from app.schemas.prompts import (
     PromptModesRead,
 )
 from app.schemas.prop_firm import (
+    FirmRuleProfileCreate,
+    FirmRuleProfilePatch,
+    FirmRuleProfileRead,
     PropFirmConfigIn,
     PropFirmDayRow,
     PropFirmPresetRead,
@@ -100,6 +103,9 @@ __all__ = [
     "ExperimentDecisionsRead",
     "ExperimentRead",
     "ExperimentUpdate",
+    "FirmRuleProfileCreate",
+    "FirmRuleProfilePatch",
+    "FirmRuleProfileRead",
     "ImportBacktestResponse",
     "IngesterStatus",
     "LiveMonitorStatus",

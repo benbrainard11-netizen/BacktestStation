@@ -398,3 +398,99 @@ class RiskProfile(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+
+class FirmRuleProfile(Base):
+    """Editable firm rule profile — the source of truth for prop-firm
+    rules consumed by the Monte Carlo simulator and shown on the firms
+    page.
+
+    Seeded from `app.services.prop_firm.PRESETS` on first boot (any row
+    with `is_seed=True`). After that, the dict is just the factory-reset
+    reference for the `reset` endpoint; live state lives here.
+
+    Verification semantics:
+    - Editing any rule field on a "verified" profile flips the status
+      back to "unverified" and clears `verified_at` / `verified_by`.
+    - Setting `verification_status="verified"` explicitly stamps
+      `verified_at = now()`.
+    """
+
+    __tablename__ = "firm_rule_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Stable string key — used in URLs + by the simulator's firm_profile_id.
+    profile_id: Mapped[str] = mapped_column(String(60), unique=True, index=True)
+
+    # Identity
+    firm_name: Mapped[str] = mapped_column(String(120))
+    account_name: Mapped[str] = mapped_column(String(120))
+    account_size: Mapped[float] = mapped_column(Float)
+    phase_type: Mapped[str] = mapped_column(
+        String(40), default="evaluation", server_default="evaluation"
+    )
+
+    # Sim-relevant rule fields
+    profit_target: Mapped[float] = mapped_column(Float)
+    max_drawdown: Mapped[float] = mapped_column(Float)
+    daily_loss_limit: Mapped[float | None] = mapped_column(Float)
+    trailing_drawdown_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="1"
+    )
+    # "intraday" | "end_of_day" | "static" | "none"
+    trailing_drawdown_type: Mapped[str] = mapped_column(
+        String(20), default="none", server_default="none"
+    )
+    consistency_pct: Mapped[float | None] = mapped_column(Float)
+    consistency_rule_type: Mapped[str] = mapped_column(
+        String(40), default="none", server_default="none"
+    )
+    max_trades_per_day: Mapped[int | None] = mapped_column(Integer)
+    minimum_trading_days: Mapped[int | None] = mapped_column(Integer)
+    risk_per_trade_dollars: Mapped[float] = mapped_column(
+        Float, default=200.0, server_default="200"
+    )
+
+    # Payout
+    payout_split: Mapped[float] = mapped_column(
+        Float, default=0.9, server_default="0.9"
+    )
+    payout_min_days: Mapped[int | None] = mapped_column(Integer)
+    payout_min_profit: Mapped[float | None] = mapped_column(Float)
+
+    # Fees
+    eval_fee: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    activation_fee: Mapped[float] = mapped_column(
+        Float, default=0.0, server_default="0"
+    )
+    reset_fee: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    monthly_fee: Mapped[float] = mapped_column(
+        Float, default=0.0, server_default="0"
+    )
+
+    # Provenance
+    source_url: Mapped[str | None] = mapped_column(String(255))
+    last_known_at: Mapped[str | None] = mapped_column(String(20))  # ISO yyyy-mm-dd
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    # Verification
+    # "unverified" | "verified" | "demo"
+    verification_status: Mapped[str] = mapped_column(
+        String(20), default="unverified", server_default="unverified", index=True
+    )
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime)
+    verified_by: Mapped[str | None] = mapped_column(String(60))
+
+    # Bookkeeping
+    is_seed: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0", index=True
+    )
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0", index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

@@ -619,10 +619,121 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Presets */
+        /**
+         * List Presets
+         * @description Legacy shape for the deterministic single-path checker embedded
+         *     on /backtests/[id]. Reads from the DB now (so user edits flow
+         *     through), maps each row to the lean PropFirmPreset shape.
+         */
         get: operations["list_presets_api_prop_firm_presets_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/prop-firm/profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Firm Profiles
+         * @description List firm rule profiles. Active by default; pass
+         *     `?include_archived=true` to include soft-deleted ones too.
+         */
+        get: operations["list_firm_profiles_api_prop_firm_profiles_get"];
+        put?: never;
+        /**
+         * Create Firm Profile
+         * @description Create a custom firm profile. `is_seed=False` so it's never
+         *     overwritten by the seed-on-empty pass and isn't eligible for
+         *     `/reset`.
+         */
+        post: operations["create_firm_profile_api_prop_firm_profiles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/prop-firm/profiles/{profile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Firm Profile */
+        get: operations["get_firm_profile_api_prop_firm_profiles__profile_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Firm Profile
+         * @description Partial update. Pydantic v2's `exclude_unset=True` distinguishes
+         *     "field omitted" from "field set to null", which matters for
+         *     nullable rule fields like `daily_loss_limit`.
+         */
+        patch: operations["patch_firm_profile_api_prop_firm_profiles__profile_id__patch"];
+        trace?: never;
+    };
+    "/api/prop-firm/profiles/{profile_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Firm Profile */
+        post: operations["archive_firm_profile_api_prop_firm_profiles__profile_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/prop-firm/profiles/{profile_id}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Firm Profile
+         * @description Restore a seed profile to its `app.services.prop_firm.PRESETS`
+         *     factory values. Returns 404 if the profile isn't a seed (user-
+         *     created profiles have no factory to revert to).
+         */
+        post: operations["reset_firm_profile_api_prop_firm_profiles__profile_id__reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/prop-firm/profiles/{profile_id}/unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unarchive Firm Profile */
+        post: operations["unarchive_firm_profile_api_prop_firm_profiles__profile_id__unarchive_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1652,6 +1763,229 @@ export interface components {
              * @default false
              */
             weekend_holding_allowed: boolean;
+        };
+        /**
+         * FirmRuleProfileCreate
+         * @description POST body for a brand-new (custom) firm profile. The simulator's
+         *     8 sim-relevant fields are required; everything else has a sensible
+         *     default.
+         */
+        FirmRuleProfileCreate: {
+            /** Account Name */
+            account_name: string;
+            /** Account Size */
+            account_size: number;
+            /**
+             * Activation Fee
+             * @default 0
+             */
+            activation_fee: number;
+            /** Consistency Pct */
+            consistency_pct?: number | null;
+            /**
+             * Consistency Rule Type
+             * @default none
+             */
+            consistency_rule_type: string;
+            /** Daily Loss Limit */
+            daily_loss_limit?: number | null;
+            /**
+             * Eval Fee
+             * @default 0
+             */
+            eval_fee: number;
+            /** Firm Name */
+            firm_name: string;
+            /** Last Known At */
+            last_known_at?: string | null;
+            /** Max Drawdown */
+            max_drawdown: number;
+            /** Max Trades Per Day */
+            max_trades_per_day?: number | null;
+            /** Minimum Trading Days */
+            minimum_trading_days?: number | null;
+            /**
+             * Monthly Fee
+             * @default 0
+             */
+            monthly_fee: number;
+            /** Notes */
+            notes?: string | null;
+            /** Payout Min Days */
+            payout_min_days?: number | null;
+            /** Payout Min Profit */
+            payout_min_profit?: number | null;
+            /**
+             * Payout Split
+             * @default 0.9
+             */
+            payout_split: number;
+            /**
+             * Phase Type
+             * @default evaluation
+             */
+            phase_type: string;
+            /** Profile Id */
+            profile_id: string;
+            /** Profit Target */
+            profit_target: number;
+            /**
+             * Reset Fee
+             * @default 0
+             */
+            reset_fee: number;
+            /**
+             * Risk Per Trade Dollars
+             * @default 200
+             */
+            risk_per_trade_dollars: number;
+            /** Source Url */
+            source_url?: string | null;
+            /**
+             * Trailing Drawdown Enabled
+             * @default true
+             */
+            trailing_drawdown_enabled: boolean;
+            /**
+             * Trailing Drawdown Type
+             * @default intraday
+             */
+            trailing_drawdown_type: string;
+        };
+        /**
+         * FirmRuleProfilePatch
+         * @description PATCH body — every field optional. Pydantic v2 distinguishes
+         *     "field omitted" from "field set to null" via `model_dump(
+         *     exclude_unset=True)`, which the endpoint relies on for partial
+         *     updates. Setting `verification_status="verified"` stamps
+         *     `verified_at = now()`; editing any rule field while currently
+         *     verified flips the status back to unverified.
+         */
+        FirmRuleProfilePatch: {
+            /** Account Name */
+            account_name?: string | null;
+            /** Account Size */
+            account_size?: number | null;
+            /** Activation Fee */
+            activation_fee?: number | null;
+            /** Consistency Pct */
+            consistency_pct?: number | null;
+            /** Consistency Rule Type */
+            consistency_rule_type?: string | null;
+            /** Daily Loss Limit */
+            daily_loss_limit?: number | null;
+            /** Eval Fee */
+            eval_fee?: number | null;
+            /** Firm Name */
+            firm_name?: string | null;
+            /** Last Known At */
+            last_known_at?: string | null;
+            /** Max Drawdown */
+            max_drawdown?: number | null;
+            /** Max Trades Per Day */
+            max_trades_per_day?: number | null;
+            /** Minimum Trading Days */
+            minimum_trading_days?: number | null;
+            /** Monthly Fee */
+            monthly_fee?: number | null;
+            /** Notes */
+            notes?: string | null;
+            /** Payout Min Days */
+            payout_min_days?: number | null;
+            /** Payout Min Profit */
+            payout_min_profit?: number | null;
+            /** Payout Split */
+            payout_split?: number | null;
+            /** Phase Type */
+            phase_type?: string | null;
+            /** Profit Target */
+            profit_target?: number | null;
+            /** Reset Fee */
+            reset_fee?: number | null;
+            /** Risk Per Trade Dollars */
+            risk_per_trade_dollars?: number | null;
+            /** Source Url */
+            source_url?: string | null;
+            /** Trailing Drawdown Enabled */
+            trailing_drawdown_enabled?: boolean | null;
+            /** Trailing Drawdown Type */
+            trailing_drawdown_type?: string | null;
+            /** Verification Status */
+            verification_status?: string | null;
+            /** Verified By */
+            verified_by?: string | null;
+        };
+        /**
+         * FirmRuleProfileRead
+         * @description Full editable firm rule profile — what /profiles endpoints return.
+         */
+        FirmRuleProfileRead: {
+            /** Account Name */
+            account_name: string;
+            /** Account Size */
+            account_size: number;
+            /** Activation Fee */
+            activation_fee: number;
+            /** Consistency Pct */
+            consistency_pct: number | null;
+            /** Consistency Rule Type */
+            consistency_rule_type: string;
+            /** Created At */
+            created_at: string | null;
+            /** Daily Loss Limit */
+            daily_loss_limit: number | null;
+            /** Eval Fee */
+            eval_fee: number;
+            /** Firm Name */
+            firm_name: string;
+            /** Id */
+            id: number;
+            /** Is Archived */
+            is_archived: boolean;
+            /** Is Seed */
+            is_seed: boolean;
+            /** Last Known At */
+            last_known_at: string | null;
+            /** Max Drawdown */
+            max_drawdown: number;
+            /** Max Trades Per Day */
+            max_trades_per_day: number | null;
+            /** Minimum Trading Days */
+            minimum_trading_days: number | null;
+            /** Monthly Fee */
+            monthly_fee: number;
+            /** Notes */
+            notes: string | null;
+            /** Payout Min Days */
+            payout_min_days: number | null;
+            /** Payout Min Profit */
+            payout_min_profit: number | null;
+            /** Payout Split */
+            payout_split: number;
+            /** Phase Type */
+            phase_type: string;
+            /** Profile Id */
+            profile_id: string;
+            /** Profit Target */
+            profit_target: number;
+            /** Reset Fee */
+            reset_fee: number;
+            /** Risk Per Trade Dollars */
+            risk_per_trade_dollars: number;
+            /** Source Url */
+            source_url: string | null;
+            /** Trailing Drawdown Enabled */
+            trailing_drawdown_enabled: boolean;
+            /** Trailing Drawdown Type */
+            trailing_drawdown_type: string;
+            /** Updated At */
+            updated_at: string | null;
+            /** Verification Status */
+            verification_status: string;
+            /** Verified At */
+            verified_at: string | null;
+            /** Verified By */
+            verified_by: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -4198,6 +4532,229 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PropFirmPresetRead"][];
+                };
+            };
+        };
+    };
+    list_firm_profiles_api_prop_firm_profiles_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmRuleProfileRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_firm_profile_api_prop_firm_profiles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmRuleProfileCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmRuleProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_firm_profile_api_prop_firm_profiles__profile_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmRuleProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_firm_profile_api_prop_firm_profiles__profile_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmRuleProfilePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmRuleProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_firm_profile_api_prop_firm_profiles__profile_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmRuleProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_firm_profile_api_prop_firm_profiles__profile_id__reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmRuleProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unarchive_firm_profile_api_prop_firm_profiles__profile_id__unarchive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmRuleProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

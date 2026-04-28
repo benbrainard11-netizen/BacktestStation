@@ -149,6 +149,13 @@ def _run_data_migrations(engine: Engine) -> None:
             # the originals on every app restart.
             _seed_default_risk_profiles(connection)
 
+        # 2026-04-25: FirmRuleProfile table added — DB now owns the
+        # editable firm presets. Seed from the static PRESETS dict if
+        # any profile_id is missing. Idempotent — never overwrites a
+        # row the user has edited.
+        if inspector.has_table("firm_rule_profiles"):
+            _seed_default_firm_rule_profiles(connection)
+
 
 def _seed_default_risk_profiles(connection) -> None:
     """Insert Conservative / Live-mirror / Aggressive defaults if missing.
@@ -240,6 +247,91 @@ def _seed_default_risk_profiles(connection) -> None:
                 " :allowed_hours_json, :notes, :strategy_params)"
             ),
             profile,
+        )
+
+
+def _seed_default_firm_rule_profiles(connection) -> None:
+    """Seed firm rule profiles from `app.services.prop_firm.PRESETS` for
+    any `profile_id` not already in the DB. Existing rows are NEVER
+    overwritten — `is_seed=True` is the marker that a row was originally
+    seeded (and so eligible for the /reset endpoint), but once the user
+    edits it the row stays editable; reset is the only way to restore.
+    """
+    from sqlalchemy import text as _text
+
+    # Local import — services/prop_firm.py imports from app.db.models,
+    # so a top-level import would cycle.
+    from app.services.prop_firm import PRESETS
+
+    for key, preset in PRESETS.items():
+        existing = connection.execute(
+            _text("SELECT id FROM firm_rule_profiles WHERE profile_id = :pid"),
+            {"pid": key},
+        ).first()
+        if existing:
+            continue
+        firm_name = preset.name.split(" ")[0] or preset.name
+        trailing_type = preset.trailing_drawdown_type
+        if preset.trailing_drawdown and trailing_type == "none":
+            trailing_type = "intraday"
+        connection.execute(
+            _text(
+                "INSERT INTO firm_rule_profiles ("
+                " profile_id, firm_name, account_name, account_size, "
+                " phase_type, profit_target, max_drawdown, daily_loss_limit, "
+                " trailing_drawdown_enabled, trailing_drawdown_type, "
+                " consistency_pct, consistency_rule_type, max_trades_per_day, "
+                " minimum_trading_days, risk_per_trade_dollars, "
+                " payout_split, payout_min_days, payout_min_profit, "
+                " eval_fee, activation_fee, reset_fee, monthly_fee, "
+                " source_url, last_known_at, notes, "
+                " verification_status, is_seed, is_archived"
+                ") VALUES ("
+                " :profile_id, :firm_name, :account_name, :account_size, "
+                " :phase_type, :profit_target, :max_drawdown, :daily_loss_limit, "
+                " :trailing_drawdown_enabled, :trailing_drawdown_type, "
+                " :consistency_pct, :consistency_rule_type, :max_trades_per_day, "
+                " :minimum_trading_days, :risk_per_trade_dollars, "
+                " :payout_split, :payout_min_days, :payout_min_profit, "
+                " :eval_fee, :activation_fee, :reset_fee, :monthly_fee, "
+                " :source_url, :last_known_at, :notes, "
+                " :verification_status, :is_seed, :is_archived"
+                ")"
+            ),
+            {
+                "profile_id": key,
+                "firm_name": firm_name,
+                "account_name": preset.name,
+                "account_size": preset.starting_balance,
+                "phase_type": "evaluation",
+                "profit_target": preset.profit_target,
+                "max_drawdown": preset.max_drawdown,
+                "daily_loss_limit": preset.daily_loss_limit,
+                "trailing_drawdown_enabled": preset.trailing_drawdown,
+                "trailing_drawdown_type": trailing_type,
+                "consistency_pct": preset.consistency_pct,
+                "consistency_rule_type": (
+                    "best_day_pct_of_total"
+                    if preset.consistency_pct is not None
+                    else "none"
+                ),
+                "max_trades_per_day": preset.max_trades_per_day,
+                "minimum_trading_days": preset.minimum_trading_days,
+                "risk_per_trade_dollars": preset.risk_per_trade_dollars,
+                "payout_split": preset.payout_split,
+                "payout_min_days": preset.payout_min_days,
+                "payout_min_profit": preset.payout_min_profit,
+                "eval_fee": preset.eval_fee,
+                "activation_fee": preset.activation_fee,
+                "reset_fee": preset.reset_fee,
+                "monthly_fee": preset.monthly_fee,
+                "source_url": preset.source_url,
+                "last_known_at": preset.last_known_at,
+                "notes": preset.notes,
+                "verification_status": "unverified",
+                "is_seed": True,
+                "is_archived": False,
+            },
         )
 
 

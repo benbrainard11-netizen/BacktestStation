@@ -1707,6 +1707,790 @@
         "title": "FirmRuleProfile",
         "type": "object"
       },
+      "FirmRuleProfileCreate": {
+        "additionalProperties": false,
+        "description": "POST body for a brand-new (custom) firm profile. The simulator's\n8 sim-relevant fields are required; everything else has a sensible\ndefault.",
+        "properties": {
+          "account_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Account Name",
+            "type": "string"
+          },
+          "account_size": {
+            "exclusiveMinimum": 0.0,
+            "title": "Account Size",
+            "type": "number"
+          },
+          "activation_fee": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Activation Fee",
+            "type": "number"
+          },
+          "consistency_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Pct"
+          },
+          "consistency_rule_type": {
+            "default": "none",
+            "title": "Consistency Rule Type",
+            "type": "string"
+          },
+          "daily_loss_limit": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Limit"
+          },
+          "eval_fee": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Eval Fee",
+            "type": "number"
+          },
+          "firm_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Firm Name",
+            "type": "string"
+          },
+          "last_known_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Known At"
+          },
+          "max_drawdown": {
+            "exclusiveMinimum": 0.0,
+            "title": "Max Drawdown",
+            "type": "number"
+          },
+          "max_trades_per_day": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Day"
+          },
+          "minimum_trading_days": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Trading Days"
+          },
+          "monthly_fee": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Monthly Fee",
+            "type": "number"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "payout_min_days": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Days"
+          },
+          "payout_min_profit": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Profit"
+          },
+          "payout_split": {
+            "default": 0.9,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Payout Split",
+            "type": "number"
+          },
+          "phase_type": {
+            "default": "evaluation",
+            "title": "Phase Type",
+            "type": "string"
+          },
+          "profile_id": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "profit_target": {
+            "exclusiveMinimum": 0.0,
+            "title": "Profit Target",
+            "type": "number"
+          },
+          "reset_fee": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Reset Fee",
+            "type": "number"
+          },
+          "risk_per_trade_dollars": {
+            "default": 200.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Risk Per Trade Dollars",
+            "type": "number"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "trailing_drawdown_enabled": {
+            "default": true,
+            "title": "Trailing Drawdown Enabled",
+            "type": "boolean"
+          },
+          "trailing_drawdown_type": {
+            "default": "intraday",
+            "title": "Trailing Drawdown Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_id",
+          "firm_name",
+          "account_name",
+          "account_size",
+          "profit_target",
+          "max_drawdown"
+        ],
+        "title": "FirmRuleProfileCreate",
+        "type": "object"
+      },
+      "FirmRuleProfilePatch": {
+        "additionalProperties": false,
+        "description": "PATCH body \u2014 every field optional. Pydantic v2 distinguishes\n\"field omitted\" from \"field set to null\" via `model_dump(\nexclude_unset=True)`, which the endpoint relies on for partial\nupdates. Setting `verification_status=\"verified\"` stamps\n`verified_at = now()`; editing any rule field while currently\nverified flips the status back to unverified.",
+        "properties": {
+          "account_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Name"
+          },
+          "account_size": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Size"
+          },
+          "activation_fee": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activation Fee"
+          },
+          "consistency_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Pct"
+          },
+          "consistency_rule_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Rule Type"
+          },
+          "daily_loss_limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Limit"
+          },
+          "eval_fee": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eval Fee"
+          },
+          "firm_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firm Name"
+          },
+          "last_known_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Known At"
+          },
+          "max_drawdown": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown"
+          },
+          "max_trades_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Day"
+          },
+          "minimum_trading_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Trading Days"
+          },
+          "monthly_fee": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Fee"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "payout_min_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Days"
+          },
+          "payout_min_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Profit"
+          },
+          "payout_split": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Split"
+          },
+          "phase_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase Type"
+          },
+          "profit_target": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit Target"
+          },
+          "reset_fee": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset Fee"
+          },
+          "risk_per_trade_dollars": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Per Trade Dollars"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "trailing_drawdown_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trailing Drawdown Enabled"
+          },
+          "trailing_drawdown_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trailing Drawdown Type"
+          },
+          "verification_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Status"
+          },
+          "verified_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified By"
+          }
+        },
+        "title": "FirmRuleProfilePatch",
+        "type": "object"
+      },
+      "FirmRuleProfileRead": {
+        "description": "Full editable firm rule profile \u2014 what /profiles endpoints return.",
+        "properties": {
+          "account_name": {
+            "title": "Account Name",
+            "type": "string"
+          },
+          "account_size": {
+            "title": "Account Size",
+            "type": "number"
+          },
+          "activation_fee": {
+            "title": "Activation Fee",
+            "type": "number"
+          },
+          "consistency_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Pct"
+          },
+          "consistency_rule_type": {
+            "title": "Consistency Rule Type",
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "daily_loss_limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Loss Limit"
+          },
+          "eval_fee": {
+            "title": "Eval Fee",
+            "type": "number"
+          },
+          "firm_name": {
+            "title": "Firm Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_archived": {
+            "title": "Is Archived",
+            "type": "boolean"
+          },
+          "is_seed": {
+            "title": "Is Seed",
+            "type": "boolean"
+          },
+          "last_known_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Known At"
+          },
+          "max_drawdown": {
+            "title": "Max Drawdown",
+            "type": "number"
+          },
+          "max_trades_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Day"
+          },
+          "minimum_trading_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Trading Days"
+          },
+          "monthly_fee": {
+            "title": "Monthly Fee",
+            "type": "number"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "payout_min_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Days"
+          },
+          "payout_min_profit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Min Profit"
+          },
+          "payout_split": {
+            "title": "Payout Split",
+            "type": "number"
+          },
+          "phase_type": {
+            "title": "Phase Type",
+            "type": "string"
+          },
+          "profile_id": {
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "profit_target": {
+            "title": "Profit Target",
+            "type": "number"
+          },
+          "reset_fee": {
+            "title": "Reset Fee",
+            "type": "number"
+          },
+          "risk_per_trade_dollars": {
+            "title": "Risk Per Trade Dollars",
+            "type": "number"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "trailing_drawdown_enabled": {
+            "title": "Trailing Drawdown Enabled",
+            "type": "boolean"
+          },
+          "trailing_drawdown_type": {
+            "title": "Trailing Drawdown Type",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "verification_status": {
+            "title": "Verification Status",
+            "type": "string"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "verified_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified By"
+          }
+        },
+        "required": [
+          "id",
+          "profile_id",
+          "firm_name",
+          "account_name",
+          "account_size",
+          "phase_type",
+          "profit_target",
+          "max_drawdown",
+          "daily_loss_limit",
+          "trailing_drawdown_enabled",
+          "trailing_drawdown_type",
+          "consistency_pct",
+          "consistency_rule_type",
+          "max_trades_per_day",
+          "minimum_trading_days",
+          "risk_per_trade_dollars",
+          "payout_split",
+          "payout_min_days",
+          "payout_min_profit",
+          "eval_fee",
+          "activation_fee",
+          "reset_fee",
+          "monthly_fee",
+          "source_url",
+          "last_known_at",
+          "notes",
+          "verification_status",
+          "verified_at",
+          "verified_by",
+          "is_seed",
+          "is_archived",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FirmRuleProfileRead",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -7661,6 +8445,7 @@
     },
     "/api/prop-firm/presets": {
       "get": {
+        "description": "Legacy shape for the deterministic single-path checker embedded\non /backtests/[id]. Reads from the DB now (so user edits flow\nthrough), maps each row to the lean PropFirmPreset shape.",
         "operationId": "list_presets_api_prop_firm_presets_get",
         "responses": {
           "200": {
@@ -7679,6 +8464,314 @@
           }
         },
         "summary": "List Presets",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
+    "/api/prop-firm/profiles": {
+      "get": {
+        "description": "List firm rule profiles. Active by default; pass\n`?include_archived=true` to include soft-deleted ones too.",
+        "operationId": "list_firm_profiles_api_prop_firm_profiles_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FirmRuleProfileRead"
+                  },
+                  "title": "Response List Firm Profiles Api Prop Firm Profiles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Firm Profiles",
+        "tags": [
+          "prop-firm"
+        ]
+      },
+      "post": {
+        "description": "Create a custom firm profile. `is_seed=False` so it's never\noverwritten by the seed-on-empty pass and isn't eligible for\n`/reset`.",
+        "operationId": "create_firm_profile_api_prop_firm_profiles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirmRuleProfileCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmRuleProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Firm Profile",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
+    "/api/prop-firm/profiles/{profile_id}": {
+      "get": {
+        "operationId": "get_firm_profile_api_prop_firm_profiles__profile_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmRuleProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Firm Profile",
+        "tags": [
+          "prop-firm"
+        ]
+      },
+      "patch": {
+        "description": "Partial update. Pydantic v2's `exclude_unset=True` distinguishes\n\"field omitted\" from \"field set to null\", which matters for\nnullable rule fields like `daily_loss_limit`.",
+        "operationId": "patch_firm_profile_api_prop_firm_profiles__profile_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirmRuleProfilePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmRuleProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Firm Profile",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
+    "/api/prop-firm/profiles/{profile_id}/archive": {
+      "post": {
+        "operationId": "archive_firm_profile_api_prop_firm_profiles__profile_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmRuleProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Firm Profile",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
+    "/api/prop-firm/profiles/{profile_id}/reset": {
+      "post": {
+        "description": "Restore a seed profile to its `app.services.prop_firm.PRESETS`\nfactory values. Returns 404 if the profile isn't a seed (user-\ncreated profiles have no factory to revert to).",
+        "operationId": "reset_firm_profile_api_prop_firm_profiles__profile_id__reset_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmRuleProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reset Firm Profile",
+        "tags": [
+          "prop-firm"
+        ]
+      }
+    },
+    "/api/prop-firm/profiles/{profile_id}/unarchive": {
+      "post": {
+        "operationId": "unarchive_firm_profile_api_prop_firm_profiles__profile_id__unarchive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmRuleProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unarchive Firm Profile",
         "tags": [
           "prop-firm"
         ]

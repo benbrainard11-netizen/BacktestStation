@@ -1,8 +1,12 @@
+import Link from "next/link";
+
 import FirmRuleStatusBadge from "@/components/prop-simulator/shared/FirmRuleStatusBadge";
 import type { FirmRuleProfile } from "@/lib/prop-simulator/types";
 
 interface FirmRulesTableProps {
   firms: FirmRuleProfile[];
+  /** When true, the Edit cell becomes a real link to the editor route. */
+  editable?: boolean;
 }
 
 function formatCurrency(value: number | null): string {
@@ -47,7 +51,10 @@ function formatTrailing(firm: FirmRuleProfile): string {
   return firm.trailing_drawdown_type.replace(/_/g, " ");
 }
 
-export default function FirmRulesTable({ firms }: FirmRulesTableProps) {
+export default function FirmRulesTable({
+  firms,
+  editable = false,
+}: FirmRulesTableProps) {
   return (
     <div className="overflow-x-auto border border-zinc-800">
       <table className="w-full border-collapse text-left font-mono text-xs">
@@ -107,14 +114,23 @@ export default function FirmRulesTable({ firms }: FirmRulesTableProps) {
                 />
               </td>
               <td className="whitespace-nowrap px-3 py-2 text-right">
-                <button
-                  type="button"
-                  disabled
-                  className="cursor-not-allowed border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-600"
-                  title="Editor lands with firm-rule persistence"
-                >
-                  edit
-                </button>
+                {editable ? (
+                  <Link
+                    href={`/prop-simulator/firms/${firm.profile_id}/edit`}
+                    className="inline-block rounded-md border border-zinc-700 bg-zinc-900 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-100 transition-colors hover:bg-zinc-800"
+                  >
+                    edit
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="cursor-not-allowed border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-zinc-600"
+                    title="Editor needs the live /profiles endpoint"
+                  >
+                    edit
+                  </button>
+                )}
               </td>
             </tr>
           ))}
