@@ -27,12 +27,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={workSans.variable}>
-      <body className="min-h-screen bg-zinc-950 text-zinc-100">
+      <body className="min-h-screen bg-bg text-text">
         <div className="flex h-screen">
           <Sidebar />
           <div className="flex h-screen flex-1 flex-col overflow-hidden">
             <TopBar />
-            <main className="bg-depth-grid flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto bg-bg">
               {children}
             </main>
             <ContextBar />

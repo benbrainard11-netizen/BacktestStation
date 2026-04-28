@@ -18,8 +18,8 @@
 
 html,
 body {
-  background-color: rgb(9 9 11);
-  color: rgb(244 244 245);
+  background-color: #0c0a09;
+  color: #f5f4f2;
 }
 
 html {
@@ -43,8 +43,8 @@ body {
 }
 
 ::selection {
-  background: rgb(39 39 42);
-  color: rgb(244 244 245);
+  background: #2a2724;
+  color: #f5f4f2;
 }
 
 *::-webkit-scrollbar {
@@ -53,16 +53,16 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: rgb(9 9 11);
+  background: #0c0a09;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgb(39 39 42);
-  border: 2px solid rgb(9 9 11);
+  background: #2a2724;
+  border: 2px solid #0c0a09;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgb(63 63 70);
+  background: #3a3633;
 }
 
 /* `font-mono` no longer swaps fonts; it only turns on tabular numerals so

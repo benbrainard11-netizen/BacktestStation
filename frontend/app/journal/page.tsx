@@ -1,16 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import PageHeader from "@/components/PageHeader";
-import Panel from "@/components/Panel";
+import Sparkline from "@/components/charts/Sparkline";
+import Btn from "@/components/ui/Btn";
+import Panel from "@/components/ui/Panel";
+import Pill from "@/components/ui/Pill";
+import Row from "@/components/ui/Row";
+import { tradesToEquityPoints } from "@/lib/charts/transform";
+import { cn } from "@/lib/utils";
 import type { BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
 type Note = components["schemas"]["NoteRead"];
 type NoteCreate = components["schemas"]["NoteCreate"];
-import { cn } from "@/lib/utils";
+type BacktestRun = components["schemas"]["BacktestRunRead"];
+type RunMetrics = components["schemas"]["RunMetricsRead"];
+type Trade = components["schemas"]["TradeRead"];
 
 type LoadState =
   | { kind: "loading" }
@@ -22,12 +29,28 @@ type SubmitState =
   | { kind: "submitting" }
   | { kind: "error"; message: string };
 
+interface SidebarRun {
+  run: BacktestRun;
+  metrics: RunMetrics | null;
+  equityRs: number[];
+}
+
+const FILTERS = ["All", "Observation", "Drift", "Trade", "Live"] as const;
+type Filter = (typeof FILTERS)[number];
+
+const NOTE_TYPES = ["observation", "drift", "trade", "live"] as const;
+type NoteType = (typeof NOTE_TYPES)[number];
+
 export default function JournalPage() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [body, setBody] = useState("");
   const [runIdInput, setRunIdInput] = useState("");
   const [tradeIdInput, setTradeIdInput] = useState("");
+  const [noteType, setNoteType] = useState<NoteType>("observation");
+  const [showAttach, setShowAttach] = useState(false);
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
+  const [filter, setFilter] = useState<Filter>("All");
+  const [sidebar, setSidebar] = useState<SidebarRun | null>(null);
 
   const loadNotes = useCallback(async () => {
     setState({ kind: "loading" });
@@ -52,17 +75,52 @@ export default function JournalPage() {
     void loadNotes();
   }, [loadNotes]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  // Pull the latest run + its metrics + trades for the sidebar sparkline.
+  useEffect(() => {
+    let cancelled = false;
+    async function tick() {
+      try {
+        const runs = (await fetch("/api/backtests", {
+          cache: "no-store",
+        }).then((r) => (r.ok ? r.json() : []))) as BacktestRun[];
+        if (!runs.length) return;
+        const run = runs[0];
+        const [metrics, trades] = await Promise.all([
+          fetch(`/api/backtests/${run.id}/metrics`, { cache: "no-store" })
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null) as Promise<RunMetrics | null>,
+          fetch(`/api/backtests/${run.id}/trades`, { cache: "no-store" })
+            .then((r) => (r.ok ? r.json() : []))
+            .catch(() => []) as Promise<Trade[]>,
+        ]);
+        const equityRs = tradesToEquityPoints(trades).map((p) => p.r);
+        if (!cancelled) setSidebar({ run, metrics, equityRs });
+      } catch {
+        // sidebar is best-effort
+      }
+    }
+    void tick();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (body.trim().length === 0) return;
-
     setSubmit({ kind: "submitting" });
 
-    const payload: NoteCreate = { body: body.trim(), note_type: "observation" };
+    const payload: NoteCreate = {
+      body: body.trim(),
+      note_type: noteType,
+    };
     const runId = parseOptionalId(runIdInput);
     const tradeId = parseOptionalId(tradeIdInput);
     if (runId === "invalid") {
-      setSubmit({ kind: "error", message: "backtest_run_id must be a number" });
+      setSubmit({
+        kind: "error",
+        message: "backtest_run_id must be a number",
+      });
       return;
     }
     if (tradeId === "invalid") {
@@ -86,6 +144,7 @@ export default function JournalPage() {
       setBody("");
       setRunIdInput("");
       setTradeIdInput("");
+      setShowAttach(false);
       setSubmit({ kind: "idle" });
       await loadNotes();
     } catch (error) {
@@ -94,194 +153,284 @@ export default function JournalPage() {
         message: error instanceof Error ? error.message : "Network error",
       });
     }
-  }
+  };
+
+  const filtered = useMemo(() => {
+    if (state.kind !== "ready") return [];
+    if (filter === "All") return state.notes;
+    return state.notes.filter(
+      (n) => (n.note_type ?? "observation").toLowerCase() === filter.toLowerCase(),
+    );
+  }, [state, filter]);
+
+  const counts = useMemo(() => {
+    if (state.kind !== "ready") return { All: 0 } as Record<Filter, number>;
+    const c: Record<string, number> = { All: state.notes.length };
+    for (const t of NOTE_TYPES) c[capitalize(t)] = 0;
+    for (const n of state.notes) {
+      const k = capitalize((n.note_type ?? "observation").toLowerCase());
+      c[k] = (c[k] ?? 0) + 1;
+    }
+    return c as Record<Filter, number>;
+  }, [state]);
 
   return (
-    <div>
-      <PageHeader
-        title="Journal"
-        description="Research notes — free-form or attached to a run / trade"
-      />
-      <div className="mx-auto flex max-w-3xl flex-col gap-4 px-6 pb-12">
-        <Panel title="New note">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <TextArea
-              label="Body"
-              value={body}
-              onChange={setBody}
-              placeholder="What did you learn, notice, or want to revisit?"
-            />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <TextField
-                label="Backtest run ID (optional)"
+    <div className="grid grid-cols-[1fr_360px] gap-6 px-8 pb-10 pt-8">
+      <main>
+        <header className="mb-6">
+          <h1 className="m-0 text-[26px] font-medium leading-tight tracking-[-0.02em] text-text">
+            Journal
+          </h1>
+          <p className="mt-1 text-[13px] text-text-dim">
+            Research notes — free-form or attached to a run / trade
+          </p>
+        </header>
+
+        <form
+          onSubmit={handleSubmit}
+          className="mb-6 rounded-xl border border-border bg-surface p-[18px]"
+        >
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="What did you learn, notice, or want to revisit?"
+            rows={3}
+            className="w-full resize-y border-none bg-transparent text-[14px] leading-relaxed text-text outline-none placeholder:text-text-mute"
+          />
+          {showAttach ? (
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                inputMode="numeric"
                 value={runIdInput}
-                onChange={setRunIdInput}
-                placeholder="e.g. 1"
+                onChange={(e) => setRunIdInput(e.target.value)}
+                placeholder="run id"
+                className="rounded-md border border-border bg-surface-alt px-2 py-1.5 text-[13px] text-text outline-none placeholder:text-text-mute focus:border-border-strong"
               />
-              <TextField
-                label="Trade ID (optional)"
+              <input
+                type="text"
+                inputMode="numeric"
                 value={tradeIdInput}
-                onChange={setTradeIdInput}
-                placeholder="e.g. 42"
+                onChange={(e) => setTradeIdInput(e.target.value)}
+                placeholder="trade id"
+                className="rounded-md border border-border bg-surface-alt px-2 py-1.5 text-[13px] text-text outline-none placeholder:text-text-mute focus:border-border-strong"
               />
             </div>
-            <div className="flex items-center gap-3">
+          ) : null}
+          <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+            <div className="flex items-center gap-3 text-xs text-text-mute">
               <button
-                type="submit"
-                disabled={
-                  submit.kind === "submitting" || body.trim().length === 0
-                }
-                className={cn(
-                  "border border-zinc-700 bg-zinc-900 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest",
-                  submit.kind === "submitting" || body.trim().length === 0
-                    ? "cursor-not-allowed text-zinc-600"
-                    : "text-zinc-100 hover:bg-zinc-800",
-                )}
+                type="button"
+                onClick={() => setShowAttach((v) => !v)}
+                className="text-accent hover:underline"
               >
-                {submit.kind === "submitting" ? "Saving…" : "Save note"}
+                {showAttach ? "− attachments" : "+ attachments"}
               </button>
+              <span>
+                Type:{" "}
+                <select
+                  value={noteType}
+                  onChange={(e) => setNoteType(e.target.value as NoteType)}
+                  className="border-none bg-transparent text-text outline-none"
+                >
+                  {NOTE_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </span>
               {submit.kind === "error" ? (
-                <span className="font-mono text-xs text-rose-400">
-                  {submit.message}
-                </span>
+                <span className="text-neg">{submit.message}</span>
               ) : null}
             </div>
-          </form>
+            <Btn
+              type="submit"
+              variant="primary"
+              disabled={
+                submit.kind === "submitting" || body.trim().length === 0
+              }
+            >
+              {submit.kind === "submitting" ? "Saving…" : "Save note"}
+            </Btn>
+          </div>
+        </form>
+
+        <NotesFeed state={state} filtered={filtered} filter={filter} />
+      </main>
+
+      <aside className="flex flex-col gap-4">
+        <Panel title="Filter">
+          <div className="flex flex-col gap-1 text-[13px]">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={cn(
+                  "flex items-center justify-between rounded-md px-2.5 py-1.5 text-left transition-colors",
+                  f === filter
+                    ? "bg-surface-alt text-text"
+                    : "text-text-dim hover:bg-surface-alt hover:text-text",
+                )}
+              >
+                <span>{f}</span>
+                <span className="text-xs text-text-mute">{counts[f] ?? 0}</span>
+              </button>
+            ))}
+          </div>
         </Panel>
 
-        <Panel
-          title="Notes"
-          meta={
-            state.kind === "ready"
-              ? `${state.notes.length} total`
-              : undefined
-          }
-        >
-          <NotesList state={state} />
+        <Panel title="Latest run">
+          {sidebar ? (
+            <div>
+              <p className="m-0 text-[13px] text-text">
+                {sidebar.run.name ?? `BT-${sidebar.run.id}`}
+              </p>
+              <p className="m-0 mt-0.5 text-xs text-text-mute">
+                BT-{sidebar.run.id} · {sidebar.run.symbol}
+              </p>
+              <div className="mt-2">
+                {sidebar.equityRs.length > 1 ? (
+                  <Sparkline
+                    values={sidebar.equityRs}
+                    width={300}
+                    height={60}
+                  />
+                ) : (
+                  <p className="text-xs text-text-mute">
+                    No closed trades.
+                  </p>
+                )}
+              </div>
+              <div className="mt-2 flex flex-col">
+                <Row
+                  label="Net R"
+                  value={
+                    sidebar.metrics?.net_r !== null &&
+                    sidebar.metrics?.net_r !== undefined
+                      ? signedR(sidebar.metrics.net_r)
+                      : "—"
+                  }
+                  tone={
+                    sidebar.metrics?.net_r === null ||
+                    sidebar.metrics?.net_r === undefined
+                      ? "neutral"
+                      : sidebar.metrics.net_r >= 0
+                        ? "pos"
+                        : "neg"
+                  }
+                />
+                <Row
+                  label="PF"
+                  value={
+                    sidebar.metrics?.profit_factor !== null &&
+                    sidebar.metrics?.profit_factor !== undefined
+                      ? sidebar.metrics.profit_factor.toFixed(2)
+                      : "—"
+                  }
+                  tone={
+                    sidebar.metrics?.profit_factor === null ||
+                    sidebar.metrics?.profit_factor === undefined
+                      ? "neutral"
+                      : sidebar.metrics.profit_factor >= 1
+                        ? "pos"
+                        : "neg"
+                  }
+                  noBorder
+                />
+              </div>
+              <div className="mt-2">
+                <Link
+                  href={`/backtests/${sidebar.run.id}`}
+                  className="text-xs text-accent hover:underline"
+                >
+                  Open run →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[13px] text-text-dim">No runs imported.</p>
+          )}
         </Panel>
-      </div>
+      </aside>
     </div>
   );
 }
 
-function NotesList({ state }: { state: LoadState }) {
+function NotesFeed({
+  state,
+  filtered,
+  filter,
+}: {
+  state: LoadState;
+  filtered: Note[];
+  filter: Filter;
+}) {
   if (state.kind === "loading") {
-    return (
-      <p className="font-mono text-xs text-zinc-500">Loading…</p>
-    );
+    return <p className="text-[13px] text-text-dim">Loading…</p>;
   }
   if (state.kind === "error") {
     return (
-      <div className="border border-rose-900 bg-rose-950/40 p-3">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-rose-300">
-          Failed to load notes
-        </p>
-        <p className="mt-1 font-mono text-xs text-zinc-200">{state.message}</p>
-      </div>
+      <Panel title="Couldn't load notes">
+        <p className="text-[13px] text-text-dim">{state.message}</p>
+      </Panel>
     );
   }
-  if (state.notes.length === 0) {
+  if (filtered.length === 0) {
     return (
-      <div className="border border-dashed border-zinc-800 bg-zinc-950 p-4 text-center">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-          Empty
-        </p>
-        <p className="mt-1 text-xs text-zinc-500">
-          No notes yet. Write one above.
-        </p>
-      </div>
+      <p className="text-[13px] text-text-dim">
+        {state.notes.length === 0
+          ? "No notes yet. Write one above."
+          : `No notes matching "${filter}".`}
+      </p>
     );
   }
   return (
-    <ul className="flex flex-col gap-3">
-      {state.notes.map((note) => (
-        <NoteCard key={note.id} note={note} />
+    <div className="flex flex-col gap-4">
+      {filtered.map((n) => (
+        <NoteCard key={n.id} note={n} />
       ))}
-    </ul>
+    </div>
   );
 }
 
 function NoteCard({ note }: { note: Note }) {
+  const ts = new Date(note.created_at).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const type = note.note_type ?? "observation";
   return (
-    <li className="border border-zinc-800 bg-zinc-950 p-3">
-      <div className="flex items-start justify-between gap-4">
-        <p className="whitespace-pre-wrap text-sm text-zinc-200">{note.body}</p>
-        <span className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-          #{note.id}
+    <article className="rounded-xl border border-border bg-surface p-[18px]">
+      <div className="mb-2 flex items-baseline justify-between">
+        <span className="text-xs text-text-mute">
+          {ts} · <span className="text-text-dim">{type}</span>
         </span>
+        <span className="text-xs text-text-mute">#{note.id}</span>
       </div>
-      <div className="mt-2 flex flex-wrap gap-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        <span>{formatDateTime(note.created_at)}</span>
-        {note.backtest_run_id !== null ? (
-          <Link
-            href={`/backtests/${note.backtest_run_id}`}
-            className="border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-zinc-300 hover:bg-zinc-800"
-          >
-            run #{note.backtest_run_id} →
-          </Link>
-        ) : null}
-        {note.trade_id !== null ? (
-          <span className="border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-zinc-400">
-            trade #{note.trade_id}
-          </span>
-        ) : null}
-      </div>
-    </li>
-  );
-}
-
-function TextArea({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (next: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-xs">
-      <span className="font-mono uppercase tracking-widest text-zinc-500">
-        {label}
-      </span>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        rows={4}
-        className="resize-y border border-zinc-800 bg-zinc-950 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
-      />
-    </label>
-  );
-}
-
-function TextField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (next: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-xs">
-      <span className="font-mono uppercase tracking-widest text-zinc-500">
-        {label}
-      </span>
-      <input
-        type="text"
-        inputMode="numeric"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="border border-zinc-800 bg-zinc-950 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
-      />
-    </label>
+      <p className="m-0 whitespace-pre-wrap text-[14px] leading-relaxed text-text">
+        {note.body}
+      </p>
+      {note.backtest_run_id !== null || note.trade_id !== null ? (
+        <div className="mt-3 flex items-center gap-2">
+          {note.backtest_run_id !== null ? (
+            <Link
+              href={`/backtests/${note.backtest_run_id}`}
+              className="rounded border border-border bg-surface-alt px-2 py-[2px] text-xs text-accent hover:underline"
+            >
+              run #{note.backtest_run_id}
+            </Link>
+          ) : null}
+          {note.trade_id !== null ? (
+            <Pill tone="neutral" noDot>
+              trade #{note.trade_id}
+            </Pill>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
   );
 }
 
@@ -305,8 +454,11 @@ async function extractError(response: Response): Promise<string> {
   return `${response.status} ${response.statusText || "Request failed"}`;
 }
 
-function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return `${date.toISOString().slice(0, 10)} ${date.toISOString().slice(11, 16)}`;
+function signedR(value: number): string {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
+}
+
+function capitalize(s: string): string {
+  if (!s) return s;
+  return s[0].toUpperCase() + s.slice(1);
 }

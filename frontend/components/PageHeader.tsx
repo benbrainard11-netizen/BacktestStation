@@ -4,21 +4,23 @@ interface PageHeaderProps {
   meta?: string;
 }
 
-export default function PageHeader({ title, description, meta }: PageHeaderProps) {
+export default function PageHeader({
+  title,
+  description,
+  meta,
+}: PageHeaderProps) {
   return (
-    <div className="flex items-start justify-between gap-6 px-6 pt-6 pb-4">
+    <div className="flex items-start justify-between gap-6 px-8 pb-4 pt-8">
       <div>
-        <h2 className="text-2xl font-medium tracking-tight text-zinc-100">
+        <h2 className="text-[26px] font-medium leading-tight tracking-[-0.02em] text-text">
           {title}
         </h2>
         {description ? (
-          <p className="mt-1 text-sm text-zinc-400">{description}</p>
+          <p className="mt-1 text-[13px] text-text-dim">{description}</p>
         ) : null}
       </div>
       {meta ? (
-        <span className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-          {meta}
-        </span>
+        <span className="shrink-0 text-xs text-text-mute">{meta}</span>
       ) : null}
     </div>
   );

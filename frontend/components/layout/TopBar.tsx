@@ -9,20 +9,19 @@ import WindowControls from "@/components/WindowControls";
 type Segment = { text: string; tone: "muted" | "accent" | "body" };
 
 const PROP_FIRM_LABELS: { prefix: string; label: string; matchExact?: boolean }[] = [
-  { prefix: "/prop-simulator/firms", label: "Firm Rules" },
-  { prefix: "/prop-simulator/runs", label: "Simulation Runs", matchExact: true },
+  { prefix: "/prop-simulator/firms", label: "Firm rules" },
+  { prefix: "/prop-simulator/runs", label: "Simulation runs", matchExact: true },
   { prefix: "/prop-simulator/compare", label: "Compare" },
-  { prefix: "/prop-simulator/new", label: "New Simulation" },
+  { prefix: "/prop-simulator/new", label: "New simulation" },
   { prefix: "/prop-simulator", label: "Simulator", matchExact: true },
 ];
 
 function resolvePropFirmLabel(pathname: string): string | null {
-  // Detail page gets its own label so it's distinct from the list.
   if (
     pathname.startsWith("/prop-simulator/runs/") &&
     pathname !== "/prop-simulator/runs"
   ) {
-    return "Simulation Detail";
+    return "Simulation detail";
   }
   for (const entry of PROP_FIRM_LABELS) {
     if (entry.matchExact) {
@@ -41,21 +40,29 @@ function segmentsFor(pathname: string): Segment[] {
   const propFirm = resolvePropFirmLabel(pathname);
   if (propFirm !== null) {
     return [
-      { text: "Prop Firm", tone: "muted" },
+      { text: "prop firm", tone: "muted" },
       { text: propFirm, tone: "body" },
     ];
   }
-  return [
-    { text: "Local Research Terminal", tone: "muted" },
-    { text: "Phase 1", tone: "accent" },
-    { text: "Command Center", tone: "body" },
-  ];
+  if (pathname === "/" || pathname === "") {
+    return [{ text: "command center", tone: "body" }];
+  }
+  if (pathname.startsWith("/backtests")) {
+    return [{ text: "backtests", tone: "body" }];
+  }
+  if (pathname.startsWith("/monitor")) {
+    return [{ text: "monitor", tone: "body" }];
+  }
+  if (pathname.startsWith("/journal")) {
+    return [{ text: "journal", tone: "body" }];
+  }
+  return [{ text: "research terminal", tone: "muted" }];
 }
 
 const TONE_CLASS: Record<Segment["tone"], string> = {
-  muted: "text-zinc-500",
-  accent: "text-emerald-400",
-  body: "text-zinc-300",
+  muted: "text-text-mute",
+  accent: "text-accent",
+  body: "text-text-dim",
 };
 
 export default function TopBar() {
@@ -65,16 +72,16 @@ export default function TopBar() {
   return (
     <header
       data-tauri-drag-region=""
-      className="flex h-12 shrink-0 select-none items-center border-b border-zinc-800 bg-zinc-950"
+      className="flex h-12 shrink-0 select-none items-center border-b border-border bg-surface"
     >
       <div
         data-tauri-drag-region=""
-        className="flex h-full flex-1 items-center gap-2 pl-6 pr-4 font-mono text-[11px] uppercase tracking-widest"
+        className="flex h-full flex-1 items-center gap-2 pl-8 pr-4 text-xs"
       >
         {segments.map((segment, i) => (
           <span key={`${segment.text}-${i}`} className="flex items-center gap-2">
             {i > 0 ? (
-              <span data-tauri-drag-region="" className="text-zinc-700">
+              <span data-tauri-drag-region="" className="text-text-mute">
                 ·
               </span>
             ) : null}

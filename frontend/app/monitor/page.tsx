@@ -1,19 +1,15 @@
 "use client";
 
-import { AlertTriangle, FileX, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import Heartbeat from "@/components/charts/Heartbeat";
 import DriftPanel from "@/components/monitor/DriftPanel";
 import IngesterStatusPanel from "@/components/monitor/IngesterStatusPanel";
 import LiveTradesPipelinePanel from "@/components/monitor/LiveTradesPipelinePanel";
 import SessionJournalPanel from "@/components/monitor/SessionJournalPanel";
-import MetricCard from "@/components/MetricCard";
-import HeartbeatPulse from "@/components/monitor/HeartbeatPulse";
-import PageHeader from "@/components/PageHeader";
-import Panel from "@/components/Panel";
-import StatusDot, { type StatusTone } from "@/components/StatusDot";
+import Panel from "@/components/ui/Panel";
+import Pill from "@/components/ui/Pill";
 import { cn } from "@/lib/utils";
-import { formatSigned, formatUSD, toneFor } from "@/lib/format";
 import type { BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
@@ -32,12 +28,10 @@ export default function MonitorPage() {
 
   useEffect(() => {
     let cancelled = false;
-
     async function tick() {
       const next = await fetchLiveStatus();
       if (!cancelled) setState(next);
     }
-
     tick();
     const id = setInterval(tick, POLL_INTERVAL_MS);
     return () => {
@@ -47,247 +41,245 @@ export default function MonitorPage() {
   }, []);
 
   return (
-    <div className="pb-10">
-      <PageHeader
-        title="Monitor"
-        description="Live strategy status read from the local live_status.json file"
-        meta={metaLabel(state)}
-      />
-      <div className="flex flex-col gap-4 px-6 pb-6">
+    <div className="px-8 pb-10 pt-8">
+      <Header state={state} />
+
+      <Hero state={state} />
+
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <Panel
+          title="Last signal"
+          meta={
+            state.kind === "data" && state.data.last_signal !== null
+              ? "see below"
+              : "none"
+          }
+        >
+          <LastSignal state={state} />
+        </Panel>
+        <DriftPanel />
+      </div>
+
+      <div className="flex flex-col gap-4">
         <IngesterStatusPanel />
         <SessionJournalPanel />
         <LiveTradesPipelinePanel />
-        <DriftPanel />
-        <MonitorBody state={state} />
+        <Panel title="Source" meta="filesystem">
+          <SourcePath state={state} />
+        </Panel>
       </div>
     </div>
   );
 }
 
-function MonitorBody({ state }: { state: FetchState }) {
-  if (state.kind === "loading") return <LoadingPanel />;
-  if (state.kind === "error") return <ErrorPanel message={state.message} />;
-  if (!state.data.source_exists) return <MissingFilePanel data={state.data} />;
-  return <LiveStatusView data={state.data} fetchedAt={state.fetchedAt} />;
+function Header({ state }: { state: FetchState }) {
+  return (
+    <header className="mb-6 flex items-end justify-between gap-6">
+      <div>
+        <p className="m-0 text-xs text-text-mute">{metaLabel(state)}</p>
+        <h1 className="mt-1 text-[26px] font-medium leading-tight tracking-[-0.02em] text-text">
+          Monitor
+        </h1>
+      </div>
+      <RunningPill state={state} />
+    </header>
+  );
 }
 
-function LoadingPanel() {
+function RunningPill({ state }: { state: FetchState }) {
+  if (state.kind === "loading") return <Pill tone="neutral">loading…</Pill>;
+  if (state.kind === "error") return <Pill tone="neg">error</Pill>;
+  const d = state.data;
+  if (!d.source_exists) return <Pill tone="warn">no status file</Pill>;
+  const running = d.strategy_status.toLowerCase() === "running";
+  const stale = isStale(d.last_heartbeat);
+  if (running && !stale) {
+    return (
+      <Pill tone="pos">running · {heartbeatAgo(d.last_heartbeat)}</Pill>
+    );
+  }
+  if (running && stale) {
+    return <Pill tone="warn">stale · {heartbeatAgo(d.last_heartbeat)}</Pill>;
+  }
+  if (d.strategy_status.toLowerCase() === "error") {
+    return <Pill tone="neg">{d.strategy_status}</Pill>;
+  }
+  return <Pill tone="neutral">{d.strategy_status}</Pill>;
+}
+
+function Hero({ state }: { state: FetchState }) {
+  if (state.kind === "loading") {
+    return (
+      <div className="mb-4 rounded-xl border border-border bg-surface p-7">
+        <p className="text-[13px] text-text-dim">Loading live status…</p>
+      </div>
+    );
+  }
+  if (state.kind === "error") {
+    return (
+      <div className="mb-4 rounded-xl border border-neg/30 bg-neg/[0.06] p-7">
+        <p className="text-xs text-text-mute">Live status error</p>
+        <p className="mt-2 text-[14px] text-text">{state.message}</p>
+        <p className="mt-2 text-xs text-text-mute">
+          Retrying every {POLL_INTERVAL_MS / 1000}s.
+        </p>
+      </div>
+    );
+  }
+  const d = state.data;
+  if (!d.source_exists) {
+    return (
+      <div className="mb-4 rounded-xl border border-warn/30 bg-warn/[0.06] p-7">
+        <p className="text-xs text-text-mute">Live status file not found</p>
+        <p className="mt-2 text-[14px] text-text">
+          The 24/7 PC hasn&apos;t written a status file yet.
+        </p>
+        <p className="mt-2 text-xs text-text-dim">
+          Expected at <span className="text-text">{d.source_path}</span>
+        </p>
+      </div>
+    );
+  }
+  const pnl = d.today_pnl;
+  const r = d.today_r;
+  const tradesToday = d.trades_today;
   return (
-    <div className="panel-enter flex items-center gap-3 rounded-md border border-zinc-800 bg-zinc-950 px-6 py-8 text-zinc-400 shadow-dim">
-      <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} aria-hidden />
-      <span className="font-mono text-xs uppercase tracking-widest">
-        Loading live status…
-      </span>
+    <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-8 rounded-xl border border-border bg-surface p-7">
+      <div>
+        <p className="m-0 text-xs text-text-mute">Strategy</p>
+        <p className="m-0 mb-5 mt-1 text-[18px] text-text">
+          {d.current_symbol ?? "—"} ·{" "}
+          <span className="text-text-dim">{d.current_session ?? "—"}</span>
+        </p>
+        <div className="flex gap-7">
+          <BigStat
+            label="Today P&L"
+            value={
+              pnl === null
+                ? "—"
+                : `${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toFixed(2)}`
+            }
+            tone={pnl === null ? "neutral" : pnl >= 0 ? "pos" : "neg"}
+          />
+          <BigStat
+            label="Today R"
+            value={r === null ? "—" : `${r >= 0 ? "+" : ""}${r.toFixed(2)}`}
+            tone={r === null ? "neutral" : r >= 0 ? "pos" : "neg"}
+          />
+          <BigStat
+            label="Trades"
+            value={tradesToday !== null ? String(tradesToday) : "—"}
+            tone="neutral"
+          />
+        </div>
+      </div>
+      <div className="w-[360px]">
+        <p className="m-0 mb-2 text-xs text-text-mute">Heartbeat</p>
+        <div className="rounded-md border border-border bg-surface-alt p-2">
+          <Heartbeat
+            pulse={d.strategy_status.toLowerCase() === "running"}
+          />
+        </div>
+        <p className="m-0 mt-1.5 text-xs text-text-mute">
+          {clockOnly(d.last_heartbeat)} · {heartbeatAgo(d.last_heartbeat)}
+        </p>
+      </div>
     </div>
   );
 }
 
-function ErrorPanel({ message }: { message: string }) {
+function BigStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "pos" | "neg" | "neutral";
+}) {
   return (
-    <div className="panel-enter rounded-md border border-rose-900 bg-rose-950/30 px-6 py-6 shadow-dim">
-      <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-rose-300">
-        <AlertTriangle className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-        <span>Unable to read live status</span>
-      </div>
-      <p className="mt-3 font-mono text-xs text-zinc-200">{message}</p>
-      <p className="mt-3 font-mono text-[11px] text-zinc-500">
-        Retrying every {POLL_INTERVAL_MS / 1000}s. Check that the backend is
-        running at /api and that live_status.json is valid JSON.
+    <div>
+      <p className="m-0 text-xs text-text-mute">{label}</p>
+      <p
+        className={cn(
+          "m-0 mt-1 text-[32px] tabular-nums leading-none",
+          tone === "pos" && "text-pos",
+          tone === "neg" && "text-neg",
+          tone === "neutral" && "text-text",
+        )}
+      >
+        {value}
       </p>
     </div>
   );
 }
 
-function MissingFilePanel({ data }: { data: LiveMonitorStatus }) {
-  return (
-    <>
-      <div className="panel-enter rounded-md border border-amber-900/40 bg-amber-950/20 px-6 py-6 shadow-dim">
-        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-amber-300">
-          <FileX className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-          <span>Live status file not found</span>
-        </div>
-        <p className="mt-3 text-sm text-zinc-200">
-          The 24/7 PC hasn&apos;t written a status file here yet.
-        </p>
-        <p className="mt-2 font-mono text-[11px] text-zinc-500">
-          Expected at:{" "}
-          <span className="text-zinc-300">{data.source_path}</span>
-        </p>
-        <p className="mt-3 font-mono text-[11px] text-zinc-500">
-          Strategy status: {data.strategy_status}
-        </p>
-      </div>
-      <SourcePath path={data.source_path} />
-    </>
-  );
-}
-
-function LiveStatusView({
-  data,
-  fetchedAt,
-}: {
-  data: LiveMonitorStatus;
-  fetchedAt: number;
-}) {
-  return (
-    <>
-      <LiveHero data={data} fetchedAt={fetchedAt} />
-      <KpiGrid data={data} />
-      <SignalErrorRow data={data} />
-      <SourcePath path={data.source_path} />
-    </>
-  );
-}
-
-function LiveHero({
-  data,
-  fetchedAt,
-}: {
-  data: LiveMonitorStatus;
-  fetchedAt: number;
-}) {
-  const tone = statusTone(data.strategy_status);
-  const pulseTone =
-    tone === "live"
-      ? "live"
-      : tone === "off"
-        ? "off"
-        : tone === "warn"
-          ? "warn"
-          : "idle";
-
-  return (
-    <Panel title="Live channel" meta="polling 5s · local file" tone="hero">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div className="flex flex-col gap-5">
-          <div className="flex items-center gap-3">
-            <StatusDot status={tone} pulse={tone === "live"} />
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-500">
-                Strategy status
-              </p>
-              <p
-                className={cn(
-                  "text-2xl font-light tracking-tight",
-                  tone === "live" && "text-emerald-300",
-                  tone === "off" && "text-rose-300",
-                  tone === "idle" && "text-zinc-300",
-                  tone === "warn" && "text-amber-300",
-                )}
-              >
-                {data.strategy_status}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-            <HeroStat label="Symbol" value={data.current_symbol ?? "—"} />
-            <HeroStat label="Session" value={data.current_session ?? "—"} />
-            <HeroStat
-              label="Last heartbeat"
-              value={formatHeartbeat(data.last_heartbeat, fetchedAt)}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-500">
-            Telemetry
-          </span>
-          <HeartbeatPulse tone={pulseTone} />
-          <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-600">
-            {pulseTone === "live"
-              ? "trace · streaming"
-              : pulseTone === "off"
-                ? "trace · halted"
-                : "trace · idle"}
-          </span>
-        </div>
-      </div>
-    </Panel>
-  );
-}
-
-function HeroStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1.5 rounded-md border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 shadow-edge-top">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        {label}
-      </span>
-      <span className="font-mono text-sm tabular-nums text-zinc-100">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function KpiGrid({ data }: { data: LiveMonitorStatus }) {
-  const pnlTone = data.today_pnl !== null ? toneFor(data.today_pnl) : "neutral";
-  const rTone = data.today_r !== null ? toneFor(data.today_r) : "neutral";
-
-  return (
-    <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
-      <MetricCard
-        label="Today P&L"
-        value={data.today_pnl !== null ? formatUSD(data.today_pnl) : "—"}
-        valueTone={pnlTone}
-      />
-      <MetricCard
-        label="Today R"
-        value={data.today_r !== null ? formatSigned(data.today_r) : "—"}
-        valueTone={rTone}
-      />
-      <MetricCard
-        label="Trades today"
-        value={data.trades_today !== null ? String(data.trades_today) : "—"}
-        valueTone="neutral"
-      />
-    </section>
-  );
-}
-
-function SignalErrorRow({ data }: { data: LiveMonitorStatus }) {
-  return (
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Panel title="Last signal" meta={data.last_signal === null ? "none" : undefined}>
-        {renderSignal(data.last_signal)}
-      </Panel>
-      <Panel
-        title="Last error"
-        meta={data.last_error === null ? "none" : "active"}
-      >
-        {renderError(data.last_error)}
-      </Panel>
-    </section>
-  );
-}
-
-function renderSignal(signal: LiveMonitorStatus["last_signal"]) {
-  if (signal === null) {
-    return <p className="font-mono text-xs text-zinc-500">No signal yet.</p>;
+function LastSignal({ state }: { state: FetchState }) {
+  if (state.kind !== "data") {
+    return <p className="text-[13px] text-text-dim">No signal yet.</p>;
   }
-  if (typeof signal === "string") {
+  const sig = state.data.last_signal;
+  if (sig === null) {
+    return <p className="text-[13px] text-text-dim">No signal yet.</p>;
+  }
+  if (typeof sig === "string") {
     return (
-      <p className="font-mono text-xs text-zinc-200 whitespace-pre-wrap break-all">
-        {signal}
+      <p className="m-0 whitespace-pre-wrap text-[13px] text-text">
+        {sig}
       </p>
     );
   }
-  const entries = Object.entries(signal);
+  const entries = Object.entries(sig);
+  const side = (sig as { side?: string }).side;
+  const price = (sig as { price?: number | string }).price;
+  const reason = (sig as { reason?: string }).reason;
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 font-mono text-xs">
-      {entries.map(([key, value]) => (
-        <FragmentRow key={key} label={key} value={formatSignalValue(value)} />
-      ))}
-    </dl>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-baseline gap-2 text-[14px]">
+        {side ? (
+          <span
+            className={cn(
+              "rounded px-2 py-[2px] text-xs font-medium tabular-nums",
+              side === "long"
+                ? "bg-pos/15 text-pos"
+                : "bg-neg/15 text-neg",
+            )}
+          >
+            {side === "long" ? "LONG" : "SHORT"}
+          </span>
+        ) : null}
+        {price !== undefined ? (
+          <span className="tabular-nums text-text">@ {String(price)}</span>
+        ) : null}
+      </div>
+      {reason ? (
+        <p className="m-0 text-[13px] leading-relaxed text-text-dim">
+          {reason}
+        </p>
+      ) : null}
+      <details>
+        <summary className="cursor-pointer text-xs text-text-mute hover:text-text-dim">
+          raw signal
+        </summary>
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-xs">
+          {entries.map(([key, value]) => (
+            <FragmentRow
+              key={key}
+              label={key}
+              value={formatSignalValue(value)}
+            />
+          ))}
+        </dl>
+      </details>
+    </div>
   );
 }
 
 function FragmentRow({ label, value }: { label: string; value: string }) {
   return (
     <>
-      <dt className="text-zinc-500">{label}</dt>
-      <dd className="text-zinc-200 break-all">{value}</dd>
+      <dt className="text-text-mute">{label}</dt>
+      <dd className="break-all text-text-dim">{value}</dd>
     </>
   );
 }
@@ -304,31 +296,18 @@ function formatSignalValue(value: unknown): string {
   }
 }
 
-function renderError(error: string | null) {
-  if (error === null || error.length === 0) {
-    return (
-      <p className="font-mono text-xs text-emerald-400">No errors reported.</p>
-    );
-  }
+function SourcePath({ state }: { state: FetchState }) {
+  const path =
+    state.kind === "data" ? state.data.source_path : "/api/monitor/live";
   return (
-    <pre className="whitespace-pre-wrap break-words font-mono text-xs text-rose-300">
-      {error}
-    </pre>
-  );
-}
-
-function SourcePath({ path }: { path: string }) {
-  return (
-    <p className="font-mono text-[11px] text-zinc-500">
-      <span className="text-zinc-600">Source · </span>
+    <p className="m-0 text-xs text-text-dim">
+      <span className="text-text-mute">path · </span>
       {path}
     </p>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+// ── helpers ───────────────────────────────────────────────────────────
 
 async function fetchLiveStatus(): Promise<FetchState> {
   try {
@@ -365,35 +344,33 @@ function metaLabel(state: FetchState): string {
   return "Live · polling 5s";
 }
 
-function statusTone(status: string): StatusTone {
-  const normalized = status.toLowerCase();
-  if (normalized === "running" || normalized === "live") return "live";
-  if (normalized === "error" || normalized === "failed") return "off";
-  if (normalized === "missing" || normalized === "") return "idle";
-  if (normalized === "warn" || normalized === "warning") return "warn";
-  return "idle";
+function isStale(iso: string | null): boolean {
+  if (iso === null) return true;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return true;
+  return Date.now() - t > 30_000;
 }
 
-function formatHeartbeat(iso: string | null, now: number): string {
+function heartbeatAgo(iso: string | null): string {
   if (iso === null) return "—";
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return iso;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  const seconds = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  return `${hours}h ago`;
+}
 
-  const diffMs = now - then;
-  const absSec = Math.round(Math.abs(diffMs) / 1000);
-
-  let relative: string;
-  if (absSec < 60) relative = `${absSec}s`;
-  else if (absSec < 3600) relative = `${Math.round(absSec / 60)}m`;
-  else if (absSec < 86400) relative = `${Math.round(absSec / 3600)}h`;
-  else relative = `${Math.round(absSec / 86400)}d`;
-
-  const direction = diffMs >= 0 ? "ago" : "ahead";
-  const clock = new Date(iso).toLocaleTimeString(undefined, {
+function clockOnly(iso: string | null): string {
+  if (iso === null) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleTimeString(undefined, {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
   });
-  return `${clock} · ${relative} ${direction}`;
 }

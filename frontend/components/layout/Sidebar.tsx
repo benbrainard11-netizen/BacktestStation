@@ -30,25 +30,25 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={cn(
-        "group relative flex items-center gap-3 rounded-sm px-3 py-2 text-sm",
-        "transition-all duration-150 ease-out",
+        "group relative flex items-center gap-3 rounded-md px-3 py-2 text-[13px]",
+        "transition-colors duration-150 ease-out",
         active
-          ? "bg-zinc-900 text-zinc-100 shadow-edge-top"
-          : "text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-100",
+          ? "bg-surface-alt text-text"
+          : "text-text-dim hover:bg-surface-alt hover:text-text",
       )}
     >
       {active ? (
         <span
           aria-hidden="true"
-          className="absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-emerald-500/80"
+          className="absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-accent/80"
         />
       ) : null}
       <Icon
         className={cn(
           "h-4 w-4 shrink-0 transition-colors duration-150",
           active
-            ? "text-emerald-400 drop-shadow-[0_0_4px_rgba(52,211,153,0.35)]"
-            : "text-zinc-500 group-hover:text-zinc-400",
+            ? "text-accent"
+            : "text-text-mute group-hover:text-text-dim",
         )}
         strokeWidth={1.5}
         aria-hidden="true"
@@ -63,14 +63,12 @@ export default function Sidebar() {
   const activeHref = pickActiveHref(pathname, NAV_ITEMS);
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
-      <div className="border-b border-zinc-800 px-4 py-4">
-        <h1 className="font-mono text-base tracking-[0.25em] text-zinc-100">
-          BACKTESTSTATION
+    <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface">
+      <div className="border-b border-border px-4 py-4">
+        <h1 className="text-[15px] font-medium tracking-[-0.01em] text-text">
+          backtest&nbsp;station
         </h1>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-          v{APP_VERSION}
-        </p>
+        <p className="mt-0.5 text-xs text-text-mute">v{APP_VERSION}</p>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-3">
@@ -79,7 +77,7 @@ export default function Sidebar() {
           if (items.length === 0) return null;
           return (
             <div key={group.key} className="mb-5 last:mb-0">
-              <p className="px-3 pb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+              <p className="px-3 pb-2 text-xs text-text-mute">
                 {group.label}
               </p>
               <ul className="space-y-px">
@@ -94,24 +92,24 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+      <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-text-mute">
         <div className="flex items-center gap-2">
-          <span className="text-zinc-600">Local build</span>
-          <span className="text-zinc-300">v{APP_VERSION}</span>
+          <span>local build</span>
+          <span className="text-text-dim">v{APP_VERSION}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-2">
+      <div className="flex items-center justify-between border-t border-border px-4 py-2">
         <button
           type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-sm text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-text-mute transition-colors hover:bg-surface-alt hover:text-text"
           aria-label="Toggle theme (not implemented)"
         >
           <SunMedium className="h-4 w-4" strokeWidth={1.5} />
         </button>
         <button
           type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-sm text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-text-mute transition-colors hover:bg-surface-alt hover:text-text"
           aria-label="Sign out (not implemented)"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.5} />
