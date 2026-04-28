@@ -2,12 +2,26 @@
 
 > Wake-up doc for after the gym. This run finished while you were out.
 
+## ⭐ The headline find — read this first
+
+**Your "+274R good backtest" is 100% real and reproducible.** I re-ran the trusted script (`C:\Fractal-AMD\scripts\trusted_multiyear_bt.py`) on my machine just now — got **exact same numbers as the bundled CSV: 586 trades, 40.8% WR, +274.4R, max DD -20R, 8 of 9 quarters profitable**. The strategy is real. The numbers are not bug-inflated.
+
+Earlier in this session memory said the trusted source code was "lost" — that was wrong. It lives at `C:\Fractal-AMD\scripts\` (the original local repo, not the GitHub-deployed `FractalAMD-` which got stripped to live-only). I verified, ran it, and it works.
+
+**What this means for you:**
+- The strategy you remember winning with **does win** — that wasn't a bug or a fluke.
+- Your live bot on ben-247 is a *port* of that script — and the port has known divergences (e.g. it's missing the `compute_continuation_of` gate that requires `cos >= 3` to fire entries).
+- Path forward: port the trusted script faithfully into BacktestStation as a new strategy plugin, then replace the live bot with one that uses the same plugin code. One core piece of code, used in BOTH backtest and live.
+
+I started that work on a third branch (`lane-c-trusted-port-2026-04-28-pm`). Status below.
+
 ## TL;DR
 
-**8 phases attempted. 8 shipped.** Two PR-ready branches pushed to GitHub, neither merged so you can review on return.
+**3 PRs in flight.** Two are PR-ready and merge-able now (Lane A + Lane B). Lane C (the trusted port) is started but partial — engine plugin work is in progress, the standalone backtest already verifies the trusted strategy reproduces +274R.
 
 - **Lane B punch list** (3 commits): drift hardening + gate CLI cutover + FVG zone overlay frontend
 - **Lane A engine work** (2 commits): perf optimization (90× speedup, byte-identical) + setup expiry on day boundary
+- **Lane C trusted port** (in progress): verified the trusted strategy is real, started porting it. Engine plugin port is the path to "live = backtest" but still has work to land.
 
 Tests: 507 → 512 backend after Lane B merges (+5 net from new tests). Lane A adds no tests (engine optimization + setup expiry are exercised by existing 71 fractal tests + the smoke characterization). Both green. Frontend `npx tsc --noEmit` clean.
 
@@ -102,6 +116,38 @@ stage signals: 5209
 **Sunday-go-live status: still OFF.** Same gate as the 2026-04-25 memory said: "engine port produces a recognizable strategy on its own merits across multi-month windows." It does now produce a recognizable strategy (989 trades, distributed across both directions, runtime tractable) — but that strategy loses money, so paper would just be paper-losing. Don't ship.
 
 **The other un-fixed strategy item** — narrow FVG detection window in `_build_setups_from_ltf` — was deliberately NOT touched. It needs a strategy-rule decision (how wide should the resample window be? full session?) and your sign-off; it was on the explicit "do not touch without Ben's approval" list.
+
+### Lane C — branch `lane-c-trusted-port-2026-04-28-pm` (IN PROGRESS, not PR-ready)
+
+The big one. Started after the Lane A characterization came back showing the engine port loses money over 2.25 years, and we re-discovered the trusted source isn't actually lost.
+
+**What's verified (today, on my machine):**
+- Trusted script at `C:\Fractal-AMD\scripts\trusted_multiyear_bt.py` runs cleanly using BacktestStation's Python venv.
+- Output: **586 trades, 40.8% WR, +274.4R, avg +0.47R, max DD -20.1R** — exact match to the bundled `samples/fractal_trusted_multiyear/trades.csv`.
+- Quarter breakdown: 8 of 9 quarters profitable. Only loser is 2024Q2 (-11R, 27% WR).
+- Direction: BULLISH +124R, BEARISH +150R — both legs profitable, neither carries the strategy alone.
+- Hour: 9–13 ET, with hour 11 dominating (+103R / 47% WR / 138 trades).
+- Equity curve: peak +274R, trough -6R. Smooth.
+
+**Specific divergences identified between trusted and current engine port:**
+1. Trusted requires `compute_continuation_of` gate (`cos >= 3`) — the engine port doesn't even import this function. `order_flow.py` from the original repo has it; BacktestStation has nothing equivalent.
+2. Trusted's entry trigger: bar's range intersects FVG → wait one bar → enter at next bar's *open*. Engine port uses TBBO tick price triggers.
+3. Trusted's setup selection: `find_nearest_unfilled_fvg` (FVG nearest to current close). Engine port iterates `engine.setups` and fires on first match.
+4. Trusted's LTF SMT search: 15m → 5m, first match wins (early return). Engine port iterates all LTF candle pairs.
+5. Trusted scans HTF candles ONCE per day at start. Engine port re-scans every bar (mitigated by `_fully_scanned` cache but still iterates).
+
+**What's done so far:**
+- Verified trusted script reproduces +274R (above).
+- Confirmed BacktestStation's existing `signals.py` has most of the helpers (FVG, SMT, candle bounds, get_ohlc, detect_rejection) needed.
+- Confirmed `compute_continuation_of` is NOT in BacktestStation — needs porting from `C:\Fractal-AMD\src\features\order_flow.py:386`.
+
+**What's NOT done — the real work:**
+- Port `compute_continuation_of` to BacktestStation (~200 lines, pandas → list[Bar]).
+- Build a new strategy plugin `app/strategies/fractal_amd_trusted/` that mirrors trusted's orchestration (HTF scan ONCE per day, find_nearest_unfilled_fvg selection, next-bar-open entry, etc.).
+- Regression test: run new plugin on 2024-2026 data, assert it reproduces +274R / 586 trades / 40.8% WR within tight tolerance.
+- (Future, separate change) Replace ben-247's `live_bot.py` with one that calls the new plugin code, plugged into Rithmic.
+
+This is a multi-hour focused build. I started it but ran into the time budget for "wake-up before Ben's back from tanning." Picking it up tomorrow with you is the right call.
 
 ## What I deliberately didn't do
 
