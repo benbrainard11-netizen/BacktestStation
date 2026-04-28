@@ -127,11 +127,13 @@ Tools shipped to disk but not called from app code paths. Each is a CLI; documen
 ```
 D:/data/
 ├── raw/
-│   ├── live/                  GLBX.MDP3-tbbo-{YYYY-MM-DD}.dbn        (live ingester)
-│   └── historical/            GLBX.MDP3-{schema}-{YYYY-MM-DD}.dbn    (historical pulls)
-├── raw/databento/             # parquet mirror of raw/ DBN files
-│   ├── tbbo/symbol={X}/date={Y}/part-000.parquet
-│   └── mbp-1/symbol={X}/date={Y}/part-000.parquet
+│   ├── live/                  GLBX.MDP3-tbbo-{YYYY-MM-DD}.dbn               (live ingester)
+│   ├── historical/
+│   │   ├── GLBX.MDP3-{schema}-{YYYY-MM-DD}.dbn                              (legacy multi-symbol — pre 2026-04-27)
+│   │   └── GLBX.MDP3-{schema}-{YYYY-MM-DD}-{SYMBOL}.dbn                     (per-symbol — current)
+│   └── databento/             # parquet mirror of raw/ DBN files
+│       ├── tbbo/symbol={X}/date={Y}/part-000.parquet
+│       └── mbp-1/symbol={X}/date={Y}/part-000.parquet
 ├── processed/
 │   └── bars/timeframe=1m/symbol={X}/date={Y}/part-000.parquet
 ├── manifests/                 per-file kv-metadata + integrity hashes
@@ -139,17 +141,26 @@ D:/data/
 └── logs/
 ```
 
-What's actually in the warehouse as of 2026-04-27 (audited on ben-247 — the empirical state, not aspirational):
+What's actually in the warehouse as of **2026-04-27 evening** (audited end-to-end on ben-247 after the full March MBP-1 backfill):
 
-- **Live TBBO**: 4 days of `GLBX.MDP3-tbbo-{date}.dbn` files in `raw/live/` (2026-04-24 → 2026-04-27). Only 2026-04-27 contains real market data — 592k MBP1Msg records / 9 MB parquet across 4 symbols (NQ/ES/YM/RTY M6). The 4/24-4/26 files contain only Databento control messages (Saturday + ingester respawn boundary before Sunday's 6 PM ET CME open).
-- **Historical MBP-1**: 2026-04-27 backfill brought all 27 trading days of March 2026 onto disk. 63 DBN files / 13.2 GB raw across NQ/ES/YM/RTY at `raw/historical/`. Mirror catchup in progress to `raw/databento/mbp-1/`. Going forward: monthly fires via `BacktestStationHistorical` scheduled task on day 1 at 02:00 local.
-- **OHLCV-1m**: derived bars in `processed/bars/timeframe=1m/`. As of 2026-04-27, only 2026-04-27 live-source partitions exist (4 symbols × ~1,050 1m bars each = 4,213 bars total). Prior live dates absent because the source DBN files were empty of market data; historical-derived 1m bars land as the mirror catchup completes.
-- **OHLCV-1s**: not collected. Defer until needed.
-- **Universe**: actively NQ/ES/YM/RTY only. The four CME equity-index futures the live bot watches. The `28-symbol universe` referenced in some older docs is aspirational and was never on disk; we'll expand by adding subscriptions to the live ingester + corresponding historical pulls when the strategies that need them get scoped.
+- **TBBO (live, raw DBN)** — 4 daily files in `raw/live/`, only 2026-04-27 has market data (~592k MBP1Msg / 46 MB). The 4/24–4/26 files are weekend / ingester-respawn-boundary empty (control messages only).
+- **TBBO (live, parquet)** — 4 partitions at `raw/databento/tbbo/` for 2026-04-27 (NQM6, ESM6, YMM6, RTYM6).
+- **MBP-1 (historical, raw DBN)** — 63 files / 13.2 GB at `raw/historical/`. All 27 March 2026 trading days. Two filename layouts:
+  - 15 legacy multi-symbol files (03-01..05, 08..12, 15..19) from the first puller pass
+  - 48 per-symbol files (03-06, 13, 20, 22..27, 29..31) from the second pass after the puller fix
+- **MBP-1 (historical, parquet)** — 108 partitions at `raw/databento/mbp-1/` (27 dates × 4 symbols).
+- **1m bars (derived)** — 112 partitions at `processed/bars/timeframe=1m/` (108 mbp-1-derived + 4 tbbo-derived).
+- **Manifests** — 28 in `manifests/ingest_runs/` (27 mbp-1 + 1 tbbo). One per (date, schema).
+- **OHLCV-1m, OHLCV-1s** — none yet (separate pulls, not scheduled).
+- **Universe**: actively NQ/ES/YM/RTY only. The four CME equity-index futures the live bot watches. The `28-symbol universe` referenced in some older docs is aspirational and was never on disk; we'll expand by adding subscriptions when the strategies that need them get scoped.
 
 > **Doc lifecycle note (2026-04-27):** prior versions of this section claimed "12 months TBBO across the full 28-symbol universe" was already in the warehouse. That was never true — the live ingester only came online 2026-04-24 and the parquet pipeline produced its first partitions on 2026-04-27. When a future audit shows different contents, **edit this section to match the audit**, not to project forward. The Live-pipeline panel on `/monitor` is the live-truth view; this doc is a periodic snapshot.
 
-**Pipeline status (2026-04-27, post-verification):** parquet_mirror is working. Earlier in the day a missing `processed/` tree triggered a "schema-mismatch bug" hypothesis; deeper inspection showed mirror was correctly skipping the actively-written 4/27 DBN due to its 60s freshness guard. After UTC midnight the file closes and the next hourly mirror picks it up automatically. No code change needed in `parquet_mirror` or `app.ingest.live`.
+**Pipeline status (2026-04-27 evening):** end-to-end working. Earlier in the day:
+
+- The historical puller hit a Databento 503 cascade on 14 of 31 March days (full-day × 4-symbol payloads were too large). Fixed in PR #9 (`fix/historical-puller-per-symbol-with-retry`): per-symbol pulls + retry-with-backoff. Re-pull with the fix succeeded with 0 errors.
+- The per-symbol naming convention is new (current naming: `{DATASET}-{SCHEMA}-{DATE}-{SYMBOL}.dbn`). `parquet_mirror.py:_DBN_RE` updated to accept both legacy and per-symbol filenames; the existing group-by-record-symbol code path partitions correctly in both cases.
+- The `BacktestStationParquetMirror` scheduled task has `ExecutionTimeLimit = 30 min` baked in by `install_scheduled_tasks.ps1`. That cap kills any catchup-mode mirror run mid-flight (today's full warehouse catchup needed ~45 min). PR #10 (`fix/mirror-task-execution-time-limit`) bumps it to 4h. **Until that PR ships and the install script is re-run on ben-247**, large catchups must be done by launching `python -m app.ingest.parquet_mirror` directly (no scheduler = no time limit).
 
 Full schema definitions: see [`SCHEMA_SPEC.md`](SCHEMA_SPEC.md). Additions bump `SCHEMA_VERSION` in `backend/app/data/schema.py`.
 
