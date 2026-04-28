@@ -40,6 +40,21 @@ class ReplayEntry(BaseModel):
     exit_reason: str | None
 
 
+class ReplayFvgZone(BaseModel):
+    """One Fair Value Gap zone detected on the replay's resampled 5m
+    candles. Frontend renders these as semi-transparent price-range
+    bands so a reviewer can see "did this trade enter inside an FVG?"
+    """
+
+    direction: str  # "BULLISH" | "BEARISH"
+    low: float
+    high: float
+    created_at: datetime
+    timeframe: str  # e.g. "5m"
+    filled: bool
+    fill_time: datetime | None
+
+
 class ReplayPayload(BaseModel):
     """Full payload for one (symbol, date) replay request."""
 
@@ -48,3 +63,4 @@ class ReplayPayload(BaseModel):
     bars: list[ReplayBar] = Field(default_factory=list)
     entries: list[ReplayEntry] = Field(default_factory=list)
     backtest_run_id: int | None = None
+    fvg_zones: list[ReplayFvgZone] = Field(default_factory=list)

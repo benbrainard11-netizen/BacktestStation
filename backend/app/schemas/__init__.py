@@ -66,6 +66,7 @@ from app.schemas.results import (
 from app.schemas.replay import (
     ReplayBar,
     ReplayEntry,
+    ReplayFvgZone,
     ReplayPayload,
 )
 from app.schemas.risk_profile import (
@@ -126,6 +127,7 @@ __all__ = [
     "RISK_PROFILE_STATUSES",
     "ReplayBar",
     "ReplayEntry",
+    "ReplayFvgZone",
     "ReplayPayload",
     "RiskEvaluationRead",
     "RiskProfileCreate",

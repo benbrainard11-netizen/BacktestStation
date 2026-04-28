@@ -2553,6 +2553,31 @@ export interface components {
             trade_id: number;
         };
         /**
+         * ReplayFvgZone
+         * @description One Fair Value Gap zone detected on the replay's resampled 5m
+         *     candles. Frontend renders these as semi-transparent price-range
+         *     bands so a reviewer can see "did this trade enter inside an FVG?"
+         */
+        ReplayFvgZone: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Direction */
+            direction: string;
+            /** Fill Time */
+            fill_time: string | null;
+            /** Filled */
+            filled: boolean;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Timeframe */
+            timeframe: string;
+        };
+        /**
          * ReplayPayload
          * @description Full payload for one (symbol, date) replay request.
          */
@@ -2568,6 +2593,8 @@ export interface components {
             date: string;
             /** Entries */
             entries?: components["schemas"]["ReplayEntry"][];
+            /** Fvg Zones */
+            fvg_zones?: components["schemas"]["ReplayFvgZone"][];
             /** Symbol */
             symbol: string;
         };

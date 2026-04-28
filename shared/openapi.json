@@ -4010,6 +4010,59 @@
         "title": "ReplayEntry",
         "type": "object"
       },
+      "ReplayFvgZone": {
+        "description": "One Fair Value Gap zone detected on the replay's resampled 5m\ncandles. Frontend renders these as semi-transparent price-range\nbands so a reviewer can see \"did this trade enter inside an FVG?\"",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "fill_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fill Time"
+          },
+          "filled": {
+            "title": "Filled",
+            "type": "boolean"
+          },
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "timeframe": {
+            "title": "Timeframe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "direction",
+          "low",
+          "high",
+          "created_at",
+          "timeframe",
+          "filled",
+          "fill_time"
+        ],
+        "title": "ReplayFvgZone",
+        "type": "object"
+      },
       "ReplayPayload": {
         "description": "Full payload for one (symbol, date) replay request.",
         "properties": {
@@ -4041,6 +4094,13 @@
               "$ref": "#/components/schemas/ReplayEntry"
             },
             "title": "Entries",
+            "type": "array"
+          },
+          "fvg_zones": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayFvgZone"
+            },
+            "title": "Fvg Zones",
             "type": "array"
           },
           "symbol": {
