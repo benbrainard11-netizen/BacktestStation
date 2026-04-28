@@ -291,6 +291,59 @@ def pull_day(
     return any_wrote, total_bytes
 
 
+def pull_one_day_one_symbol(
+    client: "db.Historical",
+    day: dt.date,
+    symbol: str,
+    *,
+    data_root: Path | None = None,
+    schema: str = DEFAULT_SCHEMA,
+    logger: logging.Logger | None = None,
+) -> tuple[bool, int]:
+    """Pull a single (date, symbol) DBN partition. Idempotent.
+
+    Returns (wrote_or_existed, bytes). If the file exists non-empty,
+    skip and return (True, current_size). Otherwise hit Databento with
+    the same retry-with-backoff logic as `pull_day`. Empty data days
+    return (False, 0). Permanent errors are caught and logged; caller
+    sees (False, 0) without an exception.
+
+    Used by `app.ingest.gap_filler` to fill missing partitions one at
+    a time after a cost check has confirmed the call is free.
+    """
+    data_root = data_root or _data_root()
+    logger = logger or _setup_logging(data_root)
+
+    out_path = file_for_date_symbol(data_root, day, symbol, schema)
+    if out_path.exists() and out_path.stat().st_size > 0:
+        logger.info(f"  skip existing: {out_path.name}")
+        return True, out_path.stat().st_size
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    start = dt.datetime.combine(day, dt.time(0, 0, tzinfo=dt.timezone.utc))
+    end = start + dt.timedelta(days=1)
+
+    try:
+        response = _get_range_with_retry(
+            client, schema, symbol, start, end, logger
+        )
+    except RuntimeError as e:
+        logger.error(f"  {symbol} {day.isoformat()}: {e}")
+        return False, 0
+
+    df = response.to_df()
+    if df.empty:
+        logger.info(f"  {symbol} {day.isoformat()}: no data, skipping write")
+        return False, 0
+
+    response.to_file(str(out_path))
+    sz = out_path.stat().st_size
+    logger.info(
+        f"  wrote {out_path.name} ({sz:,} bytes, {len(df)} rows)"
+    )
+    return True, sz
+
+
 def pull_month(
     year: int,
     month: int,

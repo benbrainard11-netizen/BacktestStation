@@ -209,6 +209,76 @@ if (-not (Get-ScheduledTask -TaskName 'BacktestStationHistorical' -ErrorAction S
 }
 Write-Host "  registered. First run May 1 at 02:00 local."
 
+# --- 5b. Register weekly gap-filler (Sunday 03:00 local) ----------------
+
+Write-Host ""
+Write-Host "Registering BacktestStationGapFiller (weekly, Sunday at 03:00)..." -ForegroundColor Cyan
+
+# Weekly trigger via XML for the same reason as the monthly task
+# (PowerShell CIM types don't compose cleanly). Sunday-3am gives the
+# monthly historical fire (1st of the month, 02:00) plenty of time
+# to settle, and lets the gap-filler catch any week the monthly run
+# missed (e.g. Databento outage, holiday, scheduler hiccup).
+
+$gfXml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Weekly gap-filler: fill missing MBP-1 partitions in last 3 months, $0-cost only</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>$startBoundary</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByWeek>
+        <DaysOfWeek><Sunday /></DaysOfWeek>
+        <WeeksInterval>1</WeeksInterval>
+      </ScheduleByWeek>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>$User</UserId>
+      <LogonType>S4U</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <ExecutionTimeLimit>PT4H</ExecutionTimeLimit>
+    <Enabled>true</Enabled>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>$xmlEscapedPython</Command>
+      <Arguments>-m app.ingest.gap_filler</Arguments>
+      <WorkingDirectory>$xmlEscapedBackend</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>
+"@
+
+# Re-anchor StartBoundary to the next Sunday at 03:00 so the schedule
+# fires consistently regardless of when the install ran.
+$today = Get-Date
+$daysUntilSunday = (7 - [int]$today.DayOfWeek) % 7
+if ($daysUntilSunday -eq 0) { $daysUntilSunday = 7 }
+$nextSunday = $today.Date.AddDays($daysUntilSunday).AddHours(3)
+$gfStart = $nextSunday.ToString('yyyy-MM-ddTHH:mm:ss')
+$gfXml = $gfXml -replace [regex]::Escape($startBoundary), $gfStart
+
+Register-ScheduledTask -TaskName 'BacktestStationGapFiller' -Xml $gfXml -Force | Out-Null
+
+if (-not (Get-ScheduledTask -TaskName 'BacktestStationGapFiller' -ErrorAction SilentlyContinue)) {
+    Write-Host "ERROR: BacktestStationGapFiller did not register. See errors above." -ForegroundColor Red
+    exit 1
+}
+Write-Host "  registered. First run $gfStart local (next Sunday 03:00)."
+
 # --- 6. Summary ---------------------------------------------------------
 
 Write-Host ""
