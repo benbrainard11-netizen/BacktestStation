@@ -298,5 +298,12 @@ function BarsPanel({
       </div>
     );
   }
-  return <BarChart bars={bars} anchor={state.anchor} timeframe={timeframe} />;
+  return (
+    <BarChart
+      bars={bars}
+      anchor={state.anchor}
+      timeframe={timeframe}
+      fvgZones={state.payload.fvg_zones ?? []}
+    />
+  );
 }

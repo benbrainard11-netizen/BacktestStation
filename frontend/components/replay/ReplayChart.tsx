@@ -16,6 +16,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { components } from "@/lib/api/generated";
 
+import { type FvgZoneInput, FvgZonesPrimitive } from "./FvgZonesPrimitive";
+
 type ReplayPayload = components["schemas"]["ReplayPayload"];
 
 const SPEED_PRESETS = [
@@ -39,9 +41,11 @@ export default function ReplayChart({ payload }: Props) {
   const [cursorIndex, setCursorIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speedMs, setSpeedMs] = useState<number>(SPEED_PRESETS[1].ms);
+  const [showZones, setShowZones] = useState(true);
 
   const bars = payload.bars ?? [];
   const entries = payload.entries ?? [];
+  const zones = payload.fvg_zones ?? [];
   const candles: CandlestickData[] = useMemo(
     () =>
       bars.map((b) => ({
@@ -52,6 +56,24 @@ export default function ReplayChart({ payload }: Props) {
         close: b.close,
       })),
     [bars],
+  );
+
+  // FVG zone primitive — attached once, fed via setZones() on change.
+  const zonesPrimitiveRef = useRef<FvgZonesPrimitive | null>(null);
+
+  const zoneInputs = useMemo<FvgZoneInput[]>(
+    () =>
+      zones.map((z) => ({
+        direction: z.direction,
+        low: z.low,
+        high: z.high,
+        createdAtSec: Math.floor(new Date(z.created_at).getTime() / 1000),
+        fillTimeSec:
+          z.fill_time !== null && z.fill_time !== undefined
+            ? Math.floor(new Date(z.fill_time).getTime() / 1000)
+            : null,
+      })),
+    [zones],
   );
 
   // Mount the chart once.
@@ -81,14 +103,32 @@ export default function ReplayChart({ payload }: Props) {
     seriesRef.current = series;
     // v5 markers are a series-attached primitive, not a series method.
     markersRef.current = createSeriesMarkers(series, []);
+    const zonesPrimitive = new FvgZonesPrimitive();
+    series.attachPrimitive(zonesPrimitive);
+    zonesPrimitiveRef.current = zonesPrimitive;
     return () => {
       markersRef.current?.detach();
       markersRef.current = null;
+      try {
+        series.detachPrimitive(zonesPrimitive);
+      } catch {
+        /* chart torn down already */
+      }
+      zonesPrimitiveRef.current = null;
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
     };
   }, []);
+
+  // Push zone inputs into the primitive whenever they change or the toggle
+  // flips. The primitive renders behind candles; an empty list clears it.
+  useEffect(() => {
+    const primitive = zonesPrimitiveRef.current;
+    if (!primitive) return;
+    primitive.setZones(showZones ? zoneInputs : []);
+    chartRef.current?.timeScale().applyOptions({});
+  }, [zoneInputs, showZones]);
 
   // Push the visible slice of candles whenever cursor moves or data changes.
   useEffect(() => {
@@ -197,6 +237,24 @@ export default function ReplayChart({ payload }: Props) {
         >
           ⏭
         </button>
+        {zoneInputs.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setShowZones((s) => !s)}
+            className={
+              showZones
+                ? "border border-zinc-700 bg-zinc-900 px-2 py-1 text-zinc-100 hover:bg-zinc-800"
+                : "border border-zinc-800 bg-zinc-900 px-2 py-1 text-zinc-500 hover:bg-zinc-800"
+            }
+            title={
+              showZones
+                ? "Hide FVG zones"
+                : "Show FVG zones (5m, both directions)"
+            }
+          >
+            FVG ({zoneInputs.length})
+          </button>
+        ) : null}
         <span className="text-zinc-500">Speed</span>
         {SPEED_PRESETS.map((preset) => (
           <button

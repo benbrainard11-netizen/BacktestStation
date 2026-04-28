@@ -29,9 +29,14 @@ import {
   barIndexAtSec,
   resample,
 } from "@/lib/trade-replay/resampleBars";
+import {
+  type FvgZoneInput,
+  FvgZonesPrimitive,
+} from "@/components/replay/FvgZonesPrimitive";
 
 type ReplayBar = components["schemas"]["ReplayBar"];
 type Anchor = components["schemas"]["TradeReplayAnchor"];
+type ReplayFvgZone = components["schemas"]["ReplayFvgZone"];
 
 const SPEED_PRESETS = [
   { label: "1x", ms: 1000 },
@@ -44,9 +49,15 @@ interface Props {
   bars: ReplayBar[];
   anchor: Anchor;
   timeframe: Timeframe;
+  fvgZones?: ReplayFvgZone[];
 }
 
-export default function BarChart({ bars, anchor, timeframe }: Props) {
+export default function BarChart({
+  bars,
+  anchor,
+  timeframe,
+  fvgZones = [],
+}: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -85,6 +96,27 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
   const [cursorIndex, setCursorIndex] = useState(initialCursor);
   const [playing, setPlaying] = useState(false);
   const [speedMs, setSpeedMs] = useState<number>(SPEED_PRESETS[1].ms);
+  const [showZones, setShowZones] = useState(true);
+
+  // Zones come from /api/replay's fvg_zones field — already detected over
+  // the day's resampled 5m candles. Translate to the primitive's
+  // (createdAtSec, fillTimeSec) shape once per change.
+  const zoneInputs = useMemo<FvgZoneInput[]>(
+    () =>
+      fvgZones.map((z) => ({
+        direction: z.direction,
+        low: z.low,
+        high: z.high,
+        createdAtSec: Math.floor(new Date(z.created_at).getTime() / 1000),
+        fillTimeSec:
+          z.fill_time !== null && z.fill_time !== undefined
+            ? Math.floor(new Date(z.fill_time).getTime() / 1000)
+            : null,
+      })),
+    [fvgZones],
+  );
+
+  const zonesPrimitiveRef = useRef<FvgZonesPrimitive | null>(null);
 
   // Reset cursor whenever data or timeframe changes.
   useEffect(() => {
@@ -129,14 +161,30 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
     chartRef.current = chart;
     seriesRef.current = series;
     markersRef.current = createSeriesMarkers(series, []);
+    const zonesPrimitive = new FvgZonesPrimitive();
+    series.attachPrimitive(zonesPrimitive);
+    zonesPrimitiveRef.current = zonesPrimitive;
     return () => {
       markersRef.current?.detach();
       markersRef.current = null;
+      try {
+        series.detachPrimitive(zonesPrimitive);
+      } catch {
+        /* chart torn down already */
+      }
+      zonesPrimitiveRef.current = null;
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
     };
   }, []);
+
+  // Push FVG zones into the primitive when they change or the toggle flips.
+  useEffect(() => {
+    const primitive = zonesPrimitiveRef.current;
+    if (!primitive) return;
+    primitive.setZones(showZones ? zoneInputs : []);
+  }, [zoneInputs, showZones]);
 
   // Visible slice of candles up to cursor. Do NOT auto-fit on every
   // cursor change — that fights the user's pan/zoom. We fit once when
@@ -415,6 +463,24 @@ export default function BarChart({ bars, anchor, timeframe }: Props) {
         >
           Fit
         </button>
+        {zoneInputs.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setShowZones((s) => !s)}
+            className={
+              showZones
+                ? "border border-zinc-700 bg-zinc-900 px-2 py-1 text-zinc-100 hover:bg-zinc-800"
+                : "border border-zinc-800 bg-zinc-900 px-2 py-1 text-zinc-500 hover:bg-zinc-800"
+            }
+            title={
+              showZones
+                ? "Hide FVG zones"
+                : "Show FVG zones (5m, both directions)"
+            }
+          >
+            FVG ({zoneInputs.length})
+          </button>
+        ) : null}
         <span className="text-zinc-500">Speed</span>
         {SPEED_PRESETS.map((preset) => (
           <button
