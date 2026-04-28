@@ -551,6 +551,40 @@
         "title": "DailyPnL",
         "type": "object"
       },
+      "DataHealthPayload": {
+        "properties": {
+          "disk": {
+            "$ref": "#/components/schemas/DiskSpaceRead"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "scheduled_tasks": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduledTaskStatus"
+            },
+            "title": "Scheduled Tasks",
+            "type": "array"
+          },
+          "scheduled_tasks_supported": {
+            "default": true,
+            "title": "Scheduled Tasks Supported",
+            "type": "boolean"
+          },
+          "warehouse": {
+            "$ref": "#/components/schemas/WarehouseSummary"
+          }
+        },
+        "required": [
+          "warehouse",
+          "disk",
+          "fetched_at"
+        ],
+        "title": "DataHealthPayload",
+        "type": "object"
+      },
       "DataQualityIssue": {
         "properties": {
           "affected_range": {
@@ -829,6 +863,34 @@
           "skipped"
         ],
         "title": "DatasetScanResult",
+        "type": "object"
+      },
+      "DiskSpaceRead": {
+        "properties": {
+          "free_bytes": {
+            "title": "Free Bytes",
+            "type": "integer"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "total_bytes": {
+            "title": "Total Bytes",
+            "type": "integer"
+          },
+          "used_bytes": {
+            "title": "Used Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "free_bytes",
+          "used_bytes",
+          "total_bytes"
+        ],
+        "title": "DiskSpaceRead",
         "type": "object"
       },
       "DistributionBucket": {
@@ -4756,6 +4818,71 @@
         "title": "RunMetricsRead",
         "type": "object"
       },
+      "ScheduledTaskStatus": {
+        "description": "One Windows scheduled task's last/next run + result.\n\nOn non-Windows hosts, the task list is returned empty and\n`platform_supported=False` so the frontend shows a clear empty\nstate rather than implying everything is broken.",
+        "properties": {
+          "last_result": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Result"
+          },
+          "last_result_label": {
+            "title": "Last Result Label",
+            "type": "string"
+          },
+          "last_run_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Ts"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "next_run_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run Ts"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          }
+        },
+        "required": [
+          "name",
+          "last_result_label"
+        ],
+        "title": "ScheduledTaskStatus",
+        "type": "object"
+      },
       "SelectedPath": {
         "properties": {
           "bucket": {
@@ -6924,6 +7051,96 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "WarehouseSchemaSummary": {
+        "description": "Per-schema rollup of what's in the on-disk warehouse.\n\nSchema = \"tbbo\" | \"mbp-1\" | \"ohlcv-1m\" | \"ohlcv-1s\" etc.\nCounts are derived from the `datasets` table (populated by\n`dataset_scanner.scan_datasets`), so a stale scan can show stale\ncounts \u2014 `WarehouseSummary.last_scan_ts` exposes the freshness.",
+        "properties": {
+          "earliest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Date"
+          },
+          "latest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Date"
+          },
+          "partition_count": {
+            "title": "Partition Count",
+            "type": "integer"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "total_bytes": {
+            "title": "Total Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema",
+          "partition_count",
+          "total_bytes"
+        ],
+        "title": "WarehouseSchemaSummary",
+        "type": "object"
+      },
+      "WarehouseSummary": {
+        "properties": {
+          "last_scan_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scan Ts"
+          },
+          "schemas": {
+            "items": {
+              "$ref": "#/components/schemas/WarehouseSchemaSummary"
+            },
+            "title": "Schemas",
+            "type": "array"
+          },
+          "total_bytes": {
+            "default": 0,
+            "title": "Total Bytes",
+            "type": "integer"
+          },
+          "total_partitions": {
+            "default": 0,
+            "title": "Total Partitions",
+            "type": "integer"
+          }
+        },
+        "title": "WarehouseSummary",
+        "type": "object"
       }
     }
   },
@@ -7635,6 +7852,28 @@
         "summary": "Export Trades Csv",
         "tags": [
           "backtests"
+        ]
+      }
+    },
+    "/api/data-health": {
+      "get": {
+        "description": "Snapshot of warehouse contents + scheduled-task health + disk space.\n\nCheap: scans one DB table, optionally calls Get-ScheduledTaskInfo\nfor each known task (Windows only, ~50ms \u00d7 4), and one disk-stat.\nFrontend polls every ~30s.",
+        "operationId": "read_data_health_api_data_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataHealthPayload"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Data Health",
+        "tags": [
+          "data_health"
         ]
       }
     },

@@ -283,6 +283,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/data-health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Data Health
+         * @description Snapshot of warehouse contents + scheduled-task health + disk space.
+         *
+         *     Cheap: scans one DB table, optionally calls Get-ScheduledTaskInfo
+         *     for each known task (Windows only, ~50ms × 4), and one disk-stat.
+         *     Frontend polls every ~30s.
+         */
+        get: operations["read_data_health_api_data_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/datasets": {
         parameters: {
             query?: never;
@@ -1368,6 +1392,23 @@ export interface components {
             /** Trades */
             trades: number;
         };
+        /** DataHealthPayload */
+        DataHealthPayload: {
+            disk: components["schemas"]["DiskSpaceRead"];
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /** Scheduled Tasks */
+            scheduled_tasks?: components["schemas"]["ScheduledTaskStatus"][];
+            /**
+             * Scheduled Tasks Supported
+             * @default true
+             */
+            scheduled_tasks_supported: boolean;
+            warehouse: components["schemas"]["WarehouseSummary"];
+        };
         /** DataQualityIssue */
         DataQualityIssue: {
             /** Affected Range */
@@ -1479,6 +1520,17 @@ export interface components {
              * @description existing rows whose size/mtime changed
              */
             updated: number;
+        };
+        /** DiskSpaceRead */
+        DiskSpaceRead: {
+            /** Free Bytes */
+            free_bytes: number;
+            /** Path */
+            path: string;
+            /** Total Bytes */
+            total_bytes: number;
+            /** Used Bytes */
+            used_bytes: number;
         };
         /** DistributionBucket */
         DistributionBucket: {
@@ -2776,6 +2828,28 @@ export interface components {
             /** Worst Trade */
             worst_trade: number | null;
         };
+        /**
+         * ScheduledTaskStatus
+         * @description One Windows scheduled task's last/next run + result.
+         *
+         *     On non-Windows hosts, the task list is returned empty and
+         *     `platform_supported=False` so the frontend shows a clear empty
+         *     state rather than implying everything is broken.
+         */
+        ScheduledTaskStatus: {
+            /** Last Result */
+            last_result?: number | null;
+            /** Last Result Label */
+            last_result_label: string;
+            /** Last Run Ts */
+            last_run_ts?: string | null;
+            /** Name */
+            name: string;
+            /** Next Run Ts */
+            next_run_ts?: string | null;
+            /** State */
+            state?: string | null;
+        };
         /** SelectedPath */
         SelectedPath: {
             /**
@@ -3505,6 +3579,46 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /**
+         * WarehouseSchemaSummary
+         * @description Per-schema rollup of what's in the on-disk warehouse.
+         *
+         *     Schema = "tbbo" | "mbp-1" | "ohlcv-1m" | "ohlcv-1s" etc.
+         *     Counts are derived from the `datasets` table (populated by
+         *     `dataset_scanner.scan_datasets`), so a stale scan can show stale
+         *     counts — `WarehouseSummary.last_scan_ts` exposes the freshness.
+         */
+        WarehouseSchemaSummary: {
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Latest Date */
+            latest_date?: string | null;
+            /** Partition Count */
+            partition_count: number;
+            /** Schema */
+            schema: string;
+            /** Symbols */
+            symbols?: string[];
+            /** Total Bytes */
+            total_bytes: number;
+        };
+        /** WarehouseSummary */
+        WarehouseSummary: {
+            /** Last Scan Ts */
+            last_scan_ts?: string | null;
+            /** Schemas */
+            schemas?: components["schemas"]["WarehouseSchemaSummary"][];
+            /**
+             * Total Bytes
+             * @default 0
+             */
+            total_bytes: number;
+            /**
+             * Total Partitions
+             * @default 0
+             */
+            total_partitions: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -4027,6 +4141,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_data_health_api_data_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataHealthPayload"];
                 };
             };
         };
