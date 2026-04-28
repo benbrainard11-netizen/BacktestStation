@@ -2,6 +2,25 @@
 
 > Wake-up doc for after the gym. This run finished while you were out.
 
+## ⚡ Latest update — cont-OF gate experiment falsified the quick-fix hypothesis
+
+After confirming the trusted backtest is real (below), I tested whether the engine port's divergence from trusted could be closed by JUST adding the missing `compute_continuation_of` gate. Result on Q1 2024:
+
+```
+config          trades   WR%    totalR
+gate off          122   33.6%   +2.79     <- Q1 baseline (Lane A)
+gate on=3         120   31.7%   -1.77     <- gate=3 (mirrors trusted)
+trusted target     85   35.3%  +19.80
+```
+
+**Only 2 entries got rejected by the gate; WR/R got slightly worse.** Patching the existing engine to match trusted is NOT the right path — the divergence is elsewhere (setup selection, entry trigger, scan timing). The full plugin port on Lane C is the only way forward.
+
+Committed as **Lane D experimental branch** (`lane-d-cont-of-experiment-2026-04-28-pm`). The branch wires the existing-but-unused `min_co_score` config knob and adds the ported `compute_continuation_of` (verified bit-identical to the pandas original on 8 test cases). It's NOT for merge as a feature — it's the audit trail of the experiment. The `orderflow.py` port itself also lives on Lane C as the foundation for the proper port.
+
+PR URL (informational): https://github.com/benbrainard11-netizen/BacktestStation/pull/new/lane-d-cont-of-experiment-2026-04-28-pm
+
+---
+
 ## ⭐ The headline find — read this first
 
 **Your "+274R good backtest" is 100% real and reproducible.** I re-ran the trusted script (`C:\Fractal-AMD\scripts\trusted_multiyear_bt.py`) on my machine just now — got **exact same numbers as the bundled CSV: 586 trades, 40.8% WR, +274.4R, max DD -20R, 8 of 9 quarters profitable**. The strategy is real. The numbers are not bug-inflated.
