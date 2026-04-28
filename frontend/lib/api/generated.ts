@@ -960,6 +960,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/system": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read System Settings
+         * @description Snapshot of how the app is currently configured.
+         *
+         *     No persistence yet — every field is derived from process state at
+         *     request time. Frontend polls or fetches once at page load.
+         */
+        get: operations["read_system_settings_api_settings_system_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies": {
         parameters: {
             query?: never;
@@ -3402,6 +3425,44 @@ export interface components {
             /** Version */
             version?: string | null;
         };
+        /**
+         * SystemSettingsRead
+         * @description Read-only inspection of how the app is currently configured.
+         *
+         *     Everything here is derived from process state at request time —
+         *     no DB persistence yet. When editable settings ship, this stays as
+         *     the "system facts" view; new endpoints will handle the user prefs.
+         */
+        SystemSettingsRead: {
+            /** Bs Data Root */
+            bs_data_root: string;
+            /** Bs Data Root Exists */
+            bs_data_root_exists: boolean;
+            /** Databento Api Key Set */
+            databento_api_key_set: boolean;
+            /** Free Disk Bytes */
+            free_disk_bytes: number;
+            /** Git Dirty */
+            git_dirty: boolean;
+            /** Git Sha */
+            git_sha: string | null;
+            /** Platform */
+            platform: string;
+            /** Python Version */
+            python_version: string;
+            /**
+             * Server Time Et
+             * Format: date-time
+             */
+            server_time_et: string;
+            /**
+             * Server Time Utc
+             * Format: date-time
+             */
+            server_time_utc: string;
+            /** Version */
+            version: string;
+        };
         /** TradeRead */
         TradeRead: {
             /** Backtest Run Id */
@@ -5364,6 +5425,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_system_settings_api_settings_system_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemSettingsRead"];
                 };
             };
         };

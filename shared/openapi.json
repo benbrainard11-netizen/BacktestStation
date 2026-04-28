@@ -6479,6 +6479,79 @@
         "title": "StrategyVersionUpdate",
         "type": "object"
       },
+      "SystemSettingsRead": {
+        "description": "Read-only inspection of how the app is currently configured.\n\nEverything here is derived from process state at request time \u2014\nno DB persistence yet. When editable settings ship, this stays as\nthe \"system facts\" view; new endpoints will handle the user prefs.",
+        "properties": {
+          "bs_data_root": {
+            "title": "Bs Data Root",
+            "type": "string"
+          },
+          "bs_data_root_exists": {
+            "title": "Bs Data Root Exists",
+            "type": "boolean"
+          },
+          "databento_api_key_set": {
+            "title": "Databento Api Key Set",
+            "type": "boolean"
+          },
+          "free_disk_bytes": {
+            "title": "Free Disk Bytes",
+            "type": "integer"
+          },
+          "git_dirty": {
+            "title": "Git Dirty",
+            "type": "boolean"
+          },
+          "git_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Sha"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "python_version": {
+            "title": "Python Version",
+            "type": "string"
+          },
+          "server_time_et": {
+            "format": "date-time",
+            "title": "Server Time Et",
+            "type": "string"
+          },
+          "server_time_utc": {
+            "format": "date-time",
+            "title": "Server Time Utc",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bs_data_root",
+          "bs_data_root_exists",
+          "databento_api_key_set",
+          "version",
+          "git_sha",
+          "git_dirty",
+          "platform",
+          "python_version",
+          "free_disk_bytes",
+          "server_time_utc",
+          "server_time_et"
+        ],
+        "title": "SystemSettingsRead",
+        "type": "object"
+      },
       "TradeRead": {
         "properties": {
           "backtest_run_id": {
@@ -9695,6 +9768,28 @@
         "summary": "Evaluate Profile Endpoint",
         "tags": [
           "risk_profiles"
+        ]
+      }
+    },
+    "/api/settings/system": {
+      "get": {
+        "description": "Snapshot of how the app is currently configured.\n\nNo persistence yet \u2014 every field is derived from process state at\nrequest time. Frontend polls or fetches once at page load.",
+        "operationId": "read_system_settings_api_settings_system_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read System Settings",
+        "tags": [
+          "settings"
         ]
       }
     },
