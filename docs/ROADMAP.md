@@ -84,7 +84,13 @@ What's in `main` already, so you don't accidentally re-build it:
 - **Firm rules editor** at `/prop-simulator/firms` — DB-backed, seed-from-`PRESETS`, verification + reset (Husky, 2026-04-27).
 - **Session journal v1** on `/monitor` + `LivePerformanceCard` on `/strategies/[id]` (Husky, 2026-04-27).
 - **Per-symbol historical puller** with retry-with-backoff. 27 days of March 2026 MBP-1 on disk for NQ/ES/YM/RTY.
-- **470 backend tests**, all green.
+- **Drift v1 frontend panels** at `/monitor` — WR + entry-time cards with status dots (2026-04-28 overnight).
+- **Ready-for-capital gate CLI** — `python -m app.cli.ready_for_capital_check` evaluates live trades vs ROADMAP §A criteria, exits 0/1 (2026-04-28 overnight).
+- **Weekly gap-filler** — `app.ingest.gap_filler` + `BacktestStationGapFiller` Sunday 03:00 task, $0-cost guardrail (2026-04-28 overnight).
+- **FVG zone detection in /api/replay** — backend ships zones in `ReplayPayload.fvg_zones`; frontend rendering deferred (2026-04-28 overnight).
+- **Data Health page** at `/data-health` — warehouse inventory + scheduled-task health + disk space + re-scan trigger (2026-04-28).
+- **Settings page** at `/settings` — read-only system info v1 (BS_DATA_ROOT, key presence, version, git SHA, free disk, ET clock). Editable prefs deferred (2026-04-28).
+- **506 backend tests**, all green.
 
 ---
 

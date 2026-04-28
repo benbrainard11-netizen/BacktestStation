@@ -41,14 +41,16 @@
 - **Run a Backtest** UI shipped (`/backtests/run`), wired end-to-end to the engine via `POST /api/backtests/run`.
 - **Backtest dossier** (`/backtests/[id]`): trades, equity curve, metrics, config snapshot, autopsy, prop-firm sim launcher, retroactive Risk Profile violations panel.
 - **Imported runs**: import + visualize CSV/JSON result bundles.
-- **Live monitor page** (`/monitor`): ingester health, live-trades pipeline panel, live status from the bot, and (added 2026-04-27 by Husky) per-strategy session journal + signals feed.
+- **Live monitor page** (`/monitor`): ingester health, live-trades pipeline panel, **Forward Drift v1 panels (WR drift + entry-time drift, 2026-04-28)**, live status from the bot, and (added 2026-04-27 by Husky) per-strategy session journal + signals feed.
 - **Trade replay** (`/trade-replay`): TBBO + 1m/5m/15m/30m bar replay anchored to a live trade, ET time axis.
-- **Per-day chart replay** (`/replay`): symbol/date picker, 1m candles, optional run-overlay entry markers.
+- **Per-day chart replay** (`/replay`): symbol/date picker, 1m candles, optional run-overlay entry markers. Backend now also returns `fvg_zones` (frontend overlay rendering deferred).
 - **Prop firm simulator UI** (`/prop-simulator`): runs, runs detail, scope view. Firm rules editor (`/prop-simulator/firms`, un-mocked 2026-04-27 by Husky) is DB-backed with seed-from-`PRESETS`, verification stamp, reset-to-seed flow.
+- **Data Health** (`/data-health`, 2026-04-28): warehouse inventory by schema (partition counts, symbols, date ranges), scheduled-task health (parquet mirror / historical / gap-filler / live-trades import) via PowerShell shell-out, free disk, "Re-scan now" trigger.
+- **Settings** (`/settings`, 2026-04-28): read-only system info v1 (BS_DATA_ROOT, DATABENTO_API_KEY presence, version, git SHA + dirty flag, platform, python version, free disk, UTC + ET wall clocks). Editable prefs deferred to a later PR.
 
 ### Tests + CI
 
-- **470 backend tests green** at the time of this writing (`pytest backend/`). Last refreshed 2026-04-27 evening; grew from 444 → 470 with Husky's firm-rules + journal additions and Ben's per-symbol-puller test rewrite.
+- **506 backend tests green** at the time of this writing (`pytest backend/`). Last refreshed 2026-04-28; grew from 470 → 506 with the overnight tasks (drift latest endpoint, ready-for-capital, gap-filler, FVG zones) plus today's data-health + settings backends.
 - Lookahead harness, determinism check, and MBP-1 stop-vs-target race test (all inside `test_backtest_engine.py`) green.
 - Pre-commit hooks: ruff + black (Python), prettier (TS).
 
