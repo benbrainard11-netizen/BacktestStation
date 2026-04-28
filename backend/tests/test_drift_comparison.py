@@ -439,6 +439,46 @@ def test_drift_latest_resolves_to_most_recent_live_run(api_client) -> None:
     assert body["live_run_id"] == new_live_id
 
 
+def test_wr_drift_falls_back_to_r_multiple_when_pnl_is_null(session: Session) -> None:
+    """Imported runs (e.g. trades.csv bundles) often have r_multiple
+    populated but no pnl. The drift calc should still compute a win
+    rate from r_multiple in that case — losing the imported-runs
+    baseline to a `pnl IS NULL` filter would render every drift
+    comparison incomplete, which is what shipped before this fix."""
+    version = _make_strategy_and_version(session)
+    baseline = _make_run(session, version, source="imported")
+    # Imported-style trades: r_multiple set, pnl null.
+    for i in range(20):
+        is_win = i < 12  # 60% WR
+        ts = datetime(2022, 1, 1, 14, 0, 0) + timedelta(minutes=17 * i)
+        session.add(
+            models.Trade(
+                backtest_run_id=baseline.id,
+                entry_ts=ts,
+                exit_ts=ts + timedelta(minutes=10),
+                symbol="NQ",
+                side="long",
+                entry_price=16000.0,
+                exit_price=16010.0 if is_win else 15995.0,
+                size=1.0,
+                pnl=None,  # imported tooling didn't capture dollars
+                r_multiple=1.0 if is_win else -1.0,
+            )
+        )
+    live = _make_run(session, version, source="live")
+    _add_trades(session, live, count=20, win_pct=0.55)
+    version.baseline_run_id = baseline.id
+    session.commit()
+
+    comparison = compute_drift_for_strategy(session, version.id)
+    wr_result = next(r for r in comparison.results if r.signal_type == "win_rate")
+    assert wr_result.baseline_value == pytest.approx(0.6, abs=0.01)
+    assert wr_result.live_value == pytest.approx(0.55, abs=0.01)
+    # Status depends on the deviation between 60% and 55% — that's 5pp,
+    # below the WATCH threshold of 7pp.
+    assert wr_result.status == "OK"
+
+
 def test_drift_latest_404_when_resolved_version_has_no_baseline(
     api_client,
 ) -> None:

@@ -19,7 +19,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.db.models import BacktestRun, StrategyVersion, Trade
@@ -76,16 +76,21 @@ class DriftComparison:
 def _recent_completed_trades(
     session: Session, run_id: int, limit: int
 ) -> list[Trade]:
-    """Pull the most recent `limit` trades from a run that have a pnl.
+    """Pull the most recent `limit` trades from a run that resolved
+    (either `pnl` or `r_multiple` populated).
 
     Sorted DESC by exit_ts (falling back to entry_ts when exit is missing,
-    e.g. open positions in a still-running live run). Trades without pnl
-    are excluded — win-rate and direction-of-move both need a closed P&L.
+    e.g. open positions in a still-running live run). Trades that have
+    NEITHER pnl nor r_multiple are excluded — they aren't closed.
+
+    Imported runs sometimes have r_multiple but no pnl (the tooling
+    that produced them didn't capture dollars). Live runs have both.
+    Either is enough to determine win/loss.
     """
     statement = (
         select(Trade)
         .where(Trade.backtest_run_id == run_id)
-        .where(Trade.pnl.isnot(None))
+        .where(or_(Trade.pnl.isnot(None), Trade.r_multiple.isnot(None)))
         .order_by(Trade.exit_ts.desc().nullslast(), Trade.entry_ts.desc())
         .limit(limit)
     )
@@ -112,10 +117,24 @@ def _recent_trades(
 # --- Signal: win-rate drift ----------------------------------------------
 
 
+def _is_winning_trade(trade: Trade) -> bool:
+    """A trade is a win if pnl > 0, or (when pnl is missing) r_multiple > 0.
+
+    Imported runs from external tooling often have r_multiple but no
+    dollar pnl; we treat r_multiple as the authoritative direction
+    in that case.
+    """
+    if trade.pnl is not None:
+        return trade.pnl > 0
+    if trade.r_multiple is not None:
+        return trade.r_multiple > 0
+    return False
+
+
 def _win_rate(trades: list[Trade]) -> float | None:
     if not trades:
         return None
-    wins = sum(1 for t in trades if (t.pnl or 0.0) > 0)
+    wins = sum(1 for t in trades if _is_winning_trade(t))
     return wins / len(trades)
 
 
