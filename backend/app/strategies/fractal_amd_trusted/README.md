@@ -37,8 +37,10 @@ These are the things the engine plugin port needs to faithfully replicate:
 1. **Continuation-OF gate.** Trusted requires
    `compute_continuation_of(...).co_continuation_score >= 3` to fire any entry.
    The engine port doesn't import this function at all (`order_flow.py` from
-   the original repo wasn't ported). This alone almost certainly explains a
-   big chunk of the trade-count gap (989 → 586) and the WR difference.
+   the original repo wasn't ported). **The 2026-04-28 PM Q1 experiment
+   (Lane D branch) showed adding *just* this gate barely changes the engine
+   port's behavior** — see below — so #1 is necessary for trusted but not
+   sufficient. The other divergences matter more than initially suspected.
 
 2. **Entry trigger.** Trusted: bar's range intersects FVG → mark waiting →
    enter at NEXT bar's `open`. Engine port: TBBO tick price triggers and
@@ -57,13 +59,39 @@ These are the things the engine plugin port needs to faithfully replicate:
    Engine port: re-scans every bar (with a `_fully_scanned` cache to skip
    candles whose expansion window is past).
 
+## 2026-04-28 PM cont-OF gate experiment
+
+Hypothesis: of the 5 divergences above, #1 (the missing continuation-OF gate)
+is the dominant one — adding *just that gate* to the existing engine port
+should close most of the gap to trusted.
+
+Result on Q1 2024 (Lane D experimental branch, `min_co_score=3`):
+
+```
+config          trades   WR%    totalR   avgR
+gate off          122   33.6%   +2.79   +0.02     <- Q1 baseline (Lane A)
+gate on=3         120   31.7%   -1.77   -0.01     <- gate ON (this experiment)
+trusted target     85   35.3%  +19.80   +0.23
+```
+
+**Hypothesis falsified.** Only 2 of 122 entries got rejected by the gate, and
+WR/total-R both went slightly the wrong way. The engine port is already firing
+on bars where the trusted gate would pass — so the divergence is somewhere else.
+Patching the existing engine port with this gate alone is not the path to
+trusted-level performance. The full plugin port (#1 + #2 + #3 + #4 + #5
+together) is required.
+
+The Lane D branch keeps the gate wiring (config knob, off by default) and the
+Q1 experiment script for the audit trail, but it's not on the path to merge as
+a feature.
+
 ## Work plan
 
 When this gets picked up:
 
-1. **Port `compute_continuation_of`** from `C:\Fractal-AMD\src\features\order_flow.py:386`
-   to a `list[Bar]` interface in this directory (e.g. `orderflow.py`). Returns
-   at minimum `co_continuation_score`. ~200 lines of pandas → list[Bar].
+1. ~~**Port `compute_continuation_of`**~~ — DONE 2026-04-28 PM. See `orderflow.py`
+   in this directory; bit-identical to the pandas original (verified via 8
+   parametrized test cases in `backend/tests/test_fractal_amd_trusted_orderflow.py`).
 
 2. **Build the strategy plugin** (`strategy.py`, `config.py`) mirroring the
    original `Strategy` interface. Key shape:
