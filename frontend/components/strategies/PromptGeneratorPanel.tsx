@@ -10,204 +10,204 @@ import { cn } from "@/lib/utils";
 type PromptResponse = components["schemas"]["PromptGenerateResponse"];
 
 interface PromptGeneratorPanelProps {
-  strategyId: number;
-  modes: string[];
+ strategyId: number;
+ modes: string[];
 }
 
 const FALLBACK_MODES = [
-  "researcher",
-  "critic",
-  "statistician",
-  "risk_manager",
-  "engineer",
-  "live_monitor",
+ "researcher",
+ "critic",
+ "statistician",
+ "risk_manager",
+ "engineer",
+ "live_monitor",
 ];
 
 const MODE_DESCRIPTIONS: Record<string, string> = {
-  researcher: "Suggest hypotheses and next experiments to run",
-  critic: "Find weaknesses, overfit risks, decisions you're avoiding",
-  statistician: "Evaluate statistical significance + sample concerns",
-  risk_manager: "Sizing, exposure, drawdown, tail-risk concerns",
-  engineer: "Implementation bugs + fill assumption checks",
-  live_monitor: "Drift signals + when to pull capital",
+ researcher: "Suggest hypotheses and next experiments to run",
+ critic: "Find weaknesses, overfit risks, decisions you're avoiding",
+ statistician: "Evaluate statistical significance + sample concerns",
+ risk_manager: "Sizing, exposure, drawdown, tail-risk concerns",
+ engineer: "Implementation bugs + fill assumption checks",
+ live_monitor: "Drift signals + when to pull capital",
 };
 
 export default function PromptGeneratorPanel({
-  strategyId,
-  modes,
+ strategyId,
+ modes,
 }: PromptGeneratorPanelProps) {
-  const modeVocab = modes.length > 0 ? modes : FALLBACK_MODES;
-  const [mode, setMode] = useState<string>(modeVocab[0] ?? "researcher");
-  const [focus, setFocus] = useState("");
-  const [result, setResult] = useState<PromptResponse | null>(null);
-  const [phase, setPhase] = useState<
-    | { kind: "idle" }
-    | { kind: "generating" }
-    | { kind: "error"; message: string }
-  >({ kind: "idle" });
-  const [copied, setCopied] = useState(false);
-  const [copyFallback, setCopyFallback] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+ const modeVocab = modes.length > 0 ? modes : FALLBACK_MODES;
+ const [mode, setMode] = useState<string>(modeVocab[0] ?? "researcher");
+ const [focus, setFocus] = useState("");
+ const [result, setResult] = useState<PromptResponse | null>(null);
+ const [phase, setPhase] = useState<
+ | { kind: "idle" }
+ | { kind: "generating" }
+ | { kind: "error"; message: string }
+ >({ kind: "idle" });
+ const [copied, setCopied] = useState(false);
+ const [copyFallback, setCopyFallback] = useState(false);
+ const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  async function generate() {
-    setPhase({ kind: "generating" });
-    setCopied(false);
-    try {
-      const payload: Record<string, unknown> = {
-        strategy_id: strategyId,
-        mode,
-      };
-      if (focus.trim() !== "") payload.focus_question = focus.trim();
-      const response = await fetch("/api/prompts/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        setPhase({ kind: "error", message: await describe(response) });
-        return;
-      }
-      const body = (await response.json()) as PromptResponse;
-      setResult(body);
-      setPhase({ kind: "idle" });
-    } catch (e) {
-      setPhase({
-        kind: "error",
-        message: e instanceof Error ? e.message : "Network error",
-      });
-    }
-  }
+ async function generate() {
+ setPhase({ kind: "generating" });
+ setCopied(false);
+ try {
+ const payload: Record<string, unknown> = {
+ strategy_id: strategyId,
+ mode,
+ };
+ if (focus.trim() !== "") payload.focus_question = focus.trim();
+ const response = await fetch("/api/prompts/generate", {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify(payload),
+ });
+ if (!response.ok) {
+ setPhase({ kind: "error", message: await describe(response) });
+ return;
+ }
+ const body = (await response.json()) as PromptResponse;
+ setResult(body);
+ setPhase({ kind: "idle" });
+ } catch (e) {
+ setPhase({
+ kind: "error",
+ message: e instanceof Error ? e.message : "Network error",
+ });
+ }
+ }
 
-  async function copy() {
-    if (result === null) return;
-    // navigator.clipboard only exists in secure contexts (HTTPS or
-    // localhost). Fall back to selecting the textarea so the user can
-    // hit Ctrl+C themselves.
-    const clipboard =
-      typeof navigator !== "undefined" ? navigator.clipboard : undefined;
-    if (clipboard === undefined) {
-      selectFallback();
-      return;
-    }
-    try {
-      await clipboard.writeText(result.prompt_text);
-      setCopied(true);
-      setCopyFallback(false);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // writeText can reject for permission reasons even in a secure
-      // context (e.g., iframe without focus). Same fallback.
-      selectFallback();
-    }
-  }
+ async function copy() {
+ if (result === null) return;
+ // navigator.clipboard only exists in secure contexts (HTTPS or
+ // localhost). Fall back to selecting the textarea so the user can
+ // hit Ctrl+C themselves.
+ const clipboard =
+ typeof navigator !== "undefined" ? navigator.clipboard : undefined;
+ if (clipboard === undefined) {
+ selectFallback();
+ return;
+ }
+ try {
+ await clipboard.writeText(result.prompt_text);
+ setCopied(true);
+ setCopyFallback(false);
+ window.setTimeout(() => setCopied(false), 2000);
+ } catch {
+ // writeText can reject for permission reasons even in a secure
+ // context (e.g., iframe without focus). Same fallback.
+ selectFallback();
+ }
+ }
 
-  function selectFallback() {
-    const el = textareaRef.current;
-    if (el !== null) {
-      el.focus();
-      el.select();
-    }
-    setCopyFallback(true);
-    setCopied(false);
-  }
+ function selectFallback() {
+ const el = textareaRef.current;
+ if (el !== null) {
+ el.focus();
+ el.select();
+ }
+ setCopyFallback(true);
+ setCopied(false);
+ }
 
-  const generating = phase.kind === "generating";
+ const generating = phase.kind === "generating";
 
-  return (
-    <Panel title="AI prompt generator" meta="copy → external Claude/GPT">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-            Mode
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
-              className="border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-[11px] text-zinc-200 focus:border-zinc-600 focus:outline-none"
-            >
-              {modeVocab.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-1 flex-col gap-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-            Focus question (optional)
-            <input
-              type="text"
-              value={focus}
-              onChange={(e) => setFocus(e.target.value)}
-              placeholder="e.g. why does Friday underperform?"
-              className="border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-[11px] text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={generate}
-            disabled={generating}
-            className={cn(
-              "border border-emerald-900 bg-emerald-950/40 px-3 py-1 font-mono text-[10px] uppercase tracking-widest",
-              generating
-                ? "cursor-not-allowed text-zinc-600"
-                : "text-emerald-200 hover:bg-emerald-950/60",
-            )}
-          >
-            {generating ? "generating…" : "generate"}
-          </button>
-        </div>
+ return (
+ <Panel title="AI prompt generator" meta="copy → external Claude/GPT">
+ <div className="flex flex-col gap-3">
+ <div className="flex flex-wrap items-end gap-2">
+ <label className="flex flex-col gap-1 tabular-nums text-[10px] text-text-mute">
+ Mode
+ <select
+ value={mode}
+ onChange={(e) => setMode(e.target.value)}
+ className="border border-border bg-surface px-2 py-1 tabular-nums text-[11px] text-text focus:border-border focus:outline-none"
+ >
+ {modeVocab.map((m) => (
+ <option key={m} value={m}>
+ {m}
+ </option>
+ ))}
+ </select>
+ </label>
+ <label className="flex flex-1 flex-col gap-1 tabular-nums text-[10px] text-text-mute">
+ Focus question (optional)
+ <input
+ type="text"
+ value={focus}
+ onChange={(e) => setFocus(e.target.value)}
+ placeholder="e.g. why does Friday underperform?"
+ className="border border-border bg-surface px-2 py-1 tabular-nums text-[11px] text-text placeholder:text-text-mute focus:border-border focus:outline-none"
+ />
+ </label>
+ <button
+ type="button"
+ onClick={generate}
+ disabled={generating}
+ className={cn(
+ "border border-pos/30 bg-pos/10 px-3 py-1 tabular-nums text-[10px] ",
+ generating
+ ? "cursor-not-allowed text-text-mute"
+ : "text-pos hover:bg-pos/10",
+ )}
+ >
+ {generating ? "generating…" : "generate"}
+ </button>
+ </div>
 
-        <p className="font-mono text-[11px] text-zinc-500">
-          {MODE_DESCRIPTIONS[mode] ?? ""}
-        </p>
+ <p className="tabular-nums text-[11px] text-text-mute">
+ {MODE_DESCRIPTIONS[mode] ?? ""}
+ </p>
 
-        {phase.kind === "error" ? (
-          <p className="font-mono text-[11px] text-rose-400">{phase.message}</p>
-        ) : null}
+ {phase.kind === "error" ? (
+ <p className="tabular-nums text-[11px] text-neg">{phase.message}</p>
+ ) : null}
 
-        {result !== null ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={copy}
-                className="border border-zinc-700 bg-zinc-900 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-100 hover:bg-zinc-800"
-              >
-                {copied ? "copied ✓" : "copy prompt"}
-              </button>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                {result.char_count.toLocaleString()} chars
-              </span>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-                · {result.bundled_context_summary.join(" · ")}
-              </span>
-            </div>
-            <textarea
-              ref={textareaRef}
-              readOnly
-              value={result.prompt_text}
-              rows={16}
-              className="resize-y border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-200 focus:border-zinc-600 focus:outline-none"
-            />
-            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-              {copyFallback
-                ? "Clipboard unavailable — text selected. Use Ctrl+C (or ⌘+C), then paste into Claude or GPT."
-                : "Paste into a fresh Claude or GPT chat."}
-            </p>
-          </div>
-        ) : null}
-      </div>
-    </Panel>
-  );
+ {result !== null ? (
+ <div className="flex flex-col gap-2">
+ <div className="flex flex-wrap items-center gap-2">
+ <button
+ type="button"
+ onClick={copy}
+ className="border border-border-strong bg-surface-alt px-2.5 py-1 tabular-nums text-[10px] text-text hover:bg-surface-alt"
+ >
+ {copied ? "copied ✓" : "copy prompt"}
+ </button>
+ <span className="tabular-nums text-[10px] text-text-mute">
+ {result.char_count.toLocaleString()} chars
+ </span>
+ <span className="tabular-nums text-[10px] text-text-mute">
+ · {result.bundled_context_summary.join(" · ")}
+ </span>
+ </div>
+ <textarea
+ ref={textareaRef}
+ readOnly
+ value={result.prompt_text}
+ rows={16}
+ className="resize-y border border-border bg-surface px-3 py-2 tabular-nums text-[11px] leading-relaxed text-text focus:border-border focus:outline-none"
+ />
+ <p className="tabular-nums text-[10px] text-text-mute">
+ {copyFallback
+ ? "Clipboard unavailable — text selected. Use Ctrl+C (or ⌘+C), then paste into Claude or GPT."
+ : "Paste into a fresh Claude or GPT chat."}
+ </p>
+ </div>
+ ) : null}
+ </div>
+ </Panel>
+ );
 }
 
 async function describe(response: Response): Promise<string> {
-  try {
-    const parsed = (await response.json()) as BackendErrorBody;
-    if (typeof parsed.detail === "string" && parsed.detail.length > 0) {
-      return parsed.detail;
-    }
-  } catch {
-    /* fall through */
-  }
-  return `${response.status} ${response.statusText || "Request failed"}`;
+ try {
+ const parsed = (await response.json()) as BackendErrorBody;
+ if (typeof parsed.detail === "string" && parsed.detail.length > 0) {
+ return parsed.detail;
+ }
+ } catch {
+ /* fall through */
+ }
+ return `${response.status} ${response.statusText || "Request failed"}`;
 }

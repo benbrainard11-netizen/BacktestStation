@@ -10,37 +10,37 @@ import TopBar from "@/components/layout/TopBar";
 import "./globals.css";
 
 const workSans = Work_Sans({
-  subsets: ["latin"],
-  // Pull the full weight range so the tearsheet view can use 200 light
-  // for display + 700+ for emphasis without falling back to faux weights.
-  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-work-sans",
+ subsets: ["latin"],
+ // Pull the full weight range so the tearsheet view can use 200 light
+ // for display + 700+ for emphasis without falling back to faux weights.
+ weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
+ variable: "--font-work-sans",
 });
 
 export const metadata: Metadata = {
-  title: "BacktestStation",
-  description: "Futures strategy research terminal",
+ title: "BacktestStation",
+ description: "Futures strategy research terminal",
 };
 
 export default function RootLayout({
-  children,
+ children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en" className={workSans.variable}>
-      <body className="min-h-screen bg-bg text-text">
-        <div className="flex h-screen">
-          <Sidebar />
-          <div className="flex h-screen flex-1 flex-col overflow-hidden">
-            <TopBar />
-            <main className="flex-1 overflow-auto bg-bg">
-              {children}
-            </main>
-            <ContextBar />
-          </div>
-        </div>
-        <CommandPalette />
-        <KeyboardHelp />
-      </body>
-    </html>
-  );
+ return (
+ <html lang="en" className={workSans.variable}>
+ <body className="min-h-screen bg-bg text-text">
+ <div className="flex h-screen">
+ <Sidebar />
+ <div className="flex h-screen flex-1 flex-col overflow-hidden">
+ <TopBar />
+ <main className="flex-1 overflow-auto bg-bg">
+ {children}
+ </main>
+ <ContextBar />
+ </div>
+ </div>
+ <CommandPalette />
+ <KeyboardHelp />
+ </body>
+ </html>
+ );
 }

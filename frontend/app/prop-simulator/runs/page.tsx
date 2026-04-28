@@ -3,6 +3,7 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import SimulationRunsTable from "@/components/prop-simulator/runs/SimulationRunsTable";
+import Btn from "@/components/ui/Btn";
 import { apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 import type { SimulationRunListRow } from "@/lib/prop-simulator/types";
@@ -22,30 +23,25 @@ export default async function SimulationRunsPage() {
 
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
-        <Link
-          href="/prop-simulator"
-          className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
-        >
-          ← Simulator
-        </Link>
+      <div className="px-8 pt-4">
+        <Btn href="/prop-simulator">← Simulator</Btn>
       </div>
       <PageHeader
         title="Simulation Runs"
         description="Every saved Monte Carlo run. Click a row for the full pass/fail/payout/EV breakdown, risk sweep, and selected paths."
         meta={`${runs.length} runs`}
       />
-      <div className="flex flex-col gap-4 px-6">
+      <div className="flex flex-col gap-4 px-8">
         <Panel
           title="All runs"
           meta={runs.length === 0 ? "no runs yet" : "live data"}
         >
           {runs.length === 0 ? (
-            <p className="px-3 py-6 font-mono text-xs text-zinc-500">
+            <p className="m-0 text-[13px] text-text-dim">
               No simulations yet. Create one from{" "}
               <Link
                 href="/prop-simulator/new"
-                className="text-zinc-300 underline hover:text-zinc-100"
+                className="text-accent hover:underline"
               >
                 /prop-simulator/new
               </Link>

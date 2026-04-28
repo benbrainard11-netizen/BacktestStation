@@ -1,19 +1,14 @@
-import Link from "next/link";
+import Btn from "@/components/ui/Btn";
 
 export default function BacktestNotFound() {
   return (
-    <div className="px-6 pb-10 pt-6">
-      <Link
-        href="/backtests"
-        className="mb-4 inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
-      >
-        ← All runs
-      </Link>
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-          Not found
-        </p>
-        <p className="mt-2 text-sm text-zinc-300">
+    <div className="px-8 pb-10 pt-6">
+      <div className="mb-4">
+        <Btn href="/backtests">← All runs</Btn>
+      </div>
+      <div className="rounded-lg border border-border bg-surface p-4">
+        <p className="m-0 text-xs text-text-mute">Not found</p>
+        <p className="m-0 mt-2 text-[13px] text-text-dim">
           No backtest run exists with that ID.
         </p>
       </div>

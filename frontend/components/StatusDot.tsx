@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 export type StatusTone = "live" | "idle" | "warn" | "off";
 
 const TONE: Record<StatusTone, string> = {
-  live: "bg-emerald-400",
-  idle: "bg-zinc-500",
-  warn: "bg-amber-400",
-  off: "bg-rose-400",
+  live: "bg-pos",
+  idle: "bg-text-mute",
+  warn: "bg-warn",
+  off: "bg-neg",
 };
 
 interface StatusDotProps {

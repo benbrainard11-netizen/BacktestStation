@@ -1,7 +1,6 @@
-import Link from "next/link";
-
 import PageHeader from "@/components/PageHeader";
 import NewSimulationWorkflow from "@/components/prop-simulator/new/NewSimulationWorkflow";
+import Btn from "@/components/ui/Btn";
 import { apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 import { presetToFirmProfile } from "@/lib/prop-simulator/preset-mapping";
@@ -45,20 +44,15 @@ export default async function NewSimulationPage() {
 
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
-        <Link
-          href="/prop-simulator"
-          className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
-        >
-          ← Simulator
-        </Link>
+      <div className="px-8 pt-4">
+        <Btn href="/prop-simulator">← Simulator</Btn>
       </div>
       <PageHeader
         title="New simulation"
         description="Assemble a Monte Carlo prop-firm simulation from imported backtests, firm rules, sampling mode, risk model, and personal rules."
         meta={pool.length > 0 ? "live data" : "no real backtests yet"}
       />
-      <div className="px-6">
+      <div className="px-8">
         <NewSimulationWorkflow pool={pool} firms={firms} />
       </div>
     </div>

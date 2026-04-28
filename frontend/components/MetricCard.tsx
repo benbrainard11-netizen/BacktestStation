@@ -1,5 +1,3 @@
-import { Info } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
 export type Tone = "positive" | "negative" | "neutral";
@@ -13,17 +11,22 @@ interface MetricCardProps {
 }
 
 const VALUE_TONE: Record<Tone, string> = {
-  positive: "text-emerald-400",
-  negative: "text-rose-400",
-  neutral: "text-zinc-100",
+  positive: "text-pos",
+  negative: "text-neg",
+  neutral: "text-text",
 };
 
 const DELTA_TONE: Record<Tone, string> = {
-  positive: "text-emerald-400",
-  negative: "text-rose-400",
-  neutral: "text-zinc-500",
+  positive: "text-pos",
+  negative: "text-neg",
+  neutral: "text-text-mute",
 };
 
+/**
+ * Direction A metric tile. Border + surface, sentence-case label, large
+ * tabular value, optional delta line. Calmer than the legacy lift-on-hover
+ * card — matches StatTile from `components/ui/`.
+ */
 export default function MetricCard({
   label,
   value,
@@ -32,38 +35,20 @@ export default function MetricCard({
   deltaTone = "neutral",
 }: MetricCardProps) {
   return (
-    <div
-      className={cn(
-        "panel-enter group flex min-w-0 flex-col gap-3",
-        "rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3",
-        "transform-gpu shadow-dim",
-        "transition-[transform,border-color,box-shadow] duration-200",
-        "[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
-        "hover:-translate-y-0.5 hover:border-zinc-700 hover:shadow-dim-hover",
-      )}
-    >
-      <div className="flex items-center gap-1.5 text-zinc-500">
-        <span className="font-mono text-[10px] uppercase tracking-widest">
-          {label}
-        </span>
-        <Info
-          className="h-3 w-3 shrink-0 text-zinc-700 transition-colors group-hover:text-zinc-600"
-          strokeWidth={1.5}
-          aria-hidden="true"
-        />
-      </div>
+    <div className="rounded-lg border border-border bg-surface px-[18px] py-4 transition-colors hover:bg-surface-alt">
+      <p className="m-0 text-xs text-text-mute">{label}</p>
       <p
         className={cn(
-          "font-mono text-2xl leading-none tracking-tight tabular-nums",
+          "m-0 mt-2 text-[24px] font-normal leading-none tracking-[-0.01em] tabular-nums",
           VALUE_TONE[valueTone],
         )}
       >
         {value}
       </p>
       {delta ? (
-        <p className="font-mono text-[11px] leading-none">
+        <p className="m-0 mt-1.5 text-xs tabular-nums">
           <span className={DELTA_TONE[deltaTone]}>{delta.split(" ")[0]}</span>
-          <span className="ml-1 text-zinc-600">
+          <span className="ml-1 text-text-mute">
             {delta.split(" ").slice(1).join(" ")}
           </span>
         </p>

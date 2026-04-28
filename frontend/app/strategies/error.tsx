@@ -1,6 +1,7 @@
 "use client";
 
 import PageHeader from "@/components/PageHeader";
+import Btn from "@/components/ui/Btn";
 
 export default function StrategiesError({
   error,
@@ -15,19 +16,13 @@ export default function StrategiesError({
         title="Strategies"
         description="Every strategy seen across imported runs"
       />
-      <div className="px-6 pb-10">
-        <div className="border border-rose-900 bg-rose-950/40 p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-rose-300">
-            Failed to load strategies
-          </p>
-          <p className="mt-2 font-mono text-xs text-zinc-200">{error.message}</p>
-          <button
-            type="button"
-            onClick={reset}
-            className="mt-4 border border-zinc-700 bg-zinc-900 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-100 hover:bg-zinc-800"
-          >
-            Retry
-          </button>
+      <div className="px-8 pb-10">
+        <div className="rounded-lg border border-neg/30 bg-neg/10 p-4">
+          <p className="m-0 text-xs text-neg">Failed to load strategies</p>
+          <p className="m-0 mt-2 text-[13px] text-text">{error.message}</p>
+          <div className="mt-4">
+            <Btn onClick={reset}>Retry</Btn>
+          </div>
         </div>
       </div>
     </div>

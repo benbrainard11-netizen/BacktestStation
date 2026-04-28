@@ -1,6 +1,7 @@
 "use client";
 
 import PageHeader from "@/components/PageHeader";
+import Btn from "@/components/ui/Btn";
 
 export default function BacktestsError({
   error,
@@ -15,28 +16,20 @@ export default function BacktestsError({
         title="Backtests"
         description="Imported runs from existing backtest result files"
       />
-      <div className="px-6 pb-10">
-        <div className="border border-rose-900 bg-rose-950/40 p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-rose-300">
-            Failed to load runs
-          </p>
-          <p className="mt-2 font-mono text-xs text-zinc-200">
-            {error.message}
-          </p>
-          <p className="mt-3 text-xs text-zinc-500">
+      <div className="px-8 pb-10">
+        <div className="rounded-lg border border-neg/30 bg-neg/10 p-4">
+          <p className="m-0 text-xs text-neg">Failed to load runs</p>
+          <p className="m-0 mt-2 text-[13px] text-text">{error.message}</p>
+          <p className="m-0 mt-3 text-xs text-text-mute">
             Backend reachable at the configured API URL? The default is
-            <span className="ml-1 font-mono text-zinc-300">
+            <span className="ml-1 tabular-nums text-text-dim">
               http://localhost:8000
             </span>
             .
           </p>
-          <button
-            type="button"
-            onClick={reset}
-            className="mt-4 border border-zinc-700 bg-zinc-900 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-100 hover:bg-zinc-800"
-          >
-            Retry
-          </button>
+          <div className="mt-4">
+            <Btn onClick={reset}>Retry</Btn>
+          </div>
         </div>
       </div>
     </div>

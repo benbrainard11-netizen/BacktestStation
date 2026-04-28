@@ -4,20 +4,25 @@ interface EmptyTableProps {
   emptyDetail?: string;
 }
 
+/**
+ * Direction A empty-table placeholder. Headers render as a real thead so
+ * the column shape is visible; body shows an inline "Empty · placeholder"
+ * message. Border + surface, no atmospheric background.
+ */
 export default function EmptyTable({
   columns,
   emptyLabel,
   emptyDetail,
 }: EmptyTableProps) {
   return (
-    <div className="rounded-md border border-zinc-800">
-      <table className="w-full table-fixed">
+    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <table className="w-full table-fixed text-[13px]">
         <thead>
-          <tr className="border-b border-zinc-800 bg-zinc-900/40">
+          <tr>
             {columns.map((col) => (
               <th
                 key={col}
-                className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-widest text-zinc-500"
+                className="border-b border-border px-[18px] py-2.5 text-left text-xs font-normal text-text-mute"
               >
                 {col}
               </th>
@@ -25,14 +30,12 @@ export default function EmptyTable({
           </tr>
         </thead>
       </table>
-      <div className="bg-stripes flex min-h-[160px] items-center justify-center border-t border-zinc-800/50 px-6 py-10 text-center">
+      <div className="flex min-h-[160px] items-center justify-center px-6 py-10 text-center">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-            Empty · placeholder
-          </p>
-          <p className="mt-2 text-sm text-zinc-300">{emptyLabel}</p>
+          <p className="m-0 text-xs text-text-mute">Empty · placeholder</p>
+          <p className="m-0 mt-2 text-[13px] text-text">{emptyLabel}</p>
           {emptyDetail ? (
-            <p className="mt-1 text-xs text-zinc-500">{emptyDetail}</p>
+            <p className="m-0 mt-1 text-xs text-text-dim">{emptyDetail}</p>
           ) : null}
         </div>
       </div>

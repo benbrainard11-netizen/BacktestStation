@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import PageHeader from "@/components/PageHeader";
 import FirmEditor from "@/components/prop-simulator/firms/FirmEditor";
+import Btn from "@/components/ui/Btn";
 import { ApiError, apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
@@ -25,20 +25,15 @@ export default async function FirmEditPage({ params }: FirmEditPageProps) {
 
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
-        <Link
-          href="/prop-simulator/firms"
-          className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
-        >
-          ← Firm Rules
-        </Link>
+      <div className="px-8 pt-4">
+        <Btn href="/prop-simulator/firms">← Firm Rules</Btn>
       </div>
       <PageHeader
         title={profile.firm_name}
         description={profile.account_name}
         meta={`profile · ${profile.profile_id}${profile.is_seed ? " · seed" : " · custom"}`}
       />
-      <div className="px-6">
+      <div className="px-8">
         <FirmEditor initialProfile={profile} />
       </div>
     </div>

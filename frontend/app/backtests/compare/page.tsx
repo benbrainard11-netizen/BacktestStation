@@ -5,6 +5,7 @@ import OverlaidEquityChart from "@/components/backtests/OverlaidEquityChart";
 import OverlaidRHistogram from "@/components/backtests/OverlaidRHistogram";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
+import Btn from "@/components/ui/Btn";
 import { ApiError, apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
@@ -49,20 +50,15 @@ export default async function CompareBacktestsPage({ searchParams }: PageProps) 
 
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
-        <Link
-          href="/backtests"
-          className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
-        >
-          ← All runs
-        </Link>
+      <div className="px-8 pt-4">
+        <Btn href="/backtests">← All runs</Btn>
       </div>
       <PageHeader
         title="Compare runs"
         description={`${aLabel} vs ${bLabel}`}
-        meta={`A=#${runA.id}  B=#${runB.id}`}
+        meta={`A=#${runA.id} B=#${runB.id}`}
       />
-      <div className="flex flex-col gap-4 px-6">
+      <div className="flex flex-col gap-4 px-8">
         <Panel title="Equity curves" meta="overlaid">
           <OverlaidEquityChart
             a={{ label: aLabel, points: equityA }}
@@ -84,18 +80,8 @@ export default async function CompareBacktestsPage({ searchParams }: PageProps) 
           />
         </Panel>
         <div className="flex gap-3">
-          <Link
-            href={`/backtests/${runA.id}`}
-            className="border border-zinc-800 bg-zinc-950 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-200 hover:bg-zinc-900"
-          >
-            Open A: {aLabel} →
-          </Link>
-          <Link
-            href={`/backtests/${runB.id}`}
-            className="border border-zinc-800 bg-zinc-950 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-200 hover:bg-zinc-900"
-          >
-            Open B: {bLabel} →
-          </Link>
+          <Btn href={`/backtests/${runA.id}`}>Open A: {aLabel} →</Btn>
+          <Btn href={`/backtests/${runB.id}`}>Open B: {bLabel} →</Btn>
         </div>
       </div>
     </div>
@@ -111,7 +97,7 @@ async function PickTwoRuns() {
         title="Compare runs"
         description="Pick two imported runs to compare side by side"
       />
-      <div className="px-6">
+      <div className="px-8">
         {runs.length < 2 ? (
           <EmptyPicker count={runs.length} />
         ) : (
@@ -124,27 +110,27 @@ async function PickTwoRuns() {
 
 function Picker({ runs }: { runs: BacktestRun[] }) {
   return (
-    <div className="border border-zinc-800 bg-zinc-950 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        Available runs
-      </p>
-      <ul className="mt-3 flex flex-col gap-1 font-mono text-xs text-zinc-300">
+    <div className="rounded-lg border border-border bg-surface p-[18px]">
+      <p className="m-0 text-xs text-text-mute">Available runs</p>
+      <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0 text-[13px] text-text-dim">
         {runs.map((run) => (
           <li key={run.id} className="flex items-center justify-between gap-3">
             <span>
               #{run.id} · {runLabel(run)}
             </span>
-            <span className="text-zinc-600">{run.symbol}</span>
+            <span className="text-text-mute">{run.symbol}</span>
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-xs text-zinc-500">
+      <p className="m-0 mt-4 text-xs text-text-mute">
         Add{" "}
-        <code className="bg-zinc-900 px-1 text-zinc-300">?a=ID&amp;b=ID</code>{" "}
+        <code className="rounded bg-surface-alt px-1 text-text-dim">
+          ?a=ID&amp;b=ID
+        </code>{" "}
         to this URL to compare, e.g.{" "}
         <Link
           href={`/backtests/compare?a=${runs[0].id}&b=${runs[1].id}`}
-          className="text-zinc-300 underline hover:text-zinc-100"
+          className="text-accent hover:underline"
         >
           ?a={runs[0].id}&b={runs[1].id}
         </Link>
@@ -156,21 +142,18 @@ function Picker({ runs }: { runs: BacktestRun[] }) {
 
 function EmptyPicker({ count }: { count: number }) {
   return (
-    <div className="border border-dashed border-zinc-800 bg-zinc-950 p-6">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        Not enough runs
-      </p>
-      <p className="mt-2 text-sm text-zinc-300">
+    <div className="rounded-lg border border-dashed border-border bg-surface p-6">
+      <p className="m-0 text-xs text-text-mute">Not enough runs</p>
+      <p className="m-0 mt-2 text-[13px] text-text-dim">
         {count === 0
           ? "No runs imported yet."
           : "Only one run in the DB — import another to compare."}
       </p>
-      <Link
-        href="/import"
-        className="mt-3 inline-block border border-zinc-700 bg-zinc-900 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-100 hover:bg-zinc-800"
-      >
-        Go to Import →
-      </Link>
+      <div className="mt-3">
+        <Btn href="/import" variant="primary">
+          Go to Import →
+        </Btn>
+      </div>
     </div>
   );
 }
@@ -188,19 +171,14 @@ function MissingRuns({
 }) {
   return (
     <div className="pb-10">
-      <div className="px-6 pt-4">
-        <Link
-          href="/backtests"
-          className="inline-block border border-zinc-800 bg-zinc-950 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 hover:bg-zinc-900"
-        >
-          ← All runs
-        </Link>
+      <div className="px-8 pt-4">
+        <Btn href="/backtests">← All runs</Btn>
       </div>
       <PageHeader title="Compare runs" description="One of the IDs wasn't found" />
-      <div className="px-6">
-        <div className="border border-rose-900 bg-rose-950/40 p-4 font-mono text-xs text-zinc-200">
-          <p>A = #{a} {foundA ? "✓" : "✗ not found"}</p>
-          <p>B = #{b} {foundB ? "✓" : "✗ not found"}</p>
+      <div className="px-8">
+        <div className="rounded-lg border border-neg/30 bg-neg/10 p-4 text-[13px] text-text">
+          <p className="m-0">A = #{a} {foundA ? "✓" : "✗ not found"}</p>
+          <p className="m-0 mt-1">B = #{b} {foundB ? "✓" : "✗ not found"}</p>
         </div>
       </div>
     </div>

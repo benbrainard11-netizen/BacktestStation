@@ -72,10 +72,10 @@ function ControlButton({
       onClick={onClick}
       aria-label={ariaLabel}
       className={cn(
-        "flex h-full w-11 items-center justify-center text-zinc-500 transition-colors",
+        "flex h-full w-11 items-center justify-center text-text-mute transition-colors",
         danger
-          ? "hover:bg-rose-500/80 hover:text-white"
-          : "hover:bg-zinc-800 hover:text-zinc-100",
+          ? "hover:bg-neg/10 hover:text-text"
+          : "hover:bg-surface-alt hover:text-text",
       )}
     >
       {children}

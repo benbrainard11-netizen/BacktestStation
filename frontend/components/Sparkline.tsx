@@ -11,7 +11,7 @@ interface SparklineProps {
 export default function Sparkline({
   data,
   className,
-  strokeClassName = "stroke-zinc-500",
+  strokeClassName = "stroke-text-mute",
   width = 80,
   height = 20,
 }: SparklineProps) {
