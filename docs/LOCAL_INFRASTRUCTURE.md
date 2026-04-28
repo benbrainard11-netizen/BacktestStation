@@ -76,7 +76,7 @@ Standard Git: branch off `main` → push to GitHub → invoke the merge-review a
 3. Backend deps: see the README quickstart — `python -m venv .venv && .venv\Scripts\python -m pip install -e ".[dev]"` from `backend/`.
 4. Frontend deps: `npm install` from `frontend/`.
 5. Pick a `BS_DATA_ROOT`: either mount the Tailscale share OR run `app.ingest.warehouse_sync` to pull a subset locally. See [`PROJECT_STATE.md`](PROJECT_STATE.md) "Onboarding a new collaborator" for the canonical recipe.
-6. Verify by running the backend test suite: `cd backend && .venv\Scripts\python -m pytest -q`. Should be 444 passed (or whatever `PROJECT_STATE.md` says is current).
+6. Verify by running the backend test suite: `cd backend && .venv\Scripts\python -m pytest -q`. Should match whatever `PROJECT_STATE.md` says is current (470 as of 2026-04-27 evening).
 7. Read [`ROADMAP.md`](ROADMAP.md) to know what's in scope; read [`../CLAUDE.md`](../CLAUDE.md) for engineering rules.
 
 ## Deferred (do not build until needed)

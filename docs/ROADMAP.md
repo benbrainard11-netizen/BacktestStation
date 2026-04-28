@@ -49,8 +49,10 @@ The data layer the rest of the system depends on. Already mostly built; needs to
 
 Parallel lane, Husky-owned. Don't stomp his WIP.
 
-- Un-mock `/prop-simulator` dashboard, `/prop-simulator/firms`, `/prop-simulator/compare`. Backend already exists (`app/services/prop_firm.py` + endpoints). This is wiring + UX work.
-- The simulator runs page (`/prop-simulator/runs`) is already on real data; only the pages above are mocked.
+- ✅ `/prop-simulator/firms` un-mocked 2026-04-27 — DB-backed editor with seed-from-`PRESETS`, verification stamp, reset-to-seed.
+- ✅ Live-session journal panel on `/monitor` + stage-gated `LivePerformanceCard` on `/strategies/[id]` (Husky, 2026-04-27).
+- Still mocked: `/prop-simulator` dashboard, `/prop-simulator/compare`. Backend exists; remaining work is wiring + UX.
+- The simulator runs page (`/prop-simulator/runs`) is already on real data.
 
 ### DEFERRED — do not build until current focus is done
 
@@ -79,7 +81,10 @@ What's in `main` already, so you don't accidentally re-build it:
 - **Live-trades pipeline health panel** on `/monitor` — surfaces silent failures.
 - **Forward Drift Monitor v1 backend** — WR + entry-time chi-square against a baseline run.
 - **`merge-review` subagent** at `.claude/agents/merge-review.md` — run before merging a branch.
-- **444 backend tests**, all green.
+- **Firm rules editor** at `/prop-simulator/firms` — DB-backed, seed-from-`PRESETS`, verification + reset (Husky, 2026-04-27).
+- **Session journal v1** on `/monitor` + `LivePerformanceCard` on `/strategies/[id]` (Husky, 2026-04-27).
+- **Per-symbol historical puller** with retry-with-backoff. 27 days of March 2026 MBP-1 on disk for NQ/ES/YM/RTY.
+- **470 backend tests**, all green.
 
 ---
 

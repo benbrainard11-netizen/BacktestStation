@@ -37,16 +37,19 @@
 
 ### Frontend
 
-- **`/strategies` pipeline board + dossier**
+- **`/strategies` pipeline board + dossier**, with stage-gated `LivePerformanceCard` (added 2026-04-27 by Husky) on `/strategies/[id]` for strategies in `live`/`forward_test`.
 - **Run a Backtest** UI shipped (`/backtests/run`), wired end-to-end to the engine via `POST /api/backtests/run`.
-- **Backtest dossier** (`/backtests/[id]`): trades, equity curve, metrics, config snapshot, autopsy, prop-firm sim launcher.
+- **Backtest dossier** (`/backtests/[id]`): trades, equity curve, metrics, config snapshot, autopsy, prop-firm sim launcher, retroactive Risk Profile violations panel.
 - **Imported runs**: import + visualize CSV/JSON result bundles.
-- **Live monitor page** (`/monitor`): ingester health + live status from the bot.
+- **Live monitor page** (`/monitor`): ingester health, live-trades pipeline panel, live status from the bot, and (added 2026-04-27 by Husky) per-strategy session journal + signals feed.
+- **Trade replay** (`/trade-replay`): TBBO + 1m/5m/15m/30m bar replay anchored to a live trade, ET time axis.
+- **Per-day chart replay** (`/replay`): symbol/date picker, 1m candles, optional run-overlay entry markers.
+- **Prop firm simulator UI** (`/prop-simulator`): runs, runs detail, scope view. Firm rules editor (`/prop-simulator/firms`, un-mocked 2026-04-27 by Husky) is DB-backed with seed-from-`PRESETS`, verification stamp, reset-to-seed flow.
 
 ### Tests + CI
 
-- 434 backend tests green at the time of this writing (`pytest backend/`).
-- Lookahead harness (`test_lookahead.py`), determinism check, MBP-1 stop-vs-target race test all green.
+- **470 backend tests green** at the time of this writing (`pytest backend/`). Last refreshed 2026-04-27 evening; grew from 444 → 470 with Husky's firm-rules + journal additions and Ben's per-symbol-puller test rewrite.
+- Lookahead harness, determinism check, and MBP-1 stop-vs-target race test (all inside `test_backtest_engine.py`) green.
 - Pre-commit hooks: ruff + black (Python), prettier (TS).
 
 ---
@@ -100,6 +103,14 @@ The remaining unmatched live trade (2026-04-24 13:31 short, entry 27196.83): por
 ### Live ingester health
 
 Running on ben-247 against `BS_DATA_ROOT=D:\data`. Heartbeat written to `data/heartbeat/live_ingester.json`; surfaced via `GET /api/monitor/ingester`. Status as of 2026-04-24: ticks flowing; reconnect_count growth has not been audited recently.
+
+### Live-trades Taildrop receive (open issue, 2026-04-27)
+
+ben-247's `tailscale file cp ... benpc:` task fires daily at 16:45 ET with `LastTaskResult=0`, but the file does not always reach benpc's inbox. `tailscale file get --verbose` reports `moved 0/0`; the fresh trades.jsonl is not in `Downloads/`, the project inbox, or anywhere on benpc's filesystem. Tailscale on benpc runs as a user-mode app (no Windows service), which may be writing received files to a queue location the CLI doesn't drain. Open: capture daemon logs while ben-247 retries, or migrate to Tailscale service install + retest.
+
+### Session journal v1 — phase 2 follow-up
+
+The `/monitor` session journal (Husky, 2026-04-27) currently shows fills + cumulative R from `/api/monitor/live`. Real-time *unrealized* P&L is deferred until a live quote source is wired (the `/api/monitor/signals` join doesn't carry mark-to-market). When a quote source lands, surface unrealized PnL in `LiveSessionJournal.tsx` and the dossier's `LivePerformanceCard`.
 
 ---
 

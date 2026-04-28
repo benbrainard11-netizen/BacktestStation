@@ -2,7 +2,7 @@
 
 A local-first research and command center for personal futures trading. Imported + engine-generated backtest runs, per-trade replay (1m and tick-level), live monitoring, drift detection, retroactive risk-profile evaluation, and a futures data warehouse — all running on local hardware.
 
-**Status (2026-04-27):** Phase 1 (Imported Results Command Center) shipped. Backtest engine, live ingester, and live-trades pipeline online. Trade replay shipped. 444 backend tests green. See [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) for the full live-state mirror.
+**Status (2026-04-27):** Phase 1 (Imported Results Command Center) shipped. Backtest engine, live ingester, and live-trades pipeline online. Trade replay shipped. Firm-rules editor + session journal landed end-of-day. 470 backend tests green. See [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) for the full live-state mirror.
 
 ## Where to look next
 
@@ -71,7 +71,7 @@ uvicorn app.main:app --reload --port 8000
 
 Health check: `curl http://localhost:8000/api/health` → `{"status":"ok","version":"0.1.0"}`.
 
-Tests: `pytest -q` (target: 444 passed).
+Tests: `pytest -q` (target: 470 passed; check `docs/PROJECT_STATE.md` for the current canonical count).
 
 ### Frontend (manual)
 
