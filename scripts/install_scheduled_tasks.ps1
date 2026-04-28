@@ -101,8 +101,16 @@ $pmSettings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
     -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 30) `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 4) `
     -MultipleInstances IgnoreNew
+
+# 4h is generous on purpose. Normal hourly runs finish in seconds (just
+# scan + skip-unchanged); the limit only matters when there's catchup
+# to do after a backfill. Empirically (2026-04-27) a full warehouse
+# catchup of ~30 per-symbol DBN files took ~45 min of wall time, and
+# legacy multi-symbol files (~700 MB each) take 3-5 min apiece. The
+# previous 30-min cap killed catchup runs mid-flight, so the next
+# hourly fire would re-process the same files and get killed again.
 
 # S4U: run as the current user without storing a password, in a
 # non-interactive context. User env vars are still resolved.
