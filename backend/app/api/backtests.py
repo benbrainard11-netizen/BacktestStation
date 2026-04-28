@@ -21,6 +21,7 @@ from app.db.models import (
     BacktestRun,
     ConfigSnapshot,
     EquityPoint,
+    Experiment,
     RunMetrics,
     StrategyVersion,
     Trade,
@@ -204,8 +205,34 @@ def delete_backtest(
     trades, equity_points, run_metrics, and config_snapshot go with it.
     Notes keep a nullable FK and are not cascade-deleted — they survive
     as floating research notes.
+
+    SQLite FK enforcement is off in this app (PRAGMA foreign_keys=0) and
+    the baseline_run_id columns were added via migrations that didn't
+    encode ON DELETE SET NULL, so we explicitly NULL out any
+    StrategyVersion.baseline_run_id and Experiment.baseline_run_id /
+    variant_run_id pointing at this run before deleting. Without this,
+    the Forward Drift Monitor's /drift/latest endpoint would render an
+    empty panel after the live-baseline run was deleted (observed
+    2026-04-28).
     """
     run = _require_run(db, backtest_id)
+
+    db.execute(
+        StrategyVersion.__table__.update()
+        .where(StrategyVersion.baseline_run_id == backtest_id)
+        .values(baseline_run_id=None)
+    )
+    db.execute(
+        Experiment.__table__.update()
+        .where(Experiment.baseline_run_id == backtest_id)
+        .values(baseline_run_id=None)
+    )
+    db.execute(
+        Experiment.__table__.update()
+        .where(Experiment.variant_run_id == backtest_id)
+        .values(variant_run_id=None)
+    )
+
     db.delete(run)
     db.commit()
     return None
