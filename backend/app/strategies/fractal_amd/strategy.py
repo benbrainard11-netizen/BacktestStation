@@ -19,6 +19,7 @@ annotations live in `docs/FRACTAL_AMD_PORT_REFERENCE.md`.
 
 from __future__ import annotations
 
+import bisect
 import datetime as dt
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
@@ -39,6 +40,21 @@ from app.strategies.fractal_amd.signals import (
     is_in_entry_window,
     resample_bars,
 )
+
+
+def _bars_in_range(
+    bars: list[Bar], start: dt.datetime, end: dt.datetime
+) -> list[Bar]:
+    """Slice `bars` to the half-open [start, end) by ts_event using
+    bisect. Replaces the O(n) `[b for b in bars if start <= b.ts_event < end]`
+    pattern that dominated profile time on multi-month windows. Bars
+    are append-ordered by ts_event so the list is already sorted.
+    """
+    if not bars:
+        return []
+    lo = bisect.bisect_left(bars, start, key=lambda b: b.ts_event)
+    hi = bisect.bisect_left(bars, end, key=lambda b: b.ts_event)
+    return bars[lo:hi]
 
 if TYPE_CHECKING:
     from app.backtest.orders import Fill
@@ -183,6 +199,13 @@ class FractalAMD(Strategy):
         Once expansion is fully behind us
         (`exp_end + small_buffer <= bar.ts_event`), the candle is
         recorded as `_fully_scanned` and skipped on subsequent bars.
+
+        Performance: every helper that takes `bars_by_asset` filters to a
+        time range internally (O(n) per call). At multi-month scale this
+        is the dominant cost. We pre-slice each asset's bars to the
+        union of the candle pair's time range BEFORE handing it to the
+        helper, so the helper's filter only walks O(window_size) bars.
+        See `_bars_in_range` for the bisect slice.
         """
         bars_by_asset = self._bars_by_asset(context)
         if any(len(b) == 0 for b in bars_by_asset.values()):
@@ -213,8 +236,17 @@ class FractalAMD(Strategy):
                     continue
 
                 ref_start, ref_end = all_candles[i - 1]
+
+                # Pre-slice each asset's bars to [ref_start, cur_end).
+                # check_candle_pair / detect_smt_at_level / detect_rejection
+                # only ever read inside this window, so the narrow list
+                # gives them everything they need at O(log n + k) cost.
+                pair_bars_by_asset = {
+                    sym: _bars_in_range(bars, ref_start, cur_end)
+                    for sym, bars in bars_by_asset.items()
+                }
                 signal = check_candle_pair(
-                    bars_by_asset,
+                    pair_bars_by_asset,
                     cur_start=cur_start,
                     cur_end=cur_end,
                     ref_start=ref_start,
@@ -434,24 +466,30 @@ class FractalAMD(Strategy):
                 lcs, lce = rel[li]
                 lrs, lre = rel[li - 1]
 
-                # LTF SMT: same direction as the HTF stage
+                # LTF SMT: same direction as the HTF stage. Pre-slice to
+                # [lrs, lce) — both ref_ohlc and detect_smt_at_level only
+                # read inside this range.
+                ltf_bars_by_asset = {
+                    sym: _bars_in_range(bars, lrs, lce)
+                    for sym, bars in bars_by_asset.items()
+                }
                 ref_ohlc = {
                     sym: get_ohlc(bars, lrs, lre)
-                    for sym, bars in bars_by_asset.items()
+                    for sym, bars in ltf_bars_by_asset.items()
                 }
                 if any(v is None for v in ref_ohlc.values()):
                     continue
                 if signal.direction == "BEARISH":
-                    levels = {sym: ref_ohlc[sym].high for sym in bars_by_asset}
+                    levels = {sym: ref_ohlc[sym].high for sym in ltf_bars_by_asset}
                     smt = detect_smt_at_level(
-                        bars_by_asset, levels, "high", lcs, lce
+                        ltf_bars_by_asset, levels, "high", lcs, lce
                     )
                     if not (smt.has_smt and smt.direction == "BEARISH"):
                         continue
                 else:
-                    levels = {sym: ref_ohlc[sym].low for sym in bars_by_asset}
+                    levels = {sym: ref_ohlc[sym].low for sym in ltf_bars_by_asset}
                     smt = detect_smt_at_level(
-                        bars_by_asset, levels, "low", lcs, lce
+                        ltf_bars_by_asset, levels, "low", lcs, lce
                     )
                     if not (smt.has_smt and smt.direction == "BULLISH"):
                         continue
@@ -462,10 +500,9 @@ class FractalAMD(Strategy):
                     lce + dt.timedelta(minutes=ltf_min * 5),
                     bar_now.ts_event,
                 )
-                primary_window = [
-                    b for b in primary
-                    if fvg_window_start <= b.ts_event < fvg_window_end
-                ]
+                primary_window = _bars_in_range(
+                    primary, fvg_window_start, fvg_window_end
+                )
                 if len(primary_window) < ltf_min * 3:
                     continue
                 ltf_bars = resample_bars(primary_window, ltf_min)
@@ -520,10 +557,19 @@ class FractalAMD(Strategy):
 
         Primary symbol: from context.history. Aux symbols: from the
         accumulator we maintain in on_bar.
+
+        These are direct references, not copies. Helpers downstream
+        only read the lists (no mutation) so the defensive `list(...)`
+        snapshot the previous version did is unnecessary and was the
+        single biggest contributor to the O(n^2) ceiling — it ran every
+        bar and rebuilt the full history list each time. With this
+        change `_bars_by_asset` is O(1).
         """
-        out: dict[str, list[Bar]] = {self.config.primary_symbol: list(context.history)}
+        out: dict[str, list[Bar]] = {
+            self.config.primary_symbol: context.history
+        }
         for sym in self.config.aux_symbols:
-            out[sym] = list(self.aux_history.get(sym, []))
+            out[sym] = self.aux_history.get(sym, [])
         return out
 
     # ------------------------------------------------------------------
@@ -534,6 +580,18 @@ class FractalAMD(Strategy):
         """Reset per-day state on the first bar of a new ET trading day.
 
         Trading day rolls at 18:00 ET (Globex open).
+
+        Setup expiry: at the day boundary we drop all in-flight setups
+        (WATCHING + TOUCHED) plus the per-candle `_fully_scanned`
+        markers, mirroring the live bot's `reset_day()` (FractalAMD-/
+        production/live_bot.py:336-343 — sets `self.setups = []` on the
+        boundary). Without this, setups built on day N's HTF candles
+        could touch days later when price drifts back through the FVG,
+        firing a stale entry that the live bot would never take. Stage
+        signals are kept for diagnostic/debug purposes (no behavior
+        depends on them across days). Listed as one of the two
+        un-fixed strategy items in `project_backtest_divergence.md`
+        memory (2026-04-25).
         """
         et_now = now.astimezone(ET)
         # Trading day = the calendar day of the 17:00 ET close.
@@ -545,6 +603,8 @@ class FractalAMD(Strategy):
             self.today = trading_day
             self.trades_today = 0
             self.entries_today = set()
+            self.setups = []
+            self._fully_scanned = set()
 
     @classmethod
     def from_config(
