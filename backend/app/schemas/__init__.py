@@ -17,6 +17,7 @@ from app.schemas.experiments import (
 from app.schemas.monitor import (
     IngesterStatus,
     LiveMonitorStatus,
+    LiveSignalRead,
     LiveTradesPipelineStatus,
 )
 from app.schemas.notes import NoteCreate, NoteRead, NoteTypesRead, NoteUpdate
@@ -109,6 +110,7 @@ __all__ = [
     "ImportBacktestResponse",
     "IngesterStatus",
     "LiveMonitorStatus",
+    "LiveSignalRead",
     "LiveTradesPipelineStatus",
     "NoteCreate",
     "NoteRead",

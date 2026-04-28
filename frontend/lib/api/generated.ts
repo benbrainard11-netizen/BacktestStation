@@ -513,6 +513,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/monitor/signals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Live Signals
+         * @description Recent live signals, ordered newest first.
+         *
+         *     Filters AND together. `strategy_id` resolves to all of that
+         *     strategy's version ids and matches LiveSignal.strategy_version_id
+         *     against any of them. Used by the Monitor session journal panel to
+         *     show today's signals for the currently-live strategy.
+         */
+        get: operations["list_live_signals_api_monitor_signals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notes": {
         parameters: {
             query?: never;
@@ -2089,6 +2114,29 @@ export interface components {
             today_r: number | null;
             /** Trades Today */
             trades_today: number | null;
+        };
+        /**
+         * LiveSignalRead
+         * @description One row from `live_signals` — what the live bot emitted.
+         */
+        LiveSignalRead: {
+            /** Executed */
+            executed: boolean;
+            /** Id */
+            id: number;
+            /** Price */
+            price: number;
+            /** Reason */
+            reason: string | null;
+            /** Side */
+            side: string;
+            /** Strategy Version Id */
+            strategy_version_id: number | null;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
         };
         /**
          * LiveTradesPipelineStatus
@@ -4306,6 +4354,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LiveTradesPipelineStatus"];
+                };
+            };
+        };
+    };
+    list_live_signals_api_monitor_signals_get: {
+        parameters: {
+            query?: {
+                strategy_id?: number | null;
+                strategy_version_id?: number | null;
+                /** @description ISO datetime; only signals with ts >= since are returned */
+                since?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveSignalRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

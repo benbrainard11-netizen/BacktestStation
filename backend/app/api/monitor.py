@@ -4,7 +4,9 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -15,12 +17,13 @@ from app.core.paths import (
     LIVE_STATUS_PATH,
     ingester_heartbeat_path,
 )
-from app.db.models import BacktestRun, Trade
+from app.db.models import BacktestRun, LiveSignal, StrategyVersion, Trade
 from app.db.session import get_session
 from app.schemas import (
     DriftComparisonRead,
     IngesterStatus,
     LiveMonitorStatus,
+    LiveSignalRead,
     LiveTradesPipelineStatus,
 )
 from app.services.drift_comparison import compute_drift_for_strategy
@@ -196,6 +199,50 @@ def _read_log_tail_and_status(
     if "no trades.jsonl in inbox" in section_text:
         return tail, "no_jsonl"
     return tail, "running"
+
+
+@router.get("/signals", response_model=list[LiveSignalRead])
+def list_live_signals(
+    strategy_id: int | None = Query(default=None),
+    strategy_version_id: int | None = Query(default=None),
+    since: datetime | None = Query(
+        default=None,
+        description="ISO datetime; only signals with ts >= since are returned",
+    ),
+    limit: int = Query(default=50, ge=1, le=500),
+    db: Session = Depends(get_session),
+) -> list[LiveSignal]:
+    """Recent live signals, ordered newest first.
+
+    Filters AND together. `strategy_id` resolves to all of that
+    strategy's version ids and matches LiveSignal.strategy_version_id
+    against any of them. Used by the Monitor session journal panel to
+    show today's signals for the currently-live strategy.
+    """
+    statement = select(LiveSignal)
+    if strategy_id is not None:
+        version_ids = list(
+            db.scalars(
+                select(StrategyVersion.id).where(
+                    StrategyVersion.strategy_id == strategy_id
+                )
+            ).all()
+        )
+        if not version_ids:
+            return []
+        statement = statement.where(
+            LiveSignal.strategy_version_id.in_(version_ids)
+        )
+    if strategy_version_id is not None:
+        statement = statement.where(
+            LiveSignal.strategy_version_id == strategy_version_id
+        )
+    if since is not None:
+        statement = statement.where(LiveSignal.ts >= since)
+    statement = statement.order_by(LiveSignal.ts.desc(), LiveSignal.id.desc()).limit(
+        limit
+    )
+    return list(db.scalars(statement).all())
 
 
 @router.get(

@@ -53,6 +53,20 @@ class LiveTradesPipelineStatus(BaseModel):
     import_log_tail: list[str]
 
 
+class LiveSignalRead(BaseModel):
+    """One row from `live_signals` — what the live bot emitted."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    strategy_version_id: int | None
+    ts: datetime
+    side: str
+    price: float
+    reason: str | None
+    executed: bool
+
+
 class IngesterStatus(BaseModel):
     """Live ingester heartbeat — mirror of {DATA_ROOT}/heartbeat/live_ingester.json.
 

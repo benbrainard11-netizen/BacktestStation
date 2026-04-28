@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ArchiveStrategyButton from "@/components/strategies/ArchiveStrategyButton";
 import ArchiveVersionButton from "@/components/strategies/ArchiveVersionButton";
 import ExperimentsPanel from "@/components/strategies/ExperimentsPanel";
+import LivePerformanceCard from "@/components/strategies/LivePerformanceCard";
 import MetricsGrid from "@/components/backtests/MetricsGrid";
 import NewVersionButton from "@/components/strategies/NewVersionButton";
 import NotesPanel from "@/components/strategies/NotesPanel";
@@ -123,6 +124,14 @@ export default async function StrategyDetailPage({ params }: PageProps) {
               ))
             : null}
         </div>
+
+        {strategy.status === "live" || strategy.status === "forward_test" ? (
+          <LivePerformanceCard
+            strategyId={strategy.id}
+            strategyName={strategy.name}
+            stage={strategy.status}
+          />
+        ) : null}
 
         {strategy.description ? (
           <Panel title="Description">

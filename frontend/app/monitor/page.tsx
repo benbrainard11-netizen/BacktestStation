@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import IngesterStatusPanel from "@/components/monitor/IngesterStatusPanel";
 import LiveTradesPipelinePanel from "@/components/monitor/LiveTradesPipelinePanel";
+import SessionJournalPanel from "@/components/monitor/SessionJournalPanel";
 import MetricCard from "@/components/MetricCard";
 import HeartbeatPulse from "@/components/monitor/HeartbeatPulse";
 import PageHeader from "@/components/PageHeader";
@@ -53,6 +54,7 @@ export default function MonitorPage() {
       />
       <div className="flex flex-col gap-4 px-6 pb-6">
         <IngesterStatusPanel />
+        <SessionJournalPanel />
         <LiveTradesPipelinePanel />
         <MonitorBody state={state} />
       </div>
