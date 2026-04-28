@@ -1,6 +1,13 @@
 """Pydantic schemas exposed by the API."""
 
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
+from app.schemas.data_health import (
+    DataHealthPayload,
+    DiskSpaceRead,
+    ScheduledTaskStatus,
+    WarehouseSchemaSummary,
+    WarehouseSummary,
+)
 from app.schemas.data_quality import DataQualityIssue, DataQualityReportRead
 from app.schemas.datasets import DatasetRead, DatasetScanResult
 from app.schemas.drift import (
@@ -94,8 +101,13 @@ __all__ = [
     "BacktestRunTagsUpdate",
     "BacktestRunUpdate",
     "ConfigSnapshotRead",
+    "DataHealthPayload",
     "DataQualityIssue",
     "DataQualityReportRead",
+    "DiskSpaceRead",
+    "ScheduledTaskStatus",
+    "WarehouseSchemaSummary",
+    "WarehouseSummary",
     "DatasetRead",
     "DatasetScanResult",
     "DriftComparisonRead",
