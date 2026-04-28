@@ -8051,6 +8051,28 @@
         ]
       }
     },
+    "/api/monitor/drift/latest": {
+      "get": {
+        "description": "Auto-resolve the most-recent live run's strategy_version and\nreturn its drift comparison. Saves the frontend a round-trip.\n\n404 if there are no live runs yet (frontend renders an empty state).\n404 with a \"no baseline\" message if the resolved version has no\nbaseline assigned (frontend renders a \"set a baseline at /strategies\"\nhint).",
+        "operationId": "get_drift_latest_api_monitor_drift_latest_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriftComparisonRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Drift Latest",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
     "/api/monitor/drift/{strategy_version_id}": {
       "get": {
         "description": "Compute Forward Drift Monitor signals for a strategy version.\n\nResolves the version's `baseline_run_id` and most-recent live run,\nthen runs the configured drift signals (win-rate + entry-time).\n\nReturns 404 if the version is missing or has no baseline assigned.\nThe \"no live run yet\" case is NOT a 404 \u2014 it's a valid drift state\nsurfaced as WARN results so the UI can render the panel.",

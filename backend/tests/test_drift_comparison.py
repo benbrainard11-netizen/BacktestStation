@@ -396,3 +396,62 @@ def test_drift_endpoint_404_when_no_baseline(api_client) -> None:
 
     response = client.get(f"/api/monitor/drift/{version_id}")
     assert response.status_code == 404
+
+
+# --- /drift/latest auto-resolver -----------------------------------------
+
+
+def test_drift_latest_404_when_no_live_runs(api_client) -> None:
+    """No live runs in DB → 404 with a clear message so the frontend
+    renders an empty state."""
+    client, _ = api_client
+    response = client.get("/api/monitor/drift/latest")
+    assert response.status_code == 404
+    assert "no live runs" in response.json()["detail"].lower()
+
+
+def test_drift_latest_resolves_to_most_recent_live_run(api_client) -> None:
+    """When multiple live runs exist, the auto-resolver picks the most
+    recent one's strategy_version_id and returns its drift comparison."""
+    client, SessionLocal = api_client
+    with SessionLocal() as s:
+        version = _make_strategy_and_version(s)
+        baseline = _make_run(s, version, source="imported")
+        # Older live run first.
+        old_live = _make_run(s, version, source="live")
+        _add_trades(s, baseline, count=20, win_pct=0.55)
+        _add_trades(s, old_live, count=20, win_pct=0.55)
+        version.baseline_run_id = baseline.id
+        s.commit()
+        # Newer live run for the same version.
+        new_live = _make_run(s, version, source="live")
+        _add_trades(s, new_live, count=20, win_pct=0.55)
+        s.commit()
+        version_id = version.id
+        baseline_id = baseline.id
+        new_live_id = new_live.id
+
+    response = client.get("/api/monitor/drift/latest")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["strategy_version_id"] == version_id
+    assert body["baseline_run_id"] == baseline_id
+    assert body["live_run_id"] == new_live_id
+
+
+def test_drift_latest_404_when_resolved_version_has_no_baseline(
+    api_client,
+) -> None:
+    """A live run exists but its strategy_version has no baseline →
+    404 with the same message format as /drift/{id}, so the frontend
+    can render a 'set a baseline' hint."""
+    client, SessionLocal = api_client
+    with SessionLocal() as s:
+        version = _make_strategy_and_version(s)
+        live = _make_run(s, version, source="live")
+        _add_trades(s, live, count=5, win_pct=0.5)
+        s.commit()
+
+    response = client.get("/api/monitor/drift/latest")
+    assert response.status_code == 404
+    assert "baseline" in response.json()["detail"].lower()

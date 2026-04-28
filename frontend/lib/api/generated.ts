@@ -421,6 +421,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/monitor/drift/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Drift Latest
+         * @description Auto-resolve the most-recent live run's strategy_version and
+         *     return its drift comparison. Saves the frontend a round-trip.
+         *
+         *     404 if there are no live runs yet (frontend renders an empty state).
+         *     404 with a "no baseline" message if the resolved version has no
+         *     baseline assigned (frontend renders a "set a baseline at /strategies"
+         *     hint).
+         */
+        get: operations["get_drift_latest_api_monitor_drift_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/monitor/drift/{strategy_version_id}": {
         parameters: {
             query?: never;
@@ -4263,6 +4289,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_drift_latest_api_monitor_drift_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriftComparisonRead"];
                 };
             };
         };

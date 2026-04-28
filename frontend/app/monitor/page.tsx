@@ -3,6 +3,7 @@
 import { AlertTriangle, FileX, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import DriftPanel from "@/components/monitor/DriftPanel";
 import IngesterStatusPanel from "@/components/monitor/IngesterStatusPanel";
 import LiveTradesPipelinePanel from "@/components/monitor/LiveTradesPipelinePanel";
 import SessionJournalPanel from "@/components/monitor/SessionJournalPanel";
@@ -56,6 +57,7 @@ export default function MonitorPage() {
         <IngesterStatusPanel />
         <SessionJournalPanel />
         <LiveTradesPipelinePanel />
+        <DriftPanel />
         <MonitorBody state={state} />
       </div>
     </div>

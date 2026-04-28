@@ -246,6 +246,45 @@ def list_live_signals(
 
 
 @router.get(
+    "/drift/latest", response_model=DriftComparisonRead
+)
+def get_drift_latest(
+    db: Session = Depends(get_session),
+) -> DriftComparisonRead:
+    """Auto-resolve the most-recent live run's strategy_version and
+    return its drift comparison. Saves the frontend a round-trip.
+
+    404 if there are no live runs yet (frontend renders an empty state).
+    404 with a "no baseline" message if the resolved version has no
+    baseline assigned (frontend renders a "set a baseline at /strategies"
+    hint).
+    """
+    latest = db.scalars(
+        select(BacktestRun)
+        .where(BacktestRun.source == "live")
+        .order_by(BacktestRun.created_at.desc())
+        .limit(1)
+    ).first()
+    if latest is None:
+        raise HTTPException(
+            status_code=404, detail="no live runs available"
+        )
+    try:
+        comparison = compute_drift_for_strategy(
+            db, latest.strategy_version_id
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    return DriftComparisonRead(
+        strategy_version_id=comparison.strategy_version_id,
+        baseline_run_id=comparison.baseline_run_id,
+        live_run_id=comparison.live_run_id,
+        computed_at=comparison.computed_at,
+        results=[asdict(r) for r in comparison.results],
+    )
+
+
+@router.get(
     "/drift/{strategy_version_id}", response_model=DriftComparisonRead
 )
 def get_drift_for_strategy_version(
