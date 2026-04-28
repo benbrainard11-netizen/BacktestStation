@@ -33,8 +33,7 @@ For every commit / file in the diff:
 
 1. **Scope.** Does each change serve a Current Focus lane (A, B, or C in `ROADMAP.md`)? Flag any drift into Deferred-tier work (ML/training, 2nd custom strategy, new warehouse schemas, agents, cloud, SaaS).
 2. **Engine purity.** No `sqlalchemy`, `httpx`, `requests`, or anything from `api/` / `db/` / `ingest/` inside `app/engine/` or `app/strategies/`. (CLAUDE.md non-negotiable rule #1.)
-3. **No lookahead.** Strategy code only sees data up to the current event's timestamp. Never hands a strategy a raw DataFrame. Run `pytest backend/tests/test_lookahead.py -q` and confirm green.
-4. **Determinism.** Backtest engine changes keep the determinism test green. Run `pytest backend/tests/test_backtest_engine.py -q`.
+3. **No lookahead + determinism.** Backtest engine + strategy changes must keep the lookahead and determinism tests green. They live inside `backend/tests/test_backtest_engine.py`. Run `pytest backend/tests/test_backtest_engine.py -q`.
 5. **Schema migrations.** Any `models.py` change must have a matching guarded ALTER in `app/db/session.py:_run_data_migrations`. Any `SCHEMA_VERSION` bump in `app/data/schema.py` must update both `docs/SCHEMA_SPEC.md` and `docs/PROJECT_STATE.md` warehouse contents.
 6. **Mocked pages.** Any new page rendering hardcoded data shows `[MOCK]` in its visible header (not just a comment). Grep for `MOCK_` imports in new `frontend/app/**/page.tsx` files.
 7. **Test coverage.** New API endpoints have tests in `backend/tests/test_<router>_*.py`. New strategies have regression tests.
