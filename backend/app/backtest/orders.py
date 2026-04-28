@@ -57,6 +57,13 @@ class BracketOrder:
     Fractal AMD switching from NQ at $20/pt to MNQ at $2/pt for
     wide-stop setups so dollar risk stays inside the configured cap).
     `None` means use the run config's value.
+
+    `max_hold_bars`: if set, the bracket force-closes at the bar's close
+    once `bar_index - entry_bar_index >= max_hold_bars` (i.e., the
+    position has been held for `max_hold_bars` complete bars after the
+    entry-fill bar). The exit fill is recorded with `reason="timeout"`
+    and `fill_confidence="exact"`. Mirrors `MAX_HOLD=120` in the trusted
+    Fractal AMD backtest. `None` (default) = no timeout.
     """
 
     side: Side
@@ -64,6 +71,7 @@ class BracketOrder:
     stop_price: float
     target_price: float
     contract_value: float | None = None
+    max_hold_bars: int | None = None
 
 
 @dataclass(frozen=True)
@@ -96,6 +104,11 @@ class Order:
     submitted_bar_index: int
     state: str = "pending"  # pending | active | filled | cancelled
     entry_fill: "Fill | None" = None
+    # Bar index at which the entry fill happened (the bar where the
+    # market open was used as the fill price). Set by `resolve_pending_entries`
+    # so that `resolve_active_brackets` can compute bars-held for the
+    # `BracketOrder.max_hold_bars` timeout. None until the entry fills.
+    entry_bar_index: int | None = None
 
     @staticmethod
     def new(

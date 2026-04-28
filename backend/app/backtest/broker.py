@@ -83,12 +83,20 @@ class Broker:
 
     # --- Fill resolution ---
 
-    def resolve_pending_entries(self, current_bar: Bar) -> list[Fill]:
+    def resolve_pending_entries(
+        self, current_bar: Bar, bar_index: int | None = None
+    ) -> list[Fill]:
         """Fill orders submitted on the previous bar at THIS bar's open.
 
         Slippage: market orders fill `slippage_ticks` worse than open
         (above for buys, below for sells). Commission charged once per
         contract on the entry.
+
+        `bar_index` is the engine's bar counter for `current_bar`. When
+        provided, it's stamped onto the order so `resolve_active_brackets`
+        can compute bars-held for `BracketOrder.max_hold_bars` timeouts.
+        Defaulted to `None` to keep the older single-arg call sites
+        green; existing tests don't drive max_hold so the absence is fine.
         """
         fills: list[Fill] = []
         if not self.pending_entries:
@@ -114,6 +122,7 @@ class Broker:
                 )
                 fills.append(fill)
                 order.entry_fill = fill
+                order.entry_bar_index = bar_index
                 order.state = "filled"
             elif isinstance(order.intent, BracketOrder):
                 side = order.intent.side
@@ -132,6 +141,7 @@ class Broker:
                 )
                 fills.append(fill)
                 order.entry_fill = fill
+                order.entry_bar_index = bar_index
                 order.state = "active"
                 self.active_brackets.append(order)
 
@@ -139,11 +149,22 @@ class Broker:
         self.pending_entries.clear()
         return fills
 
-    def resolve_active_brackets(self, current_bar: Bar) -> list[Fill]:
+    def resolve_active_brackets(
+        self, current_bar: Bar, bar_index: int | None = None
+    ) -> list[Fill]:
         """Check live brackets against the current bar's range.
 
         For each bracket: did the bar touch the stop, the target, both,
         or neither? Both = ambiguous, conservative -> stop wins.
+
+        Also enforces `BracketOrder.max_hold_bars` timeouts when
+        `bar_index` is provided: a bracket whose position has been held
+        for `max_hold_bars` bars (i.e., `bar_index - entry_bar_index >=
+        max_hold_bars`) and hasn't hit stop or target on this bar
+        force-closes at the bar's close with `reason="timeout"`. Mirrors
+        the trusted Fractal AMD `MAX_HOLD=120` exit. `bar_index=None`
+        keeps existing tests green by skipping the timeout check
+        entirely.
         """
         fills: list[Fill] = []
         if not self.active_brackets:
@@ -160,7 +181,34 @@ class Broker:
             stop_touched = current_bar.low <= stop <= current_bar.high
             target_touched = current_bar.low <= target <= current_bar.high
 
+            # MAX_HOLD timeout check. If the bracket has been held for
+            # `max_hold_bars` bars and neither stop nor target touched
+            # on this bar, force-close at the bar's close. Stop/target
+            # checks above still take precedence on the timeout bar
+            # itself — if either hit, that's the exit reason.
             if not stop_touched and not target_touched:
+                max_hold = order.intent.max_hold_bars
+                if (
+                    max_hold is not None
+                    and bar_index is not None
+                    and order.entry_bar_index is not None
+                    and bar_index - order.entry_bar_index >= max_hold
+                ):
+                    qty = order.intent.qty
+                    fill = Fill(
+                        order_id=order.id,
+                        ts=current_bar.ts_event,
+                        side=order.intent.side.opposite,
+                        qty=qty,
+                        price=current_bar.close,
+                        commission=qty * self.config.commission_per_contract,
+                        is_entry=False,
+                        fill_confidence="exact",
+                        reason="timeout",
+                    )
+                    fills.append(fill)
+                    order.state = "filled"
+                    self.active_brackets.remove(order)
                 continue
 
             qty = order.intent.qty

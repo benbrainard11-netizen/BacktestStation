@@ -145,7 +145,7 @@ def run(
             }
 
         # 1. Resolve pending entry orders submitted on the prior bar.
-        for fill in broker.resolve_pending_entries(bar):
+        for fill in broker.resolve_pending_entries(bar, bar_index=i):
             events.append(_fill_event(fill, i))
             context.position = _apply_entry_fill(fill, bar, context, broker)
             realized_equity -= fill.commission
@@ -164,7 +164,7 @@ def run(
             strategy.on_fill(fill, context)
 
         # 2. Resolve active brackets against this bar's range.
-        for fill in broker.resolve_active_brackets(bar):
+        for fill in broker.resolve_active_brackets(bar, bar_index=i):
             trade, realized_pnl = _close_position_with_fill(
                 context.position, fill, config
             )
