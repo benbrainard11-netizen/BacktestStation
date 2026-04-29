@@ -82,6 +82,10 @@ def test_import_backtest_bundle_then_read_it(client: TestClient) -> None:
     strategies = client.get("/api/strategies").json()
     assert strategies[0]["name"] == "ORB"
     assert strategies[0]["versions"][0]["version"] == "v1"
+    # Codex review 2026-04-29: imported strategies were getting
+    # status="testing" which is no longer in the lifecycle vocab.
+    # New imports default to "building".
+    assert strategies[0]["status"] == "building"
 
     backtest = client.get(f"/api/backtests/{run_id}").json()
     assert backtest["symbol"] == "NQ"

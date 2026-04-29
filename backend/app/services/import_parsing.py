@@ -231,9 +231,17 @@ def _optional_datetime(value: Any) -> datetime | None:
             timestamp = timestamp / 1000
         return datetime.fromtimestamp(timestamp, tz=UTC).replace(tzinfo=None)
     try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00")).replace(tzinfo=None)
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError as exc:
         raise ImportValidationError(f"Invalid datetime value: {text}") from exc
+    # SQLite columns are tz-naive; we store everything in UTC. If the
+    # source ISO carried an offset (e.g. "...-05:00"), convert to UTC
+    # BEFORE stripping tzinfo or the wall-clock hour shifts by the
+    # offset (codex review 2026-04-29: "09:30-05:00" was being stored
+    # as naive 09:30 instead of naive 14:30 UTC).
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(UTC).replace(tzinfo=None)
+    return parsed
 
 
 def _parse_tags(value: Any) -> list[str] | None:
@@ -252,12 +260,22 @@ def _parse_tags(value: Any) -> list[str] | None:
 
 
 def _normalize_side(value: str) -> str:
+    """Normalize a CSV side value to {"long","short"}.
+
+    Reject unknowns instead of passing them through — the rest of the
+    code (DB constraints, dossier UI, R-multiple math) assumes one of
+    the two. A `side="sideways"` row would otherwise poison every
+    downstream consumer (codex review 2026-04-29).
+    """
     side = value.strip().lower()
     if side in {"bullish", "buy", "long"}:
         return "long"
     if side in {"bearish", "sell", "short"}:
         return "short"
-    return side
+    raise ImportValidationError(
+        f"Invalid trade side {value!r}; expected one of "
+        "long/short/buy/sell/bullish/bearish."
+    )
 
 
 def _pick(row: dict[str, str], field: str) -> str | None:

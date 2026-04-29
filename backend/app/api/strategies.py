@@ -382,6 +382,36 @@ def set_strategy_version_baseline(
                 "is meaningless."
             ),
         )
+    # Same-strategy guard. The drift comparison reads this version's
+    # live trades and matches them against the baseline run's trades;
+    # if the baseline belongs to a different strategy, the comparison
+    # is apples-to-oranges. Cross-version-of-the-same-strategy is OK
+    # (e.g. baseline against the prior version's locked-in run); only
+    # cross-strategy is rejected (codex review 2026-04-29; pattern
+    # already used by Experiments).
+    #
+    # Fails CLOSED if run.strategy_version can't be resolved — with FK
+    # enforcement on this should be unreachable, but a missing chain
+    # silently mismatching strategies is the failure mode we want to
+    # avoid (codex re-review 2026-04-29).
+    if (
+        run.strategy_version is None
+        or run.strategy_version.strategy_id != version.strategy_id
+    ):
+        run_strategy_id = (
+            run.strategy_version.strategy_id
+            if run.strategy_version is not None
+            else None
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"baseline run {run.id} belongs to a different strategy "
+                f"(strategy {run_strategy_id}) than this version "
+                f"(strategy {version.strategy_id}). Pick a run from the "
+                "same strategy."
+            ),
+        )
     version.baseline_run_id = run.id
     db.commit()
     db.refresh(version)

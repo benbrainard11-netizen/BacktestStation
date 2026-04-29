@@ -517,6 +517,81 @@ def test_delete_strategy_cleans_up_chat_messages(
         assert remaining == []
 
 
+def test_set_baseline_rejects_run_from_different_strategy(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Codex review 2026-04-29: PATCH /strategy-versions/{id}/baseline
+    must reject runs that belong to a different strategy. Otherwise a
+    drift comparison silently runs apples-to-oranges across strategies."""
+    from datetime import datetime
+
+    with session_factory() as session:
+        strat_a = models.Strategy(name="A", slug="a")
+        version_a = models.StrategyVersion(strategy=strat_a, version="v1")
+        strat_b = models.Strategy(name="B", slug="b")
+        version_b = models.StrategyVersion(strategy=strat_b, version="v1")
+        session.add_all([strat_a, strat_b])
+        session.commit()
+        version_a_id = version_a.id
+
+        # Run that belongs to strategy B (NOT strategy A).
+        run_b = models.BacktestRun(
+            strategy_version=version_b,
+            symbol="NQ",
+            import_source="t",
+            start_ts=datetime(2026, 1, 2),
+            end_ts=datetime(2026, 1, 3),
+            source="engine",
+        )
+        session.add(run_b)
+        session.commit()
+        run_b_id = run_b.id
+
+    # Try to use B's run as a baseline for A's version → should 422.
+    response = client.patch(
+        f"/api/strategy-versions/{version_a_id}/baseline",
+        json={"run_id": run_b_id},
+    )
+    assert response.status_code == 422, response.text
+    assert "different strategy" in response.json()["detail"].lower()
+
+
+def test_set_baseline_accepts_run_from_same_strategy_different_version(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Cross-version-of-same-strategy baseline IS allowed (e.g. baseline
+    a v2 against the v1 locked-in run). Only cross-strategy is rejected."""
+    from datetime import datetime
+
+    with session_factory() as session:
+        strategy = models.Strategy(name="A", slug="a")
+        version_v1 = models.StrategyVersion(strategy=strategy, version="v1")
+        version_v2 = models.StrategyVersion(strategy=strategy, version="v2")
+        session.add(strategy)
+        session.commit()
+        v1_id = version_v1.id
+        v2_id = version_v2.id
+
+        run_v1 = models.BacktestRun(
+            strategy_version_id=v1_id,
+            symbol="NQ",
+            import_source="t",
+            start_ts=datetime(2026, 1, 2),
+            end_ts=datetime(2026, 1, 3),
+            source="engine",
+        )
+        session.add(run_v1)
+        session.commit()
+        run_v1_id = run_v1.id
+
+    response = client.patch(
+        f"/api/strategy-versions/{v2_id}/baseline",
+        json={"run_id": run_v1_id},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["baseline_run_id"] == run_v1_id
+
+
 def test_delete_strategy_version_cleans_up_attached_notes_and_experiments(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:

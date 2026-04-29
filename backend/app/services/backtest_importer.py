@@ -95,7 +95,11 @@ def _get_or_create_strategy(
     ).first()
     if strategy is not None:
         return strategy
-    strategy = models.Strategy(name=strategy_name, slug=strategy_slug, status="testing")
+    # status="building" (the migration in db/session.py already maps any
+    # legacy "testing" rows to "building"; new imports default to the
+    # same so the lifecycle vocab stays consistent — codex review
+    # 2026-04-29 caught this regression).
+    strategy = models.Strategy(name=strategy_name, slug=strategy_slug, status="building")
     db.add(strategy)
     db.flush()
     return strategy
