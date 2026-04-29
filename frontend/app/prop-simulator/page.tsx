@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import DailyPnLPanel from "@/components/prop-simulator/dashboard/DailyPnLPanel";
+import RiskSweepSummaryPanel from "@/components/prop-simulator/dashboard/RiskSweepSummaryPanel";
+import SamplePathsPanel from "@/components/prop-simulator/dashboard/SamplePathsPanel";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/ui/Panel";
 import Pill from "@/components/ui/Pill";
@@ -12,10 +15,12 @@ import {
   samplingModeLabel,
 } from "@/lib/prop-simulator/format";
 import type { components } from "@/lib/api/generated";
+import type { SimulationRunDetail } from "@/lib/prop-simulator/types";
 import { cn } from "@/lib/utils";
 
 type ListRow = components["schemas"]["SimulationRunListRow"];
 type Profile = components["schemas"]["FirmRuleProfileRead"];
+type ApiDetail = components["schemas"]["SimulationRunDetail"];
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +32,27 @@ export default async function PropSimulatorDashboardPage() {
     apiGet<Profile[]>("/api/prop-firm/profiles").catch(() => [] as Profile[]),
   ]);
 
+  // Pre-compute the highest-EV run so we can fetch its detail in parallel
+  // with the second render pass and feature it on the dashboard.
+  const featured =
+    runs.length > 0
+      ? runs.reduce(
+          (best, r) => (r.ev_after_fees > best.ev_after_fees ? r : best),
+          runs[0],
+        )
+      : null;
+  const featuredDetail = featured
+    ? ((await apiGet<ApiDetail>(
+        `/api/prop-firm/simulations/${encodeURIComponent(featured.simulation_id)}`,
+      ).catch(() => null)) as ApiDetail | null)
+    : null;
+  // Local types mirror the API shape field-for-field — same cast pattern as
+  // the runs/[id] detail page.
+  const featuredLocal =
+    featuredDetail !== null
+      ? (featuredDetail as unknown as SimulationRunDetail)
+      : null;
+
   return (
     <div className="pb-10">
       <PageHeader
@@ -37,7 +63,11 @@ export default async function PropSimulatorDashboardPage() {
         {runs.length === 0 ? (
           <EmptyDashboard profileCount={profiles.length} />
         ) : (
-          <Body runs={runs} profiles={profiles} />
+          <Body
+            runs={runs}
+            profiles={profiles}
+            featured={featuredLocal}
+          />
         )}
       </div>
     </div>
@@ -64,7 +94,15 @@ function EmptyDashboard({ profileCount }: { profileCount: number }) {
   );
 }
 
-function Body({ runs, profiles }: { runs: ListRow[]; profiles: Profile[] }) {
+function Body({
+  runs,
+  profiles,
+  featured,
+}: {
+  runs: ListRow[];
+  profiles: Profile[];
+  featured: SimulationRunDetail | null;
+}) {
   const totalRuns = runs.length;
   const avgPass = runs.reduce((s, r) => s + r.pass_rate, 0) / totalRuns;
   const avgConfidence = runs.reduce((s, r) => s + r.confidence, 0) / totalRuns;
@@ -206,7 +244,47 @@ function Body({ runs, profiles }: { runs: ListRow[]; profiles: Profile[] }) {
           </div>
         </div>
       </div>
+
+      {featured ? (
+        <FeaturedRunSection detail={featured} />
+      ) : null}
     </>
+  );
+}
+
+function FeaturedRunSection({ detail }: { detail: SimulationRunDetail }) {
+  const { config, aggregated, selected_paths, fan_bands, daily_pnl, risk_sweep } =
+    detail;
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <div>
+          <p className="m-0 text-xs text-text-mute">featured run · highest EV</p>
+          <Link
+            href={`/prop-simulator/runs/${config.simulation_id}`}
+            className="text-[15px] text-text hover:underline"
+          >
+            {config.name}
+          </Link>
+        </div>
+        <span className="text-xs text-text-mute">
+          {config.simulation_count.toLocaleString()} sequences ·{" "}
+          {samplingModeLabel(config.sampling_mode)}
+        </span>
+      </div>
+
+      <SamplePathsPanel
+        paths={selected_paths}
+        fanBands={fan_bands}
+        meta={`featured · ${selected_paths.length} selected paths · ${config.simulation_count.toLocaleString()} sequences`}
+      />
+
+      {daily_pnl.length > 0 ? <DailyPnLPanel data={daily_pnl} /> : null}
+
+      {risk_sweep && risk_sweep.length > 0 ? (
+        <RiskSweepSummaryPanel rows={risk_sweep} />
+      ) : null}
+    </div>
   );
 }
 

@@ -1,15 +1,19 @@
-import RunsExplorer from "@/components/backtests/RunsExplorer";
+import BacktestsScopeShell from "@/components/backtests/BacktestsScopeShell";
 import PageHeader from "@/components/PageHeader";
 import Btn from "@/components/ui/Btn";
 import { apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type Strategy = components["schemas"]["StrategyRead"];
 
 export const dynamic = "force-dynamic";
 
 export default async function BacktestsPage() {
-  const runs = await apiGet<BacktestRun[]>("/api/backtests");
+  const [runs, strategies] = await Promise.all([
+    apiGet<BacktestRun[]>("/api/backtests"),
+    apiGet<Strategy[]>("/api/strategies").catch(() => [] as Strategy[]),
+  ]);
 
   return (
     <div className="auto-enter">
@@ -24,7 +28,11 @@ export default async function BacktestsPage() {
             <Btn href="/backtests/compare">Compare runs →</Btn>
           </div>
         ) : null}
-        {runs.length === 0 ? <EmptyRuns /> : <RunsExplorer runs={runs} />}
+        {runs.length === 0 ? (
+          <EmptyRuns />
+        ) : (
+          <BacktestsScopeShell runs={runs} strategies={strategies} />
+        )}
       </div>
     </div>
   );

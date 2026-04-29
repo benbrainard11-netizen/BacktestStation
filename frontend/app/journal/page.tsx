@@ -9,6 +9,7 @@ import Panel from "@/components/ui/Panel";
 import Pill from "@/components/ui/Pill";
 import Row from "@/components/ui/Row";
 import { tradesToEquityPoints } from "@/lib/charts/transform";
+import { useCurrentStrategy } from "@/lib/hooks/useCurrentStrategy";
 import { cn } from "@/lib/utils";
 import type { BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
@@ -18,6 +19,9 @@ type NoteCreate = components["schemas"]["NoteCreate"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Trade = components["schemas"]["TradeRead"];
+type Strategy = components["schemas"]["StrategyRead"];
+
+const SCOPE_KEY = "bts.journal.scope";
 
 type LoadState =
   | { kind: "loading" }
@@ -51,6 +55,13 @@ export default function JournalPage() {
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
   const [filter, setFilter] = useState<Filter>("All");
   const [sidebar, setSidebar] = useState<SidebarRun | null>(null);
+  const [scope, setScope] = useState<"all" | "current">("all");
+  const [scopedRunIds, setScopedRunIds] = useState<Set<number> | null>(null);
+  const [currentStrategyName, setCurrentStrategyName] = useState<string | null>(
+    null,
+  );
+  const { id: currentStrategyId, loading: currentLoading } =
+    useCurrentStrategy();
 
   const loadNotes = useCallback(async () => {
     setState({ kind: "loading" });
@@ -105,6 +116,53 @@ export default function JournalPage() {
     };
   }, []);
 
+  // Persisted scope (all/current). Default to current when an active
+  // strategy exists.
+  useEffect(() => {
+    if (currentLoading) return;
+    const stored = window.localStorage.getItem(SCOPE_KEY);
+    if (stored === "all" || stored === "current") setScope(stored);
+    else if (currentStrategyId !== null) setScope("current");
+  }, [currentLoading, currentStrategyId]);
+
+  // Fetch the current strategy + its runs whenever scope or strategy
+  // changes; resolves the run-id set used to filter notes when scope is
+  // "current".
+  useEffect(() => {
+    if (currentStrategyId === null) {
+      setScopedRunIds(null);
+      setCurrentStrategyName(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [strategyRes, runsRes] = await Promise.all([
+          fetch(`/api/strategies/${currentStrategyId}`, { cache: "no-store" }),
+          fetch(`/api/strategies/${currentStrategyId}/runs`, {
+            cache: "no-store",
+          }),
+        ]);
+        if (!strategyRes.ok || !runsRes.ok) return;
+        const strategy = (await strategyRes.json()) as Strategy;
+        const runs = (await runsRes.json()) as BacktestRun[];
+        if (cancelled) return;
+        setCurrentStrategyName(strategy.name);
+        setScopedRunIds(new Set(runs.map((r) => r.id)));
+      } catch {
+        // best-effort
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentStrategyId]);
+
+  const persistScope = (next: "all" | "current") => {
+    setScope(next);
+    window.localStorage.setItem(SCOPE_KEY, next);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (body.trim().length === 0) return;
@@ -157,11 +215,18 @@ export default function JournalPage() {
 
   const filtered = useMemo(() => {
     if (state.kind !== "ready") return [];
-    if (filter === "All") return state.notes;
-    return state.notes.filter(
+    let notes = state.notes;
+    if (scope === "current" && scopedRunIds !== null) {
+      notes = notes.filter(
+        (n) =>
+          n.backtest_run_id !== null && scopedRunIds.has(n.backtest_run_id),
+      );
+    }
+    if (filter === "All") return notes;
+    return notes.filter(
       (n) => (n.note_type ?? "observation").toLowerCase() === filter.toLowerCase(),
     );
-  }, [state, filter]);
+  }, [state, filter, scope, scopedRunIds]);
 
   const counts = useMemo(() => {
     if (state.kind !== "ready") return { All: 0 } as Record<Filter, number>;
@@ -177,13 +242,31 @@ export default function JournalPage() {
   return (
     <div className="grid grid-cols-[1fr_360px] gap-6 px-8 pb-10 pt-8">
       <main>
-        <header className="mb-6">
-          <h1 className="m-0 text-[26px] font-medium leading-tight tracking-[-0.02em] text-text">
-            Journal
-          </h1>
-          <p className="mt-1 text-[13px] text-text-dim">
-            Research notes — free-form or attached to a run / trade
-          </p>
+        <header className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h1 className="m-0 text-[26px] font-medium leading-tight tracking-[-0.02em] text-text">
+              Journal
+            </h1>
+            <p className="mt-1 text-[13px] text-text-dim">
+              Research notes — free-form or attached to a run / trade
+            </p>
+          </div>
+          {currentStrategyId !== null ? (
+            <div className="flex items-center gap-1">
+              <ScopeBtn
+                active={scope === "all"}
+                onClick={() => persistScope("all")}
+              >
+                All notes
+              </ScopeBtn>
+              <ScopeBtn
+                active={scope === "current"}
+                onClick={() => persistScope("current")}
+              >
+                {currentStrategyName ?? "Current"} only
+              </ScopeBtn>
+            </div>
+          ) : null}
         </header>
 
         <form
@@ -431,6 +514,31 @@ function NoteCard({ note }: { note: Note }) {
         </div>
       ) : null}
     </article>
+  );
+}
+
+function ScopeBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-md border px-2.5 py-1 text-xs transition-colors",
+        active
+          ? "border-border-strong bg-surface-alt text-text"
+          : "border-border bg-surface text-text-dim hover:bg-surface-alt",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
