@@ -41,7 +41,7 @@ const ACTIVE_STAGES = new Set([
 
 export default async function StrategiesPage() {
   const [strategies, stagesResponse, allRuns] = await Promise.all([
-    apiGet<Strategy[]>("/api/strategies"),
+    apiGet<Strategy[]>("/api/strategies").catch(() => [] as Strategy[]),
     apiGet<Stages>("/api/strategies/stages").catch(
       () => ({ stages: FALLBACK_STAGES }) as Stages,
     ),

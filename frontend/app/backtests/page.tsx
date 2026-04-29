@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BacktestsPage() {
   const [runs, strategies] = await Promise.all([
-    apiGet<BacktestRun[]>("/api/backtests"),
+    apiGet<BacktestRun[]>("/api/backtests").catch(() => [] as BacktestRun[]),
     apiGet<Strategy[]>("/api/strategies").catch(() => [] as Strategy[]),
   ]);
 
