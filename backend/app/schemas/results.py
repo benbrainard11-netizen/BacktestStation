@@ -116,6 +116,14 @@ class BacktestRunRequest(BaseModel):
     initial_equity: float = Field(default=25_000.0, gt=0)
     params: dict[str, Any] = Field(default_factory=dict)
 
+    # Engine-level knobs (universal across strategies). When unset, the
+    # engine falls back to RunConfig dataclass defaults: no session
+    # gate, slippage_ticks=1.
+    session_start_hour: int | None = Field(default=None, ge=0, le=23)
+    session_end_hour: int | None = Field(default=None, ge=1, le=24)
+    session_tz: str = Field(default="America/New_York")
+    slippage_ticks: int = Field(default=1, ge=0, le=10)
+
     @field_validator("start", "end", mode="after")
     @classmethod
     def _valid_iso_date(cls, value: str) -> str:

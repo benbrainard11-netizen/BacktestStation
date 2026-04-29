@@ -6,6 +6,7 @@ from app.api import (
     autopsy,
     backtest_export,
     backtests,
+    chat,
     data_health,
     data_quality,
     datasets,
@@ -57,3 +58,4 @@ app.include_router(risk_profiles.router, prefix="/api")
 app.include_router(settings_api.router, prefix="/api")
 app.include_router(replay.router, prefix="/api")
 app.include_router(trade_replay.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")

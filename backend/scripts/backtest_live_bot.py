@@ -473,10 +473,14 @@ def run_day(
         entry_blocked = (t.hour == config.min_hour and t.minute < config.min_entry_minute)
 
         if len(nq_closed) > 20 and len(es_closed) > 20 and len(ym_closed) > 20:
-            # 1. Scan for new setups. scan_for_setups now dedupes internally so calling
-            #    every minute is cheap, but we still throttle to 5 min since LTF is 5m.
-            if t.minute % 5 == 0 or len(engine.setups) == 0:
-                engine.scan_for_setups(nq_closed, es_closed, ym_closed, t)
+            # 1. Scan for new setups EVERY minute — same cadence as live_bot's
+            #    main loop (`current_minute > last_scan_time` fires once per
+            #    1m boundary). Earlier 5-min throttle here delayed setup
+            #    materialization vs production and caused trade-list drift
+            #    on the plugin↔live comparison. scan_for_setups dedupes via
+            #    `_htf_stages_scanned` / `_materialized_stages` so the per-
+            #    minute call is cheap.
+            engine.scan_for_setups(nq_closed, es_closed, ym_closed, t)
 
             # 2. Check whether the just-closed bar (nq_closed.iloc[-1]) touched the
             #    nearest WATCHING setup per direction. Mirrors live_bot's call site.

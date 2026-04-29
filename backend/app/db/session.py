@@ -156,6 +156,32 @@ def _run_data_migrations(engine: Engine) -> None:
         if inspector.has_table("firm_rule_profiles"):
             _seed_default_firm_rule_profiles(connection)
 
+        # 2026-04-29: ChatMessage table for per-strategy AI chat threads.
+        # `Base.metadata.create_all()` already handles fresh DBs; this
+        # guarded CREATE catches existing sqlite files that predate the
+        # model.
+        if not inspector.has_table("chat_messages"):
+            connection.execute(
+                text(
+                    "CREATE TABLE chat_messages ("
+                    " id INTEGER PRIMARY KEY,"
+                    " strategy_id INTEGER NOT NULL REFERENCES strategies(id),"
+                    " role VARCHAR(16) NOT NULL,"
+                    " content TEXT NOT NULL,"
+                    " model VARCHAR(16) NOT NULL DEFAULT 'claude',"
+                    " cli_session_id VARCHAR(64),"
+                    " cost_usd FLOAT,"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
+                    ")"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_chat_messages_strategy_id "
+                    "ON chat_messages(strategy_id)"
+                )
+            )
+
 
 def _seed_default_risk_profiles(connection) -> None:
     """Insert Conservative / Live-mirror / Aggressive defaults if missing.

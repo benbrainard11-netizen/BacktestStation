@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.backtest.engine import RunConfig, run as engine_run
+from app.backtest.instruments import lookup as lookup_instrument
 from app.backtest.runner import (
     _data_root,
     _git_sha,
@@ -74,6 +75,19 @@ def run_engine_backtest(
             detail=f"strategy version {payload.strategy_version_id} not found",
         )
 
+    # Instrument-aware defaults — pull tick_size, contract_value, and
+    # commission from the per-instrument table keyed by the symbol's
+    # alpha prefix. Falls back to the RunConfig dataclass defaults
+    # (NQ values) when the prefix is unknown.
+    spec = lookup_instrument(payload.symbol)
+    instrument_kwargs: dict = {}
+    if spec is not None:
+        instrument_kwargs = {
+            "tick_size": spec.tick_size,
+            "contract_value": spec.contract_value,
+            "commission_per_contract": spec.commission_per_contract,
+        }
+
     config = RunConfig(
         strategy_name=payload.strategy_name,
         symbol=payload.symbol,
@@ -84,6 +98,11 @@ def run_engine_backtest(
         qty=payload.qty,
         aux_symbols=payload.aux_symbols,
         params=payload.params,
+        slippage_ticks=payload.slippage_ticks,
+        session_start_hour=payload.session_start_hour,
+        session_end_hour=payload.session_end_hour,
+        session_tz=payload.session_tz,
+        **instrument_kwargs,
     )
 
     try:

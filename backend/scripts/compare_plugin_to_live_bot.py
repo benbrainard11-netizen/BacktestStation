@@ -3,10 +3,13 @@ rewritten FractalAMD- live_bot.SignalEngine. Both should produce the
 same trades on the same data — that's the "live = backtest by
 construction" goal of Lane C Phase E.
 
-Runs over Jan 2026 (TBBO-covered, fast). Reports trade-by-trade match.
+Default window is Jan 2026 (TBBO-covered, fast). Override with --start /
+--end to run any range — useful for full-history runs against the live
+bot's val_930 backtest output.
 """
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import os
 import subprocess
@@ -24,6 +27,7 @@ from app.strategies.fractal_amd_trusted import (
 
 DATA_DIR = Path(os.environ.get("FRACTAL_DATA_DIR", r"C:\Fractal-AMD\data\raw"))
 TZ = "America/New_York"
+# Defaults; overridden by --start / --end CLI args.
 T0 = pd.Timestamp("2026-01-02", tz=TZ)
 T1 = pd.Timestamp("2026-01-31 23:59", tz=TZ)
 LIVE_BOT_OUT = Path(
@@ -92,11 +96,39 @@ def run_plugin():
 
 
 def main():
-    print(f"=== Plugin (Jan 2026) ===")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--start", default="2026-01-02", help="YYYY-MM-DD")
+    parser.add_argument("--end", default="2026-01-31", help="YYYY-MM-DD")
+    parser.add_argument(
+        "--live-csv",
+        default=None,
+        help="Path to live_bot val_930 CSV. Default infers from --start/--end.",
+    )
+    parser.add_argument(
+        "--max-detail-days",
+        type=int,
+        default=20,
+        help="Cap on per-day diff lines printed (long ranges produce too much output).",
+    )
+    args = parser.parse_args()
+
+    global T0, T1, LIVE_BOT_OUT
+    T0 = pd.Timestamp(args.start, tz=TZ)
+    T1 = pd.Timestamp(args.end + " 23:59", tz=TZ)
+    LIVE_BOT_OUT = (
+        Path(args.live_csv)
+        if args.live_csv
+        else Path(
+            f"C:/Fractal-AMD/outputs/live_engine_bt_{args.start}_{args.end}__val_930.csv"
+        )
+    )
+
+    print(f"=== Plugin ({args.start} -> {args.end}) ===")
     plug = run_plugin()
     print(f"trades={len(plug)}  WR={(plug.pnl_r>0).mean()*100:.1f}%  totalR={plug.pnl_r.sum():+.2f}")
 
-    print(f"\n=== Live bot val_930 (Jan 2026) ===")
+    print(f"\n=== Live bot val_930 ({args.start} -> {args.end}) ===")
+    print(f"reading {LIVE_BOT_OUT}")
     lb = pd.read_csv(LIVE_BOT_OUT)
     lb["entry_ts"] = pd.to_datetime(lb["date"] + " " + lb["entry_time"]).dt.tz_localize("America/New_York")
     print(f"trades={len(lb)}  WR={(lb.pnl_r>0).mean()*100:.1f}%  totalR={lb.pnl_r.sum():+.2f}")
@@ -108,28 +140,33 @@ def main():
     l_by_day = lb.groupby("day").size()
     all_days = sorted(set(p_by_day.index) | set(l_by_day.index))
     diffs = 0
+    detail_printed = 0
     for day in all_days:
         p = p_by_day.get(day, 0)
         l = l_by_day.get(day, 0)
         if p != l:
             diffs += 1
-            print(f"\n{day} (Plug={p} Live={l})")
-            pd_today = plug[plug.day == day]
-            lb_today = lb[lb.day == day]
-            p_str = "; ".join(
-                f"{r.entry_ts.strftime('%H:%M')} {r.direction[:4]} R={r.pnl_r:+.1f}"
-                for _, r in pd_today.iterrows()
-            )
-            l_str = "; ".join(
-                f"{r.entry_ts.strftime('%H:%M')} {r.direction[:4]} R={r.pnl_r:+.1f}"
-                for _, r in lb_today.iterrows()
-            )
-            print(f"  Plug: {p_str or '(none)'}")
-            print(f"  Live: {l_str or '(none)'}")
+            if detail_printed < args.max_detail_days:
+                print(f"\n{day} (Plug={p} Live={l})")
+                pd_today = plug[plug.day == day]
+                lb_today = lb[lb.day == day]
+                p_str = "; ".join(
+                    f"{r.entry_ts.strftime('%H:%M')} {r.direction[:4]} R={r.pnl_r:+.1f}"
+                    for _, r in pd_today.iterrows()
+                )
+                l_str = "; ".join(
+                    f"{r.entry_ts.strftime('%H:%M')} {r.direction[:4]} R={r.pnl_r:+.1f}"
+                    for _, r in lb_today.iterrows()
+                )
+                print(f"  Plug: {p_str or '(none)'}")
+                print(f"  Live: {l_str or '(none)'}")
+                detail_printed += 1
     if diffs == 0:
         print("\n*** PLUGIN AND LIVE BOT MATCH BYTE-FOR-BYTE ***")
     else:
         print(f"\nDivergent days: {diffs}/{len(all_days)}")
+        if diffs > args.max_detail_days:
+            print(f"(suppressed {diffs - args.max_detail_days} more divergent days; raise --max-detail-days to see all)")
 
 
 if __name__ == "__main__":

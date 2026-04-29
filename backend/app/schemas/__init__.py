@@ -1,6 +1,7 @@
 """Pydantic schemas exposed by the API."""
 
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
+from app.schemas.chat import ChatMessageRead, ChatTurnRequest, ChatTurnResponse
 from app.schemas.data_health import (
     DataHealthPayload,
     DiskSpaceRead,

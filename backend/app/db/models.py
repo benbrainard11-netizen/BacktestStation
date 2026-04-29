@@ -494,3 +494,39 @@ class FirmRuleProfile(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+
+class ChatMessage(Base):
+    """One turn of a per-strategy AI chat thread.
+
+    Messages are appended in order (user → assistant → user → ...). The
+    `cli_session_id` on assistant messages records Claude Code CLI's
+    session UUID so subsequent turns can pass `--resume <id>` to keep
+    conversation context. Codex is stateless in v1, so its messages
+    leave `cli_session_id` null.
+
+    `cost_usd` is what the CLI reported for this turn (Claude only —
+    Codex CLI doesn't emit a cost field). Audit trail; not enforced.
+    """
+
+    __tablename__ = "chat_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    strategy_id: Mapped[int] = mapped_column(
+        ForeignKey("strategies.id"), index=True
+    )
+    # "user" | "assistant"
+    role: Mapped[str] = mapped_column(String(16), index=True)
+    content: Mapped[str] = mapped_column(Text)
+    # "claude" | "codex"
+    model: Mapped[str] = mapped_column(String(16), default="claude", index=True)
+    # Claude Code's session UUID; populated on assistant messages from
+    # the CLI's JSON output. Reused as `--resume <id>` on the next user
+    # turn to keep context. Null on user messages and on Codex turns.
+    cli_session_id: Mapped[str | None] = mapped_column(String(64))
+    # USD cost reported by the CLI for this turn. Claude emits it via
+    # `total_cost_usd`; Codex doesn't, leave null.
+    cost_usd: Mapped[float | None] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
