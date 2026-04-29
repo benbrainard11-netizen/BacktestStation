@@ -87,23 +87,48 @@ test.describe("Primary route smoke pass", () => {
 });
 
 test.describe("Strategy picker flow", () => {
-  test("/ shows the strategy picker when none is selected", async ({
+  test("/ auto-opens the picker on a fresh session", async ({
     page,
     context,
   }) => {
-    // Force a clean slate: no localStorage carryover.
+    // Force a clean slate: no localStorage / sessionStorage carryover.
     await context.clearCookies();
     await page.goto("/");
-    await page.evaluate(() => window.localStorage.clear());
+    await page.evaluate(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
     await page.reload();
 
-    const choose = page.getByRole("button", { name: /Choose strategy/i });
-    await expect(choose).toBeVisible();
-
-    // Click into the picker; assert it opens.
-    await choose.click();
+    // Per the auto-open behavior: every fresh boot pops the picker.
     await expect(
       page.getByRole("dialog", { name: /Select a strategy/i }),
     ).toBeVisible();
+  });
+
+  test("/ does not re-prompt on internal navigation", async ({
+    page,
+    context,
+  }) => {
+    await context.clearCookies();
+    await page.goto("/");
+    await page.evaluate(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
+    await page.reload();
+
+    // First mount: dialog is visible.
+    const dialog = page.getByRole("dialog", { name: /Select a strategy/i });
+    await expect(dialog).toBeVisible();
+
+    // Dismiss with Escape (picker isn't forced when not the only path).
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+
+    // Navigate away and back; picker should NOT re-open in the same session.
+    await page.goto("/journal");
+    await page.goto("/");
+    await expect(dialog).toBeHidden();
   });
 });

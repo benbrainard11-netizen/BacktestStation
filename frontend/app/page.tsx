@@ -44,11 +44,23 @@ type DashboardState =
   | { kind: "error"; message: string }
   | { kind: "data"; data: DashboardData };
 
+const PICKER_SHOWN_KEY = "bts.pickerShownThisSession";
+
 export default function CommandCenter() {
   const { id: currentId, loading: currentLoading, clearId } =
     useCurrentStrategy();
   const [state, setState] = useState<DashboardState>({ kind: "loading" });
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Auto-open the picker once per browser session so every fresh boot
+  // gives you a chance to confirm or switch the active strategy. Internal
+  // navigation back to / does NOT re-prompt — sessionStorage gates it.
+  useEffect(() => {
+    if (currentLoading) return;
+    if (window.sessionStorage.getItem(PICKER_SHOWN_KEY) === "true") return;
+    setPickerOpen(true);
+    window.sessionStorage.setItem(PICKER_SHOWN_KEY, "true");
+  }, [currentLoading]);
 
   // Fetch everything tied to the current strategy. Re-runs whenever the id
   // changes (incl. cross-tab sync via storage event).
