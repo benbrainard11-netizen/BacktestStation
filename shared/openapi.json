@@ -276,6 +276,44 @@
             "title": "Qty",
             "type": "integer"
           },
+          "session_end_hour": {
+            "anyOf": [
+              {
+                "maximum": 24.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session End Hour"
+          },
+          "session_start_hour": {
+            "anyOf": [
+              {
+                "maximum": 23.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Start Hour"
+          },
+          "session_tz": {
+            "default": "America/New_York",
+            "title": "Session Tz",
+            "type": "string"
+          },
+          "slippage_ticks": {
+            "default": 1,
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Slippage Ticks",
+            "type": "integer"
+          },
           "start": {
             "title": "Start",
             "type": "string"
@@ -473,6 +511,120 @@
           "equity_file"
         ],
         "title": "Body_import_backtest_api_import_backtest_post",
+        "type": "object"
+      },
+      "ChatMessageRead": {
+        "description": "One message rendered in the chat thread.",
+        "properties": {
+          "cli_session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cli Session Id"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "cost_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Usd"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "model": {
+            "enum": [
+              "claude",
+              "codex"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "strategy_id",
+          "role",
+          "content",
+          "model",
+          "cli_session_id",
+          "cost_usd",
+          "created_at"
+        ],
+        "title": "ChatMessageRead",
+        "type": "object"
+      },
+      "ChatTurnRequest": {
+        "additionalProperties": false,
+        "description": "POST body for a new chat turn.",
+        "properties": {
+          "model": {
+            "default": "claude",
+            "enum": [
+              "claude",
+              "codex"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt": {
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "title": "ChatTurnRequest",
+        "type": "object"
+      },
+      "ChatTurnResponse": {
+        "description": "Returns both new messages so the FE can append in order.",
+        "properties": {
+          "assistant": {
+            "$ref": "#/components/schemas/ChatMessageRead"
+          },
+          "user": {
+            "$ref": "#/components/schemas/ChatMessageRead"
+          }
+        },
+        "required": [
+          "user",
+          "assistant"
+        ],
+        "title": "ChatTurnResponse",
         "type": "object"
       },
       "ConfidenceInterval": {
@@ -5994,7 +6146,7 @@
         "type": "object"
       },
       "StrategyParamFieldSchema": {
-        "description": "One field of a strategy's params, in a frontend-friendly shape.\n\n`type` mirrors JSON Schema's primitive types we actually use today;\n`label` is the form-row title; `min`/`max`/`step` are optional UI\nhints for number inputs; `description` is a one-line hint shown\nunder the field. `enum` lets a strategy expose dropdown choices in\nthe future (unused so far).",
+        "description": "One field of a strategy's params, in a frontend-friendly shape.\n\n`type` mirrors JSON Schema's primitive types we actually use today;\n`label` is the form-row title; `min`/`max`/`step` are optional UI\nhints for number inputs; `description` is a one-line hint shown\nunder the field. `enum` lets a strategy expose dropdown choices in\nthe future (unused so far).\n\n`group` lets the inline runner bucket fields by concern:\n  - `signal`  : algorithmic knobs that define what the strategy detects\n  - `risk`    : per-trade risk caps (stop, target, max risk pts/$)\n  - `session` : portfolio-level limits (max trades/day, dedup window,\n    entry-window hours)\nUntagged fields fall into the `signal` group by default.",
         "properties": {
           "description": {
             "anyOf": [
@@ -6018,6 +6170,22 @@
               }
             ],
             "title": "Enum"
+          },
+          "group": {
+            "anyOf": [
+              {
+                "enum": [
+                  "signal",
+                  "risk",
+                  "session"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group"
           },
           "label": {
             "title": "Label",
@@ -7319,7 +7487,7 @@
     },
     "/api/backtests/{backtest_id}": {
       "delete": {
-        "description": "Delete a run and all its children.\n\nORM relationships are declared with cascade=\"all, delete-orphan\", so\ntrades, equity_points, run_metrics, and config_snapshot go with it.\nNotes keep a nullable FK and are not cascade-deleted \u2014 they survive\nas floating research notes.",
+        "description": "Delete a run and all its children.\n\nORM relationships are declared with cascade=\"all, delete-orphan\", so\ntrades, equity_points, run_metrics, and config_snapshot go with it.\nNotes keep a nullable FK and are not cascade-deleted \u2014 they survive\nas floating research notes.\n\nSQLite FK enforcement is off in this app (PRAGMA foreign_keys=0) and\nthe baseline_run_id columns were added via migrations that didn't\nencode ON DELETE SET NULL, so we explicitly NULL out any\nStrategyVersion.baseline_run_id and Experiment.baseline_run_id /\nvariant_run_id pointing at this run before deleting. Without this,\nthe Forward Drift Monitor's /drift/latest endpoint would render an\nempty panel after the live-baseline run was deleted (observed\n2026-04-28).",
         "operationId": "delete_backtest_api_backtests__backtest_id__delete",
         "parameters": [
           {
@@ -10002,6 +10170,102 @@
         "summary": "Update Strategy",
         "tags": [
           "strategies"
+        ]
+      }
+    },
+    "/api/strategies/{strategy_id}/chat": {
+      "get": {
+        "operationId": "list_chat_messages_api_strategies__strategy_id__chat_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChatMessageRead"
+                  },
+                  "title": "Response List Chat Messages Api Strategies  Strategy Id  Chat Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Chat Messages",
+        "tags": [
+          "chat"
+        ]
+      },
+      "post": {
+        "operationId": "post_chat_turn_api_strategies__strategy_id__chat_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatTurnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatTurnResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Chat Turn",
+        "tags": [
+          "chat"
         ]
       }
     },

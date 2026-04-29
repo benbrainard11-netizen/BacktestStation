@@ -85,6 +85,15 @@ export interface paths {
          *     trades, equity_points, run_metrics, and config_snapshot go with it.
          *     Notes keep a nullable FK and are not cascade-deleted — they survive
          *     as floating research notes.
+         *
+         *     SQLite FK enforcement is off in this app (PRAGMA foreign_keys=0) and
+         *     the baseline_run_id columns were added via migrations that didn't
+         *     encode ON DELETE SET NULL, so we explicitly NULL out any
+         *     StrategyVersion.baseline_run_id and Experiment.baseline_run_id /
+         *     variant_run_id pointing at this run before deleting. Without this,
+         *     the Forward Drift Monitor's /drift/latest endpoint would render an
+         *     empty panel after the live-baseline run was deleted (observed
+         *     2026-04-28).
          */
         delete: operations["delete_backtest_api_backtests__backtest_id__delete"];
         options?: never;
@@ -1051,6 +1060,24 @@ export interface paths {
         patch: operations["update_strategy_api_strategies__strategy_id__patch"];
         trace?: never;
     };
+    "/api/strategies/{strategy_id}/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Chat Messages */
+        get: operations["list_chat_messages_api_strategies__strategy_id__chat_get"];
+        put?: never;
+        /** Post Chat Turn */
+        post: operations["post_chat_turn_api_strategies__strategy_id__chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies/{strategy_id}/runs": {
         parameters: {
             query?: never;
@@ -1324,6 +1351,20 @@ export interface components {
              * @default 1
              */
             qty: number;
+            /** Session End Hour */
+            session_end_hour?: number | null;
+            /** Session Start Hour */
+            session_start_hour?: number | null;
+            /**
+             * Session Tz
+             * @default America/New_York
+             */
+            session_tz: string;
+            /**
+             * Slippage Ticks
+             * @default 1
+             */
+            slippage_ticks: number;
             /** Start */
             start: string;
             /** Strategy Name */
@@ -1380,6 +1421,59 @@ export interface components {
             trades_file: string;
             /** Version */
             version?: string | null;
+        };
+        /**
+         * ChatMessageRead
+         * @description One message rendered in the chat thread.
+         */
+        ChatMessageRead: {
+            /** Cli Session Id */
+            cli_session_id: string | null;
+            /** Content */
+            content: string;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /**
+             * Model
+             * @enum {string}
+             */
+            model: "claude" | "codex";
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Strategy Id */
+            strategy_id: number;
+        };
+        /**
+         * ChatTurnRequest
+         * @description POST body for a new chat turn.
+         */
+        ChatTurnRequest: {
+            /**
+             * Model
+             * @default claude
+             * @enum {string}
+             */
+            model: "claude" | "codex";
+            /** Prompt */
+            prompt: string;
+        };
+        /**
+         * ChatTurnResponse
+         * @description Returns both new messages so the FE can append in order.
+         */
+        ChatTurnResponse: {
+            assistant: components["schemas"]["ChatMessageRead"];
+            user: components["schemas"]["ChatMessageRead"];
         };
         /** ConfidenceInterval */
         ConfidenceInterval: {
@@ -3277,12 +3371,21 @@ export interface components {
          *     hints for number inputs; `description` is a one-line hint shown
          *     under the field. `enum` lets a strategy expose dropdown choices in
          *     the future (unused so far).
+         *
+         *     `group` lets the inline runner bucket fields by concern:
+         *       - `signal`  : algorithmic knobs that define what the strategy detects
+         *       - `risk`    : per-trade risk caps (stop, target, max risk pts/$)
+         *       - `session` : portfolio-level limits (max trades/day, dedup window,
+         *         entry-window hours)
+         *     Untagged fields fall into the `signal` group by default.
          */
         StrategyParamFieldSchema: {
             /** Description */
             description?: string | null;
             /** Enum */
             enum?: unknown[] | null;
+            /** Group */
+            group?: ("signal" | "risk" | "session") | null;
             /** Label */
             label: string;
             /** Max */
@@ -5604,6 +5707,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StrategyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_chat_messages_api_strategies__strategy_id__chat_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessageRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_chat_turn_api_strategies__strategy_id__chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatTurnRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatTurnResponse"];
                 };
             };
             /** @description Validation Error */
