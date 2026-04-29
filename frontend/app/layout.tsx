@@ -4,8 +4,8 @@ import { Work_Sans } from "next/font/google";
 import CommandPalette from "@/components/layout/CommandPalette";
 import ContextBar from "@/components/layout/ContextBar";
 import KeyboardHelp from "@/components/layout/KeyboardHelp";
-import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
+import TopTabs from "@/components/layout/TopTabs";
 
 import "./globals.css";
 
@@ -28,15 +28,13 @@ export default function RootLayout({
  return (
  <html lang="en" className={workSans.variable}>
  <body className="min-h-screen bg-bg text-text">
- <div className="flex h-screen">
- <Sidebar />
- <div className="flex h-screen flex-1 flex-col overflow-hidden">
+ <div className="flex h-screen flex-col overflow-hidden">
  <TopBar />
+ <TopTabs />
  <main className="flex-1 overflow-auto bg-bg">
  {children}
  </main>
  <ContextBar />
- </div>
  </div>
  <CommandPalette />
  <KeyboardHelp />

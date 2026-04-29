@@ -5,7 +5,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { NAV_GROUPS, NAV_ITEMS, type NavItem } from "@/lib/navigation";
+import {
+  NAV_GROUPS,
+  NAV_ITEMS,
+  TOP_TAB_HREFS,
+  type NavItem,
+} from "@/lib/navigation";
+
+// Items that have moved to the top-tab nav. Filter them out of the
+// sidebar so the same destination doesn't show up twice.
+const SIDEBAR_ITEMS: NavItem[] = NAV_ITEMS.filter(
+  (item) => !TOP_TAB_HREFS.has(item.href),
+);
 
 // App version. Hardcoded, matches backend/pyproject.toml + frontend/package.json.
 // Build-time injection (git SHA + commit date) lands with Phase 3+ tooling.
@@ -60,7 +71,7 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const activeHref = pickActiveHref(pathname, NAV_ITEMS);
+  const activeHref = pickActiveHref(pathname, SIDEBAR_ITEMS);
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface">
@@ -73,7 +84,7 @@ export default function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         {NAV_GROUPS.map((group) => {
-          const items = NAV_ITEMS.filter((i) => i.group === group.key);
+          const items = SIDEBAR_ITEMS.filter((i) => i.group === group.key);
           if (items.length === 0) return null;
           return (
             <div key={group.key} className="mb-5 last:mb-0">

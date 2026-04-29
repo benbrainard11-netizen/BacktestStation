@@ -49,3 +49,19 @@ export const NAV_GROUPS: { key: NavGroup; label: string }[] = [
   { key: "live", label: "Live" },
   { key: "system", label: "System" },
 ];
+
+// Top-tab items live in the new horizontal nav above the page content.
+// Sidebar filters these hrefs out so we don't double up.
+export interface TopTabItem {
+  href: string;
+  label: string;
+}
+
+export const TOP_TAB_ITEMS: TopTabItem[] = [
+  { href: "/", label: "Dashboard" },
+  { href: "/strategies", label: "Strategies" },
+];
+
+export const TOP_TAB_HREFS: ReadonlySet<string> = new Set(
+  TOP_TAB_ITEMS.map((i) => i.href),
+);
