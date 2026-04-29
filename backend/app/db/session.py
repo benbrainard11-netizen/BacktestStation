@@ -9,7 +9,7 @@ own engine with `make_engine("sqlite:///<tmp>/test.sqlite")` and call
 import threading
 from collections.abc import Generator
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.paths import META_DB_PATH, ensure_data_dir
@@ -20,14 +20,26 @@ class Base(DeclarativeBase):
 
 
 def make_engine(database_url: str | None = None) -> Engine:
-    """Build a SQLAlchemy engine. Defaults to the local SQLite metadata DB."""
+    """Build a SQLAlchemy engine. Defaults to the local SQLite metadata DB.
+
+    SQLite engines get a `PRAGMA foreign_keys=ON` connect listener so the
+    FK relationships declared on the ORM models are actually enforced. SQLite
+    ships with FK enforcement OFF by default — without this, `ON DELETE`
+    cascades and orphan-row protections silently no-op.
+    """
     if database_url is None:
         ensure_data_dir()
         database_url = f"sqlite:///{META_DB_PATH}"
-    connect_args = (
-        {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-    )
-    return create_engine(database_url, connect_args=connect_args, future=True)
+    is_sqlite = database_url.startswith("sqlite")
+    connect_args = {"check_same_thread": False} if is_sqlite else {}
+    engine = create_engine(database_url, connect_args=connect_args, future=True)
+    if is_sqlite:
+        @event.listens_for(engine, "connect")
+        def _enable_sqlite_foreign_keys(dbapi_connection, _connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+    return engine
 
 
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:
@@ -117,6 +129,15 @@ def _run_data_migrations(engine: Engine) -> None:
                     "ALTER TABLE backtest_runs ADD COLUMN source VARCHAR(20) "
                     "NOT NULL DEFAULT 'imported'"
                 )
+            )
+
+        # 2026-04-29: BacktestRun gains `tags` (JSON list) — the API at
+        # PUT /api/backtests/{id}/tags has been writing to this attribute,
+        # but the underlying column was missing so values silently dropped
+        # on commit. Existing rows backfill to NULL.
+        if "tags" not in run_columns:
+            connection.execute(
+                text("ALTER TABLE backtest_runs ADD COLUMN tags JSON")
             )
 
         # 2026-04-25: StrategyVersion.baseline_run_id added for the Forward

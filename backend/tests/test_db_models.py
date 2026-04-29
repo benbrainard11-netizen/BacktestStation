@@ -1,7 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import inspect
+import pytest
+from sqlalchemy import inspect, text
+from sqlalchemy.exc import IntegrityError
 
 from app.db import models
 from app.db.session import create_all, make_engine, make_session_factory
@@ -87,3 +89,98 @@ def test_strategy_chain_roundtrip(tmp_path: Path) -> None:
         assert len(loaded.equity_points) == 1
         assert len(loaded.trades) == 1
         assert loaded.trades[0].tags == ["breakout"]
+
+
+def test_backtest_runs_has_tags_column(tmp_path: Path) -> None:
+    """Regression: PUT /api/backtests/{id}/tags writes to BacktestRun.tags
+    but the column was missing in the schema for a long stretch, silently
+    dropping values on commit. Lock the column in."""
+    engine = make_engine(f"sqlite:///{tmp_path / 'tags.sqlite'}")
+    create_all(engine)
+    columns = {c["name"] for c in inspect(engine).get_columns("backtest_runs")}
+    assert "tags" in columns
+
+    SessionLocal = make_session_factory(engine)
+    with SessionLocal() as session:
+        strategy = models.Strategy(name="T", slug="t")
+        version = models.StrategyVersion(version="v1", strategy=strategy)
+        run = models.BacktestRun(
+            symbol="NQ",
+            import_source="t",
+            strategy_version=version,
+            tags=["validated", "live-candidate"],
+        )
+        session.add(strategy)
+        session.commit()
+        run_id = run.id
+
+    with SessionLocal() as session:
+        loaded = session.get(models.BacktestRun, run_id)
+        assert loaded is not None
+        assert loaded.tags == ["validated", "live-candidate"]
+
+
+def test_legacy_db_missing_tags_column_is_migrated(tmp_path: Path) -> None:
+    """An older `data/meta.sqlite` may have backtest_runs WITHOUT the tags
+    column. _run_data_migrations should add it idempotently."""
+    db_path = tmp_path / "legacy.sqlite"
+    engine = make_engine(f"sqlite:///{db_path}")
+
+    # Build the legacy schema by hand — same shape as the model minus
+    # the columns added in subsequent migrations.
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE TABLE backtest_runs ("
+                " id INTEGER PRIMARY KEY,"
+                " strategy_version_id INTEGER NOT NULL,"
+                " name VARCHAR(200),"
+                " symbol VARCHAR(40) NOT NULL,"
+                " timeframe VARCHAR(20),"
+                " session_label VARCHAR(40),"
+                " start_ts DATETIME,"
+                " end_ts DATETIME,"
+                " import_source TEXT,"
+                " status VARCHAR(20) NOT NULL DEFAULT 'imported',"
+                " created_at DATETIME"
+                ")"
+            )
+        )
+
+    create_all(engine)  # triggers _run_data_migrations
+
+    columns = {c["name"] for c in inspect(engine).get_columns("backtest_runs")}
+    assert "tags" in columns
+
+    # Re-running the migration is a no-op (idempotent).
+    create_all(engine)
+    columns = {c["name"] for c in inspect(engine).get_columns("backtest_runs")}
+    assert "tags" in columns
+
+
+def test_sqlite_foreign_keys_enforced(tmp_path: Path) -> None:
+    """SQLite ships with FK enforcement OFF — the engine factory enables it
+    so declared relationships actually prevent orphan rows. Inserting a
+    Trade with a bogus backtest_run_id should raise IntegrityError."""
+    engine = make_engine(f"sqlite:///{tmp_path / 'fk.sqlite'}")
+    create_all(engine)
+
+    # Confirm the pragma is on at the connection level.
+    with engine.connect() as connection:
+        result = connection.execute(text("PRAGMA foreign_keys")).scalar()
+        assert result == 1, f"expected foreign_keys=1, got {result}"
+
+    SessionLocal = make_session_factory(engine)
+    with SessionLocal() as session:
+        # backtest_run_id 9999 does not exist — FK should reject the trade.
+        bad_trade = models.Trade(
+            backtest_run_id=9999,
+            entry_ts=datetime(2026, 1, 2, 13, 30),
+            symbol="NQ",
+            side="long",
+            entry_price=21000.0,
+            size=1.0,
+        )
+        session.add(bad_trade)
+        with pytest.raises(IntegrityError):
+            session.commit()

@@ -242,3 +242,47 @@ def test_delete_doesnt_clear_unrelated_baselines(
         version_b = session.get(models.StrategyVersion, version_b_id)
         assert version_b is not None
         assert version_b.baseline_run_id == run_b_id
+
+
+def test_delete_run_removes_prop_firm_simulations(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Codex review 2026-04-29: PropFirmSimulation has a non-null FK to
+    backtest_runs. With FK enforcement on, deleting a run with a sim
+    pointing at it would 500 unless the sim is cascade-deleted first."""
+    run_id, _ = _seed_full_run(session_factory, slug="prop")
+    with session_factory() as session:
+        sim = models.PropFirmSimulation(
+            name="test sim",
+            source_backtest_run_id=run_id,
+            firm_profile_id="apex_50k",
+            config_json={"k": 1},
+            firm_profile_json={"name": "apex"},
+            aggregated_json={"pass_rate": 0.5},
+            selected_paths_json=[],
+            fan_bands_json={},
+            confidence_json={},
+            rule_violation_counts_json={},
+            daily_pnl_json=[],
+            pool_backtests_json=[],
+            summary_pass_rate=0.5,
+            summary_fail_rate=0.5,
+            summary_payout_rate=0.0,
+            summary_ev_after_fees=0.0,
+            summary_confidence=0.95,
+            sampling_mode="bootstrap",
+            simulation_count=1000,
+            risk_label="conservative",
+            strategy_name="test",
+            firm_name="apex",
+            account_size=50_000.0,
+        )
+        session.add(sim)
+        session.commit()
+        sim_id = sim.id
+
+    response = client.delete(f"/api/backtests/{run_id}")
+    assert response.status_code == 204
+
+    with session_factory() as session:
+        assert session.get(models.PropFirmSimulation, sim_id) is None

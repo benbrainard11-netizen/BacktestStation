@@ -440,6 +440,83 @@ def test_delete_strategy_cleans_up_attached_notes(
     assert remaining == []
 
 
+def test_delete_strategy_version_clears_live_signals(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Codex review 2026-04-29: LiveSignal.strategy_version_id is a
+    nullable FK; with FK enforcement on, deleting a version with live
+    signals (and no runs) would 500 unless the signals are cleared first.
+    Signals must survive (floating, no attribution) so the historical
+    record is preserved."""
+    from datetime import datetime
+
+    with session_factory() as session:
+        strategy = models.Strategy(name="Y", slug="y")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        sid = strategy.id  # noqa: F841 — kept for parity / readability
+        vid = version.id
+        signal = models.LiveSignal(
+            strategy_version_id=vid,
+            ts=datetime(2026, 1, 2, 13, 30),
+            side="long",
+            price=21000.0,
+            reason="test",
+        )
+        session.add(signal)
+        session.commit()
+        signal_id = signal.id
+
+    response = client.delete(f"/api/strategy-versions/{vid}")
+    assert response.status_code == 204, response.text
+
+    with session_factory() as session:
+        loaded = session.get(models.LiveSignal, signal_id)
+        assert loaded is not None, "live signal should survive version delete"
+        assert loaded.strategy_version_id is None
+
+
+def test_delete_strategy_cleans_up_chat_messages(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Codex review 2026-04-29: ChatMessage.strategy_id is a FK; with FK
+    enforcement on, deleting a strategy with chat history would 500
+    unless the messages are cleaned up first."""
+    with session_factory() as session:
+        strategy = models.Strategy(name="Chatty", slug="chatty")
+        session.add(strategy)
+        session.commit()
+        sid = strategy.id
+        # Insert chat history directly (the API handler would otherwise
+        # spawn a CLI subprocess — out of scope for this test).
+        session.add(
+            models.ChatMessage(
+                strategy_id=sid, role="user", content="hello", model="claude"
+            )
+        )
+        session.add(
+            models.ChatMessage(
+                strategy_id=sid,
+                role="assistant",
+                content="hi back",
+                model="claude",
+            )
+        )
+        session.commit()
+
+    response = client.delete(f"/api/strategies/{sid}")
+    assert response.status_code == 204, response.text
+
+    with session_factory() as session:
+        from sqlalchemy import select
+
+        remaining = session.scalars(
+            select(models.ChatMessage).where(models.ChatMessage.strategy_id == sid)
+        ).all()
+        assert remaining == []
+
+
 def test_delete_strategy_version_cleans_up_attached_notes_and_experiments(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:

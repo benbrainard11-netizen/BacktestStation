@@ -231,7 +231,12 @@ def import_jsonl(
     run_name = f"{RUN_NAME_PREFIX} {jsonl_path.name}"
 
     with factory() as session:
-        # Idempotency: nuke any prior import for this jsonl.
+        # Idempotency: nuke any prior import for this jsonl. Use the
+        # shared run-deletion helper so we honor FK enforcement (notes,
+        # baselines, prop-firm sims pointing at the prior run all get
+        # cleaned up the same way the API DELETE endpoint does).
+        from app.services.run_deletion import delete_run as _delete_run_with_cleanup
+
         prior = session.scalars(
             select(BacktestRun).where(
                 BacktestRun.name == run_name,
@@ -239,7 +244,7 @@ def import_jsonl(
             )
         ).all()
         for run in prior:
-            session.delete(run)
+            _delete_run_with_cleanup(session, run)
         if prior:
             log.info(f"replaced {len(prior)} prior live run(s) for this jsonl")
             session.flush()

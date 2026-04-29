@@ -109,6 +109,7 @@ class BacktestRun(Base):
         String(20), default="imported", server_default="imported", index=True
     )
     status: Mapped[str] = mapped_column(String(20), default="imported")
+    tags: Mapped[list[str] | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     strategy_version: Mapped[StrategyVersion] = relationship(

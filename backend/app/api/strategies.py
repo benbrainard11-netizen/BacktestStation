@@ -12,7 +12,15 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.db.models import BacktestRun, Experiment, Note, Strategy, StrategyVersion
+from app.db.models import (
+    BacktestRun,
+    ChatMessage,
+    Experiment,
+    LiveSignal,
+    Note,
+    Strategy,
+    StrategyVersion,
+)
 from app.db.session import get_session
 from app.schemas import (
     BacktestRunRead,
@@ -177,10 +185,14 @@ def delete_strategy(
                 "(PATCH status=\"archived\") or delete each version first."
             ),
         )
-    # Clean up orphan notes attached at the strategy level. There are no
+    # Clean up rows that reference this strategy directly. There are no
     # versions at this point (409 above), so no version-scoped rows to
-    # worry about.
+    # worry about. With FK enforcement on, both notes and chat messages
+    # must be cleared before the strategy row can be deleted; chat
+    # history is cascade-deleted with the strategy (it lives and dies
+    # with the conversation thread it belongs to).
     db.execute(delete(Note).where(Note.strategy_id == strategy.id))
+    db.execute(delete(ChatMessage).where(ChatMessage.strategy_id == strategy.id))
     db.delete(strategy)
     db.commit()
     return None
@@ -286,10 +298,20 @@ def delete_strategy_version(
             ),
         )
     # Clean up orphan research artifacts scoped to this version. No runs
-    # are attached (409 above), so nothing downstream to touch.
+    # are attached (409 above), so nothing downstream to touch. With FK
+    # enforcement on, every nullable FK pointing at this version must be
+    # cleared first; LiveSignal.strategy_version_id can be set when the
+    # live bot emitted signals for this version even before any run was
+    # imported (codex review 2026-04-29). NULL preserves the signal's
+    # historical record, just floating without attribution.
     db.execute(delete(Note).where(Note.strategy_version_id == version.id))
     db.execute(
         delete(Experiment).where(Experiment.strategy_version_id == version.id)
+    )
+    db.execute(
+        LiveSignal.__table__.update()
+        .where(LiveSignal.strategy_version_id == version.id)
+        .values(strategy_version_id=None)
     )
     db.delete(version)
     db.commit()
