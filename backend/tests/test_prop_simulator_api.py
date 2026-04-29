@@ -168,6 +168,109 @@ def test_simulation_persists_and_appears_in_list(
     assert detail.json()["config"]["simulation_id"] == sim_id
 
 
+def _seed_second_run_with_trades(
+    factory: sessionmaker[Session],
+    *,
+    strategy_name: str,
+    strategy_slug: str,
+    symbol: str = "ES.c.0",
+    n_trades: int = 30,
+) -> int:
+    """Seed a SECOND, distinct strategy + version + run with trades."""
+    with factory() as session:
+        strategy = models.Strategy(name=strategy_name, slug=strategy_slug)
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        run = models.BacktestRun(
+            strategy_version=version,
+            symbol=symbol,
+            timeframe="1m",
+            start_ts=datetime(2026, 4, 1),
+            end_ts=datetime(2026, 4, 24),
+            import_source="test2",
+            source="imported",
+            status="complete",
+        )
+        session.add_all([strategy, version, run])
+        session.flush()
+        for i in range(n_trades):
+            day = datetime(2026, 4, 1 + (i % 24), 14, 0)
+            session.add(
+                models.Trade(
+                    backtest_run_id=run.id,
+                    entry_ts=day,
+                    exit_ts=day,
+                    symbol=symbol,
+                    side="long",
+                    entry_price=5_000.0,
+                    exit_price=5_000.0,
+                    size=1.0,
+                    r_multiple=1.0 if i % 2 == 0 else -1.0,
+                    exit_reason="target" if i % 2 == 0 else "stop",
+                )
+            )
+        session.commit()
+        return run.id
+
+
+def test_multi_strategy_pool_carries_per_run_metadata(
+    client: TestClient, session_factory: sessionmaker[Session]
+):
+    """Codex review 2026-04-29 finding #8: when the pool spans multiple
+    strategies, each pool_backtests row must carry its OWN strategy/
+    version/symbol — not the first run's metadata copy-pasted across
+    every row. Top-level strategy_name should label the mix as
+    "Mixed pool" rather than misleadingly using the first run's name."""
+    run_a = _seed_run_with_trades(session_factory)
+    run_b = _seed_second_run_with_trades(
+        session_factory,
+        strategy_name="Opening Range Breakout",
+        strategy_slug="orb",
+        symbol="ES.c.0",
+    )
+
+    response = client.post(
+        "/api/prop-firm/simulations",
+        json=_payload(run_a, simulation_count=30) | {
+            "selected_backtest_ids": [run_a, run_b],
+        },
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+
+    # Each pool_backtests row carries its own strategy + symbol.
+    pool = body["pool_backtests"]
+    assert len(pool) == 2
+    by_run = {row["backtest_id"]: row for row in pool}
+    assert by_run[run_a]["strategy_name"] == "Fractal AMD"
+    assert by_run[run_a]["symbol"] == "NQ.c.0"
+    assert by_run[run_b]["strategy_name"] == "Opening Range Breakout"
+    assert by_run[run_b]["symbol"] == "ES.c.0"
+
+    # Top-level persisted strategy_name (visible on the list endpoint)
+    # is honest about the multi-strategy mix instead of the first run's
+    # name.
+    rows = client.get("/api/prop-firm/simulations").json()
+    assert len(rows) == 1
+    assert "Mixed pool" in rows[0]["strategy_name"], (
+        f"expected 'Mixed pool' label, got {rows[0]['strategy_name']!r}"
+    )
+
+
+def test_single_strategy_pool_keeps_real_strategy_name(
+    client: TestClient, session_factory: sessionmaker[Session]
+):
+    """Single-strategy pool: persisted strategy_name should be the real
+    name, not 'Mixed'. Regression on the Mixed-label edge."""
+    run_id = _seed_run_with_trades(session_factory)
+    response = client.post(
+        "/api/prop-firm/simulations",
+        json=_payload(run_id, simulation_count=30),
+    )
+    assert response.status_code == 201
+    rows = client.get("/api/prop-firm/simulations").json()
+    assert rows[0]["strategy_name"] == "Fractal AMD"
+
+
 def test_simulation_with_no_trades_returns_422(
     client: TestClient, session_factory: sessionmaker[Session]
 ):

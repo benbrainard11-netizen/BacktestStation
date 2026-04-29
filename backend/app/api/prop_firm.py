@@ -453,19 +453,57 @@ def create_simulation(
             )
         firm_profile = _preset_to_firm_rule_profile(legacy_preset, payload)
 
-    # 4. Resolve strategy name (use the first run's strategy).
-    first_run = runs[0]
-    version = db.get(StrategyVersion, first_run.strategy_version_id)
-    strategy = (
-        db.get(Strategy, version.strategy_id) if version is not None else None
-    )
-    strategy_name = strategy.name if strategy else "Unknown strategy"
+    # 4. Resolve per-run strategy + version metadata. Codex review
+    # 2026-04-29 finding #8: previously only the FIRST run's metadata
+    # was looked up and copy-pasted across every pool_backtests row,
+    # silently mis-labelling runs from different strategies/versions/
+    # symbols when the user picked a multi-strategy pool.
+    version_ids = {r.strategy_version_id for r in runs}
+    versions_by_id: dict[int, StrategyVersion] = {
+        v.id: v
+        for v in db.scalars(
+            select(StrategyVersion).where(StrategyVersion.id.in_(version_ids))
+        )
+    }
+    strategy_ids = {v.strategy_id for v in versions_by_id.values()}
+    strategies_by_id: dict[int, Strategy] = {
+        s.id: s
+        for s in db.scalars(
+            select(Strategy).where(Strategy.id.in_(strategy_ids))
+        )
+    }
 
-    # 5. Build pool_backtests + daily_pnl side data.
-    pool_backtests = [
-        _pool_backtest_summary(r, version, strategy, len(trades), trades)
-        for r in runs
-    ]
+    def _meta_for(run: BacktestRun) -> tuple[StrategyVersion | None, Strategy | None]:
+        version = versions_by_id.get(run.strategy_version_id)
+        strategy = (
+            strategies_by_id.get(version.strategy_id)
+            if version is not None
+            else None
+        )
+        return version, strategy
+
+    # Top-level strategy_name: single name when the pool is
+    # homogeneous, "Mixed pool (N strategies)" otherwise. The Monte
+    # Carlo result row shows this; using "Mixed" instead of misleading
+    # the user with the first run's name is the honest choice.
+    unique_strategy_names = sorted(
+        {s.name for _, s in (_meta_for(r) for r in runs) if s is not None}
+    )
+    if len(unique_strategy_names) == 1:
+        strategy_name = unique_strategy_names[0]
+    elif len(unique_strategy_names) == 0:
+        strategy_name = "Unknown strategy"
+    else:
+        strategy_name = f"Mixed pool ({len(unique_strategy_names)} strategies)"
+
+    # 5. Build pool_backtests + daily_pnl side data. Each row carries
+    # its OWN run's strategy/version metadata.
+    pool_backtests = []
+    for r in runs:
+        v, s = _meta_for(r)
+        pool_backtests.append(
+            _pool_backtest_summary(r, v, s, len(trades), trades)
+        )
     daily_pnl = _build_daily_pnl(trades, payload.risk_per_trade or 200.0)
 
     # 6. Run the Monte Carlo.
@@ -478,11 +516,14 @@ def create_simulation(
         daily_pnl=daily_pnl,
     )
 
-    # 7. Persist.
+    # 7. Persist. The denormalized `source_backtest_run_id` is the
+    # primary anchor for the per-run detail page; for multi-run pools
+    # we use the first run as the anchor (the others appear in the
+    # pool_backtests JSON column with their own metadata).
     risk_label = _format_risk_label(payload)
     sim = PropFirmSimulation(
         name=payload.name,
-        source_backtest_run_id=first_run.id,
+        source_backtest_run_id=runs[0].id,
         firm_profile_id=payload.firm_profile_id,
         config_json=result["config"],
         firm_profile_json=result["firm"],
