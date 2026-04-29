@@ -11,6 +11,7 @@ from app.api import (
     data_quality,
     datasets,
     experiments,
+    features,
     health,
     imports,
     monitor,
@@ -59,3 +60,4 @@ app.include_router(settings_api.router, prefix="/api")
 app.include_router(replay.router, prefix="/api")
 app.include_router(trade_replay.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(features.router, prefix="/api")

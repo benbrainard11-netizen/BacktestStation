@@ -21,6 +21,7 @@ class StrategyVersionRead(OrmModel):
     created_at: datetime
     archived_at: datetime | None = None
     baseline_run_id: int | None = None
+    spec_json: dict[str, Any] | None = None
 
 
 class StrategyRead(OrmModel):
@@ -31,6 +32,7 @@ class StrategyRead(OrmModel):
     status: str
     tags: list[str] | None
     created_at: datetime
+    plugin: str | None = None
     versions: list[StrategyVersionRead] = []
 
 
@@ -210,6 +212,10 @@ class StrategyCreate(BaseModel):
     description: str | None = None
     status: str = Field(default="idea", max_length=20)
     tags: list[str] | None = None
+    # Engine-plugin key (composable / fractal_amd / etc.). When the user
+    # picks a plugin at strategy creation, the workspace's Build tab
+    # renders the right UI (visual feature builder vs markdown rules).
+    plugin: str | None = Field(default=None, max_length=64)
 
     @field_validator("name", mode="after")
     @classmethod
@@ -247,6 +253,7 @@ class StrategyUpdate(BaseModel):
     description: str | None = None
     status: str | None = None
     tags: list[str] | None = None
+    plugin: str | None = None
 
     @field_validator("name", mode="after")
     @classmethod
@@ -300,6 +307,7 @@ class StrategyVersionUpdate(BaseModel):
     exit_md: str | None = None
     risk_md: str | None = None
     git_commit_sha: str | None = None
+    spec_json: dict[str, Any] | None = None
 
 
 class StrategyStagesRead(BaseModel):

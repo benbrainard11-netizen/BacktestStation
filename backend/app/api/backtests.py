@@ -88,6 +88,20 @@ def run_engine_backtest(
             "commission_per_contract": spec.commission_per_contract,
         }
 
+    # Composable strategies: if the run params are empty (or missing the
+    # entry lists), fall back to the version's saved spec_json. Lets the
+    # /build visual builder save the recipe once and the /backtest tab
+    # use it without re-pasting the spec on every run. Per-run overrides
+    # still win when the caller passes an explicit params dict.
+    run_params = dict(payload.params or {})
+    if (
+        payload.strategy_name == "composable"
+        and not run_params.get("entry_long")
+        and not run_params.get("entry_short")
+    ):
+        if version.spec_json:
+            run_params = {**version.spec_json, **run_params}
+
     config = RunConfig(
         strategy_name=payload.strategy_name,
         symbol=payload.symbol,
@@ -97,7 +111,7 @@ def run_engine_backtest(
         initial_equity=payload.initial_equity,
         qty=payload.qty,
         aux_symbols=payload.aux_symbols,
-        params=payload.params,
+        params=run_params,
         slippage_ticks=payload.slippage_ticks,
         session_start_hour=payload.session_start_hour,
         session_end_hour=payload.session_end_hour,

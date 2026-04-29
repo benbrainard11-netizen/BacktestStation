@@ -13,6 +13,33 @@ interface NewStrategyButtonProps {
  stages: string[];
 }
 
+// Hand-listed plugin choices that match the engine resolver. When a
+// new plugin lands in `app.services.strategy_registry.STRATEGY_DEFINITIONS`,
+// add it here too. "composable" gets the visual feature builder on the
+// /build sub-page; the others use the markdown rules editor.
+const PLUGIN_OPTIONS: { value: string; label: string; hint: string }[] = [
+ {
+ value: "composable",
+ label: "Composable (visual builder)",
+ hint: "Stack pre-made features into a recipe. No Python.",
+ },
+ {
+ value: "fractal_amd",
+ label: "Fractal AMD",
+ hint: "Trusted-style SMT + FVG setup with the live bot's gates.",
+ },
+ {
+ value: "fractal_amd_trusted",
+ label: "Fractal AMD (trusted port)",
+ hint: "Byte-faithful port of the trusted multi-year backtest.",
+ },
+ {
+ value: "moving_average_crossover",
+ label: "Moving average crossover",
+ hint: "Smoke-test plugin. Two MAs, fixed-tick stop / target.",
+ },
+];
+
 type Phase =
  | { kind: "closed" }
  | { kind: "open" }
@@ -26,12 +53,14 @@ export default function NewStrategyButton({ stages }: NewStrategyButtonProps) {
  const [slug, setSlug] = useState("");
  const [description, setDescription] = useState("");
  const [status, setStatus] = useState<string>(stages[0] ?? "idea");
+ const [plugin, setPlugin] = useState<string>(PLUGIN_OPTIONS[0].value);
 
  function open() {
  setName("");
  setSlug("");
  setDescription("");
  setStatus(stages[0] ?? "idea");
+ setPlugin(PLUGIN_OPTIONS[0].value);
  setPhase({ kind: "open" });
  }
 
@@ -52,6 +81,7 @@ export default function NewStrategyButton({ stages }: NewStrategyButtonProps) {
  slug: slug.trim().toLowerCase(),
  description: description.trim() || null,
  status,
+ plugin,
  }),
  });
  if (!response.ok) {
@@ -131,6 +161,23 @@ export default function NewStrategyButton({ stages }: NewStrategyButtonProps) {
  </select>
  </label>
  </div>
+ <label className="flex flex-col gap-1 tabular-nums text-[10px] text-text-mute">
+ Engine plugin
+ <select
+ value={plugin}
+ onChange={(e) => setPlugin(e.target.value)}
+ className="border border-border bg-surface px-2 py-1 tabular-nums text-xs text-text focus:border-border focus:outline-none"
+ >
+ {PLUGIN_OPTIONS.map((p) => (
+ <option key={p.value} value={p.value}>
+ {p.label}
+ </option>
+ ))}
+ </select>
+ <span className="tabular-nums text-[10px] text-text-mute">
+ {PLUGIN_OPTIONS.find((p) => p.value === plugin)?.hint}
+ </span>
+ </label>
  <label className="flex flex-col gap-1 tabular-nums text-[10px] text-text-mute">
  Description
  <textarea

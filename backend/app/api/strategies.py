@@ -83,6 +83,7 @@ def create_strategy(
         description=payload.description,
         status=payload.status,
         tags=payload.tags,
+        plugin=payload.plugin,
     )
     db.add(strategy)
     try:
@@ -144,6 +145,8 @@ def update_strategy(
         strategy.status = payload.status
     if "tags" in touched:
         strategy.tags = payload.tags
+    if "plugin" in touched:
+        strategy.plugin = payload.plugin
     db.commit()
     db.refresh(strategy)
     _ = strategy.versions
@@ -248,6 +251,8 @@ def update_strategy_version(
         version.risk_md = payload.risk_md
     if "git_commit_sha" in touched:
         version.git_commit_sha = payload.git_commit_sha
+    if "spec_json" in touched:
+        version.spec_json = payload.spec_json
     db.commit()
     db.refresh(version)
     return version

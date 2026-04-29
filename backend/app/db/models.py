@@ -37,6 +37,12 @@ class Strategy(Base):
     # idea | testing | live | retired
     status: Mapped[str] = mapped_column(String(20), default="idea")
     tags: Mapped[list[str] | None] = mapped_column(JSON)
+    # Engine plugin this strategy uses — matches a key in
+    # `app.services.strategy_registry.STRATEGY_DEFINITIONS`. Null = the
+    # strategy isn't bound to a plugin yet (legacy / imported-only). The
+    # frontend's Build page renders the visual feature builder when
+    # plugin === "composable", else the markdown rules editor.
+    plugin: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     versions: Mapped[list["StrategyVersion"]] = relationship(
@@ -65,6 +71,11 @@ class StrategyVersion(Base):
     baseline_run_id: Mapped[int | None] = mapped_column(
         ForeignKey("backtest_runs.id", ondelete="SET NULL"), default=None
     )
+    # Composable-strategy spec (entry_long / entry_short / stop / target
+    # rules over the FEATURES registry). Null for traditional plugins
+    # (fractal_amd etc.) which still use entry_md/exit_md/risk_md as the
+    # rules source. Set by the visual feature builder on /build.
+    spec_json: Mapped[dict | None] = mapped_column(JSON, default=None)
 
     strategy: Mapped[Strategy] = relationship(back_populates="versions")
     # `runs` is the reverse side of BacktestRun.strategy_version_id. With

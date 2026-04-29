@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import ArchiveVersionButton from "@/components/strategies/ArchiveVersionButton";
+import ComposableBuilder from "@/components/strategies/ComposableBuilder";
 import NewVersionButton from "@/components/strategies/NewVersionButton";
 import Panel from "@/components/Panel";
 import { ApiError, apiGet } from "@/lib/api/client";
@@ -19,12 +20,11 @@ interface PageProps {
 export const dynamic = "force-dynamic";
 
 /**
- * Per-strategy build sub-page. v1: versions list with markdown
- * rules (entry / exit / risk) + per-version run list.
+ * Per-strategy build sub-page.
  *
- * Phase C lands here later — for `composable` strategies, this page
- * gets a feature pantry + recipe editor instead of (or alongside)
- * the markdown rules.
+ * For composable strategies (`strategy.plugin === "composable"`) we
+ * render the visual feature builder (Phase C). For traditional
+ * strategies we render the markdown-based rules editor + version list.
  */
 export default async function BuildPage({ params }: PageProps) {
   const { id } = await params;
@@ -46,22 +46,28 @@ export default async function BuildPage({ params }: PageProps) {
   }
 
   const sortedVersions = [...strategy.versions].sort((a, b) => b.id - a.id);
+  const isComposable = strategy.plugin === "composable";
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-4">
       <header className="flex items-baseline justify-between gap-3 border-b border-border pb-2">
         <div>
           <h2 className="m-0 text-[15px] font-medium tracking-[-0.01em] text-text">
             Build
           </h2>
           <p className="m-0 mt-0.5 text-xs text-text-mute">
-            Each version freezes a specific entry / exit / risk
-            ruleset. Phase C visual feature builder lands here later.
+            {isComposable
+              ? "Compose a strategy from pre-made features. Saved spec auto-applies on the next backtest run."
+              : "Each version freezes a specific entry / exit / risk ruleset."}
           </p>
         </div>
         <NewVersionButton strategyId={strategy.id} />
       </header>
 
+      {isComposable ? <ComposableBuilder strategy={strategy} /> : null}
+
+      {/* Versions list — shown for both plugin types so users can see /
+          archive / inspect versions, not just edit the active spec. */}
       {sortedVersions.length === 0 ? (
         <Panel title="No versions yet">
           <p className="text-xs text-text-mute">
@@ -71,6 +77,7 @@ export default async function BuildPage({ params }: PageProps) {
         </Panel>
       ) : (
         <div className="flex flex-col gap-3">
+          <h3 className="m-0 text-[13px] font-medium text-text-dim">Versions</h3>
           {sortedVersions.map((version) => (
             <VersionPanel
               key={version.id}

@@ -156,6 +156,24 @@ def _run_data_migrations(engine: Engine) -> None:
         if inspector.has_table("firm_rule_profiles"):
             _seed_default_firm_rule_profiles(connection)
 
+        # 2026-04-29: Strategy.plugin — engine-plugin key (composable /
+        # fractal_amd / fractal_amd_trusted / moving_average_crossover).
+        # Lets the workspace render the right Build-tab UI (visual
+        # feature builder vs markdown rules) without name-matching tricks.
+        s_columns = {c["name"] for c in inspector.get_columns("strategies")}
+        if "plugin" not in s_columns:
+            connection.execute(
+                text("ALTER TABLE strategies ADD COLUMN plugin VARCHAR(64)")
+            )
+
+        # 2026-04-29: StrategyVersion.spec_json — composable-strategy
+        # recipe (entry_long / entry_short / stop / target). Null for
+        # traditional plugins.
+        if "spec_json" not in sv_columns:
+            connection.execute(
+                text("ALTER TABLE strategy_versions ADD COLUMN spec_json JSON")
+            )
+
         # 2026-04-29: ChatMessage table for per-strategy AI chat threads.
         # `Base.metadata.create_all()` already handles fresh DBs; this
         # guarded CREATE catches existing sqlite files that predate the
