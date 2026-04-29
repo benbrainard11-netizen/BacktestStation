@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import ConnectionStatus from "@/components/ConnectionStatus";
+import CurrentStrategySwitcher from "@/components/CurrentStrategySwitcher";
 import LocalClock from "@/components/LocalClock";
 import WindowControls from "@/components/WindowControls";
 
@@ -95,6 +96,7 @@ export default function TopBar() {
         ))}
       </div>
       <div data-tauri-drag-region="" className="flex items-center gap-2 pr-2">
+        <CurrentStrategySwitcher />
         <LocalClock />
         <ConnectionStatus />
       </div>

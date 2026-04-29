@@ -1,15 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
 import EquityCurve from "@/components/charts/EquityCurve";
 import Heartbeat from "@/components/charts/Heartbeat";
 import MonthlyHeatmap from "@/components/charts/MonthlyHeatmap";
 import Sparkline from "@/components/charts/Sparkline";
+import StrategyPicker from "@/components/StrategyPicker";
 import Btn from "@/components/ui/Btn";
 import Panel from "@/components/ui/Panel";
 import Pill from "@/components/ui/Pill";
 import Row from "@/components/ui/Row";
 import StatTile from "@/components/ui/StatTile";
-import { ApiError, apiGet } from "@/lib/api/client";
+import { useCurrentStrategy } from "@/lib/hooks/useCurrentStrategy";
 import {
   tradesToEquityPoints,
   tradesToMonthlyHeatmap,
@@ -20,50 +24,256 @@ type BacktestRun = components["schemas"]["BacktestRunRead"];
 type LiveMonitorStatus = components["schemas"]["LiveMonitorStatus"];
 type Note = components["schemas"]["NoteRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
+type Strategy = components["schemas"]["StrategyRead"];
 type Trade = components["schemas"]["TradeRead"];
 
-export const dynamic = "force-dynamic";
+interface DashboardData {
+  strategy: Strategy;
+  runs: BacktestRun[];
+  latestRun: BacktestRun | null;
+  metrics: RunMetrics | null;
+  trades: Trade[];
+  monitor: LiveMonitorStatus | null;
+  notes: Note[];
+}
 
-export default async function CommandCenter() {
-  const [runs, monitor, notes] = await Promise.all([
-    apiGet<BacktestRun[]>("/api/backtests").catch(() => [] as BacktestRun[]),
-    apiGet<LiveMonitorStatus>("/api/monitor/live").catch(
-      () => null as LiveMonitorStatus | null,
-    ),
-    apiGet<Note[]>("/api/notes").catch(() => [] as Note[]),
-  ]);
+type DashboardState =
+  | { kind: "loading" }
+  | { kind: "no-strategy" }
+  | { kind: "stale-strategy" }
+  | { kind: "error"; message: string }
+  | { kind: "data"; data: DashboardData };
 
-  const latestRun = runs[0] ?? null;
-  const [latestMetrics, latestTrades] = await Promise.all([
-    latestRun
-      ? apiGet<RunMetrics>(`/api/backtests/${latestRun.id}/metrics`).catch(
-          (error) => {
-            if (error instanceof ApiError && error.status === 404) return null;
-            throw error;
+export default function CommandCenter() {
+  const { id: currentId, loading: currentLoading, clearId } =
+    useCurrentStrategy();
+  const [state, setState] = useState<DashboardState>({ kind: "loading" });
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Fetch everything tied to the current strategy. Re-runs whenever the id
+  // changes (incl. cross-tab sync via storage event).
+  useEffect(() => {
+    if (currentLoading) return;
+    if (currentId === null) {
+      setState({ kind: "no-strategy" });
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      setState({ kind: "loading" });
+      try {
+        const [strategy, runs, monitor, notes] = await Promise.all([
+          fetchJson<Strategy>(`/api/strategies/${currentId}`),
+          fetchJson<BacktestRun[]>(`/api/strategies/${currentId}/runs`),
+          fetchOrNull<LiveMonitorStatus>("/api/monitor/live"),
+          fetchOr<Note[]>("/api/notes", []),
+        ]);
+
+        if (cancelled) return;
+
+        const sortedRuns = [...runs].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime(),
+        );
+        const latestRun = sortedRuns[0] ?? null;
+
+        const [metrics, trades] = await Promise.all([
+          latestRun
+            ? fetchOrNull<RunMetrics>(
+                `/api/backtests/${latestRun.id}/metrics`,
+              )
+            : Promise.resolve(null),
+          latestRun
+            ? fetchOr<Trade[]>(`/api/backtests/${latestRun.id}/trades`, [])
+            : Promise.resolve([] as Trade[]),
+        ]);
+        if (cancelled) return;
+
+        // Notes scoped to this strategy = notes whose backtest_run_id is one
+        // of this strategy's runs (or directly references one of its versions
+        // via attached run). Trade-attached notes follow the same path.
+        const runIds = new Set(sortedRuns.map((r) => r.id));
+        const scopedNotes = notes.filter(
+          (n) => n.backtest_run_id !== null && runIds.has(n.backtest_run_id),
+        );
+
+        setState({
+          kind: "data",
+          data: {
+            strategy,
+            runs: sortedRuns,
+            latestRun,
+            metrics,
+            trades,
+            monitor,
+            notes: scopedNotes,
           },
-        )
-      : Promise.resolve(null),
-    latestRun
-      ? apiGet<Trade[]>(`/api/backtests/${latestRun.id}/trades`).catch(
-          () => [] as Trade[],
-        )
-      : Promise.resolve([] as Trade[]),
-  ]);
-
-  const equity = tradesToEquityPoints(latestTrades);
-  const monthly = tradesToMonthlyHeatmap(latestTrades);
-  const liveRunning =
-    monitor?.source_exists && monitor?.strategy_status === "running";
+        });
+      } catch (e) {
+        if (cancelled) return;
+        // 404 on /api/strategies/{id} means the saved id is stale (strategy
+        // deleted). Recover by clearing localStorage and reverting to the
+        // no-strategy state.
+        if (e instanceof Error && /^404 /.test(e.message)) {
+          clearId();
+          setState({ kind: "stale-strategy" });
+          return;
+        }
+        setState({
+          kind: "error",
+          message: e instanceof Error ? e.message : "Failed to load",
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentId, currentLoading, clearId]);
 
   return (
     <div className="px-8 pb-10 pt-8">
-      <Header runCount={runs.length} notesCount={notes.length} />
+      {state.kind === "loading" ? <LoadingHeader /> : null}
+      {state.kind === "no-strategy" ? (
+        <EmptyDashboard onPick={() => setPickerOpen(true)} />
+      ) : null}
+      {state.kind === "stale-strategy" ? (
+        <StaleDashboard onPick={() => setPickerOpen(true)} />
+      ) : null}
+      {state.kind === "error" ? (
+        <ErrorDashboard
+          message={state.message}
+          onPick={() => setPickerOpen(true)}
+        />
+      ) : null}
+      {state.kind === "data" ? <DashboardBody data={state.data} /> : null}
+
+      <StrategyPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+      />
+    </div>
+  );
+}
+
+// ── states ────────────────────────────────────────────────────────────
+
+function LoadingHeader() {
+  return (
+    <header className="mb-7 flex items-end justify-between gap-6 border-b border-border pb-5">
+      <div>
+        <p className="m-0 text-xs text-text-mute">Loading…</p>
+        <h1 className="mt-1.5 text-[28px] font-medium leading-tight tracking-[-0.02em] text-text">
+          Welcome
+        </h1>
+      </div>
+    </header>
+  );
+}
+
+function EmptyDashboard({ onPick }: { onPick: () => void }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
+      <div className="flex flex-col gap-2">
+        <p className="m-0 text-xs text-text-mute">
+          no strategy selected
+        </p>
+        <h1 className="m-0 text-[32px] font-medium leading-tight tracking-[-0.02em] text-text">
+          Pick a strategy to start.
+        </h1>
+        <p className="m-0 text-[14px] text-text-dim">
+          Your dashboard is scoped to a strategy. Choose one to focus
+          on, or create a new thesis from scratch.
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Btn variant="primary" onClick={onPick}>
+          Choose strategy
+        </Btn>
+        <Btn href="/strategies">Browse all strategies</Btn>
+      </div>
+      <p className="mt-4 text-xs text-text-mute">
+        Want the cross-strategy overview instead?{" "}
+        <Link href="/monitor" className="text-accent hover:underline">
+          Go to /monitor →
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+function StaleDashboard({ onPick }: { onPick: () => void }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
+      <div className="flex flex-col gap-2">
+        <p className="m-0 text-xs text-warn">strategy not found</p>
+        <h1 className="m-0 text-[28px] font-medium leading-tight tracking-[-0.02em] text-text">
+          Your saved strategy was deleted.
+        </h1>
+        <p className="m-0 text-[14px] text-text-dim">
+          Pick another to continue.
+        </p>
+      </div>
+      <Btn variant="primary" onClick={onPick}>
+        Choose strategy
+      </Btn>
+    </div>
+  );
+}
+
+function ErrorDashboard({
+  message,
+  onPick,
+}: {
+  message: string;
+  onPick: () => void;
+}) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
+      <div className="flex flex-col gap-2">
+        <p className="m-0 text-xs text-neg">dashboard error</p>
+        <h1 className="m-0 text-[28px] font-medium leading-tight tracking-[-0.02em] text-text">
+          Couldn&apos;t load this strategy.
+        </h1>
+        <p className="m-0 text-[14px] text-text-dim">{message}</p>
+      </div>
+      <Btn onClick={onPick}>Switch strategy</Btn>
+    </div>
+  );
+}
+
+// ── selected dashboard ────────────────────────────────────────────────
+
+function DashboardBody({ data }: { data: DashboardData }) {
+  const equity = useMemo(() => tradesToEquityPoints(data.trades), [data.trades]);
+  const monthly = useMemo(
+    () => tradesToMonthlyHeatmap(data.trades),
+    [data.trades],
+  );
+
+  // Live status applies to THIS strategy only when the strategy is live or
+  // forward-test stage AND the singleton monitor reports running. The
+  // monitor endpoint doesn't return which strategy is live, so we infer
+  // from the strategy's own status field.
+  const isLiveCandidate =
+    data.strategy.status === "live" ||
+    data.strategy.status === "forward_test";
+  const liveRunning =
+    isLiveCandidate &&
+    data.monitor?.source_exists === true &&
+    data.monitor.strategy_status === "running";
+
+  return (
+    <>
+      <Header strategy={data.strategy} runCount={data.runs.length} />
 
       <KpiStrip
-        monitor={monitor}
-        liveRunning={Boolean(liveRunning)}
-        latestRun={latestRun}
-        latestMetrics={latestMetrics}
+        strategy={data.strategy}
+        monitor={data.monitor}
+        liveRunning={liveRunning}
+        latestRun={data.latestRun}
+        metrics={data.metrics}
         sparkValues={equity.map((p) => p.r)}
       />
 
@@ -71,11 +281,15 @@ export default async function CommandCenter() {
         <div className="col-span-7">
           <Panel
             title="Latest run"
-            meta={latestRun ? latestRun.name ?? `BT-${latestRun.id}` : "—"}
+            meta={
+              data.latestRun
+                ? data.latestRun.name ?? `BT-${data.latestRun.id}`
+                : "—"
+            }
           >
             <LatestRunBody
-              run={latestRun}
-              metrics={latestMetrics}
+              run={data.latestRun}
+              metrics={data.metrics}
               equity={equity}
             />
           </Panel>
@@ -86,12 +300,18 @@ export default async function CommandCenter() {
             meta={
               liveRunning ? (
                 <Pill tone="pos">running</Pill>
+              ) : isLiveCandidate ? (
+                <Pill tone="warn">offline</Pill>
               ) : (
-                <Pill tone="neutral">offline</Pill>
+                <Pill tone="neutral">{data.strategy.status}</Pill>
               )
             }
           >
-            <LiveChannelBody monitor={monitor} liveRunning={Boolean(liveRunning)} />
+            <LiveChannelBody
+              monitor={data.monitor}
+              isLiveCandidate={isLiveCandidate}
+              liveRunning={liveRunning}
+            />
           </Panel>
         </div>
       </div>
@@ -119,50 +339,56 @@ export default async function CommandCenter() {
         <div className="col-span-7">
           <Panel
             title="Recent runs"
-            meta={runs.length === 0 ? "none" : `${runs.length} total`}
+            meta={data.runs.length === 0 ? "none" : `${data.runs.length} total`}
             padded={false}
           >
-            <RecentRunsTable runs={runs.slice(0, 6)} />
+            <RecentRunsTable runs={data.runs.slice(0, 6)} />
           </Panel>
         </div>
         <div className="col-span-5">
           <Panel
             title="Recent notes"
-            meta={notes.length === 0 ? "none" : `${notes.length} total`}
+            meta={
+              data.notes.length === 0 ? "none" : `${data.notes.length} total`
+            }
           >
-            <RecentNotesList notes={notes.slice(0, 4)} />
+            <RecentNotesList notes={data.notes.slice(0, 4)} />
           </Panel>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
 function Header({
+  strategy,
   runCount,
-  notesCount,
 }: {
+  strategy: Strategy;
   runCount: number;
-  notesCount: number;
 }) {
   const greeting = greetingFor(new Date());
   return (
     <header className="mb-7 flex items-end justify-between gap-6 border-b border-border pb-5">
       <div>
         <p className="m-0 text-xs text-text-mute">
-          Today · {new Date().toLocaleDateString()}
+          Today · {new Date().toLocaleDateString()} · working on{" "}
+          <span className="text-text-dim">{strategy.name}</span>
         </p>
         <h1 className="mt-1.5 text-[28px] font-medium leading-tight tracking-[-0.02em] text-text">
           {greeting}, Ben
         </h1>
         <p className="mt-1 text-sm text-text-dim">
-          {runCount} runs imported · {notesCount} notes
+          {runCount} run{runCount === 1 ? "" : "s"} ·{" "}
+          {strategy.versions.length} version
+          {strategy.versions.length === 1 ? "" : "s"} · stage{" "}
+          <span className="text-text">{strategy.status}</span>
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <Btn href="/import">Import run</Btn>
-        <Btn href="/strategies" variant="primary">
-          New backtest
+        <Btn href={`/strategies/${strategy.id}`}>Open detail</Btn>
+        <Btn href="/import" variant="primary">
+          Import run
         </Btn>
       </div>
     </header>
@@ -170,25 +396,27 @@ function Header({
 }
 
 function KpiStrip({
+  strategy,
   monitor,
   liveRunning,
   latestRun,
-  latestMetrics,
+  metrics,
   sparkValues,
 }: {
+  strategy: Strategy;
   monitor: LiveMonitorStatus | null;
   liveRunning: boolean;
   latestRun: BacktestRun | null;
-  latestMetrics: RunMetrics | null;
+  metrics: RunMetrics | null;
   sparkValues: number[];
 }) {
-  const todayPnl = monitor?.today_pnl ?? null;
-  const todayR = monitor?.today_r ?? null;
-  const tradesToday = monitor?.trades_today ?? null;
+  const todayPnl = liveRunning ? monitor?.today_pnl ?? null : null;
+  const todayR = liveRunning ? monitor?.today_r ?? null : null;
+  const tradesToday = liveRunning ? monitor?.trades_today ?? null : null;
 
-  const netR = latestMetrics?.net_r ?? null;
-  const pf = latestMetrics?.profit_factor ?? null;
-  const tradeCount = latestMetrics?.trade_count ?? null;
+  const netR = metrics?.net_r ?? null;
+  const pf = metrics?.profit_factor ?? null;
+  const tradeCount = metrics?.trade_count ?? null;
 
   return (
     <div className="mb-4 grid grid-cols-4 gap-4">
@@ -200,9 +428,11 @@ function KpiStrip({
             : `${todayPnl >= 0 ? "+" : "-"}$${Math.abs(todayPnl).toFixed(2)}`
         }
         sub={
-          tradesToday !== null && todayR !== null
+          liveRunning && tradesToday !== null && todayR !== null
             ? `${tradesToday} trades · ${todayR >= 0 ? "+" : ""}${todayR.toFixed(2)}R`
-            : "no live data"
+            : strategy.status === "live" || strategy.status === "forward_test"
+              ? "no live data"
+              : "not deployed"
         }
         tone={
           todayPnl === null ? "neutral" : todayPnl >= 0 ? "pos" : "neg"
@@ -210,15 +440,23 @@ function KpiStrip({
       />
       <StatTile
         label="Live status"
-        value={liveRunning ? "Running" : monitor?.strategy_status ?? "Idle"}
-        sub={
+        value={
           liveRunning
-            ? `heartbeat ${heartbeatAge(monitor?.last_heartbeat ?? null)} · ${monitor?.current_symbol ?? "—"}`
-            : monitor?.source_exists
-              ? "no current activity"
-              : "no status file"
+            ? "Running"
+            : strategy.status === "live"
+              ? "Offline"
+              : strategy.status === "forward_test"
+                ? "Forward test"
+                : "Idle"
         }
-        tone={liveRunning ? "pos" : "neutral"}
+        sub={
+          liveRunning && monitor?.last_heartbeat
+            ? `heartbeat ${heartbeatAge(monitor.last_heartbeat)} · ${monitor.current_symbol ?? "—"}`
+            : `stage · ${strategy.status}`
+        }
+        tone={
+          liveRunning ? "pos" : strategy.status === "live" ? "warn" : "neutral"
+        }
       />
       <StatTile
         label={
@@ -234,9 +472,7 @@ function KpiStrip({
             ? `pf ${pf.toFixed(2)} · ${tradeCount} trades`
             : "no metrics"
         }
-        tone={
-          netR === null ? "neutral" : netR >= 0 ? "pos" : "neg"
-        }
+        tone={netR === null ? "neutral" : netR >= 0 ? "pos" : "neg"}
         spark={
           sparkValues.length > 1 ? (
             <Sparkline values={sparkValues} width={84} height={22} />
@@ -245,10 +481,11 @@ function KpiStrip({
         href={latestRun ? `/backtests/${latestRun.id}` : undefined}
       />
       <StatTile
-        label="Drift"
-        value="—"
-        sub="not wired yet"
+        label="Versions"
+        value={String(strategy.versions.length)}
+        sub={`${strategy.slug}`}
         tone="neutral"
+        href={`/strategies/${strategy.id}`}
       />
     </div>
   );
@@ -267,10 +504,10 @@ function LatestRunBody({
     return (
       <div className="flex flex-col items-start gap-3 py-2">
         <p className="m-0 text-[13px] text-text-dim">
-          No runs imported yet. Import a CSV to seed the workspace.
+          No runs imported for this strategy yet.
         </p>
         <Btn href="/import" variant="primary">
-          Go to Import
+          Import a backtest
         </Btn>
       </div>
     );
@@ -290,8 +527,17 @@ function LatestRunBody({
       )}
       <div className="grid grid-cols-3 gap-x-6">
         {metricRow("Net R", metrics?.net_r, signedR, rTone)}
-        {metricRow("Win rate", metrics?.win_rate, (v) => `${(v * 100).toFixed(1)}%`)}
-        {metricRow("Profit factor", metrics?.profit_factor, (v) => v.toFixed(2), pfTone)}
+        {metricRow(
+          "Win rate",
+          metrics?.win_rate,
+          (v) => `${(v * 100).toFixed(1)}%`,
+        )}
+        {metricRow(
+          "Profit factor",
+          metrics?.profit_factor,
+          (v) => v.toFixed(2),
+          pfTone,
+        )}
         {metricRow("Max drawdown", metrics?.max_drawdown, signedR, ddTone)}
         {metricRow("Avg R", metrics?.avg_r, signedR, rTone)}
         {metricRow("Trades", metrics?.trade_count, (v) => v.toFixed(0))}
@@ -315,15 +561,27 @@ function metricRow(
 
 function LiveChannelBody({
   monitor,
+  isLiveCandidate,
   liveRunning,
 }: {
   monitor: LiveMonitorStatus | null;
+  isLiveCandidate: boolean;
   liveRunning: boolean;
 }) {
+  if (!isLiveCandidate) {
+    return (
+      <p className="text-[13px] text-text-dim">
+        This strategy isn&apos;t deployed yet — promote to{" "}
+        <span className="text-text">forward_test</span> or{" "}
+        <span className="text-text">live</span> to wire up the live channel.
+      </p>
+    );
+  }
   if (!monitor || !monitor.source_exists) {
     return (
       <p className="text-[13px] text-text-dim">
-        No live status file yet — bot has not written a heartbeat.
+        Strategy is staged for live but the bot hasn&apos;t written a
+        heartbeat yet.
       </p>
     );
   }
@@ -333,10 +591,7 @@ function LiveChannelBody({
       <div className="flex flex-col">
         <Row label="Symbol" value={monitor.current_symbol ?? "—"} />
         <Row label="Session" value={monitor.current_session ?? "—"} />
-        <Row
-          label="Heartbeat"
-          value={heartbeatAge(monitor.last_heartbeat)}
-        />
+        <Row label="Heartbeat" value={heartbeatAge(monitor.last_heartbeat)} />
         <Row
           label="Today P&L"
           value={
@@ -438,7 +693,7 @@ function RecentNotesList({ notes }: { notes: Note[] }) {
   if (notes.length === 0) {
     return (
       <p className="text-[13px] text-text-dim">
-        No notes yet. Capture observations in the journal.
+        No notes attached to this strategy yet.
       </p>
     );
   }
@@ -473,6 +728,30 @@ function RecentNotesList({ notes }: { notes: Note[] }) {
 
 // ── helpers ───────────────────────────────────────────────────────────
 
+async function fetchJson<T>(path: string): Promise<T> {
+  const r = await fetch(path, { cache: "no-store" });
+  if (!r.ok) {
+    throw new Error(`${r.status} ${r.statusText || "Request failed"}`);
+  }
+  return (await r.json()) as T;
+}
+
+async function fetchOrNull<T>(path: string): Promise<T | null> {
+  try {
+    return await fetchJson<T>(path);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchOr<T>(path: string, fallback: T): Promise<T> {
+  try {
+    return await fetchJson<T>(path);
+  } catch {
+    return fallback;
+  }
+}
+
 function greetingFor(now: Date): string {
   const h = now.getHours();
   if (h < 5) return "Working late";
@@ -502,7 +781,8 @@ function ddTone(value: number): "pos" | "neg" | "neutral" {
 function runStatusTone(
   status: string,
 ): "pos" | "neg" | "warn" | "neutral" {
-  if (status === "live" || status === "imported" || status === "ok") return "pos";
+  if (status === "live" || status === "imported" || status === "ok")
+    return "pos";
   if (status === "stale" || status === "warn") return "warn";
   if (status === "failed" || status === "error") return "neg";
   return "neutral";
@@ -546,3 +826,4 @@ function shortDateTime(iso: string): string {
     minute: "2-digit",
   });
 }
+
