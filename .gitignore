@@ -16,6 +16,11 @@ backend/tests/_artifacts/
 *.egg-info/
 dist/
 build/
+# Re-include Next.js route directories named "build" — they're source,
+# not Python build artifacts. Anchored under frontend/app/ so the
+# generic `build/` rule still catches Python output everywhere else.
+!frontend/app/**/build/
+!frontend/app/**/build/**
 
 # Node / Next.js
 node_modules/
