@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
-import os
 import re
 from pathlib import Path
+
+from app.core.paths import warehouse_root
 
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -58,8 +59,9 @@ _BAR_TIMEFRAMES = {
 
 
 def _data_root() -> Path:
-    default = "C:/data" if os.name == "nt" else "./data"
-    return Path(os.environ.get("BS_DATA_ROOT", default))
+    """Backwards-compat alias for `app.core.paths.warehouse_root` so the
+    module-internal callers below don't need to be touched."""
+    return warehouse_root()
 
 
 def _raw_partition_root(data_root: Path, schema: str) -> Path:

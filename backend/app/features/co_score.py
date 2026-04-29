@@ -1,10 +1,12 @@
 """Continuation-OF score feature.
 
-Wraps `compute_continuation_of` from the trusted plugin. Returns
-`passed=True` if the compound score for the given direction meets
-or exceeds `min_score`. `metadata` carries the raw score and the 8
-sub-feature values so downstream rules can reference them (e.g.,
-gate on a specific sub-feature instead of the compound score).
+Returns `passed=True` if the compound score for the given direction
+meets or exceeds `min_score`. `metadata` carries the raw score and
+the 8 sub-feature values so downstream rules can reference them
+(e.g., gate on a specific sub-feature instead of the compound
+score). The underlying `compute_continuation_of` math lives in
+`app.features._orderflow` (originally ported from the trusted
+plugin's order_flow.py).
 """
 
 from __future__ import annotations
@@ -12,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from app.features import Direction, FeatureResult, FeatureSpec, register
-from app.strategies.fractal_amd_trusted.orderflow import compute_continuation_of
+from app.features._orderflow import compute_continuation_of
 
 if TYPE_CHECKING:
     from app.backtest.strategy import Bar
@@ -51,10 +53,10 @@ register(
         fn=co_score,
         label="Continuation-OF score gate",
         description=(
-            "Compound 8-sub-feature OHLCV score from the trusted plugin "
-            "(volume fade, delta shift, absorption, range contraction, "
-            "etc.). Pass if the compound score for the given direction "
-            "is >= min_score. min_score=3 is trusted's default."
+            "Compound 8-sub-feature OHLCV score (volume fade, delta "
+            "shift, absorption, range contraction, etc.). Pass if the "
+            "compound score for the given direction is >= min_score. "
+            "3 is the historically used default."
         ),
         param_schema={
             "min_score": {

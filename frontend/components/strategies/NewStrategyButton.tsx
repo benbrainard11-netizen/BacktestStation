@@ -29,11 +29,6 @@ const PLUGIN_OPTIONS: { value: string; label: string; hint: string }[] = [
  hint: "Trusted-style SMT + FVG setup with the live bot's gates.",
  },
  {
- value: "fractal_amd_trusted",
- label: "Fractal AMD (trusted port)",
- hint: "Byte-faithful port of the trusted multi-year backtest.",
- },
- {
  value: "moving_average_crossover",
  label: "Moving average crossover",
  hint: "Smoke-test plugin. Two MAs, fixed-tick stop / target.",

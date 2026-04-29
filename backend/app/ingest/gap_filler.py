@@ -75,8 +75,9 @@ class GapFillResult:
 
 
 def _data_root() -> Path:
-    default = "C:/data" if os.name == "nt" else "./data"
-    return Path(os.environ.get("BS_DATA_ROOT", default))
+    """Backwards-compat alias for `app.core.paths.warehouse_root`."""
+    from app.core.paths import warehouse_root
+    return warehouse_root()
 
 
 def _is_weekday(day: dt.date) -> bool:

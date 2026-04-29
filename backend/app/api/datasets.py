@@ -5,7 +5,6 @@ endpoint walks the configured data root and reconciles. The list
 endpoint exposes filtered reads.
 """
 
-import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -21,9 +20,9 @@ router = APIRouter(prefix="/datasets", tags=["datasets"])
 
 
 def _data_root() -> Path:
-    """Resolve BS_DATA_ROOT env var → Path. Defaults match the ingester."""
-    default = "C:/data" if os.name == "nt" else "./data"
-    return Path(os.environ.get("BS_DATA_ROOT", default))
+    """Backwards-compat alias for `app.core.paths.warehouse_root`."""
+    from app.core.paths import warehouse_root
+    return warehouse_root()
 
 
 @router.get("", response_model=list[DatasetRead])

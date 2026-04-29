@@ -178,9 +178,9 @@ def _run_data_migrations(engine: Engine) -> None:
             _seed_default_firm_rule_profiles(connection)
 
         # 2026-04-29: Strategy.plugin — engine-plugin key (composable /
-        # fractal_amd / fractal_amd_trusted / moving_average_crossover).
-        # Lets the workspace render the right Build-tab UI (visual
-        # feature builder vs markdown rules) without name-matching tricks.
+        # fractal_amd / moving_average_crossover). Lets the workspace
+        # render the right Build-tab UI (visual feature builder vs
+        # markdown rules) without name-matching tricks.
         s_columns = {c["name"] for c in inspector.get_columns("strategies")}
         if "plugin" not in s_columns:
             connection.execute(

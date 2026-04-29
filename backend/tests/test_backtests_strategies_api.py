@@ -46,7 +46,6 @@ def test_list_strategies_returns_known_runnable_set(api_client) -> None:
     # surfaces them. Drift-detection: when a new one lands, this asserts up.
     assert names == {
         "fractal_amd",
-        "fractal_amd_trusted",
         "composable",
         "moving_average_crossover",
     }

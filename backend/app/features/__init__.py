@@ -23,8 +23,8 @@ Adding a feature:
      description, param schema for the form).
 
 Most features are thin wrappers around helpers already in
-`app/strategies/fractal_amd/signals.py` and
-`app/strategies/fractal_amd_trusted/orderflow.py`.
+`app/strategies/fractal_amd/signals.py` and the in-package
+`app/features/_orderflow.py` (continuation-OF score primitives).
 """
 
 from __future__ import annotations

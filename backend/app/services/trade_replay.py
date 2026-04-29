@@ -15,7 +15,6 @@ sub-day filtering at the parquet layer. We slice in pandas after load.
 from __future__ import annotations
 
 import datetime as dt
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -29,8 +28,9 @@ TRAIL_MAX_SECONDS = 1800
 
 
 def _data_root_default() -> Path:
-    default = "C:/data" if os.name == "nt" else "./data"
-    return Path(os.environ.get("BS_DATA_ROOT", default))
+    """Backwards-compat alias for `app.core.paths.warehouse_root`."""
+    from app.core.paths import warehouse_root
+    return warehouse_root()
 
 
 def _tbbo_partition_path(data_root: Path, symbol: str, date: dt.date) -> Path:

@@ -31,7 +31,6 @@ from __future__ import annotations
 from typing import Any
 
 from app.strategies.fractal_amd.config import FractalAMDConfig
-from app.strategies.fractal_amd_trusted.config import FractalAMDTrustedConfig
 
 
 def _fractal_amd_definition() -> dict[str, Any]:
@@ -200,131 +199,6 @@ def _moving_average_crossover_definition() -> dict[str, Any]:
     }
 
 
-def _fractal_amd_trusted_definition() -> dict[str, Any]:
-    cfg = FractalAMDTrustedConfig()
-    return {
-        "name": "fractal_amd_trusted",
-        "label": "Fractal AMD (trusted port)",
-        "description": (
-            "Engine-plugin port of `trusted_multiyear_bt.py`. Same SMT/FVG "
-            "model as Fractal AMD, but with the trusted backtest's batch-"
-            "lookahead CO gate (so plug↔trusted byte-equivalent on the same "
-            "data). Toggle `co_lookahead=False` to run live-faithful (no "
-            "future-bar peek)."
-        ),
-        "default_params": {
-            "stop_buffer_pts": cfg.stop_buffer_pts,
-            "target_r": cfg.target_r,
-            "max_hold_bars": cfg.max_hold_bars,
-            "max_risk_pts": cfg.max_risk_pts,
-            "min_risk_pts": cfg.min_risk_pts,
-            "min_co_score": cfg.min_co_score,
-            "max_trades_per_day": cfg.max_trades_per_day,
-            "entry_dedup_minutes": cfg.entry_dedup_minutes,
-            "fvg_min_gap_pct": cfg.fvg_min_gap_pct,
-            "fvg_expiry_bars": cfg.fvg_expiry_bars,
-            "co_lookahead": cfg.co_lookahead,
-            "entry_delay_bars": cfg.entry_delay_bars,
-        },
-        "param_schema": {
-            "type": "object",
-            "properties": {
-                "stop_buffer_pts": {
-                    "type": "number",
-                    "label": "Stop buffer beyond FVG (pts)",
-                    "min": 0,
-                    "max": 20,
-                    "step": 0.5,
-                    "group": "risk",
-                },
-                "target_r": {
-                    "type": "number",
-                    "label": "Target R-multiple",
-                    "min": 0.5,
-                    "max": 10,
-                    "step": 0.5,
-                    "group": "risk",
-                },
-                "max_hold_bars": {
-                    "type": "integer",
-                    "label": "Max hold (1m bars)",
-                    "min": 5,
-                    "max": 600,
-                    "group": "risk",
-                },
-                "max_risk_pts": {
-                    "type": "number",
-                    "label": "Max risk (pts)",
-                    "min": 1,
-                    "max": 500,
-                    "step": 1,
-                    "group": "risk",
-                },
-                "min_risk_pts": {
-                    "type": "number",
-                    "label": "Min risk (pts)",
-                    "min": 0,
-                    "max": 50,
-                    "step": 0.5,
-                    "group": "risk",
-                    "description": "0 = trusted-faithful; 8+ = live-deployable (drops unfillable tight stops).",
-                },
-                "min_co_score": {
-                    "type": "integer",
-                    "label": "Min CO score (gate)",
-                    "min": 0,
-                    "max": 8,
-                    "group": "signal",
-                    "description": "Continuation-OF threshold. 3 is trusted's value; raise to drop borderline.",
-                },
-                "max_trades_per_day": {
-                    "type": "integer",
-                    "label": "Max trades/day",
-                    "min": 1,
-                    "max": 10,
-                    "group": "session",
-                },
-                "entry_dedup_minutes": {
-                    "type": "integer",
-                    "label": "Direction dedup window (min)",
-                    "min": 1,
-                    "max": 60,
-                    "group": "session",
-                },
-                "fvg_min_gap_pct": {
-                    "type": "number",
-                    "label": "FVG min gap (% of avg range)",
-                    "min": 0,
-                    "max": 2,
-                    "step": 0.05,
-                    "group": "signal",
-                },
-                "fvg_expiry_bars": {
-                    "type": "integer",
-                    "label": "FVG expiry (LTF bars)",
-                    "min": 5,
-                    "max": 200,
-                    "group": "signal",
-                },
-                "co_lookahead": {
-                    "type": "boolean",
-                    "label": "CO lookahead (entry-bar score)",
-                    "group": "signal",
-                    "description": "True = trusted-faithful (uses entry bar's close in CO score). False = live-faithful (uses touch bar's close).",
-                },
-                "entry_delay_bars": {
-                    "type": "integer",
-                    "label": "Bars to wait between touch and entry",
-                    "min": 0,
-                    "max": 5,
-                    "group": "signal",
-                    "description": "0 = enter at T+1.open (trusted). 1 = wait one bar, enter at T+2.open.",
-                },
-            },
-        },
-    }
-
-
 def _composable_definition() -> dict[str, Any]:
     """User-assembled strategy. The full spec lives in `params` as a
     JSON object; the form surfaces a few top-level knobs and a hint
@@ -405,7 +279,6 @@ def _composable_definition() -> dict[str, Any]:
 
 STRATEGY_DEFINITIONS: list[dict[str, Any]] = [
     _fractal_amd_definition(),
-    _fractal_amd_trusted_definition(),
     _composable_definition(),
     _moving_average_crossover_definition(),
 ]

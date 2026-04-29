@@ -35,7 +35,6 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
-import os
 import subprocess
 import sys
 import uuid
@@ -87,12 +86,6 @@ def _resolve_strategy(name: str, params: dict, config: RunConfig) -> Strategy:
         from app.strategies.fractal_amd import FractalAMD
 
         return FractalAMD.from_config(
-            params, tick_size=config.tick_size, qty=config.qty
-        )
-    if name == "fractal_amd_trusted":
-        from app.strategies.fractal_amd_trusted import FractalAMDTrusted
-
-        return FractalAMDTrusted.from_config(
             params, tick_size=config.tick_size, qty=config.qty
         )
     if name == "composable":
@@ -185,8 +178,9 @@ def _read_symbol_bars(
 
 
 def _data_root() -> Path:
-    default = "C:/data" if os.name == "nt" else "./data"
-    return Path(os.environ.get("BS_DATA_ROOT", default))
+    """Backwards-compat alias for `app.core.paths.warehouse_root`."""
+    from app.core.paths import warehouse_root
+    return warehouse_root()
 
 
 def make_run_dir(

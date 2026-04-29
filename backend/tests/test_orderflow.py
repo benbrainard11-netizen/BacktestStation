@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 from app.backtest.strategy import Bar
-from app.strategies.fractal_amd_trusted.orderflow import (
+from app.features._orderflow import (
     compute_continuation_of as port_continuation_of,
 )
 
