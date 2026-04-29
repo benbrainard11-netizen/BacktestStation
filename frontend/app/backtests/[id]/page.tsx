@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import AutopsyPanel from "@/components/backtests/AutopsyPanel";
-import BacktestConfidencePanel from "@/components/backtests/BacktestConfidencePanel";
 import ConfigSnapshotPanel from "@/components/backtests/ConfigSnapshotPanel";
 import DataQualityPanel from "@/components/backtests/DataQualityPanel";
 import DeleteRunButton from "@/components/backtests/DeleteRunButton";
@@ -35,7 +34,6 @@ import {
   tradesToScatter,
 } from "@/lib/charts/transform";
 import type { components } from "@/lib/api/generated";
-import { computeHeuristicConfidence } from "@/lib/backtests/confidence-heuristic";
 import { cn } from "@/lib/utils";
 
 type AutopsyReport = components["schemas"]["AutopsyReportRead"];
@@ -249,20 +247,6 @@ export default async function BacktestDetailPage({
             </Panel>
           </div>
 
-          <Panel
-            title="Backtest confidence"
-            meta="MOCK · placeholder heuristic"
-          >
-            <BacktestConfidencePanel
-              confidence={computeHeuristicConfidence({
-                tradeCount: trades.length,
-                startIso: run.start_ts,
-                endIso: run.end_ts,
-                dataQualityScore: dataQuality.report?.reliability_score ?? null,
-                hasConfigSnapshot: configResult.config !== null,
-              })}
-            />
-          </Panel>
         </section>
 
         <section id="trades" className="flex flex-col gap-4 pt-2">
