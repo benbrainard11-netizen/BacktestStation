@@ -14,10 +14,13 @@ from zoneinfo import ZoneInfo
 from app.backtest.strategy import Bar
 from app.features import FEATURES, FeatureResult
 from app.features.co_score import co_score
+from app.features.decisive_close import decisive_close
 from app.features.fvg_touch_recent import fvg_touch_recent
 from app.features.prior_level_sweep import prior_level_sweep
 from app.features.smt_at_level import smt_at_level
+from app.features.swing_sweep import swing_sweep
 from app.features.time_window import time_window
+from app.features.volatility_regime import volatility_regime
 
 
 ET = ZoneInfo("America/New_York")
@@ -200,12 +203,127 @@ def test_fvg_touch_recent_no_history_fails_cleanly():
     assert r.passed is False
 
 
+# ── swing_sweep ───────────────────────────────────────────────────────
+
+
+def test_swing_sweep_pierces_recent_high():
+    """Build bars that have a clear swing high at index 5, then a
+    bar at index 12 that pierces it."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars: list[Bar] = []
+    # bars 0-4: low values
+    for i in range(5):
+        bars.append(_bar(base + dt.timedelta(minutes=i), open_=21000, high=21005, low=20995, close=21002))
+    # bar 5: pivot high at 21030
+    bars.append(_bar(base + dt.timedelta(minutes=5), open_=21010, high=21030, low=21008, close=21025))
+    # bars 6-10: pull back below pivot
+    for i in range(6, 11):
+        bars.append(_bar(base + dt.timedelta(minutes=i), open_=21015, high=21020, low=21010, close=21015))
+    # bar 11: still below
+    bars.append(_bar(base + dt.timedelta(minutes=11), open_=21015, high=21025, low=21010, close=21020))
+    # bar 12: pierces 21030
+    bars.append(_bar(base + dt.timedelta(minutes=12), open_=21025, high=21035, low=21022, close=21032))
+
+    r = swing_sweep(
+        bars=bars, aux={}, current_idx=12,
+        side="high", pivot_strength=2, lookback_bars=20,
+    )
+    assert r.passed, r.metadata
+    assert r.direction == "BEARISH"
+    assert r.metadata["swept_level"] == 21030
+
+
+def test_swing_sweep_no_pivot_in_window():
+    """All bars same price → no pivot → fails cleanly."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [_bar(base + dt.timedelta(minutes=i), open_=21000, high=21005, low=20995) for i in range(20)]
+    r = swing_sweep(
+        bars=bars, aux={}, current_idx=15,
+        side="high", pivot_strength=3, lookback_bars=20,
+    )
+    assert not r.passed
+
+
+# ── volatility_regime ─────────────────────────────────────────────────
+
+
+def test_volatility_regime_classifies_low():
+    """Tight bars → low regime."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [_bar(base + dt.timedelta(minutes=i), open_=21000, high=21002, low=20999) for i in range(35)]
+    r = volatility_regime(
+        bars=bars, aux={}, current_idx=34,
+        lookback_bars=30, low_threshold=8.0, high_threshold=25.0,
+        require="low",
+    )
+    assert r.passed
+    assert r.metadata["regime"] == "low"
+
+
+def test_volatility_regime_not_low_filter():
+    """Wider bars → not_low passes; require=low fails."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [_bar(base + dt.timedelta(minutes=i), open_=21000, high=21015, low=20995) for i in range(35)]
+    r_not_low = volatility_regime(
+        bars=bars, aux={}, current_idx=34,
+        lookback_bars=30, low_threshold=8.0, high_threshold=25.0,
+        require="not_low",
+    )
+    assert r_not_low.passed
+    r_low = volatility_regime(
+        bars=bars, aux={}, current_idx=34,
+        lookback_bars=30, low_threshold=8.0, high_threshold=25.0,
+        require="low",
+    )
+    assert not r_low.passed
+
+
+# ── decisive_close ────────────────────────────────────────────────────
+
+
+def test_decisive_close_bullish_momentum_passes():
+    """Body 80% of range, close > open → BULLISH passes."""
+    base = _utc(2026, 4, 24, 13, 30)
+    # range = 10 (from 21000 to 21010), body = close-open = 8 → 80%
+    bars = [_bar(base, open_=21001, high=21010, low=21000, close=21009)]
+    r = decisive_close(
+        bars=bars, aux={}, current_idx=0,
+        direction="BULLISH", min_body_pct=0.6, min_range_pts=1.0,
+    )
+    assert r.passed
+    assert r.metadata["body_pct"] >= 0.6
+
+
+def test_decisive_close_indecision_fails():
+    """Tiny body / wick-fade bar → fails."""
+    base = _utc(2026, 4, 24, 13, 30)
+    # range 10, body 1 → 10%
+    bars = [_bar(base, open_=21001, high=21010, low=21000, close=21002)]
+    r = decisive_close(
+        bars=bars, aux={}, current_idx=0,
+        direction="BULLISH", min_body_pct=0.6,
+    )
+    assert not r.passed
+
+
+def test_decisive_close_wrong_direction_fails():
+    """Bullish bar fails BEARISH check."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [_bar(base, open_=21001, high=21010, low=21000, close=21009)]
+    r = decisive_close(
+        bars=bars, aux={}, current_idx=0,
+        direction="BEARISH", min_body_pct=0.6,
+    )
+    assert not r.passed
+
+
 # ── registry ──────────────────────────────────────────────────────────
 
 
-def test_all_five_features_registered():
+def test_all_features_registered():
     expected = {"time_window", "co_score", "prior_level_sweep",
-                "smt_at_level", "fvg_touch_recent"}
+                "smt_at_level", "fvg_touch_recent",
+                "swing_sweep", "volatility_regime", "decisive_close"}
     assert expected.issubset(set(FEATURES.keys()))
     for name in expected:
         spec = FEATURES[name]

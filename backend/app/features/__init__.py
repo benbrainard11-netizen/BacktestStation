@@ -86,8 +86,11 @@ def register(name: str, spec: FeatureSpec) -> None:
 # `register(...)` at import time.
 from app.features import (  # noqa: E402,F401
     co_score,
+    decisive_close,
     fvg_touch_recent,
     prior_level_sweep,
     smt_at_level,
+    swing_sweep,
     time_window,
+    volatility_regime,
 )

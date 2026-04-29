@@ -6072,6 +6072,18 @@
             "title": "Name",
             "type": "string"
           },
+          "plugin": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plugin"
+          },
           "slug": {
             "maxLength": 120,
             "minLength": 1,
@@ -6289,6 +6301,17 @@
             "title": "Name",
             "type": "string"
           },
+          "plugin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plugin"
+          },
           "slug": {
             "title": "Slug",
             "type": "string"
@@ -6371,6 +6394,17 @@
               }
             ],
             "title": "Name"
+          },
+          "plugin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plugin"
           },
           "status": {
             "anyOf": [
@@ -6562,6 +6596,18 @@
             ],
             "title": "Risk Md"
           },
+          "spec_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec Json"
+          },
           "strategy_id": {
             "title": "Strategy Id",
             "type": "integer"
@@ -6631,6 +6677,18 @@
               }
             ],
             "title": "Risk Md"
+          },
+          "spec_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec Json"
           },
           "version": {
             "anyOf": [
@@ -8526,6 +8584,33 @@
         "summary": "Update Experiment",
         "tags": [
           "experiments"
+        ]
+      }
+    },
+    "/api/features": {
+      "get": {
+        "description": "Return the FEATURES registry as a flat list.\n\nEach entry: { name, label, description, param_schema }. Frontend\nrenders one card per entry in the feature pantry; clicking \"+ Add\"\ninstantiates a `{feature: name, params: {}}` block in the strategy\nspec.",
+        "operationId": "list_features_api_features_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response List Features Api Features Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Features",
+        "tags": [
+          "features"
         ]
       }
     },

@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import Btn from "@/components/ui/Btn";
 import Panel from "@/components/ui/Panel";
 import { ApiError, apiGet, type BackendErrorBody } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -199,8 +198,28 @@ export default function ComposableBuilder({ strategy }: Props) {
     });
   }
 
-  async function save() {
+  // Validate before saving so we don't persist nonsense specs.
+  // - At least ONE direction's entry list must be non-empty (otherwise
+  //   the strategy will never fire).
+  // - stop and target rules must be set.
+  function validateSpec(): string | null {
+    if (spec.entry_long.length === 0 && spec.entry_short.length === 0) {
+      return "Spec has no entries. Add at least one feature to Long or Short.";
+    }
+    if (!spec.stop?.type) return "Stop rule is missing.";
+    if (!spec.target?.type) return "Target rule is missing.";
+    return null;
+  }
+
+  async function save(opts?: { skipValidation?: boolean }) {
     if (versionId === "") return;
+    if (!opts?.skipValidation) {
+      const err = validateSpec();
+      if (err) {
+        setState({ kind: "error", message: err });
+        return;
+      }
+    }
     setState({ kind: "saving" });
     try {
       const response = await fetch(`/api/strategy-versions/${versionId}`, {
@@ -251,7 +270,7 @@ export default function ComposableBuilder({ strategy }: Props) {
         </div>
         <button
           type="button"
-          onClick={save}
+          onClick={() => save()}
           disabled={state.kind === "saving" || versionId === ""}
           className={cn(
             "rounded-md border border-pos/30 bg-pos/10 px-3 py-1.5 text-[13px] text-pos transition-colors hover:bg-pos/20",
@@ -459,10 +478,27 @@ export default function ComposableBuilder({ strategy }: Props) {
             </p>
           </Panel>
 
-          <div className="flex justify-end">
-            <Btn href={`/strategies/${strategy.id}/backtest`} variant="primary">
-              Run backtest →
-            </Btn>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                const err = validateSpec();
+                if (err) {
+                  setState({ kind: "error", message: err });
+                  return;
+                }
+                await save({ skipValidation: true });
+                router.push(`/strategies/${strategy.id}/backtest`);
+              }}
+              disabled={state.kind === "saving" || versionId === ""}
+              className={cn(
+                "rounded-md border border-accent/30 bg-accent/10 px-3 py-1.5 text-[13px] text-accent transition-colors hover:bg-accent/20",
+                (state.kind === "saving" || versionId === "") &&
+                  "cursor-not-allowed opacity-50",
+              )}
+            >
+              Save &amp; go to Backtest →
+            </button>
           </div>
         </div>
       </div>

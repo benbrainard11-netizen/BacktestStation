@@ -142,13 +142,30 @@ export default async function Dashboard() {
         >
           {liveStrategies.length === 0 ? (
             <div className="flex flex-col items-start gap-3 py-2">
-              <p className="m-0 text-[13px] text-text-dim">
-                No live strategies yet. Build one in the workspace and ship
-                it when ready.
-              </p>
-              <Btn href="/strategies" variant="primary">
-                Go to Strategies →
-              </Btn>
+              {strategies.length === 0 ? (
+                <>
+                  <p className="m-0 text-[13px] text-text-dim">
+                    No strategies yet. Build your first by stacking
+                    pre-made features in the visual builder — no code
+                    required.
+                  </p>
+                  <Btn href="/strategies" variant="primary">
+                    + Create your first strategy →
+                  </Btn>
+                </>
+              ) : (
+                <>
+                  <p className="m-0 text-[13px] text-text-dim">
+                    {strategies.length} strateg
+                    {strategies.length === 1 ? "y" : "ies"} in development
+                    — none shipped to live yet. Ship one when backtest +
+                    validate are clean.
+                  </p>
+                  <Btn href="/strategies" variant="primary">
+                    Open Strategies →
+                  </Btn>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">

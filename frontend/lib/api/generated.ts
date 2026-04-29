@@ -420,6 +420,31 @@ export interface paths {
         patch: operations["update_experiment_api_experiments__experiment_id__patch"];
         trace?: never;
     };
+    "/api/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Features
+         * @description Return the FEATURES registry as a flat list.
+         *
+         *     Each entry: { name, label, description, param_schema }. Frontend
+         *     renders one card per entry in the feature pantry; clicking "+ Add"
+         *     instantiates a `{feature: name, params: {}}` block in the strategy
+         *     spec.
+         */
+        get: operations["list_features_api_features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -3335,6 +3360,8 @@ export interface components {
             description?: string | null;
             /** Name */
             name: string;
+            /** Plugin */
+            plugin?: string | null;
             /** Slug */
             slug: string;
             /**
@@ -3422,6 +3449,8 @@ export interface components {
             id: number;
             /** Name */
             name: string;
+            /** Plugin */
+            plugin?: string | null;
             /** Slug */
             slug: string;
             /** Status */
@@ -3453,6 +3482,8 @@ export interface components {
             description?: string | null;
             /** Name */
             name?: string | null;
+            /** Plugin */
+            plugin?: string | null;
             /** Status */
             status?: string | null;
             /** Tags */
@@ -3507,6 +3538,10 @@ export interface components {
             id: number;
             /** Risk Md */
             risk_md: string | null;
+            /** Spec Json */
+            spec_json?: {
+                [key: string]: unknown;
+            } | null;
             /** Strategy Id */
             strategy_id: number;
             /** Version */
@@ -3525,6 +3560,10 @@ export interface components {
             git_commit_sha?: string | null;
             /** Risk Md */
             risk_md?: string | null;
+            /** Spec Json */
+            spec_json?: {
+                [key: string]: unknown;
+            } | null;
             /** Version */
             version?: string | null;
         };
@@ -4561,6 +4600,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_features_api_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
                 };
             };
         };
