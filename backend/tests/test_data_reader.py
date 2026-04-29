@@ -258,6 +258,234 @@ def test_read_bars_empty_returns_empty(data_root: Path) -> None:
     assert len(df) == 0
 
 
+def _write_bars_with_custom_vwaps(
+    data_root: Path,
+    *,
+    symbol: str,
+    date: dt.date,
+    rows: list[dict],
+) -> Path:
+    """Write a 1m partition with caller-supplied VWAP/volume rows.
+
+    Used by the resample-VWAP regression test so we can pin specific
+    sub-bar values and verify the pool VWAP comes back volume-weighted.
+    """
+    out = (
+        data_root
+        / "processed"
+        / "bars"
+        / "timeframe=1m"
+        / f"symbol={symbol}"
+        / f"date={date.isoformat()}"
+        / "part-000.parquet"
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.DataFrame(rows)
+    table = pa.Table.from_pandas(
+        df, schema=BARS_1M_SCHEMA.pa_schema, preserve_index=False
+    )
+    pq.write_table(table, out)
+    return out
+
+
+def test_read_bars_resampled_vwap_is_volume_weighted(data_root: Path) -> None:
+    """Codex review 2026-04-29: the higher-timeframe VWAP was being
+    computed as a plain mean of sub-bar VWAPs, which silently re-weights
+    every sub-bar equally regardless of how much volume traded inside it.
+    Lock the volume-weighted formula in.
+
+    Setup: five 1m bars within a single 5m bucket, all on a single day.
+    Three bars traded at vwap=100 with volume=1, two bars traded at
+    vwap=200 with volume=99. Plain mean = 140; volume-weighted mean =
+    sum(vwap*volume)/sum(volume) = (3*100 + 198*200)/(3 + 198) ≈ 198.5.
+    """
+    base_ts = pd.Timestamp(dt.date(2026, 4, 24), tz="UTC") + pd.Timedelta("13:30:00")
+    rows = []
+    for i in range(5):
+        # First three bars: vwap=100 vol=1; last two: vwap=200 vol=99.
+        is_heavy = i >= 3
+        vwap = 200.0 if is_heavy else 100.0
+        volume = 99 if is_heavy else 1
+        rows.append(
+            {
+                "ts_event": base_ts + pd.Timedelta(minutes=i),
+                "symbol": "NQ.c.0",
+                "open": vwap,
+                "high": vwap,
+                "low": vwap,
+                "close": vwap,
+                "volume": volume,
+                "trade_count": volume,
+                "vwap": vwap,
+            }
+        )
+    _write_bars_with_custom_vwaps(
+        data_root,
+        symbol="NQ.c.0",
+        date=dt.date(2026, 4, 24),
+        rows=rows,
+    )
+
+    df_5m = read_bars(
+        symbol="NQ.c.0",
+        timeframe="5m",
+        start="2026-04-24",
+        end="2026-04-25",
+    )
+    assert len(df_5m) == 1
+    bar = df_5m.iloc[0]
+    expected_weighted = (3 * 100 * 1 + 2 * 200 * 99) / (3 * 1 + 2 * 99)
+    plain_mean = (3 * 100 + 2 * 200) / 5  # = 140 — what the bug returned
+    assert bar["volume"] == 3 + 2 * 99
+    assert abs(bar["vwap"] - expected_weighted) < 0.01, (
+        f"expected weighted {expected_weighted}, got {bar['vwap']}"
+    )
+    assert abs(bar["vwap"] - plain_mean) > 50, (
+        "vwap is suspiciously close to the plain mean — bug may have regressed"
+    )
+
+
+def test_read_bars_resampled_vwap_handles_nan_source(data_root: Path) -> None:
+    """Codex re-review 2026-04-29: parquet_mirror and legacy_ohlcv_import
+    both write source bars with vwap=NaN and positive volume (OHLCV-only
+    DBN files). The resample must NOT silently turn those into resampled
+    vwap=0 — substitute close before weighting."""
+    import math
+
+    base_ts = pd.Timestamp(dt.date(2026, 4, 24), tz="UTC") + pd.Timedelta("13:30:00")
+    rows = [
+        {
+            "ts_event": base_ts + pd.Timedelta(minutes=i),
+            "symbol": "NQ.c.0",
+            "open": 21000.0 + i,
+            "high": 21000.0 + i,
+            "low": 21000.0 + i,
+            "close": 21000.0 + i,
+            "volume": 100,
+            "trade_count": 0,
+            "vwap": float("nan"),
+        }
+        for i in range(5)
+    ]
+    _write_bars_with_custom_vwaps(
+        data_root,
+        symbol="NQ.c.0",
+        date=dt.date(2026, 4, 24),
+        rows=rows,
+    )
+    df_5m = read_bars(
+        symbol="NQ.c.0",
+        timeframe="5m",
+        start="2026-04-24",
+        end="2026-04-25",
+    )
+    assert len(df_5m) == 1
+    bar = df_5m.iloc[0]
+    # Volume-weighted close: each sub-bar weighs equal (vol=100) so
+    # result = mean(closes) = (21000 + 21001 + ... + 21004) / 5 = 21002
+    expected = sum(21000 + i for i in range(5)) / 5
+    assert abs(bar["vwap"] - expected) < 0.01, (
+        f"expected {expected}, got {bar['vwap']}; pre-fix bug returned 0"
+    )
+    assert bar["vwap"] > 20000, "vwap collapsed to 0 — NaN substitution regressed"
+    assert not math.isnan(bar["vwap"])
+
+
+def test_read_bars_resampled_vwap_mixed_nan_and_real(data_root: Path) -> None:
+    """Mixed bucket: some sub-bars have real vwap, others NaN. The
+    weighted formula should use the real vwap where present and the
+    close where NaN. Volume-weighting still applies."""
+    base_ts = pd.Timestamp(dt.date(2026, 4, 24), tz="UTC") + pd.Timedelta("13:30:00")
+    rows = []
+    # Two bars with real vwap=100, vol=10 each → weight 20 toward vwap=100
+    for i in range(2):
+        rows.append(
+            {
+                "ts_event": base_ts + pd.Timedelta(minutes=i),
+                "symbol": "NQ.c.0",
+                "open": 100.0,
+                "high": 100.0,
+                "low": 100.0,
+                "close": 999.0,  # will not be used because vwap is real
+                "volume": 10,
+                "trade_count": 1,
+                "vwap": 100.0,
+            }
+        )
+    # Three bars with vwap=NaN and close=200, vol=10 each → weight 30 toward 200
+    for i in range(3):
+        rows.append(
+            {
+                "ts_event": base_ts + pd.Timedelta(minutes=i + 2),
+                "symbol": "NQ.c.0",
+                "open": 200.0,
+                "high": 200.0,
+                "low": 200.0,
+                "close": 200.0,
+                "volume": 10,
+                "trade_count": 0,
+                "vwap": float("nan"),
+            }
+        )
+    _write_bars_with_custom_vwaps(
+        data_root,
+        symbol="NQ.c.0",
+        date=dt.date(2026, 4, 24),
+        rows=rows,
+    )
+    df_5m = read_bars(
+        symbol="NQ.c.0",
+        timeframe="5m",
+        start="2026-04-24",
+        end="2026-04-25",
+    )
+    assert len(df_5m) == 1
+    # Expected: (2 * 100 * 10 + 3 * 200 * 10) / (5 * 10) = 8000 / 50 = 160
+    expected = (2 * 100 * 10 + 3 * 200 * 10) / (5 * 10)
+    bar = df_5m.iloc[0]
+    assert abs(bar["vwap"] - expected) < 0.01
+
+
+def test_read_bars_resampled_vwap_handles_zero_volume(data_root: Path) -> None:
+    """A bucket with all-zero-volume sub-bars (rare but happens during
+    halts / outages) should return a sane VWAP — fall back to close
+    rather than NaN/Inf."""
+    base_ts = pd.Timestamp(dt.date(2026, 4, 24), tz="UTC") + pd.Timedelta("13:30:00")
+    rows = [
+        {
+            "ts_event": base_ts + pd.Timedelta(minutes=i),
+            "symbol": "NQ.c.0",
+            "open": 21000.0,
+            "high": 21000.0,
+            "low": 21000.0,
+            "close": 21000.0 + i * 0.25,
+            "volume": 0,
+            "trade_count": 0,
+            "vwap": 21000.0,
+        }
+        for i in range(5)
+    ]
+    _write_bars_with_custom_vwaps(
+        data_root,
+        symbol="NQ.c.0",
+        date=dt.date(2026, 4, 24),
+        rows=rows,
+    )
+    df_5m = read_bars(
+        symbol="NQ.c.0",
+        timeframe="5m",
+        start="2026-04-24",
+        end="2026-04-25",
+    )
+    assert len(df_5m) == 1
+    bar = df_5m.iloc[0]
+    assert bar["volume"] == 0
+    # Falls back to close (last sub-bar) when no volume to weight by.
+    assert bar["vwap"] == bar["close"]
+    import math
+    assert not math.isnan(bar["vwap"]) and not math.isinf(bar["vwap"])
+
+
 # --- Derived columns ---------------------------------------------------
 
 

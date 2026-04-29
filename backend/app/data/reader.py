@@ -243,8 +243,27 @@ def _resample_bars(table: pa.Table, period: dt.timedelta) -> pa.Table:
     aggregation (open=first, high=max, low=min, close=last, volume=sum).
     For our scale (a few thousand bars per request) the pandas overhead
     is irrelevant.
+
+    VWAP is genuinely volume-weighted, not a plain mean of the source
+    bars (codex review 2026-04-29 caught this regression — the docstring
+    said weighted, the code summed sub-bar VWAPs and divided by count).
+    Pre-multiplying vwap*volume per source bar and dividing the pool by
+    pool volume gives the correct rollup.
+
+    Two edge cases:
+      - Pool volume == 0 (halt / outage bucket): fall back to close.
+      - Source vwap is NaN with non-zero volume (OHLCV-only imports —
+        see ingest/parquet_mirror.py:565 and ingest/legacy_ohlcv_import
+        .py:156, which intentionally write NaN). Without handling, the
+        NaN propagates as 0 through pandas `sum`, yielding a bogus
+        resampled VWAP of 0 even though the bar traded real volume.
+        Substitute close for NaN VWAP before weighting — for OHLCV
+        bars the resampled VWAP becomes the volume-weighted close,
+        which is the best single-price proxy we have.
     """
     df = table.to_pandas().set_index("ts_event")
+    vwap_filled = df["vwap"].fillna(df["close"])
+    df = df.assign(_vwap_x_volume=vwap_filled * df["volume"])
     rule = _timedelta_to_pandas_rule(period)
     grouped = df.groupby([df["symbol"], df.index.floor(rule)]).agg(
         open=("open", "first"),
@@ -253,10 +272,13 @@ def _resample_bars(table: pa.Table, period: dt.timedelta) -> pa.Table:
         close=("close", "last"),
         volume=("volume", "sum"),
         trade_count=("trade_count", "sum"),
-        # vwap weighted recompute: sum(price*size)/sum(size). Approximate
-        # using each 1m bar's vwap × its volume.
-        vwap=("vwap", "mean"),
+        _vwap_x_volume=("_vwap_x_volume", "sum"),
     )
+    safe_volume = grouped["volume"].where(grouped["volume"] > 0)
+    grouped["vwap"] = (grouped["_vwap_x_volume"] / safe_volume).fillna(
+        grouped["close"]
+    )
+    grouped = grouped.drop(columns=["_vwap_x_volume"])
     grouped = grouped.reset_index()
     # `level_1` is the floored timestamp from the second groupby key.
     grouped = grouped.rename(columns={"level_1": "ts_event"})
