@@ -14,7 +14,7 @@ type DriftComparison = components["schemas"]["DriftComparisonRead"];
 type DriftResult = components["schemas"]["DriftResultRead"];
 
 const POLL_INTERVAL_MS = 30_000;
-const ENDPOINT = "/api/monitor/drift/latest";
+const LATEST_ENDPOINT = "/api/monitor/drift/latest";
 
 type FetchState =
  | { kind: "loading" }
@@ -24,13 +24,24 @@ type FetchState =
  | { kind: "error"; message: string }
  | { kind: "data"; data: DriftComparison; fetchedAt: number };
 
-export default function DriftPanel() {
+interface DriftPanelProps {
+ // When set, the panel scopes drift to this specific strategy version
+ // (used by the per-strategy /live sub-page). Omitted on the global
+ // monitor page, which auto-resolves the most-recent live run.
+ strategyVersionId?: number;
+}
+
+export default function DriftPanel({ strategyVersionId }: DriftPanelProps = {}) {
  const [state, setState] = useState<FetchState>({ kind: "loading" });
+ const endpoint =
+  strategyVersionId !== undefined
+   ? `/api/monitor/drift/${strategyVersionId}`
+   : LATEST_ENDPOINT;
 
  useEffect(() => {
  let cancelled = false;
  async function tick() {
- const next = await fetchDrift();
+ const next = await fetchDrift(endpoint);
  if (!cancelled) setState(next);
  }
  tick();
@@ -39,7 +50,7 @@ export default function DriftPanel() {
  cancelled = true;
  clearInterval(id);
  };
- }, []);
+ }, [endpoint]);
 
  return (
  <Panel
@@ -174,9 +185,9 @@ function metaLabel(state: FetchState): string {
  return `polling ${POLL_INTERVAL_MS / 1000}s`;
 }
 
-async function fetchDrift(): Promise<FetchState> {
+async function fetchDrift(endpoint: string): Promise<FetchState> {
  try {
- const response = await fetch(ENDPOINT, { cache: "no-store" });
+ const response = await fetch(endpoint, { cache: "no-store" });
  if (response.status === 404) {
  const detail = await readDetail(response);
  if (/no live runs/i.test(detail)) return { kind: "no_live_run" };

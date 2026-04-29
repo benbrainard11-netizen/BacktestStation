@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import DriftPanel from "@/components/monitor/DriftPanel";
 import LivePerformanceCard from "@/components/strategies/LivePerformanceCard";
 import ShipToLiveButton from "@/components/strategies/ShipToLiveButton";
 import Panel from "@/components/Panel";
@@ -23,6 +24,17 @@ export default async function LivePage({ params }: PageProps) {
     },
   );
   const isLive = strategy.status === "live" || strategy.status === "forward_test";
+
+  // Pick the most recent non-archived version to scope drift signals.
+  // The DriftPanel itself handles "no baseline" / "no live run yet" — so
+  // we can hand it any version id and let it render the right empty state.
+  const liveVersion =
+    strategy.versions
+      .filter((v) => v.archived_at === null)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )[0] ?? null;
 
   return (
     <section className="flex flex-col gap-4">
@@ -55,13 +67,16 @@ export default async function LivePage({ params }: PageProps) {
         </Panel>
       )}
 
-      <Panel title="Drift monitor" meta="not wired yet">
-        <p className="text-sm text-text-mute">
-          Forward-drift comparison against the version&apos;s baseline
-          run. Wires up once `StrategyVersion.baseline_run_id` is set
-          and the live ingester emits trades.
-        </p>
-      </Panel>
+      {liveVersion !== null ? (
+        <DriftPanel strategyVersionId={liveVersion.id} />
+      ) : (
+        <Panel title="Drift monitor" meta="no active version">
+          <p className="text-sm text-text-mute">
+            All versions on this strategy are archived. Restore one or
+            create a new version to enable drift signals.
+          </p>
+        </Panel>
+      )}
     </section>
   );
 }

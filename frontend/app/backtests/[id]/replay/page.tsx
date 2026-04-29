@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 import TradeDetailsCard from "@/components/backtests/TradeDetailsCard";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
+import ReplayChart from "@/components/replay/ReplayChart";
 import { ApiError, apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type Trade = components["schemas"]["TradeRead"];
+type ReplayPayload = components["schemas"]["ReplayPayload"];
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,18 @@ export default async function ReplayPage({ params, searchParams }: PageProps) {
 
  const trades = await apiGet<Trade[]>(`/api/backtests/${id}/trades`);
  const selected = pickTrade(trades, tradeId);
+
+ // Anchor the chart on the selected trade's date, falling back to the
+ // first trade's date when no ?trade= is set. Skip the fetch entirely
+ // when the run has no trades.
+ const anchorTrade = selected ?? trades[0] ?? null;
+ const anchorDate = anchorTrade ? toDateString(anchorTrade.entry_ts) : null;
+ const replayPayload =
+  anchorDate !== null
+   ? await apiGet<ReplayPayload>(
+      `/api/replay/${encodeURIComponent(run.symbol)}/${anchorDate}?backtest_run_id=${run.id}`,
+     ).catch(() => null)
+   : null;
 
  return (
  <div className="pb-10">
@@ -51,29 +65,40 @@ export default async function ReplayPage({ params, searchParams }: PageProps) {
  description={
  selected
  ? `${run.name ?? `BT-${run.id}`} · ${selected.symbol} · ${selected.side} · ${selected.exit_reason ?? "—"}`
- : `${run.name ?? `BT-${run.id}`} — pick a trade to replay`
+ : `${run.name ?? `BT-${run.id}`} — ${anchorDate ? `showing ${anchorDate}, pick a trade to focus` : "no trades in this run"}`
  }
  meta={`${trades.length} trades in run`}
  />
 
  <div className="flex flex-col gap-4 px-8">
  {selected ? (
- <>
- <PrevNextNav trades={trades} current={selected} runId={run.id} />
- <Panel title="Trade details">
- <TradeDetailsCard trade={selected} />
- </Panel>
- <p className="rounded-lg border border-dashed border-border bg-surface px-4 py-3 text-xs text-text-mute">
- Candle chart will land once the Databento tick pipeline is wired.
- Details card + Prev/Next nav are the Phase 1 surface.
- </p>
- </>
+  <PrevNextNav trades={trades} current={selected} runId={run.id} />
+ ) : null}
+
+ {replayPayload && replayPayload.bars && replayPayload.bars.length > 0 ? (
+  <ReplayChart payload={replayPayload} />
+ ) : anchorDate !== null ? (
+  <p className="rounded-lg border border-dashed border-border bg-surface px-4 py-3 text-xs text-text-mute">
+   No bars available in the warehouse for {run.symbol} on {anchorDate}.
+   This usually means the data isn&apos;t backfilled for that date.
+  </p>
+ ) : null}
+
+ {selected ? (
+  <Panel title="Trade details">
+   <TradeDetailsCard trade={selected} />
+  </Panel>
  ) : (
- <TradePicker trades={trades} runId={run.id} />
+  <TradePicker trades={trades} runId={run.id} />
  )}
  </div>
  </div>
  );
+}
+
+function toDateString(ts: string): string {
+ // Backend stores tz-naive UTC; ISO date prefix is the trading day.
+ return ts.slice(0, 10);
 }
 
 function pickTrade(trades: Trade[], tradeId: string | undefined): Trade | null {

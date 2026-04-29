@@ -9,6 +9,7 @@ import { ApiError, apiGet } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type DriftComparison = components["schemas"]["DriftComparisonRead"];
 type LiveMonitorStatus = components["schemas"]["LiveMonitorStatus"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type Strategy = components["schemas"]["StrategyRead"];
@@ -27,11 +28,14 @@ export const dynamic = "force-dynamic";
  * No drift panel, no live tick tape, no per-strategy sparklines yet.
  */
 export default async function Dashboard() {
-  const [strategies, runs, monitor] = await Promise.all([
+  const [strategies, runs, monitor, drift] = await Promise.all([
     apiGet<Strategy[]>("/api/strategies").catch(() => [] as Strategy[]),
     apiGet<BacktestRun[]>("/api/backtests").catch(() => [] as BacktestRun[]),
     apiGet<LiveMonitorStatus>("/api/monitor/live").catch(
       () => null as LiveMonitorStatus | null,
+    ),
+    apiGet<DriftComparison>("/api/monitor/drift/latest").catch(
+      () => null as DriftComparison | null,
     ),
   ]);
 
@@ -85,6 +89,8 @@ export default async function Dashboard() {
   const todayR = monitor?.today_r ?? null;
   const tradesToday = monitor?.trades_today ?? null;
 
+  const driftSummary = summarizeDrift(drift);
+
   return (
     <div className="px-8 pb-10 pt-7">
       <Header
@@ -125,9 +131,9 @@ export default async function Dashboard() {
         />
         <StatTile
           label="Drift"
-          value="—"
-          sub="not wired yet"
-          tone="neutral"
+          value={driftSummary.value}
+          sub={driftSummary.sub}
+          tone={driftSummary.tone}
         />
       </div>
 
@@ -234,4 +240,36 @@ function greetingFor(now: Date): string {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+function summarizeDrift(drift: DriftComparison | null): {
+  value: string;
+  sub: string;
+  tone: "pos" | "neg" | "neutral";
+} {
+  if (drift === null) {
+    return { value: "—", sub: "no live runs yet", tone: "neutral" };
+  }
+  const results = drift.results ?? [];
+  if (results.length === 0) {
+    return { value: "—", sub: "no signals computed", tone: "neutral" };
+  }
+  const worst = results.reduce<"OK" | "WATCH" | "WARN">((acc, r) => {
+    const s = r.status as "OK" | "WATCH" | "WARN";
+    if (s === "WARN") return "WARN";
+    if (s === "WATCH" && acc !== "WARN") return "WATCH";
+    return acc;
+  }, "OK");
+  const counts = results.length;
+  const subParts = [`${counts} signal${counts === 1 ? "" : "s"}`];
+  if (drift.live_run_id !== null && drift.live_run_id !== undefined) {
+    subParts.push(`vs baseline #${drift.baseline_run_id}`);
+  } else {
+    subParts.push("no live run yet");
+  }
+  return {
+    value: worst,
+    sub: subParts.join(" · "),
+    tone: worst === "WARN" ? "neg" : worst === "WATCH" ? "neutral" : "pos",
+  };
 }
