@@ -42,9 +42,14 @@ def test_list_strategies_returns_known_runnable_set(api_client) -> None:
     assert response.status_code == 200, response.text
     body = response.json()
     names = {s["name"] for s in body}
-    # Both engine-resolvable strategies must be exposed so the form
-    # surfaces them. Drift-detection: when a 3rd lands, this asserts up.
-    assert names == {"fractal_amd", "moving_average_crossover"}
+    # All engine-resolvable strategies must be exposed so the form
+    # surfaces them. Drift-detection: when a new one lands, this asserts up.
+    assert names == {
+        "fractal_amd",
+        "fractal_amd_trusted",
+        "composable",
+        "moving_average_crossover",
+    }
 
 
 def test_list_strategies_carries_default_params_and_schema(api_client) -> None:

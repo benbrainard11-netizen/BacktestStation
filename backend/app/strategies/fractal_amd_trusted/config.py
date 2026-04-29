@@ -47,6 +47,24 @@ class FractalAMDTrustedConfig:
     co_lookback: int = 15  # bars
     co_atr: float = 40.0  # passed but unused by compute_continuation_of
 
+    # Whether to compute CO at the entry bar (= bar T+1 = history[-1]) which
+    # mirrors trusted's batch lookahead, OR at the touch bar (= bar T =
+    # history[-2]) which matches what a real-time live bot can see at the
+    # moment it decides to enter. Default True for trusted-faithful backtest.
+    # Set False to align plug with live's no-lookahead reality — used by the
+    # plug↔live divergence diagnostic on 2026-04-29 AM to quantify how much
+    # of the trusted edge depends on the +1-bar lookahead.
+    co_lookahead: bool = True
+
+    # How many bars to wait between touch detection and entry.
+    # 0 (default, trusted-faithful): touch on T → enter on T+1.open.
+    # 1: touch on T → wait through T+1 → enter on T+2.open. Combined with
+    #    co_lookahead=False, CO is computed at history[-2] = T+1, which is
+    #    a CLOSED bar at the moment of decision (T+2.start). This is the
+    #    "wait-one-bar-for-confirmation" strategy: same look-ahead-equivalent
+    #    info as trusted, but no lookahead — costs one bar of price drift.
+    entry_delay_bars: int = 0
+
     # Entry window (ET). Trusted gates entries with `et.hour < 9 or et.hour
     # >= 14` AND `ess = max(le, rth_s)` where rth_s = 9:30. The combined
     # effect is 09:30-13:59 (close exclusive).

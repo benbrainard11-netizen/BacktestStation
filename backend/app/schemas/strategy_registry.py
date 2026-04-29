@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -15,6 +15,13 @@ class StrategyParamFieldSchema(BaseModel):
     hints for number inputs; `description` is a one-line hint shown
     under the field. `enum` lets a strategy expose dropdown choices in
     the future (unused so far).
+
+    `group` lets the inline runner bucket fields by concern:
+      - `signal`  : algorithmic knobs that define what the strategy detects
+      - `risk`    : per-trade risk caps (stop, target, max risk pts/$)
+      - `session` : portfolio-level limits (max trades/day, dedup window,
+        entry-window hours)
+    Untagged fields fall into the `signal` group by default.
     """
 
     type: str  # "number" | "integer" | "string" | "boolean"
@@ -24,6 +31,7 @@ class StrategyParamFieldSchema(BaseModel):
     max: float | int | None = None
     step: float | int | None = None
     enum: list[Any] | None = None
+    group: Literal["signal", "risk", "session"] | None = None
 
 
 class StrategyParamSchema(BaseModel):

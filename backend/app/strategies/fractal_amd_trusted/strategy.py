@@ -97,6 +97,7 @@ class _Setup:
     fvgs: list  # list[FVG] from detect_fvgs
     waiting: bool = False
     pending_fvg: object | None = None  # FVG object — the touched zone
+    bars_until_entry: int = 0  # countdown when waiting; 0 = ready to enter
     filled: bool = False  # set after entry is emitted
 
 
@@ -590,8 +591,17 @@ class FractalAMDTrusted(Strategy):
             if ds.trades_today >= self.config.max_trades_per_day:
                 break
 
-            # Step 1: if touched on prior bar, attempt entry on this bar.
+            # Step 1: if touched on a prior bar, count down to entry.
+            # `bars_until_entry` controls the touch→entry delay:
+            #   0 = ready to enter on this bar (default trusted behavior;
+            #       touch on T sets count=0 in step 2, so step 1 fires on
+            #       T+1).
+            #   >0 = decrement and skip; the setup is still in the
+            #       "waiting for confirmation" window.
             if setup.waiting and setup.pending_fvg is not None:
+                if setup.bars_until_entry > 0:
+                    setup.bars_until_entry -= 1
+                    continue
                 intent = self._try_enter(setup, bar, context)
                 setup.waiting = False
                 setup.pending_fvg = None
@@ -636,6 +646,11 @@ class FractalAMDTrusted(Strategy):
             if entered:
                 setup.waiting = True
                 setup.pending_fvg = nearest
+                # Touch on bar T. Default (entry_delay_bars=0): step 1
+                # consumes the wait on bar T+1 and tries enter — count=0.
+                # entry_delay_bars=1: step 1 decrements on T+1 (count=1→0),
+                # tries enter on T+2 with CO at history[-2] = T+1 (closed).
+                setup.bars_until_entry = self.config.entry_delay_bars
 
         return intents
 
@@ -675,18 +690,30 @@ class FractalAMDTrusted(Strategy):
         # Continuation-OF gate (trusted lines 178-181).
         history = context.history
         # Find the bar's index in context.history. Engine appends each
-        # bar to history BEFORE on_bar is called, so the current bar is
-        # at history[-1].
+        # bar to history BEFORE on_bar is called, so the current bar
+        # (= entry bar T+1) is at history[-1] and the touch bar (= T)
+        # is at history[-2].
         if not history:
+            return None
+        # co_lookahead=True (default, trusted-faithful): score the entry
+        # bar with full OHLC visibility. co_lookahead=False (live-faithful):
+        # score the touch bar — matches what a real-time bot can see at
+        # the moment it decides at bar T+1's open.
+        co_idx = len(history) - 1 if self.config.co_lookahead else len(history) - 2
+        if co_idx < 0:
             return None
         co = compute_continuation_of(
             history,
-            len(history) - 1,
+            co_idx,
             setup.stage.direction,
             lookback=self.config.co_lookback,
             atr=self.config.co_atr,
         )
         cos = co.get("co_continuation_score", 0) if co else 0
+        # Stash the score for diagnostic scripts (plug↔live CO distribution
+        # analysis); cheap (one int per checked entry) and overwritten on
+        # each call so it never accumulates.
+        self._last_co_score = cos
         if cos < self.config.min_co_score:
             return None
 

@@ -89,6 +89,24 @@ def _resolve_strategy(name: str, params: dict, config: RunConfig) -> Strategy:
         return FractalAMD.from_config(
             params, tick_size=config.tick_size, qty=config.qty
         )
+    if name == "fractal_amd_trusted":
+        from app.strategies.fractal_amd_trusted import FractalAMDTrusted
+
+        return FractalAMDTrusted.from_config(
+            params, tick_size=config.tick_size, qty=config.qty
+        )
+    if name == "composable":
+        from app.strategies.composable import ComposableStrategy
+
+        strat = ComposableStrategy.from_config(
+            params, tick_size=config.tick_size, qty=config.qty
+        )
+        # Composable needs to know which aux symbols to track. RunConfig
+        # carries them; we set them explicitly so the plugin's
+        # aux_history mirrors the engine's aux_bars dict.
+        strat.aux_symbols = tuple(config.aux_symbols)
+        strat.aux_history = {sym: [] for sym in config.aux_symbols}
+        return strat
     raise ValueError(
         f"unknown strategy {name!r}; add a branch in runner._resolve_strategy"
     )

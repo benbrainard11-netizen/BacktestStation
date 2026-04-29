@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass, field
+from zoneinfo import ZoneInfo
 
 from app.backtest.broker import Broker, BrokerConfig
 from app.backtest.events import Event, EventType
@@ -71,6 +72,17 @@ class RunConfig:
     # interpreting them. Kept here so the run is fully reproducible
     # from the config.
     params: dict = field(default_factory=dict)
+    # Engine-enforced trading-hours window. When `session_start_hour` is
+    # set, the engine skips `strategy.on_bar()` for any bar whose
+    # local-time hour (in `session_tz`) is outside [start, end). Fills,
+    # equity, and history still update normally — only strategy
+    # decisions are gated. This pulls market-hours filtering out of
+    # individual plugins so two strategies on the same data are bound
+    # by the same window. Default `None` = 24/5 (each plugin owns its
+    # own filter, current behavior).
+    session_start_hour: int | None = None
+    session_end_hour: int | None = None
+    session_tz: str = "America/New_York"
 
 
 @dataclass
@@ -105,6 +117,29 @@ def run(
     for sym in config.aux_symbols:
         if sym not in aux_bars:
             aux_bars[sym] = {}
+
+    # Tz-aware bar invariant. Engine uses `astimezone()` for HTF candle
+    # bounds and session gating; that needs tz-aware timestamps but
+    # works regardless of the source tz. Reject naive datetimes (the
+    # silent bug class — they look fine but compare incorrectly across
+    # DST and aux-bar joins). The runner's canonical loader produces
+    # UTC; tests sometimes use ET — both are accepted.
+    if bars:
+        first_ts = bars[0].ts_event
+        if first_ts.tzinfo is None:
+            raise ValueError(
+                f"engine.run: bars must be tz-aware; bars[0].ts_event="
+                f"{first_ts!r} has no tzinfo. Localize to UTC (canonical) "
+                f"or another tz before passing — see app.backtest.runner."
+                f"_read_symbol_bars for the canonical pattern."
+            )
+
+    # Pre-resolve session window timezone once (avoids ZoneInfo lookup
+    # in the hot loop). `session_tz` is a string for serializability;
+    # we instantiate the ZoneInfo here and reuse.
+    session_tz_obj: ZoneInfo | None = None
+    if config.session_start_hour is not None:
+        session_tz_obj = ZoneInfo(config.session_tz)
 
     broker = Broker(
         BrokerConfig(
@@ -197,6 +232,24 @@ def run(
         # 4. History BEFORE asking the strategy. Strategy sees this bar
         # as the head of history; never any future bar.
         _push_history(context, bar)
+
+        # 4b. Engine-enforced session window. When configured, skip
+        # `strategy.on_bar()` (and any of its same-bar immediate-fill
+        # brackets) for bars outside [session_start_hour, session_end_hour)
+        # in `session_tz`. Pulls market-hours filtering out of plugins so
+        # two strategies on the same bars are bound by the same window.
+        if (
+            session_tz_obj is not None
+            and config.session_start_hour is not None
+            and config.session_end_hour is not None
+        ):
+            local_hour = bar.ts_event.astimezone(session_tz_obj).hour
+            if not (
+                config.session_start_hour
+                <= local_hour
+                < config.session_end_hour
+            ):
+                continue
 
         # 5. Strategy decides what to do this bar.
         intents = strategy.on_bar(bar, context) or []
