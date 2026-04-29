@@ -64,6 +64,17 @@ class BracketOrder:
     entry-fill bar). The exit fill is recorded with `reason="timeout"`
     and `fill_confidence="exact"`. Mirrors `MAX_HOLD=120` in the trusted
     Fractal AMD backtest. `None` (default) = no timeout.
+
+    `fill_immediately`: when True, the broker fills the entry on the
+    SAME bar the order is submitted (at that bar's open + slippage)
+    rather than next bar. Stop/target watch starts from the NEXT bar
+    onward — the entry bar itself is excluded from the bracket-resolve
+    range check because bar.open is the entry price and you can't
+    legitimately stop or target on the same bar with OHLC-only data.
+    Mirrors trusted Fractal AMD's "wait for touch on bar T, decide+enter
+    on bar T+1's open" pattern, where the strategy decides during
+    on_bar(T+1) using prior touch + this bar's full data and enters at
+    T+1.open. `False` (default) = standard next-bar fill.
     """
 
     side: Side
@@ -72,6 +83,7 @@ class BracketOrder:
     target_price: float
     contract_value: float | None = None
     max_hold_bars: int | None = None
+    fill_immediately: bool = False
 
 
 @dataclass(frozen=True)

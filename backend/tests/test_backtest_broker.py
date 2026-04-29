@@ -184,3 +184,146 @@ def test_cancel_pending_entry() -> None:
     broker.submit(CancelOrder(order_id=order.id), ts, 0)
     assert order.state == "cancelled"
     assert broker.pending_entries == []
+
+
+# --- BracketOrder.fill_immediately ---
+
+
+def test_immediate_bracket_fills_at_this_bar_open() -> None:
+    """A bracket with fill_immediately=True fills at the same bar's open
+    (not next bar's). Mirrors trusted Fractal AMD's "decide on T+1's
+    open" pattern."""
+    broker = _broker()
+    ts = dt.datetime(2026, 4, 24, 13, 30, tzinfo=dt.timezone.utc)
+    bar = _bar(ts, open_=21000.0, high=21010.0, low=20995.0, close=21005.0)
+    order = broker.submit(
+        BracketOrder(
+            side=Side.LONG,
+            qty=1,
+            stop_price=20990.0,
+            target_price=21030.0,
+            fill_immediately=True,
+        ),
+        ts,
+        bar_index=5,
+    )
+    assert order is not None
+    assert order.state == "pending"
+
+    fills = broker.fill_immediate_brackets(bar, bar_index=5)
+    assert len(fills) == 1
+    fill = fills[0]
+    # 1 tick slippage above open for a LONG.
+    assert fill.price == 21000.0 + 0.25
+    assert fill.is_entry is True
+    assert fill.reason == "market"
+    assert order.state == "active"
+    assert order.entry_bar_index == 5
+    assert broker.pending_entries == []
+    assert order in broker.active_brackets
+
+
+def test_immediate_bracket_skips_same_bar_range_check() -> None:
+    """An immediate-fill bracket is in active_brackets after filling on
+    bar N, but resolve_active_brackets on bar N must NOT check stop /
+    target against bar N's high/low — that would be same-bar look-ahead.
+    The next bar IS checked normally.
+    """
+    broker = _broker()
+    ts1 = dt.datetime(2026, 4, 24, 13, 30, tzinfo=dt.timezone.utc)
+    bar1 = _bar(ts1, open_=21000.0, high=21050.0, low=20985.0, close=21030.0)
+    broker.submit(
+        BracketOrder(
+            side=Side.LONG,
+            qty=1,
+            stop_price=20990.0,  # in bar1's range
+            target_price=21030.0,  # in bar1's range
+            fill_immediately=True,
+        ),
+        ts1,
+        bar_index=5,
+    )
+    broker.fill_immediate_brackets(bar1, bar_index=5)
+    # Same bar — must NOT exit even though both stop and target are in range.
+    same_bar_fills = broker.resolve_active_brackets(bar1, bar_index=5)
+    assert same_bar_fills == []
+    assert broker.active_brackets, "bracket should still be active"
+
+    # Next bar — normal resolution.
+    ts2 = ts1 + dt.timedelta(minutes=1)
+    bar2 = _bar(ts2, open_=21015.0, high=21035.0, low=21010.0, close=21030.0)
+    next_fills = broker.resolve_active_brackets(bar2, bar_index=6)
+    assert len(next_fills) == 1
+    assert next_fills[0].reason == "target"
+    assert next_fills[0].price == 21030.0
+
+
+def test_immediate_bracket_max_hold_timeout_uses_entry_bar() -> None:
+    """max_hold_bars on an immediate-fill bracket counts from the entry
+    bar (the bar the order filled on), not from submit + 1."""
+    broker = _broker()
+    ts = dt.datetime(2026, 4, 24, 13, 30, tzinfo=dt.timezone.utc)
+    bar0 = _bar(ts, open_=21000.0, high=21005.0, low=20998.0, close=21002.0)
+    broker.submit(
+        BracketOrder(
+            side=Side.LONG,
+            qty=1,
+            stop_price=20900.0,
+            target_price=21100.0,
+            fill_immediately=True,
+            max_hold_bars=3,
+        ),
+        ts,
+        bar_index=0,
+    )
+    broker.fill_immediate_brackets(bar0, bar_index=0)
+    # Bars 1 + 2 within hold; no fills.
+    for k in (1, 2):
+        bar_k = _bar(
+            ts + dt.timedelta(minutes=k),
+            open_=21002.0, high=21004.0, low=21000.0, close=21001.0,
+        )
+        fills = broker.resolve_active_brackets(bar_k, bar_index=k)
+        assert fills == [], f"unexpected fill on bar {k}"
+    # Bar 3: bar_index - entry_bar_index = 3 >= max_hold_bars; force-close.
+    bar3 = _bar(
+        ts + dt.timedelta(minutes=3),
+        open_=21003.0, high=21006.0, low=21001.0, close=21005.0,
+    )
+    timeout_fills = broker.resolve_active_brackets(bar3, bar_index=3)
+    assert len(timeout_fills) == 1
+    assert timeout_fills[0].reason == "timeout"
+    assert timeout_fills[0].price == 21005.0  # bar's close
+    assert broker.active_brackets == []
+
+
+def test_normal_bracket_unaffected_by_fill_immediately_flag() -> None:
+    """Default fill_immediately=False keeps existing behavior:
+    submit on bar N, fill on bar N+1's open, range-check on bar N+1.
+    Pin this so the engine extension doesn't accidentally change
+    next-bar-fill semantics for the existing fractal_amd plugin."""
+    broker = _broker()
+    ts1 = dt.datetime(2026, 4, 24, 13, 30, tzinfo=dt.timezone.utc)
+    bar1 = _bar(ts1, open_=21000.0, high=21010.0, low=20995.0, close=21005.0)
+    broker.submit(
+        BracketOrder(
+            side=Side.LONG,
+            qty=1,
+            stop_price=20990.0,
+            target_price=21030.0,
+            # fill_immediately omitted -> default False
+        ),
+        ts1,
+        bar_index=0,
+    )
+    # Should NOT fill via immediate path.
+    immediate = broker.fill_immediate_brackets(bar1, bar_index=0)
+    assert immediate == []
+    assert len(broker.pending_entries) == 1
+
+    # Standard next-bar fill on bar 1.
+    ts2 = ts1 + dt.timedelta(minutes=1)
+    bar2 = _bar(ts2, open_=21006.0, high=21010.0, low=21000.0, close=21008.0)
+    fills = broker.resolve_pending_entries(bar2, bar_index=1)
+    assert len(fills) == 1
+    assert fills[0].price == 21006.0 + 0.25

@@ -215,6 +215,29 @@ def run(
                     )
                 )
 
+        # 6. Process any newly-submitted brackets with `fill_immediately=True`.
+        # These fill at THIS bar's open + slippage and become active for
+        # next-bar-onwards stop/target watch. Used by the trusted Fractal
+        # AMD plugin to match the script's "decide on bar T+1's open"
+        # semantics — see `BracketOrder.fill_immediately` docstring.
+        for fill in broker.fill_immediate_brackets(bar, bar_index=i):
+            events.append(_fill_event(fill, i))
+            context.position = _apply_entry_fill(fill, bar, context, broker)
+            realized_equity -= fill.commission
+            events.append(
+                Event(
+                    ts=fill.ts,
+                    type=EventType.POSITION_OPENED,
+                    bar_index=i,
+                    payload={
+                        "side": context.position.side.value,
+                        "qty": context.position.qty,
+                        "entry_price": context.position.entry_price,
+                    },
+                )
+            )
+            strategy.on_fill(fill, context)
+
     # 6. Final-bar flatten if requested and a position is still open.
     if (
         bars

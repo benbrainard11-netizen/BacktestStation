@@ -149,6 +149,58 @@ class Broker:
         self.pending_entries.clear()
         return fills
 
+    def fill_immediate_brackets(
+        self, current_bar: Bar, bar_index: int
+    ) -> list[Fill]:
+        """Fill any pending brackets with `fill_immediately=True` at THIS
+        bar's open. Called by the engine right after `strategy.on_bar`
+        returns intents — lets a strategy decide based on this bar's
+        full data and have the order fill at this bar's open instead of
+        next bar's. Mirrors trusted Fractal AMD's "decide on bar T+1's
+        open with prior touch knowledge from T, enter at T+1.open"
+        pattern.
+
+        Slippage applied identically to next-bar fills. The bracket is
+        added to `active_brackets`; stop/target watching starts on the
+        NEXT bar — `resolve_active_brackets` skips orders whose
+        entry_bar_index equals the current bar_index, so the entry bar
+        itself isn't checked against the bracket levels (which would be
+        same-bar look-ahead with OHLC-only data).
+        """
+        fills: list[Fill] = []
+        if not self.pending_entries:
+            return fills
+        slippage = self.config.slippage_ticks * self.config.tick_size
+        remaining: list[Order] = []
+        for order in self.pending_entries:
+            if not (
+                isinstance(order.intent, BracketOrder)
+                and order.intent.fill_immediately
+            ):
+                remaining.append(order)
+                continue
+            side = order.intent.side
+            qty = order.intent.qty
+            fill_price = current_bar.open + slippage * side.sign
+            fill = Fill(
+                order_id=order.id,
+                ts=current_bar.ts_event,
+                side=side,
+                qty=qty,
+                price=fill_price,
+                commission=qty * self.config.commission_per_contract,
+                is_entry=True,
+                fill_confidence="exact",
+                reason="market",
+            )
+            fills.append(fill)
+            order.entry_fill = fill
+            order.entry_bar_index = bar_index
+            order.state = "active"
+            self.active_brackets.append(order)
+        self.pending_entries = remaining
+        return fills
+
     def resolve_active_brackets(
         self, current_bar: Bar, bar_index: int | None = None
     ) -> list[Fill]:
@@ -174,6 +226,20 @@ class Broker:
             assert isinstance(order.intent, BracketOrder)
             entry = order.entry_fill
             assert entry is not None
+
+            # Skip same-bar range check on the entry bar of an
+            # immediate-fill bracket. The order filled at this bar's
+            # open; checking this bar's high/low for stop/target hit
+            # would be same-bar look-ahead. Standard next-bar-fill
+            # brackets keep their existing behavior (entry on bar N's
+            # open, stop/target check on bar N's range happens because
+            # the strategy already had bar N-1's full info when
+            # submitting; the engine has always done it this way).
+            if (
+                order.intent.fill_immediately
+                and order.entry_bar_index == bar_index
+            ):
+                continue
 
             stop = order.intent.stop_price
             target = order.intent.target_price

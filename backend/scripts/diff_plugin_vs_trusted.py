@@ -92,19 +92,37 @@ def main():
     )
     trusted_by_day = trusted.groupby(trusted["entry_time"].dt.date).size()
 
-    print("\nDay-by-day:")
-    print(f"{'date':<12} {'plug':>5} {'trust':>5}  diff  trust trades")
+    print("\nDivergent days (P=plugin, T=trusted):")
     all_days = sorted(set(plugin_by_day.index) | set(trusted_by_day.index))
     for day in all_days:
         p = plugin_by_day.get(day, 0)
         t = trusted_by_day.get(day, 0)
-        # List trusted trades on this day
+        if p == t:
+            continue
         tr_today = trusted[trusted["entry_time"].dt.date == day]
-        tr_str = " ".join(
-            f"{ts.strftime('%H:%M')}/{r}/{d[0]}"
-            for ts, r, d in zip(tr_today["entry_time"], tr_today["pnl_r"], tr_today["direction"])
+        tr_str = "; ".join(
+            f"{ts.strftime('%H:%M')} {d[:4]} R={r:+.1f}"
+            for ts, r, d in zip(
+                tr_today["entry_time"],
+                tr_today["pnl_r"],
+                tr_today["direction"],
+            )
         )
-        print(f"{str(day):<12} {p:>5} {t:>5}  {p-t:+3d}  {tr_str}")
+        if not plugin_df.empty:
+            pl_today = plugin_df[plugin_df["entry_time"].dt.date == day]
+            pl_str = "; ".join(
+                f"{ts.strftime('%H:%M')} {d[:4]} R={r:+.1f}"
+                for ts, r, d in zip(
+                    pl_today["entry_time"],
+                    pl_today["pnl_r"],
+                    pl_today["direction"],
+                )
+            )
+        else:
+            pl_str = ""
+        print(f"\n{day} (P={p} T={t}, diff {p-t:+d})")
+        print(f"  P: {pl_str or '(no plugin trades)'}")
+        print(f"  T: {tr_str}")
 
 
 if __name__ == "__main__":

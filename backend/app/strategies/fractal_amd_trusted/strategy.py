@@ -328,24 +328,27 @@ class FractalAMDTrusted(Strategy):
         stage: _HTFStage,
         bar: Bar,
         context: Context,
+        *,
+        only_tf: str | None = None,
     ) -> tuple[str, int, dt.datetime, dt.datetime] | None:
-        """Replicate trusted's `find_ltf_smt`. Iterate (15m, 5m); for
+        """Replicate trusted's `find_ltf_smt`. Iterate `(15m, 5m)`; for
         each, walk candle pairs in the expansion window (where the
         later candle has CLOSED by `bar.ts_event`); return the first
         candle-pair with same-direction LTF SMT. Returns
         (tf, tf_min, ref_start, candle_end) or None.
 
-        Day-context note — trusted passes `day` (the trading day) to
-        `find_ltf_smt`, which calls `candle_bounds(day, tf)`. Trusted's
-        bounds for 15m/5m span the whole 18:00→17:00 Globex day, then
-        `rel = [(s, e) for ... if s >= exp_s and e <= exp_e + 1m]`
-        narrows to the expansion window. We replicate that.
+        `only_tf`: when set, restricts the search to that single TF.
+        Used by the caller to do a 15m-only eager pass first, then a
+        5m-only fallback once all 15m candles in the expansion window
+        have closed without a match.
         """
         ds = self.day_state
         assert ds is not None
         day_dt = dt.datetime(ds.day.year, ds.day.month, ds.day.day, tzinfo=ET)
 
         for tf, tf_min in self.config.ltf_timeframes:
+            if only_tf is not None and tf != only_tf:
+                continue
             ltf_bounds = candle_bounds(day_dt, tf)
             rel = [
                 (s, e)
@@ -413,11 +416,37 @@ class FractalAMDTrusted(Strategy):
                 continue
 
             # Step 1: find the LTF SMT match if we don't have one yet.
+            # Trusted's batch `find_ltf_smt` iterates 15m fully then 5m,
+            # returning first match. 15m has STRICT priority over 5m.
+            #
+            # Incremental compromise: eager on both TFs. When a 15m
+            # match closes, we lock it in — overrides any 5m tentative.
+            # If a 5m closes with SMT before any 15m, we tentatively
+            # lock in the 5m. A later 15m (closing before exp_e) WILL
+            # override the tentative 5m if found. Setup creation
+            # remains at fse (the FVG window close), at which point the
+            # current pending_ltf_match is final for this stage's
+            # purposes — a 15m closing strictly AFTER fse won't override
+            # an already-built setup. This matches trusted's batch
+            # output for ~90% of stages; the residual mismatch is the
+            # case where a 15m closes between the 5m's fse and exp_e.
             if stage.pending_ltf_match is None:
-                # If the expansion window hasn't started yet, wait.
                 if bar.ts_event < stage.exp_s:
                     continue
-                ltf_match = self._find_ltf_smt(stage, bar, context)
+                # Prefer 15m if any has closed with SMT.
+                ltf_match = self._find_ltf_smt(stage, bar, context, only_tf="15m")
+                if ltf_match is None:
+                    # Fall through to 5m if no 15m yet.
+                    ltf_match = self._find_ltf_smt(
+                        stage, bar, context, only_tf="5m"
+                    )
+                if ltf_match is None and bar.ts_event > stage.exp_e:
+                    ds.completed_ltf_search.add(idx)
+                    self._debug_log(
+                        f"  stage {stage.timeframe} {stage.direction} "
+                        f"{stage.candle_start} REJECTED: no LTF SMT"
+                    )
+                    continue
                 if ltf_match is not None:
                     tf, tf_min, ref_start, ltf_end = ltf_match
                     fse = min(
@@ -432,14 +461,28 @@ class FractalAMDTrusted(Strategy):
                         f"{stage.candle_start} LTF MATCH {tf} ref={ref_start} "
                         f"ltf_end={ltf_end} fse={fse}"
                     )
-                elif bar.ts_event > stage.exp_e:
-                    # Expansion window fully passed without an LTF SMT.
-                    ds.completed_ltf_search.add(idx)
+                continue
+            # Step 1b: while pending_ltf_match is a 5m and we haven't
+            # built the setup yet, keep checking for 15m overrides on
+            # each bar. Trusted's strict 15m-priority means a 15m match
+            # found before the 5m's setup is built should replace it.
+            tf_p, tf_min_p, _, _, fse_p = stage.pending_ltf_match
+            if tf_p == "5m" and bar.ts_event < fse_p:
+                upgrade = self._find_ltf_smt(stage, bar, context, only_tf="15m")
+                if upgrade is not None:
+                    tf, tf_min, ref_start, ltf_end = upgrade
+                    fse = min(
+                        ltf_end + dt.timedelta(minutes=tf_min * 5),
+                        rth_close,
+                    )
+                    stage.pending_ltf_match = (
+                        tf, tf_min, ref_start, ltf_end, fse
+                    )
                     self._debug_log(
                         f"  stage {stage.timeframe} {stage.direction} "
-                        f"{stage.candle_start} REJECTED: no LTF SMT in window"
+                        f"{stage.candle_start} 15m UPGRADE: was 5m, now {tf} "
+                        f"ref={ref_start} ltf_end={ltf_end}"
                     )
-                continue
 
             # Step 2: have a pending match. Build the setup once the
             # FVG window has fully populated (incremental processing
@@ -675,6 +718,12 @@ class FractalAMDTrusted(Strategy):
             stop_price=stop,
             target_price=target,
             max_hold_bars=self.config.max_hold_bars,
+            # Trusted's `ep = bar.open` of the bar AFTER the touch bar +
+            # gates checked at the same bar's data. fill_immediately
+            # makes the engine fill at THIS bar's open instead of next
+            # bar's — entry-fill price, gate timing, and ep math all on
+            # the same bar — exactly trusted.
+            fill_immediately=True,
         )
 
     # ------------------------------------------------------------------
