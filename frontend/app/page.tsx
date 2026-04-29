@@ -8,6 +8,7 @@ import Heartbeat from "@/components/charts/Heartbeat";
 import MonthlyHeatmap from "@/components/charts/MonthlyHeatmap";
 import Sparkline from "@/components/charts/Sparkline";
 import StrategyPicker from "@/components/StrategyPicker";
+import SystemOverview from "@/components/SystemOverview";
 import Btn from "@/components/ui/Btn";
 import Panel from "@/components/ui/Panel";
 import Pill from "@/components/ui/Pill";
@@ -44,23 +45,11 @@ type DashboardState =
   | { kind: "error"; message: string }
   | { kind: "data"; data: DashboardData };
 
-const PICKER_SHOWN_KEY = "bts.pickerShownThisSession";
-
 export default function CommandCenter() {
   const { id: currentId, loading: currentLoading, clearId } =
     useCurrentStrategy();
   const [state, setState] = useState<DashboardState>({ kind: "loading" });
   const [pickerOpen, setPickerOpen] = useState(false);
-
-  // Auto-open the picker once per browser session so every fresh boot
-  // gives you a chance to confirm or switch the active strategy. Internal
-  // navigation back to / does NOT re-prompt — sessionStorage gates it.
-  useEffect(() => {
-    if (currentLoading) return;
-    if (window.sessionStorage.getItem(PICKER_SHOWN_KEY) === "true") return;
-    setPickerOpen(true);
-    window.sessionStorage.setItem(PICKER_SHOWN_KEY, "true");
-  }, [currentLoading]);
 
   // Fetch everything tied to the current strategy. Re-runs whenever the id
   // changes (incl. cross-tab sync via storage event).
@@ -146,6 +135,7 @@ export default function CommandCenter() {
 
   return (
     <div className="px-8 pb-10 pt-8">
+      <SystemOverview />
       {state.kind === "loading" ? <LoadingHeader /> : null}
       {state.kind === "no-strategy" ? (
         <EmptyDashboard onPick={() => setPickerOpen(true)} />
@@ -186,17 +176,15 @@ function LoadingHeader() {
 
 function EmptyDashboard({ onPick }: { onPick: () => void }) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-5 rounded-lg border border-dashed border-border bg-surface px-6 py-10 text-center">
       <div className="flex flex-col gap-2">
-        <p className="m-0 text-xs text-text-mute">
-          no strategy selected
-        </p>
-        <h1 className="m-0 text-[32px] font-medium leading-tight tracking-[-0.02em] text-text">
-          Pick a strategy to start.
+        <p className="m-0 text-xs text-text-mute">no strategy selected</p>
+        <h1 className="m-0 text-[28px] font-medium leading-tight tracking-[-0.02em] text-text">
+          Pick a strategy to dig in.
         </h1>
         <p className="m-0 text-[14px] text-text-dim">
-          Your dashboard is scoped to a strategy. Choose one to focus
-          on, or create a new thesis from scratch.
+          Your dashboard zooms into a single strategy. The system overview
+          above stays in view either way.
         </p>
       </div>
       <div className="flex items-center gap-2">
@@ -205,12 +193,6 @@ function EmptyDashboard({ onPick }: { onPick: () => void }) {
         </Btn>
         <Btn href="/strategies">Browse all strategies</Btn>
       </div>
-      <p className="mt-4 text-xs text-text-mute">
-        Want the cross-strategy overview instead?{" "}
-        <Link href="/monitor" className="text-accent hover:underline">
-          Go to /monitor →
-        </Link>
-      </p>
     </div>
   );
 }
