@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import AutopsyPanel from "@/components/backtests/AutopsyPanel";
+import BacktestConfidencePanel from "@/components/backtests/BacktestConfidencePanel";
 import ConfigSnapshotPanel from "@/components/backtests/ConfigSnapshotPanel";
 import DataQualityPanel from "@/components/backtests/DataQualityPanel";
 import DeleteRunButton from "@/components/backtests/DeleteRunButton";
@@ -216,6 +217,17 @@ export default async function BacktestDetailPage({
                 Need more trades to compute a 30-trade rolling window.
               </p>
             )}
+          </Panel>
+
+          <Panel
+            title="Backtest confidence"
+            meta="autopsy + data quality"
+          >
+            <BacktestConfidencePanel
+              autopsy={autopsy.report}
+              dataQuality={dataQuality.report}
+              tradeCount={trades.length}
+            />
           </Panel>
 
           <div className="grid grid-cols-2 gap-4">
