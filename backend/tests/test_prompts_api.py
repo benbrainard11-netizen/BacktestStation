@@ -198,6 +198,49 @@ def test_generate_includes_recent_notes(
     assert any("note" in s for s in summary)
 
 
+def test_generate_includes_research_workspace_entries(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid, _ = _seed_strategy(session_factory)
+    client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "Opening imbalance improves long entries",
+            "body": "Needs a clean A/B against the current baseline.",
+            "status": "open",
+            "tags": ["orderflow", "entry-filter"],
+        },
+    )
+    client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "decision",
+            "title": "Keep the session filter for now",
+            "body": "Removing it increased chop without improving net R.",
+            "status": "done",
+        },
+    )
+
+    response = client.post(
+        "/api/prompts/generate",
+        json={"strategy_id": sid, "mode": "researcher"},
+    )
+    assert response.status_code == 200, response.text
+    text = response.json()["prompt_text"]
+    assert "## Research workspace" in text
+    assert "**hypothesis/open**" in text
+    assert "Opening imbalance improves long entries" in text
+    assert "Needs a clean A/B" in text
+    assert "tags=orderflow, entry-filter" in text
+    assert "**decision/done**" in text
+    assert "Keep the session filter for now" in text
+    assert any(
+        "research entr" in item
+        for item in response.json()["bundled_context_summary"]
+    )
+
+
 def test_generate_includes_recent_experiments(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:

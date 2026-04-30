@@ -23,6 +23,7 @@ from app.db.models import (
     BacktestRun,
     Experiment,
     Note,
+    ResearchEntry,
     RunMetrics,
     Strategy,
     StrategyVersion,
@@ -32,6 +33,7 @@ from app.services import autopsy as autopsy_service
 
 NOTE_LIMIT = 20
 EXPERIMENT_LIMIT = 10
+RESEARCH_ENTRY_LIMIT = 20
 # Per-field soft cap — applied to any user-supplied markdown (strategy
 # description, version rules, note bodies, experiment change descriptions).
 # Prevents a single ballooning field from dominating the prompt.
@@ -129,6 +131,11 @@ def build_prompt(
         sections.append(_notes_section(notes))
         summary.append(f"{len(notes)} recent note(s)")
 
+    research_entries = _recent_research_entries(db, strategy)
+    if research_entries:
+        sections.append(_research_entries_section(research_entries))
+        summary.append(f"{len(research_entries)} research entr(y/ies)")
+
     experiments = _recent_experiments(db, versions)
     if experiments:
         sections.append(_experiments_section(experiments))
@@ -152,10 +159,10 @@ def build_prompt(
     text = "\n\n".join(sections)
     if len(text) > TOTAL_CAP_CHARS:
         # Sections are appended in order: preamble, focus?, strategy,
-        # versions, notes, experiments, run, autopsy, task. Drop from the
-        # end-but-before-task side (notes first, then experiments) since
-        # those are the most expendable truncatable chunks. Preamble,
-        # strategy, versions, and the closing task section stay intact.
+        # versions, notes, research entries, experiments, run, autopsy, task.
+        # Drop from the end-but-before-task side for the expendable
+        # user-authored memory chunks. Preamble, strategy, versions, and
+        # the closing task section stay intact.
         trimmed: list[str] = []
         dropped: list[str] = []
         for s in sections:
@@ -164,6 +171,8 @@ def build_prompt(
             header = s.split("\n", 1)[0]
             if header.startswith("## Recent notes") or header.startswith(
                 "## Recent experiments"
+            ) or header.startswith(
+                "## Research workspace"
             ):
                 dropped.append(header.replace("## ", "").lower())
                 continue
@@ -250,6 +259,43 @@ def _notes_section(notes: list[Note]) -> str:
         parts.append(
             f"- **{n.note_type}** · {target} · {ts}{tags_str}\n  {_cap(n.body)}"
         )
+    return "\n".join(parts)
+
+
+def _recent_research_entries(
+    db: Session, strategy: Strategy
+) -> list[ResearchEntry]:
+    statement = (
+        select(ResearchEntry)
+        .where(ResearchEntry.strategy_id == strategy.id)
+        .order_by(ResearchEntry.created_at.desc(), ResearchEntry.id.desc())
+        .limit(RESEARCH_ENTRY_LIMIT)
+    )
+    return list(db.scalars(statement).all())
+
+
+def _research_entries_section(entries: list[ResearchEntry]) -> str:
+    parts: list[str] = [f"## Research workspace (last {len(entries)})"]
+    parts.append(
+        "These are user-authored hypotheses, decisions, and questions. "
+        "Open hypotheses/questions are not proven facts; decisions are "
+        "recorded conclusions."
+    )
+    for entry in entries:
+        links: list[str] = []
+        if entry.linked_run_id is not None:
+            links.append(f"BT-{entry.linked_run_id}")
+        if entry.linked_version_id is not None:
+            links.append(f"version#{entry.linked_version_id}")
+        if entry.tags:
+            links.append("tags=" + ", ".join(entry.tags))
+        suffix = f" ({'; '.join(links)})" if links else ""
+        parts.append(
+            f"- **{entry.kind}/{entry.status}** #{entry.id}: "
+            f"{entry.title}{suffix}"
+        )
+        if entry.body:
+            parts.append(f"  {_cap(entry.body)}")
     return "\n".join(parts)
 
 

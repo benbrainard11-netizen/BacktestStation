@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.db.models import (
     BacktestRun,
     ChatMessage,
+    ResearchEntry,
     RunMetrics,
     Strategy,
     StrategyVersion,
@@ -30,6 +31,9 @@ from app.schemas.chat import ChatMessageRead, ChatTurnRequest, ChatTurnResponse
 from app.services.cli_chat import CliInvocationError, run_turn
 
 router = APIRouter(prefix="/strategies/{strategy_id}/chat", tags=["chat"])
+
+CHAT_RESEARCH_ENTRY_LIMIT = 12
+CHAT_RESEARCH_BODY_CAP = 700
 
 
 def _require_strategy(strategy_id: int, db: Session) -> Strategy:
@@ -214,10 +218,51 @@ def _build_system_prompt(strategy: Strategy, db: Session) -> str:
                 f"maxDD={metrics.max_drawdown or 0:.2f}"
             )
 
+    research_entries = list(
+        db.scalars(
+            select(ResearchEntry)
+            .where(ResearchEntry.strategy_id == strategy.id)
+            .order_by(
+                desc(ResearchEntry.created_at), desc(ResearchEntry.id)
+            )
+            .limit(CHAT_RESEARCH_ENTRY_LIMIT)
+        ).all()
+    )
+    if research_entries:
+        lines.append(
+            "\n## Research workspace\n"
+            "User-authored hypotheses, questions, and decisions. "
+            "Treat open hypotheses/questions as things to test, not facts; "
+            "treat decisions as recorded user conclusions."
+        )
+        for entry in research_entries:
+            meta = f"{entry.kind}/{entry.status}"
+            links: list[str] = []
+            if entry.linked_run_id is not None:
+                links.append(f"BT-{entry.linked_run_id}")
+            if entry.linked_version_id is not None:
+                links.append(f"version#{entry.linked_version_id}")
+            if entry.tags:
+                links.append("tags=" + ", ".join(entry.tags))
+            suffix = f" ({'; '.join(links)})" if links else ""
+            lines.append(f"- [{meta}] {entry.title}{suffix}")
+            if entry.body:
+                lines.append(f"  {_cap_chat_context(entry.body)}")
+
     lines.append(
         "\n---\n\nWhen the user asks about results, refer to these numbers. "
         "When they ask about rules, reference the markdown above. Keep "
         "answers concrete; this is a single-user dev tool, not customer "
-        "support."
+        "support. When research entries are relevant, cite their kind, "
+        "status, and title so the answer is grounded in the user's saved "
+        "research memory."
     )
     return "\n".join(lines)
+
+
+def _cap_chat_context(text: str) -> str:
+    """Keep one research body from dominating the chat system prompt."""
+    if len(text) <= CHAT_RESEARCH_BODY_CAP:
+        return text
+    omitted = len(text) - CHAT_RESEARCH_BODY_CAP
+    return f"{text[:CHAT_RESEARCH_BODY_CAP]}\n  [truncated, {omitted} chars omitted]"
