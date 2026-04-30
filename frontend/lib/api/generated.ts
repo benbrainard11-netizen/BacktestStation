@@ -471,6 +471,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/knowledge/cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Knowledge Cards */
+        get: operations["list_knowledge_cards_api_knowledge_cards_get"];
+        put?: never;
+        /** Create Knowledge Card */
+        post: operations["create_knowledge_card_api_knowledge_cards_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/cards/{card_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Knowledge Card */
+        get: operations["get_knowledge_card_api_knowledge_cards__card_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Knowledge Card */
+        delete: operations["delete_knowledge_card_api_knowledge_cards__card_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Knowledge Card */
+        patch: operations["update_knowledge_card_api_knowledge_cards__card_id__patch"];
+        trace?: never;
+    };
+    "/api/knowledge/kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Knowledge Kinds */
+        get: operations["list_knowledge_kinds_api_knowledge_kinds_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Knowledge Statuses */
+        get: operations["list_knowledge_statuses_api_knowledge_statuses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/monitor/drift/latest": {
         parameters: {
             query?: never;
@@ -2348,6 +2419,109 @@ export interface components {
             ticks_received: number;
             /** Uptime Seconds */
             uptime_seconds: number;
+        };
+        /** KnowledgeCardCreate */
+        KnowledgeCardCreate: {
+            /** Body */
+            body?: string | null;
+            /** Failure Modes */
+            failure_modes?: string[] | null;
+            /** Formula */
+            formula?: string | null;
+            /** Inputs */
+            inputs?: string[] | null;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Source */
+            source?: string | null;
+            /**
+             * Status
+             * @default draft
+             */
+            status: string;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Summary */
+            summary?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Use Cases */
+            use_cases?: string[] | null;
+        };
+        /** KnowledgeCardKindsRead */
+        KnowledgeCardKindsRead: {
+            /** Kinds */
+            kinds?: string[];
+        };
+        /** KnowledgeCardRead */
+        KnowledgeCardRead: {
+            /** Body */
+            body: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Failure Modes */
+            failure_modes: string[] | null;
+            /** Formula */
+            formula: string | null;
+            /** Id */
+            id: number;
+            /** Inputs */
+            inputs: string[] | null;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Source */
+            source: string | null;
+            /** Status */
+            status: string;
+            /** Strategy Id */
+            strategy_id: number | null;
+            /** Summary */
+            summary: string | null;
+            /** Tags */
+            tags: string[] | null;
+            /** Updated At */
+            updated_at: string | null;
+            /** Use Cases */
+            use_cases: string[] | null;
+        };
+        /** KnowledgeCardStatusesRead */
+        KnowledgeCardStatusesRead: {
+            /** Statuses */
+            statuses?: string[];
+        };
+        /** KnowledgeCardUpdate */
+        KnowledgeCardUpdate: {
+            /** Body */
+            body?: string | null;
+            /** Failure Modes */
+            failure_modes?: string[] | null;
+            /** Formula */
+            formula?: string | null;
+            /** Inputs */
+            inputs?: string[] | null;
+            /** Kind */
+            kind?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Source */
+            source?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Summary */
+            summary?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Use Cases */
+            use_cases?: string[] | null;
         };
         /** LiveMonitorStatus */
         LiveMonitorStatus: {
@@ -4805,6 +4979,209 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_knowledge_cards_api_knowledge_cards_get: {
+        parameters: {
+            query?: {
+                kind?: string | null;
+                status?: string | null;
+                strategy_id?: number | null;
+                tag?: string | null;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeCardRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_knowledge_card_api_knowledge_cards_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KnowledgeCardCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeCardRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_knowledge_card_api_knowledge_cards__card_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeCardRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_knowledge_card_api_knowledge_cards__card_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_knowledge_card_api_knowledge_cards__card_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KnowledgeCardUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeCardRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_knowledge_kinds_api_knowledge_kinds_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeCardKindsRead"];
+                };
+            };
+        };
+    };
+    list_knowledge_statuses_api_knowledge_statuses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeCardStatusesRead"];
                 };
             };
         };

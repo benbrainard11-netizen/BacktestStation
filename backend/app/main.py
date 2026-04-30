@@ -14,6 +14,7 @@ from app.api import (
     features,
     health,
     imports,
+    knowledge,
     monitor,
     notes,
     prompts,
@@ -42,6 +43,7 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(imports.router, prefix="/api")
+app.include_router(knowledge.router, prefix="/api")
 app.include_router(monitor.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(strategies.versions_router, prefix="/api")

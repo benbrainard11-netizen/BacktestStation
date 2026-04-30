@@ -596,3 +596,39 @@ class ResearchEntry(Base):
         DateTime, server_default=func.now()
     )
     updated_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class KnowledgeCard(Base):
+    """Reusable quant memory for formulas, concepts, and research process.
+
+    Knowledge cards are broader than per-strategy research entries:
+    a card can define an orderflow formula, a market concept, a setup
+    archetype, or a research playbook. Cards are global by default and
+    may optionally point at a strategy when the knowledge is strategy-
+    specific. They are intentionally structured enough for retrieval
+    while still keeping the actual explanation in markdown.
+    """
+
+    __tablename__ = "knowledge_cards"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    strategy_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategies.id"), index=True
+    )
+    kind: Mapped[str] = mapped_column(String(40), index=True)
+    name: Mapped[str] = mapped_column(String(160), index=True)
+    summary: Mapped[str | None] = mapped_column(Text)
+    body: Mapped[str | None] = mapped_column(Text)
+    formula: Mapped[str | None] = mapped_column(Text)
+    inputs: Mapped[list[str] | None] = mapped_column(JSON)
+    use_cases: Mapped[list[str] | None] = mapped_column(JSON)
+    failure_modes: Mapped[list[str] | None] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft", server_default="draft", index=True
+    )
+    source: Mapped[str | None] = mapped_column(Text)
+    tags: Mapped[list[str] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime)

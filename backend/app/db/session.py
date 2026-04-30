@@ -280,6 +280,45 @@ def _run_data_migrations(engine: Engine) -> None:
                     )
                 )
 
+        # 2026-04-30: KnowledgeCard table for reusable quant memory:
+        # formulas, market concepts, setup archetypes, and research
+        # playbooks. Cards are global by default; `strategy_id` is an
+        # optional link for strategy-specific knowledge.
+        if not inspector.has_table("knowledge_cards"):
+            connection.execute(
+                text(
+                    "CREATE TABLE knowledge_cards ("
+                    " id INTEGER PRIMARY KEY,"
+                    " strategy_id INTEGER REFERENCES strategies(id),"
+                    " kind VARCHAR(40) NOT NULL,"
+                    " name VARCHAR(160) NOT NULL,"
+                    " summary TEXT,"
+                    " body TEXT,"
+                    " formula TEXT,"
+                    " inputs JSON,"
+                    " use_cases JSON,"
+                    " failure_modes JSON,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'draft',"
+                    " source TEXT,"
+                    " tags JSON,"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " updated_at DATETIME"
+                    ")"
+                )
+            )
+            for index_name, column in [
+                ("ix_knowledge_cards_strategy_id", "strategy_id"),
+                ("ix_knowledge_cards_kind", "kind"),
+                ("ix_knowledge_cards_name", "name"),
+                ("ix_knowledge_cards_status", "status"),
+            ]:
+                connection.execute(
+                    text(
+                        f"CREATE INDEX IF NOT EXISTS {index_name} "
+                        f"ON knowledge_cards({column})"
+                    )
+                )
+
 
 def _seed_default_risk_profiles(connection) -> None:
     """Insert Conservative / Live-mirror / Aggressive defaults if missing.

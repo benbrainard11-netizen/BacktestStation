@@ -19,6 +19,7 @@ EXPECTED_TABLES = {
     "live_signals",
     "live_heartbeats",
     "notes",
+    "knowledge_cards",
 }
 
 
@@ -149,6 +150,52 @@ def test_chat_messages_has_section_column(tmp_path: Path) -> None:
         loaded = session.get(models.ChatMessage, msg_id)
         assert loaded is not None
         assert loaded.section == "build"
+
+
+def test_knowledge_cards_roundtrip(tmp_path: Path) -> None:
+    engine = make_engine(f"sqlite:///{tmp_path / 'knowledge_card.sqlite'}")
+    create_all(engine)
+    columns = {c["name"] for c in inspect(engine).get_columns("knowledge_cards")}
+    for expected in [
+        "strategy_id",
+        "kind",
+        "name",
+        "summary",
+        "body",
+        "formula",
+        "inputs",
+        "use_cases",
+        "failure_modes",
+        "status",
+        "source",
+        "tags",
+    ]:
+        assert expected in columns
+
+    SessionLocal = make_session_factory(engine)
+    with SessionLocal() as session:
+        strategy = models.Strategy(name="T", slug="t")
+        session.add(strategy)
+        session.commit()
+        card = models.KnowledgeCard(
+            strategy_id=strategy.id,
+            kind="orderflow_formula",
+            name="Aggressor Imbalance",
+            formula="(ask_volume - bid_volume) / total_volume",
+            inputs=["ask_volume", "bid_volume"],
+            status="draft",
+            tags=["orderflow"],
+        )
+        session.add(card)
+        session.commit()
+        card_id = card.id
+
+    with SessionLocal() as session:
+        loaded = session.get(models.KnowledgeCard, card_id)
+        assert loaded is not None
+        assert loaded.name == "Aggressor Imbalance"
+        assert loaded.inputs == ["ask_volume", "bid_volume"]
+        assert loaded.tags == ["orderflow"]
 
 
 def test_legacy_chat_table_missing_section_is_migrated(tmp_path: Path) -> None:

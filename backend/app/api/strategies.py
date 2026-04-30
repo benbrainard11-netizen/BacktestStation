@@ -16,6 +16,7 @@ from app.db.models import (
     BacktestRun,
     ChatMessage,
     Experiment,
+    KnowledgeCard,
     LiveSignal,
     Note,
     ResearchEntry,
@@ -191,10 +192,17 @@ def delete_strategy(
     # worry about. With FK enforcement on, every direct child reference
     # must be cleared before the strategy row can be deleted: notes,
     # chat history, and research entries cascade with the strategy.
+    # Knowledge cards are global library artifacts, so they survive with
+    # their optional strategy link nulled.
     db.execute(delete(Note).where(Note.strategy_id == strategy.id))
     db.execute(delete(ChatMessage).where(ChatMessage.strategy_id == strategy.id))
     db.execute(
         delete(ResearchEntry).where(ResearchEntry.strategy_id == strategy.id)
+    )
+    db.execute(
+        KnowledgeCard.__table__.update()
+        .where(KnowledgeCard.strategy_id == strategy.id)
+        .values(strategy_id=None)
     )
     db.delete(strategy)
     db.commit()

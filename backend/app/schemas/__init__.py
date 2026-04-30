@@ -2,6 +2,15 @@
 
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.chat import ChatMessageRead, ChatTurnRequest, ChatTurnResponse
+from app.schemas.knowledge import (
+    KNOWLEDGE_CARD_KINDS,
+    KNOWLEDGE_CARD_STATUSES,
+    KnowledgeCardCreate,
+    KnowledgeCardKindsRead,
+    KnowledgeCardRead,
+    KnowledgeCardStatusesRead,
+    KnowledgeCardUpdate,
+)
 from app.schemas.research import (
     RESEARCH_KINDS,
     RESEARCH_STATUSES,
@@ -134,6 +143,13 @@ __all__ = [
     "FirmRuleProfileRead",
     "ImportBacktestResponse",
     "IngesterStatus",
+    "KNOWLEDGE_CARD_KINDS",
+    "KNOWLEDGE_CARD_STATUSES",
+    "KnowledgeCardCreate",
+    "KnowledgeCardKindsRead",
+    "KnowledgeCardRead",
+    "KnowledgeCardStatusesRead",
+    "KnowledgeCardUpdate",
     "LiveMonitorStatus",
     "LiveSignalRead",
     "LiveTradesPipelineStatus",
