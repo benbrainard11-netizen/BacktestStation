@@ -120,6 +120,68 @@ def test_backtest_runs_has_tags_column(tmp_path: Path) -> None:
         assert loaded.tags == ["validated", "live-candidate"]
 
 
+def test_chat_messages_has_section_column(tmp_path: Path) -> None:
+    """Stage-3 prep (2026-04-30): ChatMessage.section exists on fresh DBs
+    so per-section AI agents can attach their threads. Nullable; legacy
+    rows backfill to NULL."""
+    engine = make_engine(f"sqlite:///{tmp_path / 'chat_section.sqlite'}")
+    create_all(engine)
+    columns = {c["name"] for c in inspect(engine).get_columns("chat_messages")}
+    assert "section" in columns
+
+    SessionLocal = make_session_factory(engine)
+    with SessionLocal() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        session.add(strategy)
+        session.commit()
+        msg = models.ChatMessage(
+            strategy_id=strategy.id,
+            role="user",
+            content="hello build agent",
+            model="claude",
+            section="build",
+        )
+        session.add(msg)
+        session.commit()
+        msg_id = msg.id
+
+    with SessionLocal() as session:
+        loaded = session.get(models.ChatMessage, msg_id)
+        assert loaded is not None
+        assert loaded.section == "build"
+
+
+def test_legacy_chat_table_missing_section_is_migrated(tmp_path: Path) -> None:
+    """An older DB created before the section column should pick it up
+    via the guarded ALTER. Idempotent across re-runs."""
+    db_path = tmp_path / "legacy_chat.sqlite"
+    engine = make_engine(f"sqlite:///{db_path}")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE TABLE chat_messages ("
+                " id INTEGER PRIMARY KEY,"
+                " strategy_id INTEGER NOT NULL,"
+                " role VARCHAR(16) NOT NULL,"
+                " content TEXT NOT NULL,"
+                " model VARCHAR(16) NOT NULL DEFAULT 'claude',"
+                " cli_session_id VARCHAR(64),"
+                " cost_usd FLOAT,"
+                " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
+                ")"
+            )
+        )
+
+    create_all(engine)  # triggers _run_data_migrations
+    columns = {c["name"] for c in inspect(engine).get_columns("chat_messages")}
+    assert "section" in columns
+
+    # Re-running is a no-op.
+    create_all(engine)
+    columns = {c["name"] for c in inspect(engine).get_columns("chat_messages")}
+    assert "section" in columns
+
+
 def test_legacy_db_missing_tags_column_is_migrated(tmp_path: Path) -> None:
     """An older `data/meta.sqlite` may have backtest_runs WITHOUT the tags
     column. _run_data_migrations should add it idempotently."""

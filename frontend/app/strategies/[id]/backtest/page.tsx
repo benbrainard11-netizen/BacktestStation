@@ -56,10 +56,7 @@ export default async function BacktestPage({ params }: PageProps) {
   const latestMetrics = latestRun
     ? await apiGet<RunMetrics>(
         `/api/backtests/${latestRun.id}/metrics`,
-      ).catch((error) => {
-        if (error instanceof ApiError && error.status === 404) return null;
-        throw error;
-      })
+      ).catch(() => null)
     : null;
 
   return (

@@ -43,13 +43,22 @@ def _require_strategy(strategy_id: int, db: Session) -> Strategy:
 
 @router.get("", response_model=list[ChatMessageRead])
 def list_chat_messages(
-    strategy_id: int, db: Session = Depends(get_session)
+    strategy_id: int,
+    section: str | None = None,
+    db: Session = Depends(get_session),
 ) -> list[ChatMessage]:
+    """List messages for a strategy, optionally scoped to a workspace
+    section ("build" | "backtest" | etc.). When `section` is omitted the
+    legacy single-thread behavior is preserved (returns ALL messages
+    regardless of their section tag)."""
     _require_strategy(strategy_id, db)
-    statement = (
-        select(ChatMessage)
-        .where(ChatMessage.strategy_id == strategy_id)
-        .order_by(ChatMessage.created_at.asc(), ChatMessage.id.asc())
+    statement = select(ChatMessage).where(
+        ChatMessage.strategy_id == strategy_id
+    )
+    if section is not None:
+        statement = statement.where(ChatMessage.section == section)
+    statement = statement.order_by(
+        ChatMessage.created_at.asc(), ChatMessage.id.asc()
     )
     return list(db.scalars(statement).all())
 
@@ -68,10 +77,12 @@ async def post_chat_turn(
     system = _build_system_prompt(strategy, db)
 
     # Resume Claude session if a prior assistant turn exists. Codex
-    # doesn't support resume; passing None is harmless there.
+    # doesn't support resume; passing None is harmless there. When the
+    # request carries a section tag, scope resume to that section so
+    # the build agent doesn't pick up the backtest agent's session id.
     prior_session_id: str | None = None
     if payload.model == "claude":
-        prior = db.scalar(
+        statement = (
             select(ChatMessage)
             .where(
                 ChatMessage.strategy_id == strategy_id,
@@ -79,8 +90,13 @@ async def post_chat_turn(
                 ChatMessage.model == "claude",
                 ChatMessage.cli_session_id.is_not(None),
             )
-            .order_by(desc(ChatMessage.created_at), desc(ChatMessage.id))
-            .limit(1)
+        )
+        if payload.section is not None:
+            statement = statement.where(ChatMessage.section == payload.section)
+        prior = db.scalar(
+            statement.order_by(
+                desc(ChatMessage.created_at), desc(ChatMessage.id)
+            ).limit(1)
         )
         if prior is not None:
             prior_session_id = prior.cli_session_id
@@ -92,6 +108,7 @@ async def post_chat_turn(
         role="user",
         content=payload.prompt,
         model=payload.model,
+        section=payload.section,
         cli_session_id=None,
         cost_usd=None,
     )
@@ -116,6 +133,7 @@ async def post_chat_turn(
         role="assistant",
         content=result.text,
         model=payload.model,
+        section=payload.section,
         cli_session_id=result.cli_session_id,
         cost_usd=result.cost_usd,
     )

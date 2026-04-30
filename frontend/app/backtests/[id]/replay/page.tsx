@@ -29,7 +29,9 @@ export default async function ReplayPage({ params, searchParams }: PageProps) {
  throw e;
  });
 
- const trades = await apiGet<Trade[]>(`/api/backtests/${id}/trades`);
+ const trades = await apiGet<Trade[]>(`/api/backtests/${id}/trades`).catch(
+  () => [] as Trade[],
+ );
  const selected = pickTrade(trades, tradeId);
 
  // Anchor the chart on the selected trade's date, falling back to the

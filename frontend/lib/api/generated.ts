@@ -81,19 +81,11 @@ export interface paths {
          * Delete Backtest
          * @description Delete a run and all its children.
          *
-         *     ORM relationships are declared with cascade="all, delete-orphan", so
-         *     trades, equity_points, run_metrics, and config_snapshot go with it.
-         *     Notes keep a nullable FK and are not cascade-deleted — they survive
-         *     as floating research notes.
-         *
-         *     SQLite FK enforcement is off in this app (PRAGMA foreign_keys=0) and
-         *     the baseline_run_id columns were added via migrations that didn't
-         *     encode ON DELETE SET NULL, so we explicitly NULL out any
-         *     StrategyVersion.baseline_run_id and Experiment.baseline_run_id /
-         *     variant_run_id pointing at this run before deleting. Without this,
-         *     the Forward Drift Monitor's /drift/latest endpoint would render an
-         *     empty panel after the live-baseline run was deleted (observed
-         *     2026-04-28).
+         *     Routed through `app.services.run_deletion.delete_run` so the live-
+         *     trades ingester (which replaces a prior live run for the same JSONL)
+         *     can share the exact cleanup logic. See that module for the full set
+         *     of cross-table references that get NULL'd or cascade-deleted before
+         *     the row is removed.
          */
         delete: operations["delete_backtest_api_backtests__backtest_id__delete"];
         options?: never;
@@ -1092,7 +1084,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Chat Messages */
+        /**
+         * List Chat Messages
+         * @description List messages for a strategy, optionally scoped to a workspace
+         *     section ("build" | "backtest" | etc.). When `section` is omitted the
+         *     legacy single-thread behavior is preserved (returns ALL messages
+         *     regardless of their section tag).
+         */
         get: operations["list_chat_messages_api_strategies__strategy_id__chat_get"];
         put?: never;
         /** Post Chat Turn */
@@ -1475,6 +1473,8 @@ export interface components {
              * @enum {string}
              */
             role: "user" | "assistant";
+            /** Section */
+            section?: string | null;
             /** Strategy Id */
             strategy_id: number;
         };
@@ -1491,6 +1491,8 @@ export interface components {
             model: "claude" | "codex";
             /** Prompt */
             prompt: string;
+            /** Section */
+            section?: string | null;
         };
         /**
          * ChatTurnResponse
@@ -5783,7 +5785,9 @@ export interface operations {
     };
     list_chat_messages_api_strategies__strategy_id__chat_get: {
         parameters: {
-            query?: never;
+            query?: {
+                section?: string | null;
+            };
             header?: never;
             path: {
                 strategy_id: number;

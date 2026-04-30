@@ -532,6 +532,12 @@ class ChatMessage(Base):
     content: Mapped[str] = mapped_column(Text)
     # "claude" | "codex"
     model: Mapped[str] = mapped_column(String(16), default="claude", index=True)
+    # Optional Stage-3 scope tag. When per-section AI agents land,
+    # this records which workspace tab the conversation belongs to
+    # (e.g. "build", "backtest", "replay") so each tab can render
+    # its own thread with its own system prompt + context. Null
+    # for legacy single-thread messages and for unsectioned chat.
+    section: Mapped[str | None] = mapped_column(String(32), index=True)
     # Claude Code's session UUID; populated on assistant messages from
     # the CLI's JSON output. Reused as `--resume <id>` on the next user
     # turn to keep context. Null on user messages and on Codex turns.

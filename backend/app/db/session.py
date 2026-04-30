@@ -208,6 +208,7 @@ def _run_data_migrations(engine: Engine) -> None:
                     " role VARCHAR(16) NOT NULL,"
                     " content TEXT NOT NULL,"
                     " model VARCHAR(16) NOT NULL DEFAULT 'claude',"
+                    " section VARCHAR(32),"
                     " cli_session_id VARCHAR(64),"
                     " cost_usd FLOAT,"
                     " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
@@ -218,6 +219,28 @@ def _run_data_migrations(engine: Engine) -> None:
                 text(
                     "CREATE INDEX ix_chat_messages_strategy_id "
                     "ON chat_messages(strategy_id)"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_chat_messages_section "
+                    "ON chat_messages(section)"
+                )
+            )
+
+        # 2026-04-30: ChatMessage.section — Stage-3 prep. Tags a chat
+        # message with its workspace section ("build" | "backtest" |
+        # "replay" | ...) so per-section AI agents can scope their own
+        # threads. Existing rows backfill to NULL (legacy single-thread).
+        chat_columns = {c["name"] for c in inspector.get_columns("chat_messages")}
+        if "section" not in chat_columns:
+            connection.execute(
+                text("ALTER TABLE chat_messages ADD COLUMN section VARCHAR(32)")
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_chat_messages_section "
+                    "ON chat_messages(section)"
                 )
             )
 

@@ -567,6 +567,17 @@
             "title": "Role",
             "type": "string"
           },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
           "strategy_id": {
             "title": "Strategy Id",
             "type": "integer"
@@ -602,6 +613,18 @@
             "minLength": 1,
             "title": "Prompt",
             "type": "string"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
           }
         },
         "required": [
@@ -7545,7 +7568,7 @@
     },
     "/api/backtests/{backtest_id}": {
       "delete": {
-        "description": "Delete a run and all its children.\n\nORM relationships are declared with cascade=\"all, delete-orphan\", so\ntrades, equity_points, run_metrics, and config_snapshot go with it.\nNotes keep a nullable FK and are not cascade-deleted \u2014 they survive\nas floating research notes.\n\nSQLite FK enforcement is off in this app (PRAGMA foreign_keys=0) and\nthe baseline_run_id columns were added via migrations that didn't\nencode ON DELETE SET NULL, so we explicitly NULL out any\nStrategyVersion.baseline_run_id and Experiment.baseline_run_id /\nvariant_run_id pointing at this run before deleting. Without this,\nthe Forward Drift Monitor's /drift/latest endpoint would render an\nempty panel after the live-baseline run was deleted (observed\n2026-04-28).",
+        "description": "Delete a run and all its children.\n\nRouted through `app.services.run_deletion.delete_run` so the live-\ntrades ingester (which replaces a prior live run for the same JSONL)\ncan share the exact cleanup logic. See that module for the full set\nof cross-table references that get NULL'd or cascade-deleted before\nthe row is removed.",
         "operationId": "delete_backtest_api_backtests__backtest_id__delete",
         "parameters": [
           {
@@ -10260,6 +10283,7 @@
     },
     "/api/strategies/{strategy_id}/chat": {
       "get": {
+        "description": "List messages for a strategy, optionally scoped to a workspace\nsection (\"build\" | \"backtest\" | etc.). When `section` is omitted the\nlegacy single-thread behavior is preserved (returns ALL messages\nregardless of their section tag).",
         "operationId": "list_chat_messages_api_strategies__strategy_id__chat_get",
         "parameters": [
           {
@@ -10269,6 +10293,22 @@
             "schema": {
               "title": "Strategy Id",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "section",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Section"
             }
           }
         ],

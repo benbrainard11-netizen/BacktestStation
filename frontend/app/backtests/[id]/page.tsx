@@ -69,11 +69,10 @@ export default async function BacktestDetailPage({
 
   const [metrics, trades, dataQuality, autopsy, configResult] =
     await Promise.all([
-      apiGet<RunMetrics>(`/api/backtests/${id}/metrics`).catch((error) => {
-        if (error instanceof ApiError && error.status === 404) return null;
-        throw error;
-      }),
-      apiGet<Trade[]>(`/api/backtests/${id}/trades`),
+      apiGet<RunMetrics>(`/api/backtests/${id}/metrics`).catch(() => null),
+      apiGet<Trade[]>(`/api/backtests/${id}/trades`).catch(
+        () => [] as Trade[],
+      ),
       apiGet<DataQualityReport>(`/api/backtests/${id}/data-quality`)
         .then<
           | { report: DataQualityReport; error: null }
