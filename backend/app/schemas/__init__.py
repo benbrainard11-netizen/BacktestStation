@@ -2,6 +2,13 @@
 
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.chat import ChatMessageRead, ChatTurnRequest, ChatTurnResponse
+from app.schemas.research import (
+    RESEARCH_KINDS,
+    RESEARCH_STATUSES,
+    ResearchEntryCreate,
+    ResearchEntryRead,
+    ResearchEntryUpdate,
+)
 from app.schemas.data_health import (
     DataHealthPayload,
     DiskSpaceRead,
@@ -141,11 +148,16 @@ __all__ = [
     "PropFirmDayRow",
     "PropFirmPresetRead",
     "PropFirmResultRead",
+    "RESEARCH_KINDS",
+    "RESEARCH_STATUSES",
     "RISK_PROFILE_STATUSES",
     "ReplayBar",
     "ReplayEntry",
     "ReplayFvgZone",
     "ReplayPayload",
+    "ResearchEntryCreate",
+    "ResearchEntryRead",
+    "ResearchEntryUpdate",
     "RiskEvaluationRead",
     "RiskProfileCreate",
     "RiskProfileRead",

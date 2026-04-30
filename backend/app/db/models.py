@@ -548,3 +548,51 @@ class ChatMessage(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
+
+
+class ResearchEntry(Base):
+    """One entry in the per-strategy research workspace.
+
+    Three kinds of entries:
+      - "hypothesis": "I think X. Tested by run Y." status: open / running /
+        confirmed / rejected
+      - "decision":   "I changed Z because of run Y." status: done
+      - "question":   "Should I check W?" status: open / done
+
+    All scoped to a single strategy. The body is markdown (rendered in
+    the UI). Optional links: `linked_run_id` ties a hypothesis to the
+    backtest run that tested it; `linked_version_id` ties a decision to
+    the version it changed.
+
+    Lives alongside Notes — Notes are floating research artifacts
+    (kept across strategy/version deletes); ResearchEntries are tightly
+    bound to the strategy and cascade with it.
+    """
+
+    __tablename__ = "research_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    strategy_id: Mapped[int] = mapped_column(
+        ForeignKey("strategies.id"), index=True
+    )
+    # "hypothesis" | "decision" | "question"
+    kind: Mapped[str] = mapped_column(String(20), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    body: Mapped[str | None] = mapped_column(Text)
+    # Hypotheses: open | running | confirmed | rejected
+    # Decisions: done (immutable record)
+    # Questions: open | done
+    status: Mapped[str] = mapped_column(
+        String(20), default="open", server_default="open", index=True
+    )
+    linked_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True
+    )
+    linked_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategy_versions.id"), index=True
+    )
+    tags: Mapped[list[str] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime)

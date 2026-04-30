@@ -18,6 +18,7 @@ from app.db.models import (
     Experiment,
     LiveSignal,
     Note,
+    ResearchEntry,
     Strategy,
     StrategyVersion,
 )
@@ -187,12 +188,14 @@ def delete_strategy(
         )
     # Clean up rows that reference this strategy directly. There are no
     # versions at this point (409 above), so no version-scoped rows to
-    # worry about. With FK enforcement on, both notes and chat messages
-    # must be cleared before the strategy row can be deleted; chat
-    # history is cascade-deleted with the strategy (it lives and dies
-    # with the conversation thread it belongs to).
+    # worry about. With FK enforcement on, every direct child reference
+    # must be cleared before the strategy row can be deleted: notes,
+    # chat history, and research entries cascade with the strategy.
     db.execute(delete(Note).where(Note.strategy_id == strategy.id))
     db.execute(delete(ChatMessage).where(ChatMessage.strategy_id == strategy.id))
+    db.execute(
+        delete(ResearchEntry).where(ResearchEntry.strategy_id == strategy.id)
+    )
     db.delete(strategy)
     db.commit()
     return None
@@ -312,6 +315,14 @@ def delete_strategy_version(
         LiveSignal.__table__.update()
         .where(LiveSignal.strategy_version_id == version.id)
         .values(strategy_version_id=None)
+    )
+    # Research entries linked to this version stay (they're attached
+    # to the strategy, the version is just metadata) — NULL the
+    # link so the FK reference clears (codex 2026-04-30 caught this).
+    db.execute(
+        ResearchEntry.__table__.update()
+        .where(ResearchEntry.linked_version_id == version.id)
+        .values(linked_version_id=None)
     )
     db.delete(version)
     db.commit()

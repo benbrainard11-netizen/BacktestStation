@@ -19,6 +19,7 @@ from app.api import (
     prompts,
     prop_firm,
     replay,
+    research,
     risk_profiles,
     settings as settings_api,
     strategies,
@@ -61,3 +62,4 @@ app.include_router(replay.router, prefix="/api")
 app.include_router(trade_replay.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(features.router, prefix="/api")
+app.include_router(research.router, prefix="/api")

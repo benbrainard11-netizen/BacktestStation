@@ -244,6 +244,42 @@ def _run_data_migrations(engine: Engine) -> None:
                 )
             )
 
+        # 2026-04-30: ResearchEntry table for the per-strategy Research
+        # workspace (hypotheses / decisions / questions). Fresh DBs get
+        # the table from `Base.metadata.create_all()`; existing files
+        # need this guarded CREATE.
+        if not inspector.has_table("research_entries"):
+            connection.execute(
+                text(
+                    "CREATE TABLE research_entries ("
+                    " id INTEGER PRIMARY KEY,"
+                    " strategy_id INTEGER NOT NULL REFERENCES strategies(id),"
+                    " kind VARCHAR(20) NOT NULL,"
+                    " title VARCHAR(200) NOT NULL,"
+                    " body TEXT,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'open',"
+                    " linked_run_id INTEGER REFERENCES backtest_runs(id),"
+                    " linked_version_id INTEGER REFERENCES strategy_versions(id),"
+                    " tags JSON,"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " updated_at DATETIME"
+                    ")"
+                )
+            )
+            for index_name, column in [
+                ("ix_research_entries_strategy_id", "strategy_id"),
+                ("ix_research_entries_kind", "kind"),
+                ("ix_research_entries_status", "status"),
+                ("ix_research_entries_linked_run_id", "linked_run_id"),
+                ("ix_research_entries_linked_version_id", "linked_version_id"),
+            ]:
+                connection.execute(
+                    text(
+                        f"CREATE INDEX IF NOT EXISTS {index_name} "
+                        f"ON research_entries({column})"
+                    )
+                )
+
 
 def _seed_default_risk_profiles(connection) -> None:
     """Insert Conservative / Live-mirror / Aggressive defaults if missing.

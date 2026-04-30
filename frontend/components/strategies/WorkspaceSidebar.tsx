@@ -5,6 +5,7 @@ import {
   BarChart3,
   Building2,
   FileText,
+  FlaskConical,
   GitCompareArrows,
   LayoutDashboard,
   Lightbulb,
@@ -23,10 +24,12 @@ export interface WorkspaceSection {
   path: string;
   label: string;
   icon: LucideIcon;
-  group: "build" | "validate" | "ship";
+  group: "research" | "build" | "validate" | "ship";
 }
 
 export const WORKSPACE_SECTIONS: WorkspaceSection[] = [
+  // Research — think out loud before (or while) building
+  { path: "research",    label: "Research",      icon: FlaskConical,       group: "research" },
   // Build
   { path: "",            label: "Overview",      icon: LayoutDashboard,    group: "build" },
   { path: "chat",        label: "Chat",          icon: MessageSquare,      group: "build" },
@@ -43,6 +46,7 @@ export const WORKSPACE_SECTIONS: WorkspaceSection[] = [
 ];
 
 const GROUP_LABELS: Record<WorkspaceSection["group"], string> = {
+  research: "Research",
   build: "Build",
   validate: "Validate",
   ship: "Ship",
@@ -78,7 +82,7 @@ export default function WorkspaceSidebar({
   return (
     <aside className="sticky top-0 hidden h-fit w-48 shrink-0 self-start py-2 lg:block">
       <nav aria-label="Strategy workspace">
-        {(["build", "validate", "ship"] as const).map((group) => {
+        {(["research", "build", "validate", "ship"] as const).map((group) => {
           const items = WORKSPACE_SECTIONS.filter((s) => s.group === group);
           return (
             <div key={group} className="mb-4 last:mb-0">

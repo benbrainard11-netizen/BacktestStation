@@ -13,6 +13,13 @@ type ChatModel = "claude" | "codex";
 
 interface Props {
   strategyId: number;
+  /**
+   * Stage-3 scope tag. When set, GET only returns messages tagged with
+   * the same section, and POST persists new messages with that section
+   * (so they don't bleed into the legacy single-thread chat). Omit for
+   * the legacy unsectioned thread.
+   */
+  section?: string;
 }
 
 type SubmitState =
@@ -31,7 +38,7 @@ type SubmitState =
  * - User pays via local Max-sub / Codex login. Cost displayed under
  *   each Claude turn (Codex doesn't emit cost).
  */
-export default function ChatPanel({ strategyId }: Props) {
+export default function ChatPanel({ strategyId, section }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [model, setModel] = useState<ChatModel>("claude");
@@ -39,10 +46,14 @@ export default function ChatPanel({ strategyId }: Props) {
   const [loadedHistory, setLoadedHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Initial history load
+  // Initial history load — scoped to the section when one is provided.
   useEffect(() => {
     let cancelled = false;
-    apiGet<ChatMessage[]>(`/api/strategies/${strategyId}/chat`)
+    const url =
+      section !== undefined && section !== ""
+        ? `/api/strategies/${strategyId}/chat?section=${encodeURIComponent(section)}`
+        : `/api/strategies/${strategyId}/chat`;
+    apiGet<ChatMessage[]>(url)
       .then((m) => {
         if (cancelled) return;
         setMessages(m);
@@ -56,7 +67,7 @@ export default function ChatPanel({ strategyId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [strategyId]);
+  }, [strategyId, section]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -86,6 +97,7 @@ export default function ChatPanel({ strategyId }: Props) {
       role: "user",
       content: prompt,
       model,
+      section: section ?? null,
       cli_session_id: null,
       cost_usd: null,
       created_at: new Date().toISOString(),
@@ -93,10 +105,14 @@ export default function ChatPanel({ strategyId }: Props) {
     setMessages((prev) => [...prev, optimistic]);
 
     try {
+      const body =
+        section !== undefined && section !== ""
+          ? { prompt, model, section }
+          : { prompt, model };
       const response = await fetch(`/api/strategies/${strategyId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, model }),
+        body: JSON.stringify(body),
       });
       if (!response.ok) {
         const message = await describe(response);

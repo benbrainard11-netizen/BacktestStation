@@ -1101,6 +1101,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/strategies/{strategy_id}/research": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Research Entries
+         * @description List entries for a strategy. Filter optionally by kind / status.
+         *
+         *     Sort: newest first (created_at desc, id desc) so fresh hypotheses
+         *     surface immediately.
+         */
+        get: operations["list_research_entries_api_strategies__strategy_id__research_get"];
+        put?: never;
+        /** Create Research Entry */
+        post: operations["create_research_entry_api_strategies__strategy_id__research_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/strategies/{strategy_id}/research/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Research Entry */
+        get: operations["get_research_entry_api_strategies__strategy_id__research__entry_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Research Entry */
+        delete: operations["delete_research_entry_api_strategies__strategy_id__research__entry_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Research Entry */
+        patch: operations["update_research_entry_api_strategies__strategy_id__research__entry_id__patch"];
+        trace?: never;
+    };
     "/api/strategies/{strategy_id}/runs": {
         parameters: {
             query?: never;
@@ -2793,6 +2836,91 @@ export interface components {
             fvg_zones?: components["schemas"]["ReplayFvgZone"][];
             /** Symbol */
             symbol: string;
+        };
+        /**
+         * ResearchEntryCreate
+         * @description POST body to create an entry. `strategy_id` comes from the URL.
+         */
+        ResearchEntryCreate: {
+            /** Body */
+            body?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "hypothesis" | "decision" | "question";
+            /** Linked Run Id */
+            linked_run_id?: number | null;
+            /** Linked Version Id */
+            linked_version_id?: number | null;
+            /**
+             * Status
+             * @default open
+             * @enum {string}
+             */
+            status: "open" | "running" | "confirmed" | "rejected" | "done";
+            /** Tags */
+            tags?: string[] | null;
+            /** Title */
+            title: string;
+        };
+        /**
+         * ResearchEntryRead
+         * @description One research entry rendered in the workspace.
+         */
+        ResearchEntryRead: {
+            /** Body */
+            body: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "hypothesis" | "decision" | "question";
+            /** Linked Run Id */
+            linked_run_id: number | null;
+            /** Linked Version Id */
+            linked_version_id: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "running" | "confirmed" | "rejected" | "done";
+            /** Strategy Id */
+            strategy_id: number;
+            /** Tags */
+            tags: string[] | null;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /**
+         * ResearchEntryUpdate
+         * @description PATCH body. Every field is optional; only the ones present are
+         *     updated, matching how the rest of the app's PATCH endpoints work.
+         */
+        ResearchEntryUpdate: {
+            /** Body */
+            body?: string | null;
+            /** Kind */
+            kind?: ("hypothesis" | "decision" | "question") | null;
+            /** Linked Run Id */
+            linked_run_id?: number | null;
+            /** Linked Version Id */
+            linked_version_id?: number | null;
+            /** Status */
+            status?: ("open" | "running" | "confirmed" | "rejected" | "done") | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Title */
+            title?: string | null;
         };
         /**
          * RiskEvaluationRead
@@ -5838,6 +5966,173 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChatTurnResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_research_entries_api_strategies__strategy_id__research_get: {
+        parameters: {
+            query?: {
+                kind?: string | null;
+                status?: string | null;
+            };
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchEntryRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_research_entry_api_strategies__strategy_id__research_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchEntryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_research_entry_api_strategies__strategy_id__research__entry_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_research_entry_api_strategies__strategy_id__research__entry_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_research_entry_api_strategies__strategy_id__research__entry_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchEntryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchEntryRead"];
                 };
             };
             /** @description Validation Error */

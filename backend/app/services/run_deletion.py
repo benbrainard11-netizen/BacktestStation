@@ -31,6 +31,7 @@ from app.db.models import (
     Experiment,
     Note,
     PropFirmSimulation,
+    ResearchEntry,
     StrategyVersion,
     Trade,
 )
@@ -82,6 +83,15 @@ def purge_run_references(session: Session, run_id: int) -> None:
         PropFirmSimulation.__table__.delete().where(
             PropFirmSimulation.source_backtest_run_id == run_id
         )
+    )
+    # Research entries linked to this run survive the run delete (the
+    # hypothesis the run tested is still meaningful research) — just
+    # NULL the link so the FK reference clears. Codex 2026-04-30
+    # re-review.
+    session.execute(
+        ResearchEntry.__table__.update()
+        .where(ResearchEntry.linked_run_id == run_id)
+        .values(linked_run_id=None)
     )
 
 
