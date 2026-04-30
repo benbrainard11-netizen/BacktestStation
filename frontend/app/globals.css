@@ -71,86 +71,6 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
-.bg-stripes {
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 6px,
-    rgba(255, 255, 255, 0.015) 6px,
-    rgba(255, 255, 255, 0.015) 12px
-  );
-}
-
-/* Depth utilities — used by /prop-simulator and any page that wants the
-   premium terminal feel. Subtle grid + radial vignette behind panels. */
-.bg-depth-grid {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-position: -1px -1px;
-}
-
-/* Drafting-paper grid — finer + slightly stronger than bg-depth-grid; used
-   as atmosphere on the tearsheet view. */
-.bg-drafting-grid {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size:
-    16px 16px,
-    16px 16px,
-    96px 96px,
-    96px 96px;
-}
-
-.bg-noise {
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.012) 1px,
-    transparent 1px
-  );
-  background-size: 3px 3px;
-}
-
-.bg-depth-radial {
-  background-image: radial-gradient(
-    ellipse at top,
-    rgba(255, 255, 255, 0.025) 0%,
-    transparent 65%
-  );
-}
-
-/* Slow ambient motion — used by the simulation-core hero visual. */
-@keyframes orbit-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes orbit-spin-reverse {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@keyframes ambient-pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
 @keyframes panel-enter {
   from {
     opacity: 0;
@@ -160,27 +80,6 @@ body {
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
-}
-
-/* Long-running ambient elements: hint GPU compositing so they don't
-   thrash the main thread during scroll / hover. */
-.orbit-slow {
-  animation: orbit-spin 80s linear infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-  will-change: transform;
-}
-
-.orbit-medium {
-  animation: orbit-spin-reverse 50s linear infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-  will-change: transform;
-}
-
-.ambient-pulse {
-  animation: ambient-pulse 7s ease-in-out infinite;
-  will-change: opacity;
 }
 
 /* Eased panel entrance. cubic-bezier(0.16, 1, 0.3, 1) is the "ease-out-expo"
@@ -233,26 +132,6 @@ body {
 
 .ecg-scroll {
   animation: ecg-scroll 4s linear infinite;
-  will-change: transform;
-}
-
-/* Slow Y-axis tilt oscillation for the simulation core — gives the rings
-   a subtle dimensional sway. Perspective lives on the outer wrapper so
-   this transform composes with mouse-parallax tilt above it. */
-@keyframes core-tilt {
-  0%,
-  100% {
-    transform: rotateX(8deg) rotateY(-6deg);
-  }
-  50% {
-    transform: rotateX(8deg) rotateY(6deg);
-  }
-}
-
-.core-tilt {
-  animation: core-tilt 18s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
   will-change: transform;
 }
 
@@ -330,11 +209,7 @@ input[type="range"].terminal-slider:focus {
 
 /* Respect users who prefer reduced motion. */
 @media (prefers-reduced-motion: reduce) {
-  .orbit-slow,
-  .orbit-medium,
-  .ambient-pulse,
   .panel-enter,
-  .core-tilt,
   .ecg-scroll,
   .auto-enter > * {
     animation: none;
@@ -428,20 +303,11 @@ input[type="range"].terminal-slider:focus {
     page-break-inside: avoid;
   }
 
-  /* Drop ambient + entrance animations on paper. */
+  /* Drop entrance animations on paper. */
   .panel-enter,
   .auto-enter > *,
-  .core-tilt,
-  .orbit-slow,
-  .orbit-medium,
-  .ambient-pulse,
   .ecg-scroll {
     animation: none !important;
     transform: none !important;
-  }
-
-  /* Watermark stays visible but a touch stronger on white paper. */
-  .pointer-events-none[aria-hidden="true"] span {
-    /* Affects the MOCK watermark only via its parent classes. */
   }
 }

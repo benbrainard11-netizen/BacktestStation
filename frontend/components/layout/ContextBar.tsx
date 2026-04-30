@@ -1,39 +1,13 @@
-// Sticky bottom-of-app context bar — Bloomberg-footer pattern. Always shows
-// the run provenance plus a Cmd-K affordance for the command palette.
+// Sticky bottom-of-app context bar — minimal status + Cmd-K affordance.
 
-const FIELDS: { label: string; value: string; tone?: "pos" | "warn" }[] = [
-  { label: "seed", value: "42" },
-  { label: "runs", value: "10,000" },
-  { label: "symbol", value: "NQ" },
-  { label: "engine", value: "v0.1.0" },
-  { label: "data", value: "mock", tone: "warn" },
-];
+const APP_VERSION = "0.1.0";
 
 export default function ContextBar() {
   return (
     <footer className="flex h-7 shrink-0 items-center justify-between gap-3 border-t border-border bg-surface px-4 text-xs text-text-mute">
-      <div className="flex items-center gap-3 overflow-x-auto whitespace-nowrap">
-        {FIELDS.map((field, i) => (
-          <span key={field.label} className="flex items-center gap-1.5">
-            {i > 0 ? (
-              <span aria-hidden="true" className="text-text-mute/60">
-                ·
-              </span>
-            ) : null}
-            <span>{field.label}</span>
-            <span
-              className={
-                field.tone === "warn"
-                  ? "text-warn"
-                  : field.tone === "pos"
-                    ? "text-pos"
-                    : "text-text"
-              }
-            >
-              {field.value}
-            </span>
-          </span>
-        ))}
+      <div className="flex items-center gap-1.5">
+        <span>engine</span>
+        <span className="text-text">v{APP_VERSION}</span>
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <span className="hidden items-center gap-1.5 sm:flex">

@@ -1,14 +1,7 @@
-import MockDataBanner from "@/components/prop-simulator/MockDataBanner";
-
 export default function PropSimulatorLayout({
- children,
+  children,
 }: {
- children: React.ReactNode;
+  children: React.ReactNode;
 }) {
- return (
- <div>
- <MockDataBanner />
- {children}
- </div>
- );
+  return <div>{children}</div>;
 }

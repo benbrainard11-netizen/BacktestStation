@@ -34,6 +34,12 @@ frontend/src-tauri/target/
 frontend/src-tauri/gen/
 frontend/src-tauri/WixTools/
 
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/playwright/.cache/
+
 # Env / secrets
 .env
 .env.local

@@ -1,28 +1,20 @@
 /**
  * Playwright smoke pass for the workspace IA sub-routes.
  *
- * THIS FILE IS NOT RUNNABLE FROM ITS CURRENT LOCATION.
- *
- * It lives under `docs/` because the Playwright dependency
- * (`@playwright/test`) is on `origin/main` (Husky's branch) and not
- * on the lane-c branch yet. When we merge `origin/main`, move this
- * file to `frontend/e2e/strategies-subroutes.spec.ts` and it picks
- * up Husky's `playwright.config.ts` automatically.
- *
  * Coverage:
  *   - Workspace home (`/strategies/[id]`)
  *   - All ten sub-routes under `/strategies/[id]/*`
- *   - Per-run replay (`/backtests/[id]/replay`) — the route that was
- *     a placeholder before commit 01bfdf1 and is now a real chart
+ *   - Per-run replay (`/backtests/[id]/replay`) — wired in commit
+ *     01bfdf1 (was a placeholder before)
+ *   - Dashboard drift tile presence
  *
- * Pattern follows Husky's `e2e/smoke.spec.ts` — assert HTTP < 500 +
- * the section heading text. Pages have empty-state fallbacks so the
+ * Pattern follows `e2e/smoke.spec.ts` — assert HTTP < 500 + the
+ * section heading text. Pages have empty-state fallbacks so the
  * smoke pass works whether the backend is reachable or not.
  *
- * Strategy id: hard-coded to `1`. The smoke contract is
- * `<500`, so even when strategy 1 doesn't exist (route 404s) the
- * test still passes — we're only checking that the route doesn't
- * server-error. Adjust if you want a positive-existence check.
+ * Strategy id: hard-coded to `1`. The smoke contract is `<500`, so
+ * even when strategy 1 doesn't exist (route 404s) the test passes
+ * — we're only checking the route doesn't server-error.
  */
 
 import { expect, test } from "@playwright/test";

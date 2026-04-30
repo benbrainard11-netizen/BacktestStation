@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import Heartbeat from "@/components/charts/Heartbeat";
@@ -9,13 +10,18 @@ import LiveTradesPipelinePanel from "@/components/monitor/LiveTradesPipelinePane
 import SessionJournalPanel from "@/components/monitor/SessionJournalPanel";
 import Panel from "@/components/ui/Panel";
 import Pill from "@/components/ui/Pill";
+import StatTile from "@/components/ui/StatTile";
 import { cn } from "@/lib/utils";
 import type { BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 
 type LiveMonitorStatus = components["schemas"]["LiveMonitorStatus"];
+type Strategy = components["schemas"]["StrategyRead"];
+type BacktestRun = components["schemas"]["BacktestRunRead"];
+type Note = components["schemas"]["NoteRead"];
 
 const POLL_INTERVAL_MS = 5_000;
+const AGG_REFRESH_MS = 30_000;
 const ENDPOINT = "/api/monitor/live";
 
 type FetchState =
@@ -23,8 +29,15 @@ type FetchState =
   | { kind: "error"; message: string }
   | { kind: "data"; data: LiveMonitorStatus; fetchedAt: number };
 
+interface Aggregate {
+  strategies: Strategy[];
+  runs: BacktestRun[];
+  notes: Note[];
+}
+
 export default function MonitorPage() {
   const [state, setState] = useState<FetchState>({ kind: "loading" });
+  const [agg, setAgg] = useState<Aggregate | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,9 +53,25 @@ export default function MonitorPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function tick() {
+      const next = await fetchAggregate();
+      if (!cancelled && next) setAgg(next);
+    }
+    tick();
+    const id = setInterval(tick, AGG_REFRESH_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
   return (
     <div className="px-8 pb-10 pt-8">
       <Header state={state} />
+
+      <AggregateOverview agg={agg} live={state} />
 
       <Hero state={state} />
 
@@ -76,7 +105,9 @@ function Header({ state }: { state: FetchState }) {
   return (
     <header className="mb-6 flex items-end justify-between gap-6">
       <div>
-        <p className="m-0 text-xs text-text-mute">{metaLabel(state)}</p>
+        <p className="m-0 text-xs text-text-mute">
+          system overview · {metaLabel(state)}
+        </p>
         <h1 className="mt-1 text-[26px] font-medium leading-tight tracking-[-0.02em] text-text">
           Monitor
         </h1>
@@ -86,6 +117,212 @@ function Header({ state }: { state: FetchState }) {
   );
 }
 
+// ── aggregate overview ────────────────────────────────────────────────
+
+function AggregateOverview({
+  agg,
+  live,
+}: {
+  agg: Aggregate | null;
+  live: FetchState;
+}) {
+  const todayPnl =
+    live.kind === "data" && live.data.source_exists ? live.data.today_pnl : null;
+  const tradesToday =
+    live.kind === "data" && live.data.source_exists
+      ? live.data.trades_today
+      : null;
+
+  if (agg === null) {
+    return (
+      <div className="mb-4 grid grid-cols-4 gap-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-lg border border-border bg-surface px-[18px] py-4"
+          >
+            <p className="m-0 text-xs text-text-mute">loading…</p>
+            <p className="m-0 mt-2 text-[28px] tabular-nums text-text-mute">—</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const liveCount = agg.strategies.filter(
+    (s) => s.status === "live" || s.status === "forward_test",
+  ).length;
+  const totalVersions = agg.strategies.reduce(
+    (n, s) => n + s.versions.length,
+    0,
+  );
+
+  return (
+    <>
+      <div className="mb-4 grid grid-cols-4 gap-4">
+        <StatTile
+          label="Strategies"
+          value={String(agg.strategies.length)}
+          sub={
+            liveCount > 0
+              ? `${liveCount} live or forward`
+              : "none deployed"
+          }
+          tone="neutral"
+          href="/strategies"
+        />
+        <StatTile
+          label="Runs imported"
+          value={String(agg.runs.length)}
+          sub={`across ${totalVersions} version${totalVersions === 1 ? "" : "s"}`}
+          tone="neutral"
+          href="/backtests"
+        />
+        <StatTile
+          label="Today P&L"
+          value={
+            todayPnl === null
+              ? "—"
+              : `${todayPnl >= 0 ? "+" : "-"}$${Math.abs(todayPnl).toFixed(2)}`
+          }
+          sub={
+            tradesToday !== null
+              ? `${tradesToday} trade${tradesToday === 1 ? "" : "s"} today`
+              : "no live data"
+          }
+          tone={
+            todayPnl === null ? "neutral" : todayPnl >= 0 ? "pos" : "neg"
+          }
+        />
+        <StatTile
+          label="Notes captured"
+          value={String(agg.notes.length)}
+          sub="research workspace"
+          tone="neutral"
+          href="/journal"
+        />
+      </div>
+
+      <div className="mb-4 grid grid-cols-12 gap-4">
+        <div className="col-span-7">
+          <Panel
+            title="Recent runs · all strategies"
+            meta={agg.runs.length === 0 ? "none" : `${agg.runs.length} total`}
+            padded={false}
+          >
+            <RecentRunsTable runs={agg.runs.slice(0, 6)} />
+          </Panel>
+        </div>
+        <div className="col-span-5">
+          <Panel
+            title="Recent notes · all strategies"
+            meta={agg.notes.length === 0 ? "none" : `${agg.notes.length} total`}
+          >
+            <RecentNotesList notes={agg.notes.slice(0, 4)} />
+          </Panel>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function RecentRunsTable({ runs }: { runs: BacktestRun[] }) {
+  if (runs.length === 0) {
+    return (
+      <div className="px-[18px] py-4">
+        <p className="m-0 text-[13px] text-text-dim">No runs imported yet.</p>
+      </div>
+    );
+  }
+  return (
+    <table className="w-full border-collapse text-[13px]">
+      <thead>
+        <tr className="text-xs text-text-mute">
+          {["Run", "Symbol", "Range", "Status", ""].map((h, i) => (
+            <th
+              key={`${h}-${i}`}
+              className="border-b border-border px-[18px] py-2.5 text-left font-normal"
+            >
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {runs.map((r, i) => (
+          <tr
+            key={r.id}
+            className={
+              i === runs.length - 1
+                ? "hover:bg-surface-alt"
+                : "border-b border-border hover:bg-surface-alt"
+            }
+          >
+            <td className="px-[18px] py-2.5 text-text">
+              {r.name ?? `BT-${r.id}`}
+            </td>
+            <td className="px-[18px] py-2.5 text-text-dim">{r.symbol}</td>
+            <td className="px-[18px] py-2.5 text-xs text-text-dim">
+              {shortDateRange(r.start_ts, r.end_ts)}
+            </td>
+            <td className="px-[18px] py-2.5">
+              <Pill tone={runStatusTone(r.status)}>{r.status}</Pill>
+            </td>
+            <td className="px-[18px] py-2.5 text-right">
+              <Link
+                href={`/backtests/${r.id}`}
+                className="text-xs text-accent hover:underline"
+              >
+                Open →
+              </Link>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function RecentNotesList({ notes }: { notes: Note[] }) {
+  if (notes.length === 0) {
+    return (
+      <p className="m-0 text-[13px] text-text-dim">
+        No notes captured yet.
+      </p>
+    );
+  }
+  return (
+    <ul className="m-0 flex list-none flex-col gap-3 p-0">
+      {notes.slice(0, 4).map((n) => (
+        <li
+          key={n.id}
+          className="border-b border-border pb-3 last:border-b-0 last:pb-0"
+        >
+          <p className="m-0 text-[13px] leading-relaxed text-text line-clamp-2">
+            {n.body}
+          </p>
+          <p className="mt-1.5 m-0 text-xs text-text-mute">
+            {shortDateTime(n.created_at)}
+            {n.backtest_run_id !== null ? (
+              <>
+                {" · "}
+                <Link
+                  href={`/backtests/${n.backtest_run_id}`}
+                  className="text-accent hover:underline"
+                >
+                  run #{n.backtest_run_id}
+                </Link>
+              </>
+            ) : null}
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── live hero (existing) ──────────────────────────────────────────────
+
 function RunningPill({ state }: { state: FetchState }) {
   if (state.kind === "loading") return <Pill tone="neutral">loading…</Pill>;
   if (state.kind === "error") return <Pill tone="neg">error</Pill>;
@@ -94,9 +331,7 @@ function RunningPill({ state }: { state: FetchState }) {
   const running = d.strategy_status.toLowerCase() === "running";
   const stale = isStale(d.last_heartbeat);
   if (running && !stale) {
-    return (
-      <Pill tone="pos">running · {heartbeatAgo(d.last_heartbeat)}</Pill>
-    );
+    return <Pill tone="pos">running · {heartbeatAgo(d.last_heartbeat)}</Pill>;
   }
   if (running && stale) {
     return <Pill tone="warn">stale · {heartbeatAgo(d.last_heartbeat)}</Pill>;
@@ -224,9 +459,7 @@ function LastSignal({ state }: { state: FetchState }) {
   }
   if (typeof sig === "string") {
     return (
-      <p className="m-0 whitespace-pre-wrap text-[13px] text-text">
-        {sig}
-      </p>
+      <p className="m-0 whitespace-pre-wrap text-[13px] text-text">{sig}</p>
     );
   }
   const entries = Object.entries(sig);
@@ -325,6 +558,25 @@ async function fetchLiveStatus(): Promise<FetchState> {
   }
 }
 
+async function fetchAggregate(): Promise<Aggregate | null> {
+  try {
+    const [strategies, runs, notes] = await Promise.all([
+      fetch("/api/strategies", { cache: "no-store" }).then((r) =>
+        r.ok ? (r.json() as Promise<Strategy[]>) : ([] as Strategy[]),
+      ),
+      fetch("/api/backtests", { cache: "no-store" }).then((r) =>
+        r.ok ? (r.json() as Promise<BacktestRun[]>) : ([] as BacktestRun[]),
+      ),
+      fetch("/api/notes", { cache: "no-store" }).then((r) =>
+        r.ok ? (r.json() as Promise<Note[]>) : ([] as Note[]),
+      ),
+    ]);
+    return { strategies, runs, notes };
+  } catch {
+    return null;
+  }
+}
+
 async function extractErrorMessage(response: Response): Promise<string> {
   try {
     const body = (await response.json()) as BackendErrorBody;
@@ -338,10 +590,10 @@ async function extractErrorMessage(response: Response): Promise<string> {
 }
 
 function metaLabel(state: FetchState): string {
-  if (state.kind === "loading") return "Loading…";
-  if (state.kind === "error") return "Error · retrying 5s";
-  if (!state.data.source_exists) return "Awaiting file · 5s";
-  return "Live · polling 5s";
+  if (state.kind === "loading") return "loading…";
+  if (state.kind === "error") return "error · retrying 5s";
+  if (!state.data.source_exists) return "awaiting file · 5s";
+  return "live · polling 5s";
 }
 
 function isStale(iso: string | null): boolean {
@@ -372,5 +624,40 @@ function clockOnly(iso: string | null): string {
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
+  });
+}
+
+function runStatusTone(
+  status: string,
+): "pos" | "neg" | "warn" | "neutral" {
+  if (status === "live" || status === "imported" || status === "ok")
+    return "pos";
+  if (status === "stale" || status === "warn") return "warn";
+  if (status === "failed" || status === "error") return "neg";
+  return "neutral";
+}
+
+function shortDate(iso: string | null): string {
+  if (iso === null) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toISOString().slice(0, 10);
+}
+
+function shortDateRange(start: string | null, end: string | null): string {
+  const s = shortDate(start);
+  const e = shortDate(end);
+  if (s === "—" && e === "—") return "—";
+  return `${s} → ${e}`;
+}
+
+function shortDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }

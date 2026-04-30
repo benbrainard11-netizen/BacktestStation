@@ -1,5 +1,5 @@
-// Tearsheet colophon — printer's-mark footer with attribution, mock
-// disclaimer, and engine provenance.
+// Tearsheet colophon — printer's-mark footer with attribution and engine
+// provenance.
 
 interface ColophonProps {
  simulationId: string;
@@ -43,11 +43,7 @@ export default function Colophon({
  <span className="text-text-mute">·</span>{" "}
  impressed <span className="text-text-dim">{formatDate(createdAt)}</span>
  </span>
- <span>
- <span className="text-warn">data · mock</span>
- <span className="text-text-mute"> · </span>
- not an investment recommendation
- </span>
+ <span>not an investment recommendation</span>
  </div>
  </footer>
  );
