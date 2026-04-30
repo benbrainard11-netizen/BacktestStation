@@ -49,6 +49,8 @@ The following commits touched `production/live_bot.py` between baseline and `d8b
 - Port code: `backend/app/strategies/fractal_amd/`
 - Port tests: `backend/tests/test_fractal_amd_*.py`
 - Importer (handles JSONL schema drift): `backend/app/ingest/live_trades_jsonl.py`
-- Diagnostic CLIs: `backend/debug_fractal_setup_lifecycle.py`, `backend/debug_fractal_compare_to_live.py`
+- ~~Diagnostic CLIs~~ — removed 2026-04-29 (commit 50d529e). The Lane-C
+  investigation scripts were retired with the trusted strategy. Reach
+  for `backend/tests/test_signal_helpers_isolated.py` patterns instead.
 - State doc: `docs/PROJECT_STATE.md`
 - Strategy guide: `docs/BACKTEST_ENGINE.md`

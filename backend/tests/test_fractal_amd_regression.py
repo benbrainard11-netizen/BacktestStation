@@ -6,13 +6,13 @@ the trusted multi-year CSV at `samples/fractal_trusted_multiyear/trades.csv`
 
 Why it changed: on 2026-04-25 we discovered the script that produced that
 CSV (`export_trades_tv.py`) does not exist in any repo or git history.
-Memory `project_backtest_divergence.md` from 2026-04-10 already documented
-that the live bot's setup-detection pipeline is structurally divergent
-from `export_trades_tv.py` in ways no incremental patch could close, and
-the agreed-on fix was "port export_trades_tv.py as the new strategy core".
-That source has since been deleted. The engine port currently mirrors
-`production/live_bot.py` line-for-line, which is the *divergent* code,
-not the trusted code.
+The engine port mirrors `production/live_bot.py` line-for-line, which
+diverges from whatever `export_trades_tv.py` did. The Lane-C effort to
+port export_trades_tv.py — `fractal_amd_trusted` — was deleted in commit
+50d529e (2026-04-29) after we confirmed its +364R apparent edge was
+lookahead bias and would never replicate live (see memory
+`project_lane_c_trusted_port`). The trusted CSV stays as a fixture for
+schema/regression validation; nothing we ship attempts to reproduce it.
 
 What this is now: a characterization run. Drives the FractalAMD engine
 plug-in over a configurable window of real NQ/ES/YM 1m parquets and

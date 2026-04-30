@@ -46,7 +46,7 @@ class ComposableStrategy(Strategy):
         self.aux_symbols = tuple(aux_symbols)
         self.aux_history: dict[str, list[Bar]] = {sym: [] for sym in aux_symbols}
         # Per-day state. Reset on date-of-day rollover (Globex
-        # 18:00 → 17:00 ET convention, same as fractal_amd_trusted).
+        # 18:00 → 17:00 ET convention).
         self._current_day: dt.date | None = None
         self._trades_today: int = 0
         self._entries_today: set[tuple[str, dt.datetime]] = set()

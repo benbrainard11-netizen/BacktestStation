@@ -44,14 +44,7 @@ export default async function Dashboard() {
   );
 
   // Per-strategy latest run (across all versions) + its metrics, only
-  // for the live cards. We sort runs once and pick by version-id.
-  const runsByVersion = new Map<number, BacktestRun[]>();
-  for (const r of runs) {
-    const list = runsByVersion.get(r.strategy_version_id) ?? [];
-    list.push(r);
-    runsByVersion.set(r.strategy_version_id, list);
-  }
-
+  // for the live cards.
   const liveStrategyMetrics = await Promise.all(
     liveStrategies.map(async (s) => {
       const versionIds = new Set(s.versions.map((v) => v.id));

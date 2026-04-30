@@ -85,11 +85,13 @@ The remaining unmatched live trade (2026-04-24 13:31 short, entry 27196.83): por
 - Pinned upstream reference: `docs/FRACTAL_AMD_PORT_REFERENCE.md` carries the FractalAMD- baseline SHA and an evaluated-changes table for every commit since.
 - Open: 1 live trade still doesn't fire in port (touch outside window). Not a show-stopper; tracked as "signal-detection nuance" rather than a port bug.
 
-**Tools** (use these whenever the port diverges from live again):
-- `backend/debug_fractal_setup_lifecycle.py`
-- `backend/debug_fractal_compare_to_live.py`
-- `backend/debug_fractal_zero_trades.py` (original characterization)
-- `backend/tests/test_signal_helpers_isolated.py` (20 tests; primitives isolation check)
+**Tools** (legacy — see Note below):
+- ~~`backend/debug_fractal_setup_lifecycle.py`~~ — deleted 2026-04-29 (commit 50d529e)
+- ~~`backend/debug_fractal_compare_to_live.py`~~ — deleted 2026-04-29
+- ~~`backend/debug_fractal_zero_trades.py`~~ — deleted 2026-04-29
+- `backend/tests/test_signal_helpers_isolated.py` (20 tests; primitives isolation check) — still active
+
+**Note:** the three debug CLIs above were Lane-C-investigation diagnostics. They were removed as part of the trusted-strategy retirement. If a future port-vs-live divergence comes up, recreate the diagnostic from the test_signal_helpers_isolated patterns rather than chasing the deleted scripts.
 
 ### Prop-simulator UI completion (Husky's domain)
 
@@ -129,9 +131,9 @@ Tools shipped to disk but not called from app code paths. Each is a CLI; documen
 | `app.ingest.legacy_tbbo_import` | Imports per-contract TBBO parquet from prior tooling into continuous-symbol partitions. | Same: one-off; ran for the 309 days of NQ TBBO archive. |
 | `app.ingest.historical` | Monthly historical puller with `--schema` flag (mbp-1, tbbo, ohlcv-*). Idempotent on per-day DBN files. | The primary backfill tool. Run on the 1st of each month via Task Scheduler; or `--month YYYY-MM` to fill specific gaps. |
 | `app.ingest.parquet_mirror` | Converts raw DBN files to Hive-partitioned parquet that the engine + frontend can read. | After any historical/bulk pull that produced new DBN. Idempotent. |
-| `backend/debug_fractal_zero_trades.py` | One-shot characterization run on a fixed week with hardcoded paths to legacy data dir. | Replicating the historical "0 trades" reproduction; mostly superseded by setup_lifecycle script for new debug work. |
-| `backend/debug_fractal_setup_lifecycle.py` | Runs the engine with a tracing subclass; dumps per-setup CSV + per-rejection CSV. | First tool to reach for when the port emits unexpected trade counts. |
-| `backend/debug_fractal_compare_to_live.py` | Side-by-side: live trades from `BacktestRun(source="live")` vs port setups. | Use after lifecycle dump to compare each live trade to what the port would have done. |
+| ~~`backend/debug_fractal_zero_trades.py`~~ | (removed 2026-04-29 — Lane-C diagnostic, no longer reachable) | n/a |
+| ~~`backend/debug_fractal_setup_lifecycle.py`~~ | (removed 2026-04-29) | n/a |
+| ~~`backend/debug_fractal_compare_to_live.py`~~ | (removed 2026-04-29) | n/a |
 
 ---
 
