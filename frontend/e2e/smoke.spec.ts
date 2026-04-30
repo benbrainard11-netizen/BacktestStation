@@ -51,6 +51,14 @@ test.describe("Primary route smoke pass", () => {
     ).toBeVisible();
   });
 
+  test("/knowledge — Knowledge Library renders", async ({ page }) => {
+    const response = await page.goto("/knowledge");
+    expect(response?.status()).toBeLessThan(500);
+    await expect(
+      page.getByRole("heading", { name: "Knowledge Library", exact: true }),
+    ).toBeVisible();
+  });
+
   test("/prop-simulator — Simulator dashboard renders", async ({ page }) => {
     const response = await page.goto("/prop-simulator");
     expect(response?.status()).toBeLessThan(500);

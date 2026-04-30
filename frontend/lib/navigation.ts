@@ -3,6 +3,7 @@ import {
   Activity,
   BarChart3,
   BookOpen,
+  BrainCircuit,
   Building2,
   Database,
   Dices,
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Command Center", group: "research", icon: LayoutDashboard },
   { href: "/import", label: "Import", group: "research", icon: Download },
   { href: "/strategies", label: "Strategies", group: "research", icon: BookOpen },
+  { href: "/knowledge", label: "Knowledge", group: "research", icon: BrainCircuit },
   { href: "/backtests", label: "Backtests", group: "research", icon: BarChart3 },
   { href: "/trade-replay", label: "Trade Replay", group: "research", icon: Rewind },
 
