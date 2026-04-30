@@ -53,10 +53,17 @@ export default async function BacktestPage({ params }: PageProps) {
     definitions.find((d) => keys.includes(norm(d.name))) ?? null;
 
   const latestRun = runs[0] ?? null;
+  // 404 = no metrics yet (run still computing or upload partial); render
+  // the page without the panel. Other errors (500, network) surface to
+  // the error boundary so the user knows something's actually wrong
+  // rather than silently hiding a real failure.
   const latestMetrics = latestRun
     ? await apiGet<RunMetrics>(
         `/api/backtests/${latestRun.id}/metrics`,
-      ).catch(() => null)
+      ).catch((error) => {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      })
     : null;
 
   return (

@@ -77,9 +77,15 @@ async def post_chat_turn(
     system = _build_system_prompt(strategy, db)
 
     # Resume Claude session if a prior assistant turn exists. Codex
-    # doesn't support resume; passing None is harmless there. When the
-    # request carries a section tag, scope resume to that section so
-    # the build agent doesn't pick up the backtest agent's session id.
+    # doesn't support resume; passing None is harmless there.
+    #
+    # Threads are scoped by the (strategy, section) pair: a POST with
+    # `section="build"` only resumes the build thread; a POST with
+    # `section=None` (legacy single-thread mode) only resumes other
+    # `section IS NULL` messages. Without that explicit filter, an
+    # unsectioned POST after a sectioned conversation would pick up
+    # the sectioned conversation's session id and cross-pollinate
+    # (codex review 2026-04-30 caught this).
     prior_session_id: str | None = None
     if payload.model == "claude":
         statement = (
@@ -93,6 +99,8 @@ async def post_chat_turn(
         )
         if payload.section is not None:
             statement = statement.where(ChatMessage.section == payload.section)
+        else:
+            statement = statement.where(ChatMessage.section.is_(None))
         prior = db.scalar(
             statement.order_by(
                 desc(ChatMessage.created_at), desc(ChatMessage.id)

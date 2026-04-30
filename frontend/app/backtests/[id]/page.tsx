@@ -69,7 +69,16 @@ export default async function BacktestDetailPage({
 
   const [metrics, trades, dataQuality, autopsy, configResult] =
     await Promise.all([
-      apiGet<RunMetrics>(`/api/backtests/${id}/metrics`).catch(() => null),
+      // Metrics: 404 = not yet computed, render without the panel.
+      // Other errors surface (codex review 2026-04-30).
+      apiGet<RunMetrics>(`/api/backtests/${id}/metrics`).catch((error) => {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }),
+      // Trades: a valid run can legitimately have zero trades; treat
+      // any list-fetch failure as an empty list (Husky's pattern from
+      // c534955 — the page already renders the empty-state for a
+      // zero-trade run, so a backend hiccup degrades gracefully).
       apiGet<Trade[]>(`/api/backtests/${id}/trades`).catch(
         () => [] as Trade[],
       ),

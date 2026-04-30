@@ -119,3 +119,80 @@ def test_chat_get_scoped_to_unknown_section_returns_empty(
     response = client.get(f"/api/strategies/{sid}/chat?section=replay")
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_chat_resume_isolates_unsectioned_from_sectioned(
+    session_factory: sessionmaker[Session],
+) -> None:
+    """Codex 5.5 review 2026-04-30: an unsectioned POST must NOT pick up
+    a sectioned conversation's session id. Verified at the DB-query level
+    rather than via the live POST handler (which would shell out to a
+    Claude CLI subprocess).
+
+    Mirrors the prior_session lookup in api/chat.py:post_chat_turn.
+    """
+    from sqlalchemy import desc, select
+
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        session.add(strategy)
+        session.commit()
+        sid = strategy.id
+
+        base = datetime(2026, 4, 30, 12, 0, 0)
+        # Build-section assistant turn (newest overall).
+        session.add(
+            models.ChatMessage(
+                strategy_id=sid,
+                role="assistant",
+                content="build reply",
+                model="claude",
+                section="build",
+                cli_session_id="build-session-uuid",
+                created_at=base + timedelta(seconds=10),
+            )
+        )
+        # Older legacy unsectioned assistant turn.
+        session.add(
+            models.ChatMessage(
+                strategy_id=sid,
+                role="assistant",
+                content="legacy reply",
+                model="claude",
+                section=None,
+                cli_session_id="legacy-session-uuid",
+                created_at=base + timedelta(seconds=1),
+            )
+        )
+        session.commit()
+
+        def resume_for(section: str | None) -> str | None:
+            statement = select(models.ChatMessage).where(
+                models.ChatMessage.strategy_id == sid,
+                models.ChatMessage.role == "assistant",
+                models.ChatMessage.model == "claude",
+                models.ChatMessage.cli_session_id.is_not(None),
+            )
+            if section is not None:
+                statement = statement.where(
+                    models.ChatMessage.section == section
+                )
+            else:
+                statement = statement.where(
+                    models.ChatMessage.section.is_(None)
+                )
+            row = session.scalar(
+                statement.order_by(
+                    desc(models.ChatMessage.created_at),
+                    desc(models.ChatMessage.id),
+                ).limit(1)
+            )
+            return row.cli_session_id if row else None
+
+        # Sectioned POST resumes the right thread.
+        assert resume_for("build") == "build-session-uuid"
+        # Unsectioned POST resumes ONLY the legacy null thread,
+        # NOT the newer sectioned one.
+        assert resume_for(None) == "legacy-session-uuid"
+        # An unrelated section sees no resume candidate.
+        assert resume_for("backtest") is None

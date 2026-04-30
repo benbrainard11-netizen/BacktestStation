@@ -51,10 +51,17 @@ export default async function StrategyOverviewPage({ params }: PageProps) {
   ]);
 
   const latestRun = runs[0] ?? null;
+  // 404 = no metrics yet for this run; render the page without the
+  // panel. Other errors (5xx, network) surface to the error boundary
+  // — codex review 2026-04-30 flagged silent swallow-all as too risky
+  // for a single-resource fetch.
   const latestMetrics = latestRun
     ? await apiGet<RunMetrics>(
         `/api/backtests/${latestRun.id}/metrics`,
-      ).catch(() => null)
+      ).catch((error) => {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      })
     : null;
 
   const versionCount = strategy.versions.length;
