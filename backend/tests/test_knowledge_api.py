@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.db import models
@@ -16,6 +17,8 @@ from app.main import app
 def session_factory(tmp_path: Path) -> sessionmaker[Session]:
     engine = make_engine(f"sqlite:///{tmp_path / 'knowledge.sqlite'}")
     create_all(engine)
+    with engine.begin() as connection:
+        connection.execute(text("DELETE FROM knowledge_cards"))
     return make_session_factory(engine)
 
 
@@ -228,6 +231,31 @@ def test_delete_card(client: TestClient) -> None:
     ).json()
     assert client.delete(f"/api/knowledge/cards/{created['id']}").status_code == 204
     assert client.get(f"/api/knowledge/cards/{created['id']}").status_code == 404
+
+
+def test_delete_card_clears_research_links(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    strategy_id = _seed_strategy(session_factory)
+    card = client.post(
+        "/api/knowledge/cards",
+        json={"kind": "orderflow_formula", "name": "Imbalance"},
+    ).json()
+    entry = client.post(
+        f"/api/strategies/{strategy_id}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "Imbalance helps",
+            "knowledge_card_ids": [card["id"]],
+        },
+    ).json()
+
+    assert client.delete(f"/api/knowledge/cards/{card['id']}").status_code == 204
+    fetched = client.get(
+        f"/api/strategies/{strategy_id}/research/{entry['id']}"
+    )
+    assert fetched.status_code == 200
+    assert fetched.json()["knowledge_card_ids"] is None
 
 
 def test_strategy_delete_nulls_knowledge_card_link(

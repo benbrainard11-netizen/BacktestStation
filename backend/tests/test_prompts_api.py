@@ -241,6 +241,43 @@ def test_generate_includes_research_workspace_entries(
     )
 
 
+def test_generate_includes_knowledge_cards(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid, _ = _seed_strategy(session_factory)
+    with session_factory() as session:
+        card = models.KnowledgeCard(
+            strategy_id=sid,
+            kind="orderflow_formula",
+            name="Opening Imbalance Formula",
+            summary="Tracks aggressive pressure near the open.",
+            formula="(ask_volume - bid_volume) / total_volume",
+            inputs=["ask_volume", "bid_volume", "total_volume"],
+            use_cases=["entry confirmation"],
+            failure_modes=["thin liquidity"],
+            status="needs_testing",
+            tags=["orderflow", "open"],
+        )
+        session.add(card)
+        session.commit()
+
+    response = client.post(
+        "/api/prompts/generate",
+        json={"strategy_id": sid, "mode": "researcher"},
+    )
+    assert response.status_code == 200, response.text
+    text = response.json()["prompt_text"]
+    assert "## Knowledge library" in text
+    assert "**orderflow_formula/needs_testing**" in text
+    assert "Opening Imbalance Formula" in text
+    assert "Formula: (ask_volume - bid_volume) / total_volume" in text
+    assert "Inputs: ask_volume, bid_volume, total_volume" in text
+    assert any(
+        "knowledge card" in item
+        for item in response.json()["bundled_context_summary"]
+    )
+
+
 def test_generate_includes_recent_experiments(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:

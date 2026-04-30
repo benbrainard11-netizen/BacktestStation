@@ -1215,6 +1215,23 @@ export interface paths {
         patch: operations["update_research_entry_api_strategies__strategy_id__research__entry_id__patch"];
         trace?: never;
     };
+    "/api/strategies/{strategy_id}/research/{entry_id}/experiment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Experiment From Research Entry */
+        post: operations["create_experiment_from_research_entry_api_strategies__strategy_id__research__entry_id__experiment_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies/{strategy_id}/runs": {
         parameters: {
             query?: never;
@@ -3023,6 +3040,8 @@ export interface components {
              * @enum {string}
              */
             kind: "hypothesis" | "decision" | "question";
+            /** Knowledge Card Ids */
+            knowledge_card_ids?: number[] | null;
             /** Linked Run Id */
             linked_run_id?: number | null;
             /** Linked Version Id */
@@ -3057,6 +3076,8 @@ export interface components {
              * @enum {string}
              */
             kind: "hypothesis" | "decision" | "question";
+            /** Knowledge Card Ids */
+            knowledge_card_ids: number[] | null;
             /** Linked Run Id */
             linked_run_id: number | null;
             /** Linked Version Id */
@@ -3085,6 +3106,8 @@ export interface components {
             body?: string | null;
             /** Kind */
             kind?: ("hypothesis" | "decision" | "question") | null;
+            /** Knowledge Card Ids */
+            knowledge_card_ids?: number[] | null;
             /** Linked Run Id */
             linked_run_id?: number | null;
             /** Linked Version Id */
@@ -3095,6 +3118,22 @@ export interface components {
             tags?: string[] | null;
             /** Title */
             title?: string | null;
+        };
+        /**
+         * ResearchExperimentCreate
+         * @description POST body for turning a hypothesis into an Experiment.
+         */
+        ResearchExperimentCreate: {
+            /** Baseline Run Id */
+            baseline_run_id?: number | null;
+            /** Change Description */
+            change_description?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+            /** Variant Run Id */
+            variant_run_id?: number | null;
         };
         /**
          * RiskEvaluationRead
@@ -4680,6 +4719,8 @@ export interface operations {
                 source?: string | null;
                 kind?: string | null;
                 dataset_code?: string | null;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -6510,6 +6551,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResearchEntryRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_experiment_from_research_entry_api_strategies__strategy_id__research__entry_id__experiment_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchExperimentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentRead"];
                 };
             };
             /** @description Validation Error */

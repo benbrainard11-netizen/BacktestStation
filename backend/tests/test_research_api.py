@@ -176,6 +176,60 @@ def test_create_with_linked_run_validates_same_strategy(
     assert ok.json()["linked_run_id"] == run_a_id
 
 
+def test_create_with_knowledge_cards_validates_scope(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    with session_factory() as session:
+        global_card = models.KnowledgeCard(
+            kind="orderflow_formula",
+            name="Aggressor Imbalance",
+            status="draft",
+        )
+        own_card = models.KnowledgeCard(
+            strategy_id=sid,
+            kind="setup_archetype",
+            name="FVG after SMT",
+            status="trusted",
+        )
+        other_strategy = models.Strategy(name="Other", slug="other")
+        session.add_all([global_card, own_card, other_strategy])
+        session.commit()
+        other_card = models.KnowledgeCard(
+            strategy_id=other_strategy.id,
+            kind="market_concept",
+            name="Other scoped card",
+            status="draft",
+        )
+        session.add(other_card)
+        session.commit()
+        global_id = global_card.id
+        own_id = own_card.id
+        other_id = other_card.id
+
+    ok = client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "Orderflow confirms SMT",
+            "knowledge_card_ids": [global_id, own_id, own_id],
+        },
+    )
+    assert ok.status_code == 201, ok.text
+    assert ok.json()["knowledge_card_ids"] == [global_id, own_id]
+
+    bad = client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "Wrong scope",
+            "knowledge_card_ids": [other_id],
+        },
+    )
+    assert bad.status_code == 422
+    assert "wrong scope" in bad.json()["detail"]
+
+
 def test_patch_updates_fields_and_sets_updated_at(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:
@@ -198,6 +252,37 @@ def test_patch_updates_fields_and_sets_updated_at(
     assert body["updated_at"] is not None
 
 
+def test_patch_updates_knowledge_cards(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    with session_factory() as session:
+        card = models.KnowledgeCard(
+            kind="market_concept", name="Liquidity sweep", status="trusted"
+        )
+        session.add(card)
+        session.commit()
+        card_id = card.id
+    created = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "question", "title": "Use sweeps?"},
+    )
+    eid = created.json()["id"]
+    patch = client.patch(
+        f"/api/strategies/{sid}/research/{eid}",
+        json={"knowledge_card_ids": [card_id]},
+    )
+    assert patch.status_code == 200, patch.text
+    assert patch.json()["knowledge_card_ids"] == [card_id]
+
+    cleared = client.patch(
+        f"/api/strategies/{sid}/research/{eid}",
+        json={"knowledge_card_ids": None},
+    )
+    assert cleared.status_code == 200
+    assert cleared.json()["knowledge_card_ids"] is None
+
+
 def test_delete_removes_the_entry(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:
@@ -213,6 +298,57 @@ def test_delete_removes_the_entry(
 
     get_resp = client.get(f"/api/strategies/{sid}/research/{entry_id}")
     assert get_resp.status_code == 404
+
+
+def test_hypothesis_can_create_experiment(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid, version_id, run_id = _seed_strategy_with_version_and_run(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "Aggressor imbalance improves long entries",
+            "body": "Compare baseline against imbalance-filter variant.",
+        },
+    )
+    eid = create.json()["id"]
+
+    response = client.post(
+        f"/api/strategies/{sid}/research/{eid}/experiment",
+        json={
+            "strategy_version_id": version_id,
+            "baseline_run_id": run_id,
+            "change_description": "Add imbalance filter to entries.",
+        },
+    )
+    assert response.status_code == 201, response.text
+    experiment = response.json()
+    assert experiment["strategy_version_id"] == version_id
+    assert experiment["hypothesis"] == "Aggressor imbalance improves long entries"
+    assert experiment["baseline_run_id"] == run_id
+    assert experiment["decision"] == "pending"
+
+    updated = client.get(f"/api/strategies/{sid}/research/{eid}").json()
+    assert updated["status"] == "running"
+    assert updated["linked_version_id"] == version_id
+    assert updated["linked_run_id"] == run_id
+
+
+def test_only_hypothesis_can_create_experiment(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "question", "title": "Should I test imbalance?"},
+    )
+    response = client.post(
+        f"/api/strategies/{sid}/research/{create.json()['id']}/experiment",
+        json={},
+    )
+    assert response.status_code == 422
+    assert "only hypothesis" in response.json()["detail"]
 
 
 def test_unknown_strategy_returns_404(client: TestClient) -> None:

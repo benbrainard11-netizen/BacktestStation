@@ -4861,6 +4861,20 @@
             "title": "Kind",
             "type": "string"
           },
+          "knowledge_card_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Knowledge Card Ids"
+          },
           "linked_run_id": {
             "anyOf": [
               {
@@ -4955,6 +4969,20 @@
             "title": "Kind",
             "type": "string"
           },
+          "knowledge_card_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Knowledge Card Ids"
+          },
           "linked_run_id": {
             "anyOf": [
               {
@@ -5032,6 +5060,7 @@
           "status",
           "linked_run_id",
           "linked_version_id",
+          "knowledge_card_ids",
           "tags",
           "created_at",
           "updated_at"
@@ -5069,6 +5098,20 @@
               }
             ],
             "title": "Kind"
+          },
+          "knowledge_card_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Knowledge Card Ids"
           },
           "linked_run_id": {
             "anyOf": [
@@ -5139,6 +5182,69 @@
           }
         },
         "title": "ResearchEntryUpdate",
+        "type": "object"
+      },
+      "ResearchExperimentCreate": {
+        "additionalProperties": false,
+        "description": "POST body for turning a hypothesis into an Experiment.",
+        "properties": {
+          "baseline_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Run Id"
+          },
+          "change_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Description"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          },
+          "variant_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant Run Id"
+          }
+        },
+        "title": "ResearchExperimentCreate",
         "type": "object"
       },
       "RiskEvaluationRead": {
@@ -9071,6 +9177,29 @@
               ],
               "title": "Dataset Code"
             }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "maximum": 5000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -11782,6 +11911,67 @@
           }
         },
         "summary": "Update Research Entry",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/strategies/{strategy_id}/research/{entry_id}/experiment": {
+      "post": {
+        "operationId": "create_experiment_from_research_entry_api_strategies__strategy_id__research__entry_id__experiment_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchExperimentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Experiment From Research Entry",
         "tags": [
           "research"
         ]

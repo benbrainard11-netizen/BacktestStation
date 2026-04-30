@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.db.models import KnowledgeCard, Strategy
+from app.db.models import KnowledgeCard, ResearchEntry, Strategy
 from app.db.session import get_session
 from app.schemas import (
     KNOWLEDGE_CARD_KINDS,
@@ -187,6 +187,23 @@ def delete_knowledge_card(
     card_id: int, db: Session = Depends(get_session)
 ) -> None:
     card = _require_card(db, card_id)
+    linked_entries = list(
+        db.scalars(
+            select(ResearchEntry).where(
+                ResearchEntry.knowledge_card_ids.is_not(None)
+            )
+        ).all()
+    )
+    for entry in linked_entries:
+        if entry.knowledge_card_ids is None:
+            continue
+        next_ids = [
+            existing_id
+            for existing_id in entry.knowledge_card_ids
+            if existing_id != card.id
+        ]
+        if len(next_ids) != len(entry.knowledge_card_ids):
+            entry.knowledge_card_ids = next_ids or None
     db.delete(card)
     db.commit()
     return None

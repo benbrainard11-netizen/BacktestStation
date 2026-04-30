@@ -32,6 +32,8 @@ def list_datasets(
     source: str | None = Query(default=None),
     kind: str | None = Query(default=None),
     dataset_code: str | None = Query(default=None),
+    limit: int = Query(default=500, ge=1, le=5000),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_session),
 ) -> list[Dataset]:
     statement = select(Dataset)
@@ -49,7 +51,7 @@ def list_datasets(
         Dataset.symbol.asc().nullsfirst(),
         Dataset.schema.asc(),
         Dataset.start_ts.desc().nullslast(),
-    )
+    ).offset(offset).limit(limit)
     return list(db.scalars(statement).all())
 
 

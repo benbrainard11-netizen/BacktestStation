@@ -7,9 +7,12 @@ import type { components } from "@/lib/api/generated";
 type Dataset = components["schemas"]["DatasetRead"];
 
 export const dynamic = "force-dynamic";
+const DATASET_PREVIEW_LIMIT = 500;
 
 export default async function DataWarehousePage() {
- const datasets = await apiGet<Dataset[]>("/api/datasets").catch(
+ const datasets = await apiGet<Dataset[]>(
+ `/api/datasets?limit=${DATASET_PREVIEW_LIMIT}`,
+ ).catch(
  () => [] as Dataset[],
  );
 
@@ -36,7 +39,7 @@ export default async function DataWarehousePage() {
  <PageHeader
  title="Data warehouse"
  description="Files BacktestStation knows about. Click refresh to re-scan the disk."
- meta={`${datasets.length} files · ${symbolCount} symbols · ${schemaCount} schemas · ${formatBytes(totalBytes)}`}
+ meta={`${datasets.length}${datasets.length === DATASET_PREVIEW_LIMIT ? "+" : ""} files · ${symbolCount} symbols · ${schemaCount} schemas · ${formatBytes(totalBytes)}`}
  />
 
  <div className="flex flex-col gap-4 px-8">

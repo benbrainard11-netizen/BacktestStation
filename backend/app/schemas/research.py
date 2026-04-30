@@ -59,6 +59,7 @@ class ResearchEntryRead(BaseModel):
     status: ResearchStatus
     linked_run_id: int | None
     linked_version_id: int | None
+    knowledge_card_ids: list[int] | None
     tags: list[str] | None
     created_at: datetime
     updated_at: datetime | None
@@ -75,6 +76,7 @@ class ResearchEntryCreate(BaseModel):
     status: ResearchStatus = "open"
     linked_run_id: int | None = None
     linked_version_id: int | None = None
+    knowledge_card_ids: list[int] | None = None
     tags: list[str] | None = None
 
     def model_post_init(self, _: object) -> None:
@@ -93,4 +95,17 @@ class ResearchEntryUpdate(BaseModel):
     status: ResearchStatus | None = None
     linked_run_id: int | None = None
     linked_version_id: int | None = None
+    knowledge_card_ids: list[int] | None = None
     tags: list[str] | None = None
+
+
+class ResearchExperimentCreate(BaseModel):
+    """POST body for turning a hypothesis into an Experiment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_version_id: int | None = None
+    baseline_run_id: int | None = None
+    variant_run_id: int | None = None
+    change_description: str | None = None
+    notes: str | None = None

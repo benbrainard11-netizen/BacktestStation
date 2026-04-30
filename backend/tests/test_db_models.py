@@ -198,6 +198,41 @@ def test_knowledge_cards_roundtrip(tmp_path: Path) -> None:
         assert loaded.tags == ["orderflow"]
 
 
+def test_default_knowledge_cards_are_seeded_once(tmp_path: Path) -> None:
+    engine = make_engine(f"sqlite:///{tmp_path / 'knowledge_seed.sqlite'}")
+    create_all(engine)
+    SessionLocal = make_session_factory(engine)
+
+    with SessionLocal() as session:
+        starter_cards = list(
+            session.scalars(
+                text(
+                    "SELECT name FROM knowledge_cards "
+                    "WHERE source = 'BacktestStation starter seed' "
+                    "ORDER BY name"
+                )
+            )
+        )
+
+    assert starter_cards == [
+        "Backtest trust checklist",
+        "Clean hypothesis test workflow",
+        "Orderflow formula template",
+        "Overfitting warning signs",
+        "Walk-forward testing",
+    ]
+
+    create_all(engine)
+    with SessionLocal() as session:
+        count = session.execute(
+            text(
+                "SELECT COUNT(*) FROM knowledge_cards "
+                "WHERE source = 'BacktestStation starter seed'"
+            )
+        ).scalar_one()
+    assert count == 5
+
+
 def test_legacy_chat_table_missing_section_is_migrated(tmp_path: Path) -> None:
     """An older DB created before the section column should pick it up
     via the guarded ALTER. Idempotent across re-runs."""

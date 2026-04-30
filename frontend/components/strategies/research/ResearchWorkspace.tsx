@@ -3,6 +3,7 @@
 import {
   CheckCircle2,
   Circle,
+  FlaskConical,
   HelpCircle,
   Lightbulb,
   ListPlus,
@@ -24,6 +25,9 @@ import { cn } from "@/lib/utils";
 
 type ResearchEntry = components["schemas"]["ResearchEntryRead"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type StrategyVersion = components["schemas"]["StrategyVersionRead"];
+type KnowledgeCard = components["schemas"]["KnowledgeCardRead"];
+type Experiment = components["schemas"]["ExperimentRead"];
 
 type Kind = "hypothesis" | "decision" | "question";
 type Status = "open" | "running" | "confirmed" | "rejected" | "done";
@@ -54,6 +58,8 @@ const STATUS_OPTIONS: Record<Kind, Status[]> = {
 interface Props {
   strategyId: number;
   runs: BacktestRun[];
+  versions: StrategyVersion[];
+  knowledgeCards: KnowledgeCard[];
 }
 
 /**
@@ -64,7 +70,12 @@ interface Props {
  * sorts newest-first; a top filter chip-row scopes by kind, an
  * optional status dropdown scopes further.
  */
-export default function ResearchWorkspace({ strategyId, runs }: Props) {
+export default function ResearchWorkspace({
+  strategyId,
+  runs,
+  versions,
+  knowledgeCards,
+}: Props) {
   const [entries, setEntries] = useState<ResearchEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +119,14 @@ export default function ResearchWorkspace({ strategyId, runs }: Props) {
   }, [strategyId, filterKind, filterStatus, refreshCount]);
 
   const reload = () => setRefreshCount((n) => n + 1);
+
+  const scopedKnowledgeCards = useMemo(
+    () =>
+      knowledgeCards.filter(
+        (card) => card.strategy_id === null || card.strategy_id === strategyId,
+      ),
+    [knowledgeCards, strategyId],
+  );
 
   const counts = useMemo(() => {
     const c = { hypothesis: 0, decision: 0, question: 0 };
@@ -187,6 +206,7 @@ export default function ResearchWorkspace({ strategyId, runs }: Props) {
           key={creatingKind}
           strategyId={strategyId}
           runs={runs}
+          knowledgeCards={scopedKnowledgeCards}
           mode="create"
           initialKind={creatingKind}
           onCancel={() => setCreatingKind(null)}
@@ -222,6 +242,7 @@ export default function ResearchWorkspace({ strategyId, runs }: Props) {
                 <ResearchEntryForm
                   strategyId={strategyId}
                   runs={runs}
+                  knowledgeCards={scopedKnowledgeCards}
                   mode="edit"
                   initialEntry={entry}
                   onCancel={() => setEditingId(null)}
@@ -236,8 +257,11 @@ export default function ResearchWorkspace({ strategyId, runs }: Props) {
                 <ResearchEntryCard
                   entry={entry}
                   runs={runs}
+                  versions={versions}
+                  knowledgeCards={scopedKnowledgeCards}
                   onEdit={() => setEditingId(entry.id)}
                   onDeleted={reload}
+                  onChanged={reload}
                   strategyId={strategyId}
                 />
               </li>
@@ -277,21 +301,31 @@ function FilterChip({
 function ResearchEntryCard({
   entry,
   runs,
+  versions,
+  knowledgeCards,
   onEdit,
   onDeleted,
+  onChanged,
   strategyId,
 }: {
   entry: ResearchEntry;
   runs: BacktestRun[];
+  versions: StrategyVersion[];
+  knowledgeCards: KnowledgeCard[];
   onEdit: () => void;
   onDeleted: () => void;
+  onChanged: () => void;
   strategyId: number;
 }) {
   const Icon = KIND_META[entry.kind as Kind].icon;
   const linkedRun = entry.linked_run_id
     ? runs.find((r) => r.id === entry.linked_run_id)
     : null;
+  const linkedCards = (entry.knowledge_card_ids ?? [])
+    .map((id) => knowledgeCards.find((card) => card.id === id))
+    .filter((card): card is KnowledgeCard => card !== undefined);
   const [deleting, setDeleting] = useState(false);
+  const [experimentOpen, setExperimentOpen] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`Delete this ${entry.kind}? This can't be undone.`)) return;
@@ -328,8 +362,7 @@ function ResearchEntryCard({
               </Pill>
               {linkedRun ? (
                 <span className="text-[10px] text-text-mute">
-                  linked: BT-{linkedRun.id}
-                  {linkedRun.name ? ` · ${linkedRun.name}` : ""}
+                  linked: {runLabel(linkedRun)}
                 </span>
               ) : null}
             </div>
@@ -365,6 +398,45 @@ function ResearchEntryCard({
           </button>
         </div>
       </div>
+      {linkedCards.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {linkedCards.map((card) => (
+            <span
+              key={card.id}
+              className="rounded border border-border bg-surface-alt px-2 py-0.5 text-[10px] text-text-dim"
+              title={card.summary ?? card.name}
+            >
+              {card.name}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {entry.kind === "hypothesis" ? (
+        <div className="mt-3">
+          {experimentOpen ? (
+            <ExperimentFromEntryForm
+              entry={entry}
+              runs={runs}
+              versions={versions}
+              strategyId={strategyId}
+              onCancel={() => setExperimentOpen(false)}
+              onCreated={() => {
+                setExperimentOpen(false);
+                onChanged();
+              }}
+            />
+          ) : (
+            <Btn
+              variant="ghost"
+              className="px-0 text-xs"
+              onClick={() => setExperimentOpen(true)}
+            >
+              <FlaskConical className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Create experiment
+            </Btn>
+          )}
+        </div>
+      ) : null}
       <div className="mt-2 text-[10px] text-text-mute">
         {formatDateTime(entry.created_at)}
         {entry.updated_at !== null
@@ -375,9 +447,158 @@ function ResearchEntryCard({
   );
 }
 
+function ExperimentFromEntryForm({
+  entry,
+  runs,
+  versions,
+  strategyId,
+  onCancel,
+  onCreated,
+}: {
+  entry: ResearchEntry;
+  runs: BacktestRun[];
+  versions: StrategyVersion[];
+  strategyId: number;
+  onCancel: () => void;
+  onCreated: () => void;
+}) {
+  const activeVersions = useMemo(
+    () => versions.filter((version) => version.archived_at == null),
+    [versions],
+  );
+  const defaultVersionId =
+    entry.linked_version_id !== null &&
+    activeVersions.some((version) => version.id === entry.linked_version_id)
+      ? entry.linked_version_id
+      : activeVersions[0]?.id ?? null;
+  const [versionId, setVersionId] = useState<number | null>(defaultVersionId);
+  const [baselineRunId, setBaselineRunId] = useState<number | null>(
+    entry.linked_run_id ?? null,
+  );
+  const [variantRunId, setVariantRunId] = useState<number | null>(null);
+  const [changeDescription, setChangeDescription] = useState("");
+  const [notes, setNotes] = useState(entry.body ?? "");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (versionId === null) {
+      setSubmitError("Create a strategy version before creating an experiment.");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const resp = await fetch(
+        `/api/strategies/${strategyId}/research/${entry.id}/experiment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            strategy_version_id: versionId,
+            baseline_run_id: baselineRunId,
+            variant_run_id: variantRunId,
+            change_description:
+              changeDescription.trim() === ""
+                ? null
+                : changeDescription.trim(),
+            notes: notes.trim() === "" ? null : notes.trim(),
+          }),
+        },
+      );
+      if (!resp.ok) {
+        setSubmitError(await describe(resp));
+        return;
+      }
+      const created = (await resp.json()) as Experiment;
+      void created;
+      onCreated();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Network error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-md border border-border bg-surface-alt p-3"
+    >
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <Field label="Version">
+          <select
+            value={versionId === null ? "" : String(versionId)}
+            onChange={(e) =>
+              setVersionId(e.target.value === "" ? null : Number(e.target.value))
+            }
+            className="w-full border border-border bg-surface px-2 py-1.5 text-xs text-text"
+          >
+            <option value="">none</option>
+            {activeVersions.map((version) => (
+              <option key={version.id} value={version.id}>
+                {version.version}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Baseline run">
+          <RunSelect
+            runs={runs}
+            value={baselineRunId}
+            onChange={setBaselineRunId}
+          />
+        </Field>
+        <Field label="Variant run">
+          <RunSelect
+            runs={runs}
+            value={variantRunId}
+            onChange={setVariantRunId}
+          />
+        </Field>
+      </div>
+      <Field label="Change to test" className="mt-3">
+        <textarea
+          value={changeDescription}
+          onChange={(e) => setChangeDescription(e.target.value)}
+          rows={3}
+          className="w-full resize-y border border-border bg-surface px-2 py-1.5 font-mono text-[12px] text-text"
+          placeholder="One clean change from the baseline."
+        />
+      </Field>
+      <Field label="Experiment notes" className="mt-3">
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          className="w-full resize-y border border-border bg-surface px-2 py-1.5 font-mono text-[12px] text-text"
+        />
+      </Field>
+      {submitError !== null ? (
+        <p className="mt-2 text-xs text-neg">{submitError}</p>
+      ) : null}
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <Btn type="button" onClick={onCancel} disabled={submitting}>
+          Cancel
+        </Btn>
+        <Btn variant="primary" type="submit" disabled={submitting}>
+          {submitting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <FlaskConical className="h-3.5 w-3.5" strokeWidth={1.5} />
+          )}
+          Create experiment
+        </Btn>
+      </div>
+    </form>
+  );
+}
+
 function ResearchEntryForm({
   strategyId,
   runs,
+  knowledgeCards,
   mode,
   initialKind,
   initialEntry,
@@ -386,6 +607,7 @@ function ResearchEntryForm({
 }: {
   strategyId: number;
   runs: BacktestRun[];
+  knowledgeCards: KnowledgeCard[];
   mode: "create" | "edit";
   initialKind?: Kind;
   initialEntry?: ResearchEntry;
@@ -404,6 +626,9 @@ function ResearchEntryForm({
   );
   const [linkedRunId, setLinkedRunId] = useState<number | null>(
     initialEntry?.linked_run_id ?? null,
+  );
+  const [knowledgeCardIds, setKnowledgeCardIds] = useState<number[]>(
+    initialEntry?.knowledge_card_ids ?? [],
   );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -433,6 +658,7 @@ function ResearchEntryForm({
         body: body.trim() === "" ? null : body,
         status,
         linked_run_id: linkedRunId,
+        knowledge_card_ids: knowledgeCardIds.length > 0 ? knowledgeCardIds : null,
       };
       const url =
         mode === "create"
@@ -502,21 +728,7 @@ function ResearchEntryForm({
           </select>
         </Field>
         <Field label="Linked run (optional)">
-          <select
-            value={linkedRunId === null ? "" : String(linkedRunId)}
-            onChange={(e) =>
-              setLinkedRunId(e.target.value === "" ? null : Number(e.target.value))
-            }
-            className="w-full border border-border bg-surface px-2 py-1.5 text-xs text-text"
-          >
-            <option value="">— none —</option>
-            {runs.slice(0, 50).map((r) => (
-              <option key={r.id} value={r.id}>
-                BT-{r.id}
-                {r.name ? ` · ${r.name}` : ""}
-              </option>
-            ))}
-          </select>
+          <RunSelect runs={runs} value={linkedRunId} onChange={setLinkedRunId} />
         </Field>
       </div>
 
@@ -545,12 +757,48 @@ function ResearchEntryForm({
         />
       </Field>
 
+      {knowledgeCards.length > 0 ? (
+        <div className="mt-3 flex flex-col gap-1">
+          <span className="text-[10px] uppercase tracking-wider text-text-mute">
+            Knowledge links
+          </span>
+          <div className="grid max-h-40 grid-cols-1 gap-1 overflow-y-auto border border-border bg-surface p-2 md:grid-cols-2">
+            {knowledgeCards.map((card) => {
+              const checked = knowledgeCardIds.includes(card.id);
+              return (
+                <label
+                  key={card.id}
+                  className="flex min-w-0 items-center gap-2 rounded px-1.5 py-1 text-xs text-text-dim hover:bg-surface-alt"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      setKnowledgeCardIds((current) =>
+                        e.target.checked
+                          ? Array.from(new Set([...current, card.id]))
+                          : current.filter((id) => id !== card.id),
+                      );
+                    }}
+                    className="h-3.5 w-3.5 accent-current"
+                  />
+                  <span className="min-w-0 truncate">{card.name}</span>
+                  <span className="shrink-0 text-[10px] text-text-mute">
+                    {card.status}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {submitError !== null ? (
         <p className="mt-2 text-xs text-neg">{submitError}</p>
       ) : null}
 
       <div className="mt-3 flex items-center justify-end gap-2">
-        <Btn onClick={onCancel} disabled={submitting}>
+        <Btn type="button" onClick={onCancel} disabled={submitting}>
           Cancel
         </Btn>
         <Btn variant="primary" type="submit" disabled={submitting}>
@@ -585,6 +833,35 @@ function Field({
       {children}
     </label>
   );
+}
+
+function RunSelect({
+  runs,
+  value,
+  onChange,
+}: {
+  runs: BacktestRun[];
+  value: number | null;
+  onChange: (value: number | null) => void;
+}) {
+  return (
+    <select
+      value={value === null ? "" : String(value)}
+      onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+      className="w-full border border-border bg-surface px-2 py-1.5 text-xs text-text"
+    >
+      <option value="">none</option>
+      {runs.slice(0, 50).map((run) => (
+        <option key={run.id} value={run.id}>
+          {runLabel(run)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function runLabel(run: BacktestRun): string {
+  return `BT-${run.id}${run.name ? ` / ${run.name}` : ""}`;
 }
 
 function formatDateTime(iso: string): string {

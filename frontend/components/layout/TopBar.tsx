@@ -48,6 +48,9 @@ function segmentsFor(pathname: string): Segment[] {
   if (pathname === "/" || pathname === "") {
     return [{ text: "command center", tone: "body" }];
   }
+  if (pathname === "/research") {
+    return [{ text: "research dashboard", tone: "body" }];
+  }
   if (pathname.startsWith("/backtests")) {
     return [{ text: "backtests", tone: "body" }];
   }

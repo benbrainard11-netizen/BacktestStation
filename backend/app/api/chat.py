@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.db.models import (
     BacktestRun,
     ChatMessage,
+    KnowledgeCard,
     ResearchEntry,
     RunMetrics,
     Strategy,
@@ -34,6 +35,8 @@ router = APIRouter(prefix="/strategies/{strategy_id}/chat", tags=["chat"])
 
 CHAT_RESEARCH_ENTRY_LIMIT = 12
 CHAT_RESEARCH_BODY_CAP = 700
+CHAT_KNOWLEDGE_CARD_LIMIT = 10
+CHAT_KNOWLEDGE_BODY_CAP = 700
 
 
 def _require_strategy(strategy_id: int, db: Session) -> Strategy:
@@ -249,6 +252,41 @@ def _build_system_prompt(strategy: Strategy, db: Session) -> str:
             if entry.body:
                 lines.append(f"  {_cap_chat_context(entry.body)}")
 
+    knowledge_cards = list(
+        db.scalars(
+            select(KnowledgeCard)
+            .where(
+                (KnowledgeCard.strategy_id.is_(None))
+                | (KnowledgeCard.strategy_id == strategy.id),
+                KnowledgeCard.status != "archived",
+            )
+            .order_by(desc(KnowledgeCard.updated_at), desc(KnowledgeCard.id))
+            .limit(CHAT_KNOWLEDGE_CARD_LIMIT)
+        ).all()
+    )
+    if knowledge_cards:
+        lines.append(
+            "\n## Knowledge library\n"
+            "Reusable user-saved concepts, formulas, playbooks, and "
+            "failure modes. Use these as local context; do not treat draft "
+            "or needs_testing cards as proven."
+        )
+        for card in knowledge_cards:
+            scope = "global" if card.strategy_id is None else f"strategy#{card.strategy_id}"
+            links: list[str] = [scope]
+            if card.tags:
+                links.append("tags=" + ", ".join(card.tags))
+            lines.append(
+                f"- [{card.kind}/{card.status}] {card.name} "
+                f"({'; '.join(links)})"
+            )
+            if card.summary:
+                lines.append(f"  {card.summary}")
+            if card.formula:
+                lines.append(f"  Formula: {_cap_knowledge_context(card.formula)}")
+            if card.body:
+                lines.append(f"  Notes: {_cap_knowledge_context(card.body)}")
+
     lines.append(
         "\n---\n\nWhen the user asks about results, refer to these numbers. "
         "When they ask about rules, reference the markdown above. Keep "
@@ -266,3 +304,11 @@ def _cap_chat_context(text: str) -> str:
         return text
     omitted = len(text) - CHAT_RESEARCH_BODY_CAP
     return f"{text[:CHAT_RESEARCH_BODY_CAP]}\n  [truncated, {omitted} chars omitted]"
+
+
+def _cap_knowledge_context(text: str) -> str:
+    """Keep one knowledge card field from dominating the system prompt."""
+    if len(text) <= CHAT_KNOWLEDGE_BODY_CAP:
+        return text
+    omitted = len(text) - CHAT_KNOWLEDGE_BODY_CAP
+    return f"{text[:CHAT_KNOWLEDGE_BODY_CAP]}\n  [truncated, {omitted} chars omitted]"

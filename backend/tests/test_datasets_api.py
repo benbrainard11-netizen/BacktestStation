@@ -112,6 +112,33 @@ def test_list_filters(client: TestClient, data_root: Path) -> None:
     assert historical[0]["schema"] == "mbp-1"
 
 
+def test_list_supports_pagination(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    with session_factory() as session:
+        for i in range(3):
+            session.add(
+                models.Dataset(
+                    file_path=f"C:/data/file-{i}.dbn",
+                    dataset_code="GLBX.MDP3",
+                    schema="tbbo",
+                    symbol="NQ",
+                    source="historical",
+                    kind="dbn",
+                    file_size_bytes=100 + i,
+                )
+            )
+        session.commit()
+
+    first_page = client.get("/api/datasets", params={"limit": 2}).json()
+    assert len(first_page) == 2
+
+    second_page = client.get(
+        "/api/datasets", params={"limit": 2, "offset": 2}
+    ).json()
+    assert len(second_page) == 1
+
+
 # --- scan idempotency / change detection ---------------------------------
 
 

@@ -591,6 +591,10 @@ class ResearchEntry(Base):
     linked_version_id: Mapped[int | None] = mapped_column(
         ForeignKey("strategy_versions.id"), index=True
     )
+    # Optional links to KnowledgeCard rows. Stored as a JSON id list so
+    # one hypothesis/question can point at multiple formulas/concepts.
+    # API validation keeps ids real and same-strategy/global.
+    knowledge_card_ids: Mapped[list[int] | None] = mapped_column(JSON)
     tags: Mapped[list[str] | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()

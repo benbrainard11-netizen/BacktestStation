@@ -17,6 +17,7 @@ from app.schemas.research import (
     ResearchEntryCreate,
     ResearchEntryRead,
     ResearchEntryUpdate,
+    ResearchExperimentCreate,
 )
 from app.schemas.data_health import (
     DataHealthPayload,
@@ -174,6 +175,7 @@ __all__ = [
     "ResearchEntryCreate",
     "ResearchEntryRead",
     "ResearchEntryUpdate",
+    "ResearchExperimentCreate",
     "RiskEvaluationRead",
     "RiskProfileCreate",
     "RiskProfileRead",

@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from app.db.models import (
     BacktestRun,
     Experiment,
+    KnowledgeCard,
     Note,
     ResearchEntry,
     RunMetrics,
@@ -34,6 +35,7 @@ from app.services import autopsy as autopsy_service
 NOTE_LIMIT = 20
 EXPERIMENT_LIMIT = 10
 RESEARCH_ENTRY_LIMIT = 20
+KNOWLEDGE_CARD_LIMIT = 20
 # Per-field soft cap — applied to any user-supplied markdown (strategy
 # description, version rules, note bodies, experiment change descriptions).
 # Prevents a single ballooning field from dominating the prompt.
@@ -136,6 +138,11 @@ def build_prompt(
         sections.append(_research_entries_section(research_entries))
         summary.append(f"{len(research_entries)} research entr(y/ies)")
 
+    knowledge_cards = _relevant_knowledge_cards(db, strategy)
+    if knowledge_cards:
+        sections.append(_knowledge_cards_section(knowledge_cards))
+        summary.append(f"{len(knowledge_cards)} knowledge card(s)")
+
     experiments = _recent_experiments(db, versions)
     if experiments:
         sections.append(_experiments_section(experiments))
@@ -173,6 +180,8 @@ def build_prompt(
                 "## Recent experiments"
             ) or header.startswith(
                 "## Research workspace"
+            ) or header.startswith(
+                "## Knowledge library"
             ):
                 dropped.append(header.replace("## ", "").lower())
                 continue
@@ -296,6 +305,54 @@ def _research_entries_section(entries: list[ResearchEntry]) -> str:
         )
         if entry.body:
             parts.append(f"  {_cap(entry.body)}")
+    return "\n".join(parts)
+
+
+def _relevant_knowledge_cards(
+    db: Session, strategy: Strategy
+) -> list[KnowledgeCard]:
+    statement = (
+        select(KnowledgeCard)
+        .where(
+            or_(
+                KnowledgeCard.strategy_id.is_(None),
+                KnowledgeCard.strategy_id == strategy.id,
+            ),
+            KnowledgeCard.status != "archived",
+        )
+        .order_by(KnowledgeCard.updated_at.desc(), KnowledgeCard.id.desc())
+        .limit(KNOWLEDGE_CARD_LIMIT)
+    )
+    return list(db.scalars(statement).all())
+
+
+def _knowledge_cards_section(cards: list[KnowledgeCard]) -> str:
+    parts: list[str] = [f"## Knowledge library (last {len(cards)})"]
+    parts.append(
+        "These are user-saved market concepts, formulas, setup archetypes, "
+        "and research playbooks. Draft/needs_testing cards are not proven."
+    )
+    for card in cards:
+        scope = "global" if card.strategy_id is None else f"strategy#{card.strategy_id}"
+        links: list[str] = [scope]
+        if card.tags:
+            links.append("tags=" + ", ".join(card.tags))
+        parts.append(
+            f"- **{card.kind}/{card.status}** #{card.id}: "
+            f"{card.name} ({'; '.join(links)})"
+        )
+        if card.summary:
+            parts.append(f"  Summary: {_cap(card.summary)}")
+        if card.formula:
+            parts.append(f"  Formula: {_cap(card.formula)}")
+        if card.inputs:
+            parts.append(f"  Inputs: {', '.join(card.inputs)}")
+        if card.use_cases:
+            parts.append(f"  Use cases: {', '.join(card.use_cases)}")
+        if card.failure_modes:
+            parts.append(f"  Failure modes: {', '.join(card.failure_modes)}")
+        if card.body:
+            parts.append(f"  Notes: {_cap(card.body)}")
     return "\n".join(parts)
 
 

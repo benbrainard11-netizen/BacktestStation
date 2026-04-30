@@ -260,6 +260,7 @@ def _run_data_migrations(engine: Engine) -> None:
                     " status VARCHAR(20) NOT NULL DEFAULT 'open',"
                     " linked_run_id INTEGER REFERENCES backtest_runs(id),"
                     " linked_version_id INTEGER REFERENCES strategy_versions(id),"
+                    " knowledge_card_ids JSON,"
                     " tags JSON,"
                     " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
                     " updated_at DATETIME"
@@ -277,6 +278,17 @@ def _run_data_migrations(engine: Engine) -> None:
                     text(
                         f"CREATE INDEX IF NOT EXISTS {index_name} "
                         f"ON research_entries({column})"
+                    )
+                )
+        else:
+            research_columns = {
+                c["name"] for c in inspector.get_columns("research_entries")
+            }
+            if "knowledge_card_ids" not in research_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE research_entries "
+                        "ADD COLUMN knowledge_card_ids JSON"
                     )
                 )
 
@@ -318,6 +330,8 @@ def _run_data_migrations(engine: Engine) -> None:
                         f"ON knowledge_cards({column})"
                     )
                 )
+        if inspector.has_table("knowledge_cards"):
+            _seed_default_knowledge_cards(connection)
 
 
 def _seed_default_risk_profiles(connection) -> None:
@@ -495,6 +509,134 @@ def _seed_default_firm_rule_profiles(connection) -> None:
                 "is_seed": True,
                 "is_archived": False,
             },
+        )
+
+
+def _seed_default_knowledge_cards(connection) -> None:
+    """Seed a small editable starter playbook when the library is empty."""
+    import json as _json
+    from sqlalchemy import text as _text
+
+    existing_count = connection.execute(
+        _text("SELECT COUNT(*) FROM knowledge_cards")
+    ).scalar()
+    if existing_count and existing_count > 0:
+        return
+
+    seed_source = "BacktestStation starter seed"
+    cards = [
+        {
+            "kind": "research_playbook",
+            "name": "Clean hypothesis test workflow",
+            "summary": (
+                "Turn one trading idea into one falsifiable A/B test "
+                "before adding more filters."
+            ),
+            "body": (
+                "1. Write the exact hypothesis.\n"
+                "2. Pick the baseline run/version.\n"
+                "3. Change one thing only.\n"
+                "4. Compare net R, trade count, drawdown, and regime slices.\n"
+                "5. Record promote/reject/retest as a decision."
+            ),
+            "formula": None,
+            "inputs": _json.dumps(["hypothesis", "baseline run", "variant run"]),
+            "use_cases": _json.dumps(["experiment planning"]),
+            "failure_modes": _json.dumps(["multiple changes at once", "tiny sample"]),
+            "status": "trusted",
+            "source": seed_source,
+            "tags": _json.dumps(["starter", "research-process"]),
+        },
+        {
+            "kind": "research_playbook",
+            "name": "Backtest trust checklist",
+            "summary": (
+                "Minimum checks before treating a backtest as evidence."
+            ),
+            "body": (
+                "Check for lookahead, survivorship, fill assumptions, session "
+                "timezones, commissions/slippage, sample size, and whether the "
+                "edge survives simple regime splits."
+            ),
+            "formula": None,
+            "inputs": _json.dumps(["run metrics", "trades", "config snapshot"]),
+            "use_cases": _json.dumps(["pre-decision review"]),
+            "failure_modes": _json.dumps(["optimizing to one date range"]),
+            "status": "trusted",
+            "source": seed_source,
+            "tags": _json.dumps(["starter", "backtest-quality"]),
+        },
+        {
+            "kind": "research_playbook",
+            "name": "Walk-forward testing",
+            "summary": (
+                "Split time into train/test windows to catch overfit parameters."
+            ),
+            "body": (
+                "A change is more believable when it improves or preserves "
+                "performance across multiple out-of-sample windows, not just "
+                "the window used to pick parameters."
+            ),
+            "formula": None,
+            "inputs": _json.dumps(["date windows", "strategy params", "metrics"]),
+            "use_cases": _json.dumps(["overfit detection", "parameter validation"]),
+            "failure_modes": _json.dumps(["too many retests", "changing rules mid-window"]),
+            "status": "draft",
+            "source": seed_source,
+            "tags": _json.dumps(["starter", "walk-forward", "overfitting"]),
+        },
+        {
+            "kind": "orderflow_formula",
+            "name": "Orderflow formula template",
+            "summary": (
+                "Template for saving a new orderflow formula with inputs, use "
+                "case, and known failure modes."
+            ),
+            "body": (
+                "Use this as a skeleton: define what market behavior the "
+                "formula should detect, the exact inputs, how it can lie, and "
+                "which strategy hypothesis will test it."
+            ),
+            "formula": "(signal_input_a - signal_input_b) / normalization_term",
+            "inputs": _json.dumps(["signal_input_a", "signal_input_b", "normalization_term"]),
+            "use_cases": _json.dumps(["formula drafting"]),
+            "failure_modes": _json.dumps(["bad normalization", "thin liquidity", "news spikes"]),
+            "status": "draft",
+            "source": seed_source,
+            "tags": _json.dumps(["starter", "orderflow", "template"]),
+        },
+        {
+            "kind": "market_concept",
+            "name": "Overfitting warning signs",
+            "summary": (
+                "Common signals that a strategy improvement may be curve-fit."
+            ),
+            "body": (
+                "Watch for large improvement from a tiny parameter tweak, "
+                "performance concentrated in a few trades, too many rejected "
+                "variants, unstable results across days/hours, or filters that "
+                "only help after looking at the outcome."
+            ),
+            "formula": None,
+            "inputs": _json.dumps(["trade distribution", "parameter sweep", "time slices"]),
+            "use_cases": _json.dumps(["strategy review", "experiment critique"]),
+            "failure_modes": _json.dumps(["ignoring boring negative evidence"]),
+            "status": "trusted",
+            "source": seed_source,
+            "tags": _json.dumps(["starter", "overfitting", "risk"]),
+        },
+    ]
+
+    for card in cards:
+        connection.execute(
+            _text(
+                "INSERT INTO knowledge_cards "
+                "(kind, name, summary, body, formula, inputs, use_cases, "
+                " failure_modes, status, source, tags) "
+                "VALUES (:kind, :name, :summary, :body, :formula, :inputs, "
+                " :use_cases, :failure_modes, :status, :source, :tags)"
+            ),
+            card,
         )
 
 

@@ -26,6 +26,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models import (
     BacktestRun,
+    Experiment,
+    KnowledgeCard,
     ResearchEntry,
     Strategy,
     StrategyVersion,
@@ -34,9 +36,11 @@ from app.db.session import get_session
 from app.schemas import (
     RESEARCH_KINDS,
     RESEARCH_STATUSES,
+    ExperimentRead,
     ResearchEntryCreate,
     ResearchEntryRead,
     ResearchEntryUpdate,
+    ResearchExperimentCreate,
 )
 from app.schemas.research import validate_kind_status_pair
 
@@ -117,6 +121,89 @@ def _validate_links(
             )
 
 
+def _clean_knowledge_card_ids(raw: list[int] | None) -> list[int] | None:
+    if raw is None:
+        return None
+    cleaned: list[int] = []
+    seen: set[int] = set()
+    for card_id in raw:
+        if card_id in seen:
+            continue
+        seen.add(card_id)
+        cleaned.append(card_id)
+    return cleaned or None
+
+
+def _validate_knowledge_card_ids(
+    *, card_ids: list[int] | None, db: Session, strategy_id: int
+) -> list[int] | None:
+    """Confirm linked cards exist and are either global or same-strategy."""
+    cleaned = _clean_knowledge_card_ids(card_ids)
+    if cleaned is None:
+        return None
+    cards = {
+        card.id: card
+        for card in db.scalars(
+            select(KnowledgeCard).where(KnowledgeCard.id.in_(cleaned))
+        ).all()
+    }
+    missing = [card_id for card_id in cleaned if card_id not in cards]
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=f"knowledge_card_ids not found: {missing}",
+        )
+    wrong_scope = [
+        card.id
+        for card in cards.values()
+        if card.strategy_id is not None and card.strategy_id != strategy_id
+    ]
+    if wrong_scope:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "knowledge_card_ids must be global or belong to this "
+                f"strategy; wrong scope: {wrong_scope}"
+            ),
+        )
+    return cleaned
+
+
+def _pick_experiment_version(
+    *,
+    db: Session,
+    strategy_id: int,
+    strategy_version_id: int | None,
+) -> StrategyVersion:
+    if strategy_version_id is not None:
+        version = db.get(StrategyVersion, strategy_version_id)
+        if version is None or version.strategy_id != strategy_id:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"strategy_version_id {strategy_version_id} doesn't "
+                    "belong to this strategy"
+                ),
+            )
+        return version
+
+    version = db.scalar(
+        select(StrategyVersion)
+        .where(
+            StrategyVersion.strategy_id == strategy_id,
+            StrategyVersion.archived_at.is_(None),
+        )
+        .order_by(StrategyVersion.id.desc())
+        .limit(1)
+    )
+    if version is None:
+        raise HTTPException(
+            status_code=422,
+            detail="strategy has no active version to attach an experiment to",
+        )
+    return version
+
+
 @router.get("", response_model=list[ResearchEntryRead])
 def list_research_entries(
     strategy_id: int,
@@ -168,6 +255,11 @@ def create_research_entry(
         db=db,
         strategy_id=strategy_id,
     )
+    knowledge_card_ids = _validate_knowledge_card_ids(
+        card_ids=payload.knowledge_card_ids,
+        db=db,
+        strategy_id=strategy_id,
+    )
 
     entry = ResearchEntry(
         strategy_id=strategy_id,
@@ -177,6 +269,7 @@ def create_research_entry(
         status=payload.status,
         linked_run_id=payload.linked_run_id,
         linked_version_id=payload.linked_version_id,
+        knowledge_card_ids=knowledge_card_ids,
         tags=payload.tags,
     )
     db.add(entry)
@@ -252,6 +345,12 @@ def update_research_entry(
             entry.linked_run_id = payload.linked_run_id
         if "linked_version_id" in fields_set:
             entry.linked_version_id = payload.linked_version_id
+    if "knowledge_card_ids" in fields_set:
+        entry.knowledge_card_ids = _validate_knowledge_card_ids(
+            card_ids=payload.knowledge_card_ids,
+            db=db,
+            strategy_id=strategy_id,
+        )
     if "tags" in fields_set:
         entry.tags = payload.tags
 
@@ -269,3 +368,65 @@ def delete_research_entry(
     db.delete(entry)
     db.commit()
     return None
+
+
+@router.post(
+    "/{entry_id}/experiment",
+    response_model=ExperimentRead,
+    status_code=201,
+)
+def create_experiment_from_research_entry(
+    strategy_id: int,
+    entry_id: int,
+    payload: ResearchExperimentCreate,
+    db: Session = Depends(get_session),
+) -> Experiment:
+    entry = _require_entry(strategy_id, entry_id, db)
+    if entry.kind != "hypothesis":
+        raise HTTPException(
+            status_code=422,
+            detail="only hypothesis research entries can create experiments",
+        )
+    version = _pick_experiment_version(
+        db=db,
+        strategy_id=strategy_id,
+        strategy_version_id=payload.strategy_version_id,
+    )
+    if payload.baseline_run_id is not None:
+        _validate_links(
+            linked_run_id=payload.baseline_run_id,
+            linked_version_id=None,
+            db=db,
+            strategy_id=strategy_id,
+        )
+    if payload.variant_run_id is not None:
+        _validate_links(
+            linked_run_id=payload.variant_run_id,
+            linked_version_id=None,
+            db=db,
+            strategy_id=strategy_id,
+        )
+
+    notes = payload.notes
+    if notes is None and entry.body:
+        notes = entry.body
+    experiment = Experiment(
+        strategy_version_id=version.id,
+        hypothesis=entry.title,
+        baseline_run_id=payload.baseline_run_id,
+        variant_run_id=payload.variant_run_id,
+        change_description=payload.change_description,
+        decision="pending",
+        notes=notes,
+    )
+    db.add(experiment)
+    if entry.status == "open":
+        entry.status = "running"
+    if entry.linked_version_id is None:
+        entry.linked_version_id = version.id
+    if entry.linked_run_id is None:
+        entry.linked_run_id = payload.variant_run_id or payload.baseline_run_id
+    entry.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    db.refresh(experiment)
+    return experiment

@@ -8,6 +8,7 @@ import {
   Database,
   Dices,
   Download,
+  FlaskConical,
   GitCompareArrows,
   History,
   LayoutDashboard,
@@ -27,6 +28,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Command Center", group: "research", icon: LayoutDashboard },
+  { href: "/research", label: "Research", group: "research", icon: FlaskConical },
   { href: "/import", label: "Import", group: "research", icon: Download },
   { href: "/strategies", label: "Strategies", group: "research", icon: BookOpen },
   { href: "/knowledge", label: "Knowledge", group: "research", icon: BrainCircuit },
@@ -61,6 +63,7 @@ export interface TopTabItem {
 
 export const TOP_TAB_ITEMS: TopTabItem[] = [
   { href: "/", label: "Dashboard" },
+  { href: "/research", label: "Research" },
   { href: "/strategies", label: "Strategies" },
 ];
 

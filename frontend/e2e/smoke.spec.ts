@@ -27,6 +27,14 @@ test.describe("Primary route smoke pass", () => {
     ).toBeVisible();
   });
 
+  test("/research - Research Dashboard renders", async ({ page }) => {
+    const response = await page.goto("/research");
+    expect(response?.status()).toBeLessThan(500);
+    await expect(
+      page.getByRole("heading", { name: "Research Dashboard", exact: true }),
+    ).toBeVisible();
+  });
+
   test("/monitor — Monitor renders", async ({ page }) => {
     const response = await page.goto("/monitor");
     expect(response?.status()).toBeLessThan(500);

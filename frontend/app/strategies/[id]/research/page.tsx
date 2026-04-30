@@ -8,6 +8,7 @@ import type { components } from "@/lib/api/generated";
 
 type Strategy = components["schemas"]["StrategyRead"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
+type KnowledgeCard = components["schemas"]["KnowledgeCardRead"];
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,7 +29,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function ResearchPage({ params }: PageProps) {
   const { id } = await params;
-  const [strategy, runs] = await Promise.all([
+  const [strategy, runs, knowledgeCards] = await Promise.all([
     apiGet<Strategy>(`/api/strategies/${id}`).catch((error) => {
       if (error instanceof ApiError && error.status === 404) notFound();
       throw error;
@@ -36,11 +37,19 @@ export default async function ResearchPage({ params }: PageProps) {
     apiGet<BacktestRun[]>(`/api/strategies/${id}/runs`).catch(
       () => [] as BacktestRun[],
     ),
+    apiGet<KnowledgeCard[]>("/api/knowledge/cards").catch(
+      () => [] as KnowledgeCard[],
+    ),
   ]);
 
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[3fr_2fr]">
-      <ResearchWorkspace strategyId={strategy.id} runs={runs} />
+      <ResearchWorkspace
+        strategyId={strategy.id}
+        runs={runs}
+        versions={strategy.versions}
+        knowledgeCards={knowledgeCards}
+      />
       <Panel
         title="Research chat"
         meta="scoped to this tab"
