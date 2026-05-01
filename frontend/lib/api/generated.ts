@@ -325,6 +325,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/datasets/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Coverage
+         * @description Per-(symbol, schema, kind) rollup of the dataset registry.
+         *
+         *     Read-only; aggregates in Python because the population is small and
+         *     sqlite vs. postgres date_trunc semantics aren't worth the SQL.
+         */
+        get: operations["coverage_api_datasets_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/datasets/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Readiness
+         * @description Does the warehouse have the 1m bars needed for a backtest range?
+         *
+         *     Source schema is always ohlcv-1m: `read_bars()` reads 1m from disk
+         *     and resamples higher timeframes at query time. The half-open
+         *     convention `[start, end)` matches `read_bars`. Saturdays and
+         *     Sundays are excluded from `missing_days` (futures don't trade
+         *     weekends); weekday market holidays remain a known limitation
+         *     until a CME calendar lands.
+         */
+        get: operations["readiness_api_datasets_readiness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/datasets/scan": {
         parameters: {
             query?: never;
@@ -1854,6 +1904,48 @@ export interface components {
             /** Total Bars */
             total_bars: number;
         };
+        /**
+         * DatasetCoverageRead
+         * @description GET /api/datasets/coverage response.
+         */
+        DatasetCoverageRead: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Last Scan At */
+            last_scan_at: string | null;
+            /** Rows */
+            rows: components["schemas"]["DatasetCoverageRow"][];
+        };
+        /**
+         * DatasetCoverageRow
+         * @description One row in the per-(symbol, schema, kind) coverage rollup.
+         *
+         *     `data_schema` shadows nothing on BaseModel because we expose the
+         *     JSON key as "schema" via the alias — same trick `DatasetRead` uses.
+         */
+        DatasetCoverageRow: {
+            /** Earliest Date */
+            earliest_date: string | null;
+            /** Kind */
+            kind: string;
+            /** Last Seen At */
+            last_seen_at: string | null;
+            /** Latest Date */
+            latest_date: string | null;
+            /** Partition Count */
+            partition_count: number;
+            /** Schema */
+            schema: string;
+            /** Stale Data */
+            stale_data: boolean;
+            /** Symbol */
+            symbol: string | null;
+            /** Total Bytes */
+            total_bytes: number;
+        };
         /** DatasetRead */
         DatasetRead: {
             /**
@@ -1890,6 +1982,46 @@ export interface components {
             start_ts: string | null;
             /** Symbol */
             symbol: string | null;
+        };
+        /**
+         * DatasetReadinessRead
+         * @description GET /api/datasets/readiness response — does a backtest range
+         *     have all the 1m bars it needs?
+         *
+         *     `available_days` lists every date present in the registry within
+         *     the requested range, including weekend partitions if any. Only
+         *     `missing_days` filters weekends — see endpoint docstring.
+         */
+        DatasetReadinessRead: {
+            /** Available Days */
+            available_days: string[];
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Latest Available Date */
+            latest_available_date: string | null;
+            /** Message */
+            message: string;
+            /** Missing Days */
+            missing_days: string[];
+            /** Ready */
+            ready: boolean;
+            /**
+             * Source Schema
+             * @constant
+             */
+            source_schema: "ohlcv-1m";
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /** Symbol */
+            symbol: string;
+            /** Timeframe */
+            timeframe: string;
         };
         /**
          * DatasetScanResult
@@ -4976,6 +5108,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DatasetRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    coverage_api_datasets_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetCoverageRead"];
+                };
+            };
+        };
+    };
+    readiness_api_datasets_readiness_get: {
+        parameters: {
+            query: {
+                symbol: string;
+                timeframe: string;
+                start: string;
+                end: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetReadinessRead"];
                 };
             };
             /** @description Validation Error */

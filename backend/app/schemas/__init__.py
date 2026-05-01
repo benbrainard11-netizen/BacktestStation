@@ -34,7 +34,13 @@ from app.schemas.data_health import (
     WarehouseSummary,
 )
 from app.schemas.data_quality import DataQualityIssue, DataQualityReportRead
-from app.schemas.datasets import DatasetRead, DatasetScanResult
+from app.schemas.datasets import (
+    DatasetCoverageRead,
+    DatasetCoverageRow,
+    DatasetRead,
+    DatasetReadinessRead,
+    DatasetScanResult,
+)
 from app.schemas.drift import (
     DriftComparisonRead,
     DriftResultRead,
@@ -139,7 +145,10 @@ __all__ = [
     "ScheduledTaskStatus",
     "WarehouseSchemaSummary",
     "WarehouseSummary",
+    "DatasetCoverageRead",
+    "DatasetCoverageRow",
     "DatasetRead",
+    "DatasetReadinessRead",
     "DatasetScanResult",
     "DriftComparisonRead",
     "DriftResultRead",

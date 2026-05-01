@@ -1011,6 +1011,127 @@
         "title": "DataQualityReportRead",
         "type": "object"
       },
+      "DatasetCoverageRead": {
+        "description": "GET /api/datasets/coverage response.",
+        "properties": {
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "last_scan_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scan At"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetCoverageRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "last_scan_at",
+          "generated_at"
+        ],
+        "title": "DatasetCoverageRead",
+        "type": "object"
+      },
+      "DatasetCoverageRow": {
+        "description": "One row in the per-(symbol, schema, kind) coverage rollup.\n\n`data_schema` shadows nothing on BaseModel because we expose the\nJSON key as \"schema\" via the alias \u2014 same trick `DatasetRead` uses.",
+        "properties": {
+          "earliest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Date"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen At"
+          },
+          "latest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Date"
+          },
+          "partition_count": {
+            "title": "Partition Count",
+            "type": "integer"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          },
+          "stale_data": {
+            "title": "Stale Data",
+            "type": "boolean"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "total_bytes": {
+            "title": "Total Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "symbol",
+          "schema",
+          "kind",
+          "partition_count",
+          "total_bytes",
+          "earliest_date",
+          "latest_date",
+          "last_seen_at",
+          "stale_data"
+        ],
+        "title": "DatasetCoverageRow",
+        "type": "object"
+      },
       "DatasetRead": {
         "properties": {
           "created_at": {
@@ -1126,6 +1247,84 @@
           "created_at"
         ],
         "title": "DatasetRead",
+        "type": "object"
+      },
+      "DatasetReadinessRead": {
+        "description": "GET /api/datasets/readiness response \u2014 does a backtest range\nhave all the 1m bars it needs?\n\n`available_days` lists every date present in the registry within\nthe requested range, including weekend partitions if any. Only\n`missing_days` filters weekends \u2014 see endpoint docstring.",
+        "properties": {
+          "available_days": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Available Days",
+            "type": "array"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "latest_available_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Available Date"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "missing_days": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Missing Days",
+            "type": "array"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "source_schema": {
+            "const": "ohlcv-1m",
+            "title": "Source Schema",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "timeframe": {
+            "title": "Timeframe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ready",
+          "symbol",
+          "timeframe",
+          "source_schema",
+          "start",
+          "end",
+          "available_days",
+          "missing_days",
+          "latest_available_date",
+          "message"
+        ],
+        "title": "DatasetReadinessRead",
         "type": "object"
       },
       "DatasetScanResult": {
@@ -9723,6 +9922,101 @@
           }
         },
         "summary": "List Datasets",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/datasets/coverage": {
+      "get": {
+        "description": "Per-(symbol, schema, kind) rollup of the dataset registry.\n\nRead-only; aggregates in Python because the population is small and\nsqlite vs. postgres date_trunc semantics aren't worth the SQL.",
+        "operationId": "coverage_api_datasets_coverage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetCoverageRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Coverage",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/datasets/readiness": {
+      "get": {
+        "description": "Does the warehouse have the 1m bars needed for a backtest range?\n\nSource schema is always ohlcv-1m: `read_bars()` reads 1m from disk\nand resamples higher timeframes at query time. The half-open\nconvention `[start, end)` matches `read_bars`. Saturdays and\nSundays are excluded from `missing_days` (futures don't trade\nweekends); weekday market holidays remain a known limitation\nuntil a CME calendar lands.",
+        "operationId": "readiness_api_datasets_readiness_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Symbol",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "timeframe",
+            "required": true,
+            "schema": {
+              "title": "Timeframe",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Start",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "End",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetReadinessRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Readiness",
         "tags": [
           "datasets"
         ]

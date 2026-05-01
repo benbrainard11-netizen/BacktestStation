@@ -3,6 +3,7 @@
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import CoverageReadinessPanel from "@/components/data-health/CoverageReadinessPanel";
 import DiskSpacePanel from "@/components/data-health/DiskSpacePanel";
 import LastScanPanel from "@/components/data-health/LastScanPanel";
 import ScheduledTasksPanel from "@/components/data-health/ScheduledTasksPanel";
@@ -91,6 +92,7 @@ function Body({
  <>
  <DiskSpacePanel disk={data.disk} />
  <WarehouseInventoryPanel warehouse={data.warehouse} />
+ <CoverageReadinessPanel />
  <ScheduledTasksPanel
  tasks={data.scheduled_tasks ?? []}
  supported={data.scheduled_tasks_supported}
