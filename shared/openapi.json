@@ -3635,6 +3635,162 @@
         "title": "KnowledgeCardUpdate",
         "type": "object"
       },
+      "KnowledgeHealthCounts": {
+        "additionalProperties": false,
+        "description": "Aggregate counts over the full population of knowledge cards\nplus a few cross-table signals (entries with multiple linked cards).",
+        "properties": {
+          "archived_cards": {
+            "title": "Archived Cards",
+            "type": "integer"
+          },
+          "draft_cards": {
+            "title": "Draft Cards",
+            "type": "integer"
+          },
+          "needs_testing_cards": {
+            "title": "Needs Testing Cards",
+            "type": "integer"
+          },
+          "needs_testing_without_run": {
+            "title": "Needs Testing Without Run",
+            "type": "integer"
+          },
+          "promoted_entries_with_multiple_cards": {
+            "title": "Promoted Entries With Multiple Cards",
+            "type": "integer"
+          },
+          "rejected_cards": {
+            "title": "Rejected Cards",
+            "type": "integer"
+          },
+          "stale_drafts": {
+            "title": "Stale Drafts",
+            "type": "integer"
+          },
+          "total_cards": {
+            "title": "Total Cards",
+            "type": "integer"
+          },
+          "trusted_cards": {
+            "title": "Trusted Cards",
+            "type": "integer"
+          },
+          "trusted_without_evidence": {
+            "title": "Trusted Without Evidence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_cards",
+          "trusted_cards",
+          "needs_testing_cards",
+          "draft_cards",
+          "rejected_cards",
+          "archived_cards",
+          "trusted_without_evidence",
+          "needs_testing_without_run",
+          "stale_drafts",
+          "promoted_entries_with_multiple_cards"
+        ],
+        "title": "KnowledgeHealthCounts",
+        "type": "object"
+      },
+      "KnowledgeHealthIssue": {
+        "additionalProperties": false,
+        "description": "One actionable health observation. Each issue points at the row\nthe user should look at \u2014 `card_id` for card-level issues,\n`research_entry_id` for entry-level issues. `strategy_id` is set\nwhen the offending row is strategy-scoped, so the UI can group.",
+        "properties": {
+          "card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Id"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "research_entry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Research Entry Id"
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "warn",
+              "error"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "title",
+          "detail"
+        ],
+        "title": "KnowledgeHealthIssue",
+        "type": "object"
+      },
+      "KnowledgeHealthRead": {
+        "additionalProperties": false,
+        "description": "Top-level response from GET /api/knowledge/health.",
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/KnowledgeHealthCounts"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeHealthIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          }
+        },
+        "required": [
+          "counts",
+          "issues",
+          "generated_at"
+        ],
+        "title": "KnowledgeHealthRead",
+        "type": "object"
+      },
       "LiveMonitorStatus": {
         "properties": {
           "current_session": {
@@ -10231,6 +10387,28 @@
           }
         },
         "summary": "Update Knowledge Card",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/knowledge/health": {
+      "get": {
+        "description": "Read-only health check over the knowledge memory database.\n\nSurfaces weak/stale/unproven cards so the user notices rot before\nthe assistant relies on this memory. Never mutates state \u2014 counts +\nissues only. Cheap enough to call on every Library page load.",
+        "operationId": "knowledge_health_api_knowledge_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeHealthRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Knowledge Health",
         "tags": [
           "knowledge"
         ]

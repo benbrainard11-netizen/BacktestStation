@@ -23,6 +23,8 @@ import { type BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 import { cn } from "@/lib/utils";
 
+import MemoryHealthPanel from "./MemoryHealthPanel";
+
 type KnowledgeCard = components["schemas"]["KnowledgeCardRead"];
 type KnowledgeCardCreate = components["schemas"]["KnowledgeCardCreate"];
 type KnowledgeCardUpdate = components["schemas"]["KnowledgeCardUpdate"];
@@ -107,6 +109,11 @@ export default function KnowledgeLibrary({
   });
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
+  // Bumped after any card mutation so the MemoryHealthPanel re-fetches
+  // — keeps health counts/issues in step with the visible card list
+  // without forcing a full page reload.
+  const [healthVersion, setHealthVersion] = useState(0);
+  const bumpHealth = () => setHealthVersion((n) => n + 1);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const strategyById = useMemo(() => {
@@ -244,6 +251,7 @@ export default function KnowledgeLibrary({
       });
       setEditingId(saved.id);
       setSaveState({ kind: "idle" });
+      bumpHealth();
     } catch (error) {
       setSaveState({
         kind: "error",
@@ -264,6 +272,7 @@ export default function KnowledgeLibrary({
       }
       setCards((prev) => prev.filter((row) => row.id !== card.id));
       if (editingId === card.id) startNew();
+      bumpHealth();
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Network error");
     }
@@ -287,6 +296,7 @@ export default function KnowledgeLibrary({
       if (editingId === updated.id) {
         setForm((prev) => ({ ...prev, status: updated.status }));
       }
+      bumpHealth();
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Network error");
     }
@@ -295,6 +305,7 @@ export default function KnowledgeLibrary({
   return (
     <div className="grid grid-cols-1 gap-5 px-8 pb-12 xl:grid-cols-[minmax(0,1fr)_430px]">
       <main className="flex min-w-0 flex-col gap-4">
+        <MemoryHealthPanel refreshKey={healthVersion} />
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {statuses.map((status) => (
             <StatusTile
@@ -518,6 +529,9 @@ function KnowledgeCardRow({
             <Pill tone={STATUS_TONE[card.status] ?? "neutral"}>
               {formatLabel(card.status)}
             </Pill>
+            {isTrustedWithoutEvidence(card) ? (
+              <Pill tone="warn">no evidence</Pill>
+            ) : null}
             {strategyName ? (
               <span className="text-xs text-text-mute">{strategyName}</span>
             ) : (
@@ -608,6 +622,19 @@ function KnowledgeCardRow({
         </div>
       ) : null}
     </article>
+  );
+}
+
+function isTrustedWithoutEvidence(card: KnowledgeCard): boolean {
+  // Mirrors the backend `trusted_without_evidence` rule in
+  // app/api/knowledge.py knowledge_health(). Computed locally so the
+  // chip stays accurate after PATCHes without re-fetching health.
+  return (
+    card.status === "trusted" &&
+    (card.linked_run_id === null || card.linked_run_id === undefined) &&
+    (card.linked_version_id === null || card.linked_version_id === undefined) &&
+    (card.linked_research_entry_id === null ||
+      card.linked_research_entry_id === undefined)
   );
 }
 

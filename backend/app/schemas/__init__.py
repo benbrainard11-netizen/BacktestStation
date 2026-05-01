@@ -12,6 +12,11 @@ from app.schemas.knowledge import (
     KnowledgeCardStatusesRead,
     KnowledgeCardUpdate,
 )
+from app.schemas.knowledge_health import (
+    KnowledgeHealthCounts,
+    KnowledgeHealthIssue,
+    KnowledgeHealthRead,
+)
 from app.schemas.research import (
     RESEARCH_KINDS,
     RESEARCH_STATUSES,
@@ -155,6 +160,9 @@ __all__ = [
     "KnowledgeCardRead",
     "KnowledgeCardStatusesRead",
     "KnowledgeCardUpdate",
+    "KnowledgeHealthCounts",
+    "KnowledgeHealthIssue",
+    "KnowledgeHealthRead",
     "LiveMonitorStatus",
     "LiveSignalRead",
     "LiveTradesPipelineStatus",

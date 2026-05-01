@@ -8,7 +8,7 @@ without pretending the model itself has been trained.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
@@ -30,9 +30,21 @@ from app.schemas import (
     KnowledgeCardRead,
     KnowledgeCardStatusesRead,
     KnowledgeCardUpdate,
+    KnowledgeHealthCounts,
+    KnowledgeHealthIssue,
+    KnowledgeHealthRead,
 )
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
+
+# A draft card untouched for this many days is "stale" — long enough
+# to outlive a normal "drafted but haven't gotten back to it" window
+# but short enough that it surfaces stuff Ben has actually forgotten.
+_STALE_DRAFT_DAYS = 30
+
+# Severity ranking for deterministic sort order in /health responses.
+# Higher number = louder; we list error first, then warn, then info.
+_SEVERITY_ORDER: dict[str, int] = {"error": 0, "warn": 1, "info": 2}
 
 
 def _require_card(db: Session, card_id: int) -> KnowledgeCard:
@@ -130,6 +142,153 @@ def _validate_evidence_links(
                     f"belongs to a different strategy ({entry.strategy_id})"
                 ),
             )
+
+
+@router.get("/health", response_model=KnowledgeHealthRead)
+def knowledge_health(
+    db: Session = Depends(get_session),
+) -> KnowledgeHealthRead:
+    """Read-only health check over the knowledge memory database.
+
+    Surfaces weak/stale/unproven cards so the user notices rot before
+    the assistant relies on this memory. Never mutates state — counts +
+    issues only. Cheap enough to call on every Library page load.
+    """
+    cards = list(db.scalars(select(KnowledgeCard)).all())
+    entries = list(db.scalars(select(ResearchEntry)).all())
+
+    counts_by_status: dict[str, int] = {
+        "trusted": 0,
+        "needs_testing": 0,
+        "draft": 0,
+        "rejected": 0,
+        "archived": 0,
+    }
+    trusted_without_evidence = 0
+    needs_testing_without_run = 0
+    stale_drafts = 0
+
+    issues: list[KnowledgeHealthIssue] = []
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    stale_threshold = now - timedelta(days=_STALE_DRAFT_DAYS)
+
+    for card in cards:
+        if card.status in counts_by_status:
+            counts_by_status[card.status] += 1
+
+        # Archived and rejected cards are by definition not active
+        # memory; the user has explicitly de-staged them, so they don't
+        # generate hygiene issues even if their links are missing.
+        if card.status in ("archived", "rejected"):
+            continue
+
+        if card.status == "trusted" and (
+            card.linked_run_id is None
+            and card.linked_version_id is None
+            and card.linked_research_entry_id is None
+        ):
+            trusted_without_evidence += 1
+            issues.append(
+                KnowledgeHealthIssue(
+                    code="trusted_without_evidence",
+                    severity="warn",
+                    title="Trusted card has no evidence link",
+                    detail=(
+                        f"Card #{card.id} \"{card.name}\" is marked trusted "
+                        "but has no linked run, version, or research entry. "
+                        "Wire up the evidence behind it or downgrade to "
+                        "needs_testing."
+                    ),
+                    card_id=card.id,
+                    strategy_id=card.strategy_id,
+                )
+            )
+
+        if card.status == "needs_testing" and card.linked_run_id is None:
+            needs_testing_without_run += 1
+            issues.append(
+                KnowledgeHealthIssue(
+                    code="needs_testing_without_run",
+                    severity="info",
+                    title="needs_testing card has no linked run",
+                    detail=(
+                        f"Card #{card.id} \"{card.name}\" is queued for "
+                        "testing but no backtest run is linked. The whole "
+                        "point of needs_testing is to evaluate it against "
+                        "a run."
+                    ),
+                    card_id=card.id,
+                    strategy_id=card.strategy_id,
+                )
+            )
+
+        if card.status == "draft" and card.created_at < stale_threshold:
+            stale_drafts += 1
+            age_days = (now - card.created_at).days
+            issues.append(
+                KnowledgeHealthIssue(
+                    code="stale_draft",
+                    severity="info",
+                    title="Draft card has been sitting",
+                    detail=(
+                        f"Card #{card.id} \"{card.name}\" has been a draft "
+                        f"for {age_days} days. Promote, reject, or archive "
+                        "it so it doesn't pollute the memory feed."
+                    ),
+                    card_id=card.id,
+                    strategy_id=card.strategy_id,
+                )
+            )
+
+    promoted_entries_with_multiple_cards = 0
+    for entry in entries:
+        card_ids = entry.knowledge_card_ids or []
+        if len(card_ids) > 1:
+            promoted_entries_with_multiple_cards += 1
+            issues.append(
+                KnowledgeHealthIssue(
+                    code="promoted_entry_with_multiple_cards",
+                    severity="info",
+                    title="Research entry promoted to multiple cards",
+                    detail=(
+                        f"Entry #{entry.id} \"{entry.title}\" is linked to "
+                        f"{len(card_ids)} knowledge cards "
+                        f"({', '.join(f'#{cid}' for cid in card_ids)}). "
+                        "Confirm the duplication is intentional."
+                    ),
+                    research_entry_id=entry.id,
+                    strategy_id=entry.strategy_id,
+                )
+            )
+
+    issues.sort(
+        key=lambda i: (
+            _SEVERITY_ORDER.get(i.severity, 99),
+            i.code,
+            i.card_id if i.card_id is not None else 0,
+            i.research_entry_id if i.research_entry_id is not None else 0,
+        )
+    )
+
+    counts = KnowledgeHealthCounts(
+        total_cards=len(cards),
+        trusted_cards=counts_by_status["trusted"],
+        needs_testing_cards=counts_by_status["needs_testing"],
+        draft_cards=counts_by_status["draft"],
+        rejected_cards=counts_by_status["rejected"],
+        archived_cards=counts_by_status["archived"],
+        trusted_without_evidence=trusted_without_evidence,
+        needs_testing_without_run=needs_testing_without_run,
+        stale_drafts=stale_drafts,
+        promoted_entries_with_multiple_cards=(
+            promoted_entries_with_multiple_cards
+        ),
+    )
+    return KnowledgeHealthRead(
+        counts=counts,
+        issues=issues,
+        generated_at=now,
+    )
 
 
 @router.get("/kinds", response_model=KnowledgeCardKindsRead)

@@ -508,6 +508,30 @@ export interface paths {
         patch: operations["update_knowledge_card_api_knowledge_cards__card_id__patch"];
         trace?: never;
     };
+    "/api/knowledge/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Knowledge Health
+         * @description Read-only health check over the knowledge memory database.
+         *
+         *     Surfaces weak/stale/unproven cards so the user notices rot before
+         *     the assistant relies on this memory. Never mutates state — counts +
+         *     issues only. Cheap enough to call on every Library page load.
+         */
+        get: operations["knowledge_health_api_knowledge_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/knowledge/kinds": {
         parameters: {
             query?: never;
@@ -2661,6 +2685,73 @@ export interface components {
             tags?: string[] | null;
             /** Use Cases */
             use_cases?: string[] | null;
+        };
+        /**
+         * KnowledgeHealthCounts
+         * @description Aggregate counts over the full population of knowledge cards
+         *     plus a few cross-table signals (entries with multiple linked cards).
+         */
+        KnowledgeHealthCounts: {
+            /** Archived Cards */
+            archived_cards: number;
+            /** Draft Cards */
+            draft_cards: number;
+            /** Needs Testing Cards */
+            needs_testing_cards: number;
+            /** Needs Testing Without Run */
+            needs_testing_without_run: number;
+            /** Promoted Entries With Multiple Cards */
+            promoted_entries_with_multiple_cards: number;
+            /** Rejected Cards */
+            rejected_cards: number;
+            /** Stale Drafts */
+            stale_drafts: number;
+            /** Total Cards */
+            total_cards: number;
+            /** Trusted Cards */
+            trusted_cards: number;
+            /** Trusted Without Evidence */
+            trusted_without_evidence: number;
+        };
+        /**
+         * KnowledgeHealthIssue
+         * @description One actionable health observation. Each issue points at the row
+         *     the user should look at — `card_id` for card-level issues,
+         *     `research_entry_id` for entry-level issues. `strategy_id` is set
+         *     when the offending row is strategy-scoped, so the UI can group.
+         */
+        KnowledgeHealthIssue: {
+            /** Card Id */
+            card_id?: number | null;
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Research Entry Id */
+            research_entry_id?: number | null;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "info" | "warn" | "error";
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Title */
+            title: string;
+        };
+        /**
+         * KnowledgeHealthRead
+         * @description Top-level response from GET /api/knowledge/health.
+         */
+        KnowledgeHealthRead: {
+            counts: components["schemas"]["KnowledgeHealthCounts"];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Issues */
+            issues: components["schemas"]["KnowledgeHealthIssue"][];
         };
         /** LiveMonitorStatus */
         LiveMonitorStatus: {
@@ -5333,6 +5424,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    knowledge_health_api_knowledge_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeHealthRead"];
                 };
             };
         };
