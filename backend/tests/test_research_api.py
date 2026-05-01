@@ -666,6 +666,30 @@ def test_promote_explicit_null_strategy_id_creates_global_card(
     assert promote.json()["strategy_id"] is None
 
 
+def test_promote_rejects_cross_strategy_target_scope(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid_a = _seed_strategy(session_factory)
+    with session_factory() as session:
+        strategy_b = models.Strategy(name="B", slug="b")
+        session.add(strategy_b)
+        session.commit()
+        sid_b = strategy_b.id
+
+    create = client.post(
+        f"/api/strategies/{sid_a}/research",
+        json={"kind": "hypothesis", "title": "A's hypothesis"},
+    )
+    entry_id = create.json()["id"]
+
+    promote = client.post(
+        f"/api/strategies/{sid_a}/research/{entry_id}/promote",
+        json={"strategy_id": sid_b},
+    )
+    assert promote.status_code == 422
+    assert "match this entry's strategy_id" in promote.json()["detail"]
+
+
 def test_promote_wrong_strategy_returns_404(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:

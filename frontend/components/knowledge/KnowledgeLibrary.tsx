@@ -267,6 +267,9 @@ export default function KnowledgeLibrary({
       setCards((prev) =>
         prev.map((row) => (row.id === updated.id ? updated : row)),
       );
+      if (editingId === updated.id) {
+        setForm((prev) => ({ ...prev, status: updated.status }));
+      }
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Network error");
     }
@@ -372,7 +375,7 @@ export default function KnowledgeLibrary({
                   active={card.id === editingId}
                   onEdit={() => startEdit(card)}
                   onDelete={() => void deleteCard(card)}
-                  onQuickStatus={(status) => void patchStatus(card, status)}
+                  onQuickStatus={(status) => patchStatus(card, status)}
                 />
               </li>
             ))}
@@ -471,20 +474,16 @@ function KnowledgeCardRow({
   active: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onQuickStatus: (status: string) => void;
+  onQuickStatus: (status: string) => Promise<void>;
 }) {
   const [pending, setPending] = useState<string | null>(null);
 
   async function handleQuickStatus(status: string) {
     setPending(status);
     try {
-      onQuickStatus(status);
+      await onQuickStatus(status);
     } finally {
-      // patchStatus is async-fire-and-forget from the caller's
-      // perspective; flip the flag back on the next tick so the button
-      // re-enables once the click resolves. Brief flicker is fine — the
-      // PATCH itself updates `cards` and re-renders this row.
-      setTimeout(() => setPending(null), 250);
+      setPending(null);
     }
   }
 

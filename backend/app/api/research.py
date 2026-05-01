@@ -455,10 +455,19 @@ def promote_research_entry_to_knowledge_card(
         )
 
     if target_strategy_id is not None:
-        if db.get(Strategy, target_strategy_id) is None:
+        target_strategy = db.get(Strategy, target_strategy_id)
+        if target_strategy is None:
             raise HTTPException(
                 status_code=422,
                 detail=f"strategy_id {target_strategy_id} not found",
+            )
+        if target_strategy.id != entry.strategy_id:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "strategy_id must be null for a global card or match "
+                    f"this entry's strategy_id {entry.strategy_id}"
+                ),
             )
 
     card = KnowledgeCard(
