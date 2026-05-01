@@ -180,6 +180,7 @@ def readiness(
         select(Dataset).where(
             Dataset.symbol == symbol,
             Dataset.schema == _OHLCV_1M_SCHEMA,
+            Dataset.kind == "parquet",
             Dataset.start_ts.is_not(None),
             Dataset.start_ts >= datetime.combine(start, datetime.min.time()),
             Dataset.start_ts < datetime.combine(end, datetime.min.time()),

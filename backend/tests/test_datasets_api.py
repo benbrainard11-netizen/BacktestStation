@@ -660,6 +660,36 @@ def test_readiness_only_consults_ohlcv_1m_schema(
     assert body["available_days"] == []
 
 
+def test_readiness_only_counts_parquet_ohlcv_1m_rows(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Backtests read parquet bars, so a non-parquet registry row should
+    not make readiness pass even if it uses the ohlcv-1m schema label.
+    """
+    for offset in range(5):
+        d = _dt(2026, 4, 27, tzinfo=_tz.utc) + _td(days=offset)
+        _seed_dataset(
+            session_factory,
+            symbol="NQ.c.0",
+            schema="ohlcv-1m",
+            kind="dbn",
+            file_date=d,
+            file_path=f"/fake/dbn-bars-{offset}",
+        )
+
+    body = client.get(
+        "/api/datasets/readiness",
+        params={
+            "symbol": "NQ.c.0",
+            "timeframe": "1m",
+            "start": "2026-04-27",
+            "end": "2026-05-02",
+        },
+    ).json()
+    assert body["ready"] is False
+    assert body["available_days"] == []
+
+
 @pytest.mark.parametrize(
     "timeframe",
     ["1m", "2m", "3m", "5m", "10m", "15m", "30m", "1h", "2h", "4h", "1d"],
