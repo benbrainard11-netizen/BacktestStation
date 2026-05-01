@@ -5071,6 +5071,108 @@
         "title": "ResearchEntryCreate",
         "type": "object"
       },
+      "ResearchEntryPromoteRequest": {
+        "additionalProperties": false,
+        "description": "POST body for promoting a research entry into a knowledge card.\n\nEvery field is optional. Defaults pull from the entry: kind defaults\nto \"research_playbook\"; name defaults to entry.title; body and tags\ndefault to the entry's; strategy_id defaults to the entry's strategy.\nStatus is computed from (entry.kind, entry.status) unless overridden.\nPayload values replace entry values \u2014 they don't merge.",
+        "properties": {
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "formula": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formula"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "maxLength": 800,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "title": "ResearchEntryPromoteRequest",
+        "type": "object"
+      },
       "ResearchEntryRead": {
         "description": "One research entry rendered in the workspace.",
         "properties": {
@@ -12161,6 +12263,68 @@
           }
         },
         "summary": "Create Experiment From Research Entry",
+        "tags": [
+          "research"
+        ]
+      }
+    },
+    "/api/strategies/{strategy_id}/research/{entry_id}/promote": {
+      "post": {
+        "description": "Create a knowledge card from a research entry and link them.\n\nDefault status is derived from the entry's (kind, status) so the new\ncard honestly reflects how vetted the underlying research is. Tags,\nname, and body fall back to the entry; the payload can override\neach field, but values replace rather than merge. The created card's\nid is appended to entry.knowledge_card_ids; existing links are\npreserved (re-promote is intentional \u2014 the UI confirms before\nsending a second request).",
+        "operationId": "promote_research_entry_to_knowledge_card_api_strategies__strategy_id__research__entry_id__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchEntryPromoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeCardRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote Research Entry To Knowledge Card",
         "tags": [
           "research"
         ]

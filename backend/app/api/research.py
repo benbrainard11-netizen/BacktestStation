@@ -34,15 +34,35 @@ from app.db.models import (
 )
 from app.db.session import get_session
 from app.schemas import (
+    KNOWLEDGE_CARD_KINDS,
+    KNOWLEDGE_CARD_STATUSES,
     RESEARCH_KINDS,
     RESEARCH_STATUSES,
     ExperimentRead,
+    KnowledgeCardRead,
     ResearchEntryCreate,
+    ResearchEntryPromoteRequest,
     ResearchEntryRead,
     ResearchEntryUpdate,
     ResearchExperimentCreate,
 )
 from app.schemas.research import validate_kind_status_pair
+
+
+# Default knowledge-card status for each (entry kind, entry status) pair.
+# Covers every combination allowed by ALLOWED_STATUSES_BY_KIND in
+# app/schemas/research.py. Anything outside this map is a sign the
+# research vocabulary changed without updating promote semantics — the
+# endpoint 422s defensively rather than silently picking a status.
+_PROMOTE_STATUS_BY_ENTRY: dict[tuple[str, str], str] = {
+    ("hypothesis", "open"): "needs_testing",
+    ("hypothesis", "running"): "needs_testing",
+    ("hypothesis", "confirmed"): "trusted",
+    ("hypothesis", "rejected"): "rejected",
+    ("decision", "done"): "trusted",
+    ("question", "open"): "draft",
+    ("question", "done"): "trusted",
+}
 
 router = APIRouter(
     prefix="/strategies/{strategy_id}/research",
@@ -368,6 +388,101 @@ def delete_research_entry(
     db.delete(entry)
     db.commit()
     return None
+
+
+@router.post(
+    "/{entry_id}/promote",
+    response_model=KnowledgeCardRead,
+    status_code=201,
+)
+def promote_research_entry_to_knowledge_card(
+    strategy_id: int,
+    entry_id: int,
+    payload: ResearchEntryPromoteRequest,
+    db: Session = Depends(get_session),
+) -> KnowledgeCard:
+    """Create a knowledge card from a research entry and link them.
+
+    Default status is derived from the entry's (kind, status) so the new
+    card honestly reflects how vetted the underlying research is. Tags,
+    name, and body fall back to the entry; the payload can override
+    each field, but values replace rather than merge. The created card's
+    id is appended to entry.knowledge_card_ids; existing links are
+    preserved (re-promote is intentional — the UI confirms before
+    sending a second request).
+    """
+    entry = _require_entry(strategy_id, entry_id, db)
+    fields_set = payload.model_fields_set
+
+    kind = payload.kind or "research_playbook"
+    name = (payload.name or entry.title).strip()
+    body = payload.body if "body" in fields_set else entry.body
+    tags = payload.tags if "tags" in fields_set else entry.tags
+    summary = payload.summary
+    formula = payload.formula
+    target_strategy_id = (
+        payload.strategy_id
+        if "strategy_id" in fields_set
+        else entry.strategy_id
+    )
+
+    if payload.status is not None:
+        status = payload.status
+    else:
+        try:
+            status = _PROMOTE_STATUS_BY_ENTRY[(entry.kind, entry.status)]
+        except KeyError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "no default knowledge-card status for entry "
+                    f"kind={entry.kind!r} status={entry.status!r}"
+                ),
+            ) from exc
+
+    if kind not in KNOWLEDGE_CARD_KINDS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"kind must be one of {KNOWLEDGE_CARD_KINDS}, got {kind!r}",
+        )
+    if status not in KNOWLEDGE_CARD_STATUSES:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"status must be one of {KNOWLEDGE_CARD_STATUSES}, "
+                f"got {status!r}"
+            ),
+        )
+
+    if target_strategy_id is not None:
+        if db.get(Strategy, target_strategy_id) is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"strategy_id {target_strategy_id} not found",
+            )
+
+    card = KnowledgeCard(
+        strategy_id=target_strategy_id,
+        kind=kind,
+        name=name,
+        summary=summary,
+        body=body,
+        formula=formula,
+        status=status,
+        source=f"research_entry:{entry.id}",
+        tags=tags,
+    )
+    db.add(card)
+    db.flush()  # populate card.id without committing the transaction
+
+    existing_ids = list(entry.knowledge_card_ids or [])
+    existing_ids.append(card.id)
+    entry.knowledge_card_ids = _clean_knowledge_card_ids(existing_ids)
+    entry.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    db.commit()
+    db.refresh(card)
+    return card
 
 
 @router.post(

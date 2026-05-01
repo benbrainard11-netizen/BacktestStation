@@ -5,7 +5,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.schemas.knowledge import (
+    KNOWLEDGE_CARD_KINDS,
+    KNOWLEDGE_CARD_STATUSES,
+)
 
 
 ResearchKind = Literal["hypothesis", "decision", "question"]
@@ -109,3 +114,81 @@ class ResearchExperimentCreate(BaseModel):
     variant_run_id: int | None = None
     change_description: str | None = None
     notes: str | None = None
+
+
+class ResearchEntryPromoteRequest(BaseModel):
+    """POST body for promoting a research entry into a knowledge card.
+
+    Every field is optional. Defaults pull from the entry: kind defaults
+    to "research_playbook"; name defaults to entry.title; body and tags
+    default to the entry's; strategy_id defaults to the entry's strategy.
+    Status is computed from (entry.kind, entry.status) unless overridden.
+    Payload values replace entry values — they don't merge.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str | None = None
+    status: str | None = None
+    strategy_id: int | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    summary: str | None = Field(default=None, max_length=800)
+    body: str | None = None
+    formula: str | None = None
+    tags: list[str] | None = None
+
+    @field_validator("kind", mode="after")
+    @classmethod
+    def _valid_kind(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if value not in KNOWLEDGE_CARD_KINDS:
+            raise ValueError(
+                f"kind must be one of {KNOWLEDGE_CARD_KINDS}, got {value!r}"
+            )
+        return value
+
+    @field_validator("status", mode="after")
+    @classmethod
+    def _valid_status(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if value not in KNOWLEDGE_CARD_STATUSES:
+            raise ValueError(
+                "status must be one of "
+                f"{KNOWLEDGE_CARD_STATUSES}, got {value!r}"
+            )
+        return value
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def _trim_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        if trimmed == "":
+            raise ValueError("name must be non-empty after trimming")
+        return trimmed
+
+    @field_validator("summary", "body", "formula", mode="after")
+    @classmethod
+    def _trim_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
+
+    @field_validator("tags", mode="after")
+    @classmethod
+    def _normalize_tags(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for raw in value:
+            trimmed = raw.strip()
+            if trimmed == "" or trimmed in seen:
+                continue
+            seen.add(trimmed)
+            cleaned.append(trimmed)
+        return cleaned or None

@@ -1256,6 +1256,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/strategies/{strategy_id}/research/{entry_id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promote Research Entry To Knowledge Card
+         * @description Create a knowledge card from a research entry and link them.
+         *
+         *     Default status is derived from the entry's (kind, status) so the new
+         *     card honestly reflects how vetted the underlying research is. Tags,
+         *     name, and body fall back to the entry; the payload can override
+         *     each field, but values replace rather than merge. The created card's
+         *     id is appended to entry.knowledge_card_ids; existing links are
+         *     preserved (re-promote is intentional — the UI confirms before
+         *     sending a second request).
+         */
+        post: operations["promote_research_entry_to_knowledge_card_api_strategies__strategy_id__research__entry_id__promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies/{strategy_id}/runs": {
         parameters: {
             query?: never;
@@ -3132,6 +3160,34 @@ export interface components {
             tags?: string[] | null;
             /** Title */
             title: string;
+        };
+        /**
+         * ResearchEntryPromoteRequest
+         * @description POST body for promoting a research entry into a knowledge card.
+         *
+         *     Every field is optional. Defaults pull from the entry: kind defaults
+         *     to "research_playbook"; name defaults to entry.title; body and tags
+         *     default to the entry's; strategy_id defaults to the entry's strategy.
+         *     Status is computed from (entry.kind, entry.status) unless overridden.
+         *     Payload values replace entry values — they don't merge.
+         */
+        ResearchEntryPromoteRequest: {
+            /** Body */
+            body?: string | null;
+            /** Formula */
+            formula?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Summary */
+            summary?: string | null;
+            /** Tags */
+            tags?: string[] | null;
         };
         /**
          * ResearchEntryRead
@@ -6696,6 +6752,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExperimentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_research_entry_to_knowledge_card_api_strategies__strategy_id__research__entry_id__promote_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchEntryPromoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeCardRead"];
                 };
             };
             /** @description Validation Error */

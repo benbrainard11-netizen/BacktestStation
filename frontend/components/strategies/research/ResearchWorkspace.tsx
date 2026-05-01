@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookPlus,
   CheckCircle2,
   Circle,
   FlaskConical,
@@ -14,6 +15,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import Btn from "@/components/ui/Btn";
@@ -22,6 +24,8 @@ import Pill from "@/components/ui/Pill";
 import { BackendErrorBody } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated";
 import { cn } from "@/lib/utils";
+
+import PromoteEntryForm from "./PromoteEntryForm";
 
 type ResearchEntry = components["schemas"]["ResearchEntryRead"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
@@ -76,6 +80,7 @@ export default function ResearchWorkspace({
   versions,
   knowledgeCards,
 }: Props) {
+  const router = useRouter();
   const [entries, setEntries] = useState<ResearchEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +88,7 @@ export default function ResearchWorkspace({
   const [filterStatus, setFilterStatus] = useState<Status | "all">("all");
   const [creatingKind, setCreatingKind] = useState<Kind | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [promotingId, setPromotingId] = useState<number | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
 
   useEffect(() => {
@@ -252,6 +258,24 @@ export default function ResearchWorkspace({
                   }}
                 />
               </li>
+            ) : promotingId === entry.id ? (
+              <li key={entry.id}>
+                <PromoteEntryForm
+                  entry={entry}
+                  strategyId={strategyId}
+                  onCancel={() => setPromotingId(null)}
+                  onPromoted={() => {
+                    setPromotingId(null);
+                    // reload() refreshes entries so the new card id
+                    // appears in entry.knowledge_card_ids; router.refresh
+                    // re-runs the page server component so the new card
+                    // shows up in the knowledgeCards prop and the linked
+                    // badge renders.
+                    reload();
+                    router.refresh();
+                  }}
+                />
+              </li>
             ) : (
               <li key={entry.id}>
                 <ResearchEntryCard
@@ -259,7 +283,14 @@ export default function ResearchWorkspace({
                   runs={runs}
                   versions={versions}
                   knowledgeCards={scopedKnowledgeCards}
-                  onEdit={() => setEditingId(entry.id)}
+                  onEdit={() => {
+                    setEditingId(entry.id);
+                    setPromotingId(null);
+                  }}
+                  onPromote={() => {
+                    setPromotingId(entry.id);
+                    setEditingId(null);
+                  }}
                   onDeleted={reload}
                   onChanged={reload}
                   strategyId={strategyId}
@@ -304,6 +335,7 @@ function ResearchEntryCard({
   versions,
   knowledgeCards,
   onEdit,
+  onPromote,
   onDeleted,
   onChanged,
   strategyId,
@@ -313,6 +345,7 @@ function ResearchEntryCard({
   versions: StrategyVersion[];
   knowledgeCards: KnowledgeCard[];
   onEdit: () => void;
+  onPromote: () => void;
   onDeleted: () => void;
   onChanged: () => void;
   strategyId: number;
@@ -377,6 +410,15 @@ function ResearchEntryCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={onPromote}
+            className="rounded p-1 text-text-mute hover:bg-accent/10 hover:text-accent"
+            title="Promote to knowledge card"
+            aria-label="Promote entry to knowledge card"
+          >
+            <BookPlus className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </button>
           <button
             type="button"
             onClick={onEdit}

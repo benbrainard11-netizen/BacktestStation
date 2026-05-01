@@ -252,6 +252,26 @@ export default function KnowledgeLibrary({
     }
   }
 
+  async function patchStatus(card: KnowledgeCard, status: string) {
+    try {
+      const response = await fetch(`/api/knowledge/cards/${card.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) {
+        setLoadError(await describe(response));
+        return;
+      }
+      const updated = (await response.json()) as KnowledgeCard;
+      setCards((prev) =>
+        prev.map((row) => (row.id === updated.id ? updated : row)),
+      );
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Network error");
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 gap-5 px-8 pb-12 xl:grid-cols-[minmax(0,1fr)_430px]">
       <main className="flex min-w-0 flex-col gap-4">
@@ -352,6 +372,7 @@ export default function KnowledgeLibrary({
                   active={card.id === editingId}
                   onEdit={() => startEdit(card)}
                   onDelete={() => void deleteCard(card)}
+                  onQuickStatus={(status) => void patchStatus(card, status)}
                 />
               </li>
             ))}
@@ -443,13 +464,30 @@ function KnowledgeCardRow({
   active,
   onEdit,
   onDelete,
+  onQuickStatus,
 }: {
   card: KnowledgeCard;
   strategyName: string | null;
   active: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onQuickStatus: (status: string) => void;
 }) {
+  const [pending, setPending] = useState<string | null>(null);
+
+  async function handleQuickStatus(status: string) {
+    setPending(status);
+    try {
+      onQuickStatus(status);
+    } finally {
+      // patchStatus is async-fire-and-forget from the caller's
+      // perspective; flip the flag back on the next tick so the button
+      // re-enables once the click resolves. Brief flicker is fine — the
+      // PATCH itself updates `cards` and re-renders this row.
+      setTimeout(() => setPending(null), 250);
+    }
+  }
+
   return (
     <article
       className={cn(
@@ -480,6 +518,27 @@ function KnowledgeCardRow({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <QuickStatusButton
+            label="Needs testing"
+            target="needs_testing"
+            current={card.status}
+            pending={pending}
+            onClick={() => void handleQuickStatus("needs_testing")}
+          />
+          <QuickStatusButton
+            label="Trusted"
+            target="trusted"
+            current={card.status}
+            pending={pending}
+            onClick={() => void handleQuickStatus("trusted")}
+          />
+          <QuickStatusButton
+            label="Archive"
+            target="archived"
+            current={card.status}
+            pending={pending}
+            onClick={() => void handleQuickStatus("archived")}
+          />
           <button
             type="button"
             onClick={onEdit}
@@ -531,6 +590,38 @@ function KnowledgeCardRow({
         </div>
       ) : null}
     </article>
+  );
+}
+
+function QuickStatusButton({
+  label,
+  target,
+  current,
+  pending,
+  onClick,
+}: {
+  label: string;
+  target: string;
+  current: string;
+  pending: string | null;
+  onClick: () => void;
+}) {
+  if (current === target) return null;
+  const disabled = pending !== null;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={`Mark ${label.toLowerCase()}`}
+      aria-label={`Mark ${label.toLowerCase()}`}
+      className={cn(
+        "rounded border border-border bg-surface px-2 py-1 text-[11px] text-text-dim transition-colors hover:bg-surface-alt hover:text-text",
+        disabled && "opacity-50",
+      )}
+    >
+      {label}
+    </button>
   );
 }
 

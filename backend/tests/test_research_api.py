@@ -484,3 +484,284 @@ def test_cross_strategy_entry_id_is_404(
 
     leaked = client.get(f"/api/strategies/{sid_b}/research/{entry_id}")
     assert leaked.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Promote-to-knowledge-card workflow
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("kind", "entry_status", "expected_card_status"),
+    [
+        ("hypothesis", "open", "needs_testing"),
+        ("hypothesis", "running", "needs_testing"),
+        ("hypothesis", "confirmed", "trusted"),
+        ("hypothesis", "rejected", "rejected"),
+        ("decision", "done", "trusted"),
+        ("question", "open", "draft"),
+        ("question", "done", "trusted"),
+    ],
+)
+def test_promote_default_status_per_entry_kind_status_pair(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+    kind: str,
+    entry_status: str,
+    expected_card_status: str,
+) -> None:
+    """Default status mapping covers every valid (kind, status) pair the
+    research schema allows. Promotion preserves how vetted the
+    underlying research is — confirmed hypotheses become trusted cards,
+    open hypotheses become needs_testing, etc."""
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": kind, "title": f"{kind} {entry_status}", "status": entry_status},
+    )
+    entry_id = create.json()["id"]
+
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={},
+    )
+    assert promote.status_code == 201, promote.text
+    card = promote.json()
+    assert card["kind"] == "research_playbook"
+    assert card["status"] == expected_card_status
+    assert card["name"] == f"{kind} {entry_status}"
+    assert card["strategy_id"] == sid
+    assert card["source"] == f"research_entry:{entry_id}"
+
+
+def test_promote_links_card_to_entry(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "hypothesis", "title": "Imbalance helps"},
+    )
+    entry_id = create.json()["id"]
+    assert create.json()["knowledge_card_ids"] is None
+
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={},
+    )
+    assert promote.status_code == 201, promote.text
+    card_id = promote.json()["id"]
+
+    fetched = client.get(f"/api/strategies/{sid}/research/{entry_id}").json()
+    assert fetched["knowledge_card_ids"] == [card_id]
+    assert fetched["updated_at"] is not None
+
+
+def test_promote_double_call_appends_two_cards_without_duplicates(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Re-promote is allowed; the UI confirms first. Each call creates a
+    fresh card and appends to the link list — existing ids are not
+    duplicated."""
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "hypothesis", "title": "iterate"},
+    )
+    entry_id = create.json()["id"]
+
+    first = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote", json={}
+    )
+    second = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote", json={}
+    )
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert first.json()["id"] != second.json()["id"]
+
+    fetched = client.get(f"/api/strategies/{sid}/research/{entry_id}").json()
+    assert fetched["knowledge_card_ids"] == [
+        first.json()["id"],
+        second.json()["id"],
+    ]
+
+
+def test_promote_carries_entry_tags_by_default(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "delta-driven entries",
+            "tags": ["orderflow", "delta"],
+        },
+    )
+    entry_id = create.json()["id"]
+
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote", json={}
+    )
+    assert promote.status_code == 201, promote.text
+    assert promote.json()["tags"] == ["orderflow", "delta"]
+
+
+def test_promote_payload_overrides_replace_entry_values(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Explicit payload values fully override entry values — they don't
+    merge with entry tags/body/name."""
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "original title",
+            "body": "original body",
+            "tags": ["original-tag"],
+        },
+    )
+    entry_id = create.json()["id"]
+
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={
+            "kind": "orderflow_formula",
+            "status": "trusted",
+            "name": "Custom card name",
+            "summary": "summary text",
+            "body": "different body",
+            "formula": "x = y",
+            "tags": ["new-tag"],
+        },
+    )
+    assert promote.status_code == 201, promote.text
+    card = promote.json()
+    assert card["kind"] == "orderflow_formula"
+    assert card["status"] == "trusted"
+    assert card["name"] == "Custom card name"
+    assert card["summary"] == "summary text"
+    assert card["body"] == "different body"
+    assert card["formula"] == "x = y"
+    assert card["tags"] == ["new-tag"]
+
+
+def test_promote_explicit_null_strategy_id_creates_global_card(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "hypothesis", "title": "shared concept"},
+    )
+    entry_id = create.json()["id"]
+
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={"strategy_id": None},
+    )
+    assert promote.status_code == 201, promote.text
+    assert promote.json()["strategy_id"] is None
+
+
+def test_promote_wrong_strategy_returns_404(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid_a = _seed_strategy(session_factory)
+    with session_factory() as session:
+        strategy_b = models.Strategy(name="B", slug="b")
+        session.add(strategy_b)
+        session.commit()
+        sid_b = strategy_b.id
+
+    create = client.post(
+        f"/api/strategies/{sid_a}/research",
+        json={"kind": "hypothesis", "title": "A's hypothesis"},
+    )
+    entry_id = create.json()["id"]
+
+    leaked = client.post(
+        f"/api/strategies/{sid_b}/research/{entry_id}/promote",
+        json={},
+    )
+    assert leaked.status_code == 404
+
+
+def test_promote_rejects_invalid_kind_or_status_in_payload(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "hypothesis", "title": "bad payload"},
+    )
+    entry_id = create.json()["id"]
+
+    bad_kind = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={"kind": "magic"},
+    )
+    assert bad_kind.status_code == 422
+
+    bad_status = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={"status": "proven"},
+    )
+    assert bad_status.status_code == 422
+
+
+def test_promote_rejects_unknown_target_strategy(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "hypothesis", "title": "to nowhere"},
+    )
+    entry_id = create.json()["id"]
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={"strategy_id": 9999},
+    )
+    assert promote.status_code == 422
+    assert "9999" in promote.json()["detail"]
+
+
+def test_promote_preserves_existing_knowledge_links(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Pre-existing links on the entry survive a promote — promotion
+    only appends. The dedupe in _clean_knowledge_card_ids prevents
+    double-listing if the same id somehow appears twice."""
+    sid = _seed_strategy(session_factory)
+    with session_factory() as session:
+        existing_card = models.KnowledgeCard(
+            kind="market_concept",
+            name="existing",
+            status="draft",
+        )
+        session.add(existing_card)
+        session.commit()
+        existing_id = existing_card.id
+
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={
+            "kind": "hypothesis",
+            "title": "linked already",
+            "knowledge_card_ids": [existing_id],
+        },
+    )
+    entry_id = create.json()["id"]
+    assert create.json()["knowledge_card_ids"] == [existing_id]
+
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote", json={}
+    )
+    assert promote.status_code == 201
+    new_id = promote.json()["id"]
+
+    fetched = client.get(f"/api/strategies/{sid}/research/{entry_id}").json()
+    assert fetched["knowledge_card_ids"] == [existing_id, new_id]
