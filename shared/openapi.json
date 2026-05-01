@@ -1,6 +1,140 @@
 {
   "components": {
     "schemas": {
+      "AiContextMemoryItem": {
+        "description": "One saved memory item eligible for an AI context bundle.",
+        "properties": {
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "research_entry",
+              "knowledge_card"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "kind",
+          "status",
+          "title",
+          "scope",
+          "created_at"
+        ],
+        "title": "AiContextMemoryItem",
+        "type": "object"
+      },
+      "AiContextPreviewRead": {
+        "additionalProperties": false,
+        "description": "GET /strategies/{id}/ai-context response.",
+        "properties": {
+          "item_count": {
+            "title": "Item Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AiContextMemoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "knowledge_card_count": {
+            "title": "Knowledge Card Count",
+            "type": "integer"
+          },
+          "prompt_preview": {
+            "title": "Prompt Preview",
+            "type": "string"
+          },
+          "research_entry_count": {
+            "title": "Research Entry Count",
+            "type": "integer"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "integer"
+          },
+          "strategy_name": {
+            "title": "Strategy Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "strategy_name",
+          "item_count",
+          "research_entry_count",
+          "knowledge_card_count",
+          "items",
+          "prompt_preview"
+        ],
+        "title": "AiContextPreviewRead",
+        "type": "object"
+      },
       "AutopsyConditionSlice": {
         "properties": {
           "label": {
@@ -11519,6 +11653,61 @@
         "summary": "Update Strategy",
         "tags": [
           "strategies"
+        ]
+      }
+    },
+    "/api/strategies/{strategy_id}/ai-context": {
+      "get": {
+        "description": "Show the local memory bundle available to the AI layer.\n\nThis does not call an LLM. It makes retrieval visible so the user can\nspot stale drafts, missing formulas, or context bloat before starting\na chat or generating a prompt.",
+        "operationId": "get_ai_context_preview_api_strategies__strategy_id__ai_context_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 18,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiContextPreviewRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Ai Context Preview",
+        "tags": [
+          "ai-context"
         ]
       }
     },

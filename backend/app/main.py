@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api import (
+    ai_context,
     autopsy,
     backtest_export,
     backtests,
@@ -63,5 +64,6 @@ app.include_router(settings_api.router, prefix="/api")
 app.include_router(replay.router, prefix="/api")
 app.include_router(trade_replay.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(ai_context.router, prefix="/api")
 app.include_router(features.router, prefix="/api")
 app.include_router(research.router, prefix="/api")

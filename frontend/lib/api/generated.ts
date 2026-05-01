@@ -1148,6 +1148,30 @@ export interface paths {
         patch: operations["update_strategy_api_strategies__strategy_id__patch"];
         trace?: never;
     };
+    "/api/strategies/{strategy_id}/ai-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ai Context Preview
+         * @description Show the local memory bundle available to the AI layer.
+         *
+         *     This does not call an LLM. It makes retrieval visible so the user can
+         *     spot stale drafts, missing formulas, or context bloat before starting
+         *     a chat or generating a prompt.
+         */
+        get: operations["get_ai_context_preview_api_strategies__strategy_id__ai_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies/{strategy_id}/chat": {
         parameters: {
             query?: never;
@@ -1414,6 +1438,58 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AiContextMemoryItem
+         * @description One saved memory item eligible for an AI context bundle.
+         */
+        AiContextMemoryItem: {
+            /** Body */
+            body?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Scope */
+            scope: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "research_entry" | "knowledge_card";
+            /** Status */
+            status: string;
+            /** Tags */
+            tags?: string[] | null;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /**
+         * AiContextPreviewRead
+         * @description GET /strategies/{id}/ai-context response.
+         */
+        AiContextPreviewRead: {
+            /** Item Count */
+            item_count: number;
+            /** Items */
+            items: components["schemas"]["AiContextMemoryItem"][];
+            /** Knowledge Card Count */
+            knowledge_card_count: number;
+            /** Prompt Preview */
+            prompt_preview: string;
+            /** Research Entry Count */
+            research_entry_count: number;
+            /** Strategy Id */
+            strategy_id: number;
+            /** Strategy Name */
+            strategy_name: string;
+        };
         /** AutopsyConditionSlice */
         AutopsyConditionSlice: {
             /** Label */
@@ -6316,6 +6392,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StrategyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ai_context_preview_api_strategies__strategy_id__ai_context_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiContextPreviewRead"];
                 };
             };
             /** @description Validation Error */

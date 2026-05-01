@@ -1,6 +1,7 @@
 """Pydantic schemas exposed by the API."""
 
 from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
+from app.schemas.ai_context import AiContextMemoryItem, AiContextPreviewRead
 from app.schemas.chat import ChatMessageRead, ChatTurnRequest, ChatTurnResponse
 from app.schemas.knowledge import (
     KNOWLEDGE_CARD_KINDS,
@@ -115,6 +116,8 @@ from app.schemas.trade_replay import (
 __all__ = [
     "AutopsyConditionSlice",
     "AutopsyReportRead",
+    "AiContextMemoryItem",
+    "AiContextPreviewRead",
     "BacktestRunRead",
     "BacktestRunRequest",
     "BacktestRunTagsUpdate",
