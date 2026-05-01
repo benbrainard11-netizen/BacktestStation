@@ -631,6 +631,20 @@ class KnowledgeCard(Base):
         String(20), default="draft", server_default="draft", index=True
     )
     source: Mapped[str | None] = mapped_column(Text)
+    # Optional structured pointers to the evidence behind a card. A card
+    # can be marked `trusted` only honestly if the supporting run /
+    # version / research entry is recorded here. `source` keeps the
+    # freeform string marker; these fields keep the structured pointer
+    # so the UI can render chips and validate scope.
+    linked_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True
+    )
+    linked_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategy_versions.id"), index=True
+    )
+    linked_research_entry_id: Mapped[int | None] = mapped_column(
+        ForeignKey("research_entries.id"), index=True
+    )
     tags: Mapped[list[str] | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()

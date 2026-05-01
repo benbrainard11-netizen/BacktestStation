@@ -312,6 +312,9 @@ def _run_data_migrations(engine: Engine) -> None:
                     " failure_modes JSON,"
                     " status VARCHAR(20) NOT NULL DEFAULT 'draft',"
                     " source TEXT,"
+                    " linked_run_id INTEGER REFERENCES backtest_runs(id),"
+                    " linked_version_id INTEGER REFERENCES strategy_versions(id),"
+                    " linked_research_entry_id INTEGER REFERENCES research_entries(id),"
                     " tags JSON,"
                     " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
                     " updated_at DATETIME"
@@ -323,7 +326,58 @@ def _run_data_migrations(engine: Engine) -> None:
                 ("ix_knowledge_cards_kind", "kind"),
                 ("ix_knowledge_cards_name", "name"),
                 ("ix_knowledge_cards_status", "status"),
+                ("ix_knowledge_cards_linked_run_id", "linked_run_id"),
+                ("ix_knowledge_cards_linked_version_id", "linked_version_id"),
+                (
+                    "ix_knowledge_cards_linked_research_entry_id",
+                    "linked_research_entry_id",
+                ),
             ]:
+                connection.execute(
+                    text(
+                        f"CREATE INDEX IF NOT EXISTS {index_name} "
+                        f"ON knowledge_cards({column})"
+                    )
+                )
+        else:
+            # 2026-05-01: KnowledgeCard gains structured evidence
+            # pointers (linked_run_id / linked_version_id /
+            # linked_research_entry_id). Existing local DBs need the
+            # ALTER for each column. Indexes are guarded so re-running
+            # is a no-op.
+            knowledge_columns = {
+                c["name"] for c in inspector.get_columns("knowledge_cards")
+            }
+            for column, ddl, index_name in [
+                (
+                    "linked_run_id",
+                    (
+                        "ALTER TABLE knowledge_cards ADD COLUMN "
+                        "linked_run_id INTEGER REFERENCES backtest_runs(id)"
+                    ),
+                    "ix_knowledge_cards_linked_run_id",
+                ),
+                (
+                    "linked_version_id",
+                    (
+                        "ALTER TABLE knowledge_cards ADD COLUMN "
+                        "linked_version_id INTEGER REFERENCES "
+                        "strategy_versions(id)"
+                    ),
+                    "ix_knowledge_cards_linked_version_id",
+                ),
+                (
+                    "linked_research_entry_id",
+                    (
+                        "ALTER TABLE knowledge_cards ADD COLUMN "
+                        "linked_research_entry_id INTEGER REFERENCES "
+                        "research_entries(id)"
+                    ),
+                    "ix_knowledge_cards_linked_research_entry_id",
+                ),
+            ]:
+                if column not in knowledge_columns:
+                    connection.execute(text(ddl))
                 connection.execute(
                     text(
                         f"CREATE INDEX IF NOT EXISTS {index_name} "

@@ -3105,6 +3105,39 @@
             "title": "Kind",
             "type": "string"
           },
+          "linked_research_entry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Research Entry Id"
+          },
+          "linked_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Run Id"
+          },
+          "linked_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Version Id"
+          },
           "name": {
             "maxLength": 160,
             "minLength": 1,
@@ -3264,6 +3297,39 @@
             "title": "Kind",
             "type": "string"
           },
+          "linked_research_entry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Research Entry Id"
+          },
+          "linked_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Run Id"
+          },
+          "linked_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Version Id"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -3359,6 +3425,9 @@
           "failure_modes",
           "status",
           "source",
+          "linked_run_id",
+          "linked_version_id",
+          "linked_research_entry_id",
           "tags",
           "created_at",
           "updated_at"
@@ -3442,6 +3511,39 @@
               }
             ],
             "title": "Kind"
+          },
+          "linked_research_entry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Research Entry Id"
+          },
+          "linked_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Run Id"
+          },
+          "linked_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Version Id"
           },
           "name": {
             "anyOf": [

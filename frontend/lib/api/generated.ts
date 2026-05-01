@@ -2553,6 +2553,12 @@ export interface components {
             inputs?: string[] | null;
             /** Kind */
             kind: string;
+            /** Linked Research Entry Id */
+            linked_research_entry_id?: number | null;
+            /** Linked Run Id */
+            linked_run_id?: number | null;
+            /** Linked Version Id */
+            linked_version_id?: number | null;
             /** Name */
             name: string;
             /** Source */
@@ -2595,6 +2601,12 @@ export interface components {
             inputs: string[] | null;
             /** Kind */
             kind: string;
+            /** Linked Research Entry Id */
+            linked_research_entry_id: number | null;
+            /** Linked Run Id */
+            linked_run_id: number | null;
+            /** Linked Version Id */
+            linked_version_id: number | null;
             /** Name */
             name: string;
             /** Source */
@@ -2629,6 +2641,12 @@ export interface components {
             inputs?: string[] | null;
             /** Kind */
             kind?: string | null;
+            /** Linked Research Entry Id */
+            linked_research_entry_id?: number | null;
+            /** Linked Run Id */
+            linked_run_id?: number | null;
+            /** Linked Version Id */
+            linked_version_id?: number | null;
             /** Name */
             name?: string | null;
             /** Source */

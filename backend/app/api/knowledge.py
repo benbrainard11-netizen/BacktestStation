@@ -14,7 +14,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.db.models import KnowledgeCard, ResearchEntry, Strategy
+from app.db.models import (
+    BacktestRun,
+    KnowledgeCard,
+    ResearchEntry,
+    Strategy,
+    StrategyVersion,
+)
 from app.db.session import get_session
 from app.schemas import (
     KNOWLEDGE_CARD_KINDS,
@@ -47,6 +53,85 @@ def _validate_strategy(db: Session, strategy_id: int | None) -> None:
         )
 
 
+def _validate_evidence_links(
+    *,
+    db: Session,
+    card_strategy_id: int | None,
+    linked_run_id: int | None,
+    linked_version_id: int | None,
+    linked_research_entry_id: int | None,
+) -> None:
+    """Confirm each non-None evidence pointer exists, and — when the card
+    is strategy-scoped — that each link belongs to the same strategy.
+
+    Global cards (card_strategy_id is None) skip the scope check: a
+    cross-strategy concept can legitimately cite evidence from any
+    strategy that tested it.
+    """
+    if linked_version_id is not None:
+        version = db.get(StrategyVersion, linked_version_id)
+        if version is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"linked_version_id {linked_version_id} not found",
+            )
+        if (
+            card_strategy_id is not None
+            and version.strategy_id != card_strategy_id
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"linked_version_id {linked_version_id} belongs to a "
+                    f"different strategy ({version.strategy_id})"
+                ),
+            )
+
+    if linked_run_id is not None:
+        run = db.get(BacktestRun, linked_run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"linked_run_id {linked_run_id} not found",
+            )
+        if card_strategy_id is not None:
+            run_strategy_id = (
+                run.strategy_version.strategy_id
+                if run.strategy_version is not None
+                else None
+            )
+            if run_strategy_id != card_strategy_id:
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"linked_run_id {linked_run_id} belongs to a "
+                        f"different strategy ({run_strategy_id})"
+                    ),
+                )
+
+    if linked_research_entry_id is not None:
+        entry = db.get(ResearchEntry, linked_research_entry_id)
+        if entry is None:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "linked_research_entry_id "
+                    f"{linked_research_entry_id} not found"
+                ),
+            )
+        if (
+            card_strategy_id is not None
+            and entry.strategy_id != card_strategy_id
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"linked_research_entry_id {linked_research_entry_id} "
+                    f"belongs to a different strategy ({entry.strategy_id})"
+                ),
+            )
+
+
 @router.get("/kinds", response_model=KnowledgeCardKindsRead)
 def list_knowledge_kinds() -> dict:
     return {"kinds": list(KNOWLEDGE_CARD_KINDS)}
@@ -63,6 +148,13 @@ def create_knowledge_card(
     db: Session = Depends(get_session),
 ) -> KnowledgeCard:
     _validate_strategy(db, payload.strategy_id)
+    _validate_evidence_links(
+        db=db,
+        card_strategy_id=payload.strategy_id,
+        linked_run_id=payload.linked_run_id,
+        linked_version_id=payload.linked_version_id,
+        linked_research_entry_id=payload.linked_research_entry_id,
+    )
     card = KnowledgeCard(
         strategy_id=payload.strategy_id,
         kind=payload.kind,
@@ -75,6 +167,9 @@ def create_knowledge_card(
         failure_modes=payload.failure_modes,
         status=payload.status,
         source=payload.source,
+        linked_run_id=payload.linked_run_id,
+        linked_version_id=payload.linked_version_id,
+        linked_research_entry_id=payload.linked_research_entry_id,
         tags=payload.tags,
     )
     db.add(card)
@@ -152,6 +247,44 @@ def update_knowledge_card(
 
     if "strategy_id" in touched:
         _validate_strategy(db, payload.strategy_id)
+
+    # Compute the post-patch (strategy, run, version, entry) tuple and
+    # validate up-front so a stale link can't slip through when the card
+    # changes scope. Mirrors how research.update_research_entry
+    # revalidates linked_run/version on PATCH.
+    link_fields = {
+        "linked_run_id",
+        "linked_version_id",
+        "linked_research_entry_id",
+    }
+    if "strategy_id" in touched or link_fields & touched:
+        next_strategy_id = (
+            payload.strategy_id if "strategy_id" in touched else card.strategy_id
+        )
+        next_run_id = (
+            payload.linked_run_id
+            if "linked_run_id" in touched
+            else card.linked_run_id
+        )
+        next_version_id = (
+            payload.linked_version_id
+            if "linked_version_id" in touched
+            else card.linked_version_id
+        )
+        next_entry_id = (
+            payload.linked_research_entry_id
+            if "linked_research_entry_id" in touched
+            else card.linked_research_entry_id
+        )
+        _validate_evidence_links(
+            db=db,
+            card_strategy_id=next_strategy_id,
+            linked_run_id=next_run_id,
+            linked_version_id=next_version_id,
+            linked_research_entry_id=next_entry_id,
+        )
+
+    if "strategy_id" in touched:
         card.strategy_id = payload.strategy_id
     if "kind" in touched and payload.kind is not None:
         card.kind = payload.kind
@@ -173,6 +306,12 @@ def update_knowledge_card(
         card.status = payload.status
     if "source" in touched:
         card.source = payload.source
+    if "linked_run_id" in touched:
+        card.linked_run_id = payload.linked_run_id
+    if "linked_version_id" in touched:
+        card.linked_version_id = payload.linked_version_id
+    if "linked_research_entry_id" in touched:
+        card.linked_research_entry_id = payload.linked_research_entry_id
     if "tags" in touched:
         card.tags = payload.tags
 

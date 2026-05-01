@@ -68,6 +68,9 @@ class KnowledgeCardRead(BaseModel):
     failure_modes: list[str] | None
     status: str
     source: str | None
+    linked_run_id: int | None
+    linked_version_id: int | None
+    linked_research_entry_id: int | None
     tags: list[str] | None
     created_at: datetime
     updated_at: datetime | None
@@ -86,6 +89,9 @@ class KnowledgeCardCreate(BaseModel):
     failure_modes: list[str] | None = None
     status: str = Field(default="draft")
     source: str | None = None
+    linked_run_id: int | None = None
+    linked_version_id: int | None = None
+    linked_research_entry_id: int | None = None
     tags: list[str] | None = None
     strategy_id: int | None = None
 
@@ -142,6 +148,9 @@ class KnowledgeCardUpdate(BaseModel):
     failure_modes: list[str] | None = None
     status: str | None = None
     source: str | None = None
+    linked_run_id: int | None = None
+    linked_version_id: int | None = None
+    linked_research_entry_id: int | None = None
     tags: list[str] | None = None
     strategy_id: int | None = None
 

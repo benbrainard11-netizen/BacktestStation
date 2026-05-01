@@ -557,6 +557,29 @@ def test_promote_links_card_to_entry(
     assert fetched["updated_at"] is not None
 
 
+def test_promote_sets_linked_research_entry_id(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Promotion records the structured pointer from card -> entry, not
+    just the freeform `source` string."""
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "hypothesis", "title": "evidence-aware"},
+    )
+    entry_id = create.json()["id"]
+
+    promote = client.post(
+        f"/api/strategies/{sid}/research/{entry_id}/promote",
+        json={},
+    )
+    assert promote.status_code == 201, promote.text
+    body = promote.json()
+    assert body["linked_research_entry_id"] == entry_id
+    # source still set as a freeform marker for back-compat / display
+    assert body["source"] == f"research_entry:{entry_id}"
+
+
 def test_promote_double_call_appends_two_cards_without_duplicates(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:

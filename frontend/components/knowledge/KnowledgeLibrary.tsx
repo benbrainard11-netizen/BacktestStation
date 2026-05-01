@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Btn from "@/components/ui/Btn";
 import Panel from "@/components/ui/Panel";
@@ -27,6 +27,9 @@ type KnowledgeCard = components["schemas"]["KnowledgeCardRead"];
 type KnowledgeCardCreate = components["schemas"]["KnowledgeCardCreate"];
 type KnowledgeCardUpdate = components["schemas"]["KnowledgeCardUpdate"];
 type Strategy = components["schemas"]["StrategyRead"];
+type StrategyVersion = components["schemas"]["StrategyVersionRead"];
+type BacktestRun = components["schemas"]["BacktestRunRead"];
+type ResearchEntry = components["schemas"]["ResearchEntryRead"];
 
 type SaveState =
   | { kind: "idle" }
@@ -46,6 +49,9 @@ interface FormState {
   source: string;
   tags: string;
   strategyId: string;
+  linkedRunId: string;
+  linkedVersionId: string;
+  linkedResearchEntryId: string;
 }
 
 interface Props {
@@ -68,6 +74,9 @@ const EMPTY_FORM: FormState = {
   source: "",
   tags: "",
   strategyId: "",
+  linkedRunId: "",
+  linkedVersionId: "",
+  linkedResearchEntryId: "",
 };
 
 const STATUS_TONE: Record<string, PillTone> = {
@@ -191,6 +200,14 @@ export default function KnowledgeLibrary({
       source: card.source ?? "",
       tags: (card.tags ?? []).join(", "),
       strategyId: card.strategy_id === null ? "" : String(card.strategy_id),
+      linkedRunId:
+        card.linked_run_id === null ? "" : String(card.linked_run_id),
+      linkedVersionId:
+        card.linked_version_id === null ? "" : String(card.linked_version_id),
+      linkedResearchEntryId:
+        card.linked_research_entry_id === null
+          ? ""
+          : String(card.linked_research_entry_id),
     });
   }
 
@@ -571,6 +588,8 @@ function KnowledgeCardRow({
         <MiniList title="Failure modes" items={card.failure_modes} />
       </div>
 
+      <EvidenceChips card={card} />
+
       {(card.tags?.length ?? 0) > 0 || card.source ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {card.tags?.map((tag) => (
@@ -589,6 +608,47 @@ function KnowledgeCardRow({
         </div>
       ) : null}
     </article>
+  );
+}
+
+function EvidenceChips({ card }: { card: KnowledgeCard }) {
+  const chips: { label: string; key: string }[] = [];
+  if (card.linked_run_id !== null && card.linked_run_id !== undefined) {
+    chips.push({ key: "run", label: `run #${card.linked_run_id}` });
+  }
+  if (
+    card.linked_version_id !== null &&
+    card.linked_version_id !== undefined
+  ) {
+    chips.push({
+      key: "version",
+      label: `version #${card.linked_version_id}`,
+    });
+  }
+  if (
+    card.linked_research_entry_id !== null &&
+    card.linked_research_entry_id !== undefined
+  ) {
+    chips.push({
+      key: "entry",
+      label: `research #${card.linked_research_entry_id}`,
+    });
+  }
+  if (chips.length === 0) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <span className="text-[10px] uppercase tracking-wider text-text-mute">
+        Evidence
+      </span>
+      {chips.map((chip) => (
+        <span
+          key={chip.key}
+          className="rounded border border-accent/30 bg-accent/5 px-2 py-[2px] text-[11px] text-accent"
+        >
+          {chip.label}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -726,7 +786,17 @@ function KnowledgeCardForm({
         <Field label="Scope">
           <select
             value={form.strategyId}
-            onChange={(event) => update({ strategyId: event.target.value })}
+            onChange={(event) =>
+              // Clear evidence links when scope changes — a link valid
+              // under strategy A almost never survives a move to
+              // strategy B, and the backend rejects mismatches anyway.
+              update({
+                strategyId: event.target.value,
+                linkedRunId: "",
+                linkedVersionId: "",
+                linkedResearchEntryId: "",
+              })
+            }
             className={inputClass()}
           >
             <option value="">global</option>
@@ -811,6 +881,12 @@ function KnowledgeCardForm({
           />
         </Field>
 
+        <EvidenceLinkFields
+          form={form}
+          update={update}
+          strategies={strategies}
+        />
+
         {saveState.kind === "error" ? (
           <p className="m-0 text-xs text-neg">{saveState.message}</p>
         ) : null}
@@ -842,6 +918,154 @@ function KnowledgeCardForm({
       </form>
     </Panel>
   );
+}
+
+function EvidenceLinkFields({
+  form,
+  update,
+  strategies,
+}: {
+  form: FormState;
+  update: (patch: Partial<FormState>) => void;
+  strategies: Strategy[];
+}) {
+  const [runs, setRuns] = useState<BacktestRun[]>([]);
+  const [entries, setEntries] = useState<ResearchEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // The version list comes from the strategy payload — no fetch needed.
+  // Runs and research entries are per-strategy and lazy-fetched only
+  // when the form is scoped to a strategy. Global cards (strategyId="")
+  // disable the pickers with a hint, since loading every strategy's
+  // runs and entries up-front would be wasteful.
+  useEffect(() => {
+    const trimmed = form.strategyId.trim();
+    if (trimmed === "") {
+      setRuns([]);
+      setEntries([]);
+      return;
+    }
+    let cancelled = false;
+    async function load(strategyId: string) {
+      setLoading(true);
+      try {
+        const [runsRes, entriesRes] = await Promise.all([
+          fetch(`/api/strategies/${strategyId}/runs`, { cache: "no-store" }),
+          fetch(`/api/strategies/${strategyId}/research`, {
+            cache: "no-store",
+          }),
+        ]);
+        if (cancelled) return;
+        if (runsRes.ok) {
+          setRuns((await runsRes.json()) as BacktestRun[]);
+        } else {
+          setRuns([]);
+        }
+        if (entriesRes.ok) {
+          setEntries((await entriesRes.json()) as ResearchEntry[]);
+        } else {
+          setEntries([]);
+        }
+      } catch {
+        if (!cancelled) {
+          setRuns([]);
+          setEntries([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void load(trimmed);
+    return () => {
+      cancelled = true;
+    };
+  }, [form.strategyId]);
+
+  const selectedStrategy = strategies.find(
+    (s) => String(s.id) === form.strategyId.trim(),
+  );
+  const versions = (selectedStrategy?.versions ?? []).filter(
+    (v) => v.archived_at === null,
+  );
+
+  const disabled = form.strategyId.trim() === "";
+  const hint = disabled
+    ? "Pick a strategy scope to enable evidence links."
+    : loading
+      ? "Loading…"
+      : null;
+
+  return (
+    <fieldset className="rounded-md border border-border bg-surface-alt/40 p-3">
+      <legend className="px-1 text-[10px] uppercase tracking-wider text-text-mute">
+        Evidence links
+      </legend>
+      {hint ? (
+        <p className="m-0 mb-2 text-[11px] text-text-mute">{hint}</p>
+      ) : null}
+      <div className="grid grid-cols-1 gap-3">
+        <Field label="Linked version">
+          <select
+            value={form.linkedVersionId}
+            onChange={(event) =>
+              update({ linkedVersionId: event.target.value })
+            }
+            disabled={disabled}
+            className={inputClass()}
+          >
+            <option value="">none</option>
+            {versions.map((version) => (
+              <option key={version.id} value={version.id}>
+                v{version.version} (#{version.id})
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Linked run">
+          <select
+            value={form.linkedRunId}
+            onChange={(event) => update({ linkedRunId: event.target.value })}
+            disabled={disabled}
+            className={inputClass()}
+          >
+            <option value="">none</option>
+            {runs.slice(0, 100).map((run) => (
+              <option key={run.id} value={run.id}>
+                {runOptionLabel(run)}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Linked research entry">
+          <select
+            value={form.linkedResearchEntryId}
+            onChange={(event) =>
+              update({ linkedResearchEntryId: event.target.value })
+            }
+            disabled={disabled}
+            className={inputClass()}
+          >
+            <option value="">none</option>
+            {entries.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.kind} #{entry.id} - {truncate(entry.title, 60)}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+    </fieldset>
+  );
+}
+
+function runOptionLabel(run: BacktestRun): string {
+  const base = `BT-${run.id}`;
+  return run.name ? `${base} / ${run.name}` : base;
+}
+
+function truncate(value: string, max: number): string {
+  if (value.length <= max) return value;
+  return `${value.slice(0, max - 1)}…`;
 }
 
 function Field({
@@ -881,10 +1105,20 @@ function toPayload(form: FormState): KnowledgeCardCreate | KnowledgeCardUpdate {
     failure_modes: parseList(form.failureModes),
     status: form.status,
     source: blankToNull(form.source),
+    linked_run_id: blankToNumber(form.linkedRunId),
+    linked_version_id: blankToNumber(form.linkedVersionId),
+    linked_research_entry_id: blankToNumber(form.linkedResearchEntryId),
     tags: parseList(form.tags),
     strategy_id:
       form.strategyId.trim() === "" ? null : Number(form.strategyId.trim()),
   };
+}
+
+function blankToNumber(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
 }
 
 function parseList(raw: string): string[] | null {

@@ -479,6 +479,7 @@ def promote_research_entry_to_knowledge_card(
         formula=formula,
         status=status,
         source=f"research_entry:{entry.id}",
+        linked_research_entry_id=entry.id,
         tags=tags,
     )
     db.add(card)

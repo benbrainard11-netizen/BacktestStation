@@ -1,6 +1,7 @@
 """Knowledge Library API tests."""
 
 from collections.abc import Generator
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -277,3 +278,282 @@ def test_strategy_delete_nulls_knowledge_card_link(
     fetched = client.get(f"/api/knowledge/cards/{created['id']}")
     assert fetched.status_code == 200
     assert fetched.json()["strategy_id"] is None
+
+
+# ---------------------------------------------------------------------------
+# Evidence links
+# ---------------------------------------------------------------------------
+
+
+def _seed_strategy_with_run_and_entry(
+    factory: sessionmaker[Session],
+) -> tuple[int, int, int, int]:
+    """Return (strategy_id, version_id, run_id, research_entry_id)."""
+    with factory() as session:
+        strategy = models.Strategy(name="A", slug="a", status="research")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        run = models.BacktestRun(
+            strategy_version=version,
+            symbol="NQ",
+            import_source="t",
+            start_ts=datetime(2026, 1, 2),
+            end_ts=datetime(2026, 1, 3),
+            source="engine",
+        )
+        session.add_all([strategy, version, run])
+        session.commit()
+        entry = models.ResearchEntry(
+            strategy_id=strategy.id,
+            kind="hypothesis",
+            title="A's hypothesis",
+            status="open",
+        )
+        session.add(entry)
+        session.commit()
+        return strategy.id, version.id, run.id, entry.id
+
+
+def test_create_card_with_evidence_links_validates_existence(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid, version_id, run_id, entry_id = _seed_strategy_with_run_and_entry(
+        session_factory
+    )
+
+    bad_run = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "X",
+            "strategy_id": sid,
+            "linked_run_id": 9999,
+        },
+    )
+    assert bad_run.status_code == 422
+    assert "9999" in bad_run.json()["detail"]
+
+    bad_version = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "X",
+            "strategy_id": sid,
+            "linked_version_id": 9999,
+        },
+    )
+    assert bad_version.status_code == 422
+
+    bad_entry = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "X",
+            "strategy_id": sid,
+            "linked_research_entry_id": 9999,
+        },
+    )
+    assert bad_entry.status_code == 422
+
+    ok = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "Real evidence",
+            "strategy_id": sid,
+            "linked_run_id": run_id,
+            "linked_version_id": version_id,
+            "linked_research_entry_id": entry_id,
+        },
+    )
+    assert ok.status_code == 201, ok.text
+    body = ok.json()
+    assert body["linked_run_id"] == run_id
+    assert body["linked_version_id"] == version_id
+    assert body["linked_research_entry_id"] == entry_id
+
+
+def test_create_card_strategy_scoped_run_must_match_strategy(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid_a, _, run_a_id, _ = _seed_strategy_with_run_and_entry(session_factory)
+    with session_factory() as session:
+        strategy_b = models.Strategy(name="B", slug="b")
+        version_b = models.StrategyVersion(strategy=strategy_b, version="v1")
+        run_b = models.BacktestRun(
+            strategy_version=version_b,
+            symbol="ES",
+            import_source="t",
+            start_ts=datetime(2026, 1, 2),
+            end_ts=datetime(2026, 1, 3),
+            source="engine",
+        )
+        session.add_all([strategy_b, version_b, run_b])
+        session.commit()
+        sid_b = strategy_b.id
+
+    cross = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "wrong scope",
+            "strategy_id": sid_b,
+            "linked_run_id": run_a_id,
+        },
+    )
+    assert cross.status_code == 422
+    assert "different strategy" in cross.json()["detail"].lower()
+
+
+def test_create_card_strategy_scoped_version_must_match_strategy(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid_a, version_a_id, _, _ = _seed_strategy_with_run_and_entry(
+        session_factory
+    )
+    with session_factory() as session:
+        strategy_b = models.Strategy(name="B", slug="b")
+        session.add(strategy_b)
+        session.commit()
+        sid_b = strategy_b.id
+
+    cross = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "wrong version",
+            "strategy_id": sid_b,
+            "linked_version_id": version_a_id,
+        },
+    )
+    assert cross.status_code == 422
+    assert "different strategy" in cross.json()["detail"].lower()
+
+
+def test_create_card_strategy_scoped_entry_must_match_strategy(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid_a, _, _, entry_a_id = _seed_strategy_with_run_and_entry(session_factory)
+    with session_factory() as session:
+        strategy_b = models.Strategy(name="B", slug="b")
+        session.add(strategy_b)
+        session.commit()
+        sid_b = strategy_b.id
+
+    cross = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "wrong entry",
+            "strategy_id": sid_b,
+            "linked_research_entry_id": entry_a_id,
+        },
+    )
+    assert cross.status_code == 422
+    assert "different strategy" in cross.json()["detail"].lower()
+
+
+def test_create_global_card_allows_any_strategy_evidence(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """Global cards (strategy_id=None) skip the same-strategy check —
+    a cross-strategy concept can cite evidence from any strategy that
+    tested it."""
+    _, version_id, run_id, entry_id = _seed_strategy_with_run_and_entry(
+        session_factory
+    )
+
+    ok = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "global with evidence",
+            "linked_run_id": run_id,
+            "linked_version_id": version_id,
+            "linked_research_entry_id": entry_id,
+        },
+    )
+    assert ok.status_code == 201, ok.text
+    body = ok.json()
+    assert body["strategy_id"] is None
+    assert body["linked_run_id"] == run_id
+    assert body["linked_version_id"] == version_id
+    assert body["linked_research_entry_id"] == entry_id
+
+
+def test_patch_card_can_set_and_clear_evidence_links(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid, version_id, run_id, entry_id = _seed_strategy_with_run_and_entry(
+        session_factory
+    )
+    created = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "to be wired",
+            "strategy_id": sid,
+        },
+    ).json()
+
+    set_links = client.patch(
+        f"/api/knowledge/cards/{created['id']}",
+        json={
+            "linked_run_id": run_id,
+            "linked_version_id": version_id,
+            "linked_research_entry_id": entry_id,
+        },
+    )
+    assert set_links.status_code == 200, set_links.text
+    body = set_links.json()
+    assert body["linked_run_id"] == run_id
+    assert body["linked_version_id"] == version_id
+    assert body["linked_research_entry_id"] == entry_id
+
+    cleared = client.patch(
+        f"/api/knowledge/cards/{created['id']}",
+        json={
+            "linked_run_id": None,
+            "linked_version_id": None,
+            "linked_research_entry_id": None,
+        },
+    )
+    assert cleared.status_code == 200
+    body = cleared.json()
+    assert body["linked_run_id"] is None
+    assert body["linked_version_id"] is None
+    assert body["linked_research_entry_id"] is None
+
+
+def test_patch_card_changing_strategy_revalidates_existing_links(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    """If a card has links pointing at strategy A and the user moves it
+    to strategy B, validation must catch the now-stale links — not
+    silently accept them."""
+    sid_a, version_a_id, run_a_id, entry_a_id = _seed_strategy_with_run_and_entry(
+        session_factory
+    )
+    with session_factory() as session:
+        strategy_b = models.Strategy(name="B", slug="b")
+        session.add(strategy_b)
+        session.commit()
+        sid_b = strategy_b.id
+
+    created = client.post(
+        "/api/knowledge/cards",
+        json={
+            "kind": "market_concept",
+            "name": "strategy A evidence",
+            "strategy_id": sid_a,
+            "linked_run_id": run_a_id,
+            "linked_version_id": version_a_id,
+            "linked_research_entry_id": entry_a_id,
+        },
+    ).json()
+
+    moved = client.patch(
+        f"/api/knowledge/cards/{created['id']}",
+        json={"strategy_id": sid_b},
+    )
+    assert moved.status_code == 422
+    assert "different strategy" in moved.json()["detail"].lower()
