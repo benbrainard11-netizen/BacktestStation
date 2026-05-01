@@ -286,3 +286,27 @@ def test_delete_run_removes_prop_firm_simulations(
 
     with session_factory() as session:
         assert session.get(models.PropFirmSimulation, sim_id) is None
+
+
+def test_delete_run_clears_knowledge_card_evidence_link(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    run_id, _ = _seed_full_run(session_factory, slug="knowledge-evidence")
+    with session_factory() as session:
+        card = models.KnowledgeCard(
+            kind="market_concept",
+            name="evidence card",
+            status="trusted",
+            linked_run_id=run_id,
+        )
+        session.add(card)
+        session.commit()
+        card_id = card.id
+
+    response = client.delete(f"/api/backtests/{run_id}")
+    assert response.status_code == 204
+
+    with session_factory() as session:
+        card = session.get(models.KnowledgeCard, card_id)
+        assert card is not None
+        assert card.linked_run_id is None

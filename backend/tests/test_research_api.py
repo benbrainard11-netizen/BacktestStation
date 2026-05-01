@@ -300,6 +300,36 @@ def test_delete_removes_the_entry(
     assert get_resp.status_code == 404
 
 
+def test_delete_clears_knowledge_card_evidence_link(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    sid = _seed_strategy(session_factory)
+    create = client.post(
+        f"/api/strategies/{sid}/research",
+        json={"kind": "hypothesis", "title": "evidence source"},
+    )
+    entry_id = create.json()["id"]
+    with session_factory() as session:
+        card = models.KnowledgeCard(
+            strategy_id=sid,
+            kind="market_concept",
+            name="entry evidence",
+            status="trusted",
+            linked_research_entry_id=entry_id,
+        )
+        session.add(card)
+        session.commit()
+        card_id = card.id
+
+    response = client.delete(f"/api/strategies/{sid}/research/{entry_id}")
+    assert response.status_code == 204
+
+    with session_factory() as session:
+        card = session.get(models.KnowledgeCard, card_id)
+        assert card is not None
+        assert card.linked_research_entry_id is None
+
+
 def test_hypothesis_can_create_experiment(
     client: TestClient, session_factory: sessionmaker[Session]
 ) -> None:

@@ -385,6 +385,11 @@ def delete_research_entry(
     strategy_id: int, entry_id: int, db: Session = Depends(get_session)
 ) -> None:
     entry = _require_entry(strategy_id, entry_id, db)
+    db.execute(
+        KnowledgeCard.__table__.update()
+        .where(KnowledgeCard.linked_research_entry_id == entry.id)
+        .values(linked_research_entry_id=None)
+    )
     db.delete(entry)
     db.commit()
     return None

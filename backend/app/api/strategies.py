@@ -332,6 +332,11 @@ def delete_strategy_version(
         .where(ResearchEntry.linked_version_id == version.id)
         .values(linked_version_id=None)
     )
+    db.execute(
+        KnowledgeCard.__table__.update()
+        .where(KnowledgeCard.linked_version_id == version.id)
+        .values(linked_version_id=None)
+    )
     db.delete(version)
     db.commit()
     return None

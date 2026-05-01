@@ -30,6 +30,7 @@ from app.db.models import (
     BacktestRun,
     Experiment,
     Note,
+    KnowledgeCard,
     PropFirmSimulation,
     ResearchEntry,
     StrategyVersion,
@@ -91,6 +92,14 @@ def purge_run_references(session: Session, run_id: int) -> None:
     session.execute(
         ResearchEntry.__table__.update()
         .where(ResearchEntry.linked_run_id == run_id)
+        .values(linked_run_id=None)
+    )
+    # Knowledge cards keep their claim text after a run delete, but the
+    # structured evidence pointer must be nulled or FK enforcement blocks
+    # the delete.
+    session.execute(
+        KnowledgeCard.__table__.update()
+        .where(KnowledgeCard.linked_run_id == run_id)
         .values(linked_run_id=None)
     )
 

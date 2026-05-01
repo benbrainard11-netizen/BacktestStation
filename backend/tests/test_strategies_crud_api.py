@@ -630,3 +630,31 @@ def test_delete_strategy_version_cleans_up_attached_notes_and_experiments(
     assert remaining_experiments == []
     # Strategy itself untouched
     assert client.get(f"/api/strategies/{sid}").status_code == 200
+
+
+def test_delete_strategy_version_clears_knowledge_card_evidence_link(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    with session_factory() as session:
+        strategy = models.Strategy(name="X", slug="x")
+        version = models.StrategyVersion(strategy=strategy, version="v1")
+        session.add(strategy)
+        session.commit()
+        vid = version.id
+        card = models.KnowledgeCard(
+            kind="market_concept",
+            name="version evidence",
+            status="trusted",
+            linked_version_id=vid,
+        )
+        session.add(card)
+        session.commit()
+        card_id = card.id
+
+    response = client.delete(f"/api/strategy-versions/{vid}")
+    assert response.status_code == 204
+
+    with session_factory() as session:
+        card = session.get(models.KnowledgeCard, card_id)
+        assert card is not None
+        assert card.linked_version_id is None
