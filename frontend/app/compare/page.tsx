@@ -115,9 +115,13 @@ async function fetchRunBundle(
     fetch(`/api/backtests/${id}/metrics`),
   ]);
   if (!hRes.ok) throw new Error(`run #${id} header: ${hRes.status}`);
-  if (!mRes.ok) throw new Error(`run #${id} metrics: ${mRes.status}`);
   const header = (await hRes.json()) as RunHeader;
-  const metricsRaw = (await mRes.json()) as Partial<RunMetrics>;
+  // Metrics 404 is expected for runs without computed metrics (live
+  // imports, in-flight runs, etc). Don't fail the whole comparison;
+  // render the run with all-null metric cells.
+  const metricsRaw = mRes.ok
+    ? ((await mRes.json()) as Partial<RunMetrics>)
+    : {};
   return {
     header,
     metrics: {

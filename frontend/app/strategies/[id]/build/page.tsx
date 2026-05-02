@@ -10,12 +10,14 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { usePoll } from "@/lib/poll";
 
 type Feature = {
-  id: string;
+  // The /api/features endpoint returns: name (code id), label (display),
+  // description, param_schema. No `id`, `category`, `inputs`, or `outputs`
+  // fields — those were assumptions from the FRONTEND_API_REFERENCE doc
+  // that don't match the actual response.
   name: string;
-  category: string;
-  description: string;
-  inputs?: string[];
-  outputs?: string[];
+  label?: string;
+  description?: string;
+  param_schema?: Record<string, unknown>;
 };
 
 type StrategyVersion = {
@@ -86,15 +88,17 @@ export default function StrategyBuildPage() {
   const versions = strategy.kind === "data" ? strategy.data.versions : [];
   const selectedVersion = versions.find((v) => v.id === versionId) ?? null;
 
-  // Group features by category for the pantry list
-  const featuresByCategory: Record<string, Feature[]> = {};
-  if (features.kind === "data") {
-    for (const f of features.data) {
-      const cat = f.category || "other";
-      featuresByCategory[cat] = featuresByCategory[cat] ?? [];
-      featuresByCategory[cat].push(f);
-    }
-  }
+  // Backend's /api/features doesn't return a category field, so just
+  // render a flat alphabetized list rather than synthesize category
+  // groupings client-side.
+  const allFeatures: Feature[] =
+    features.kind === "data"
+      ? [...features.data].sort((a, b) =>
+          (a.label ?? a.name).localeCompare(b.label ?? b.name),
+        )
+      : [];
+  const paramCount = (f: Feature): number =>
+    f.param_schema ? Object.keys(f.param_schema).length : 0;
 
   async function save() {
     if (!verified) throw new Error('Toggle "I verified the contract" first.');
@@ -227,51 +231,39 @@ export default function StrategyBuildPage() {
                 {features.message}
               </div>
             )}
-            {features.kind === "data" &&
-              Object.keys(featuresByCategory).length === 0 && (
-                <EmptyState
-                  title="empty registry"
-                  blurb="No features registered in /api/features."
-                />
-              )}
-            {features.kind === "data" &&
-              Object.keys(featuresByCategory).length > 0 && (
-                <div className="px-4 py-4">
-                  {Object.entries(featuresByCategory)
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([cat, list]) => (
-                      <div key={cat} className="mb-4 last:mb-0">
-                        <div className="mb-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
-                          {cat}
-                        </div>
-                        <ul className="m-0 grid list-none gap-1.5 p-0 sm:grid-cols-2">
-                          {list.map((f) => (
-                            <li
-                              key={f.id}
-                              className="rounded border border-line bg-bg-2 px-3 py-2"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-[12px] font-semibold text-ink-0">
-                                  {f.name}
-                                </span>
-                                {f.outputs && f.outputs.length > 0 && (
-                                  <span className="ml-auto font-mono text-[9.5px] text-ink-3">
-                                    → {f.outputs.join(", ")}
-                                  </span>
-                                )}
-                              </div>
-                              {f.description && (
-                                <p className="mt-1 text-[11px] text-ink-2">
-                                  {f.description}
-                                </p>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                </div>
-              )}
+            {features.kind === "data" && allFeatures.length === 0 && (
+              <EmptyState
+                title="empty registry"
+                blurb="No features registered in /api/features."
+              />
+            )}
+            {features.kind === "data" && allFeatures.length > 0 && (
+              <ul className="m-0 grid list-none gap-1.5 p-4 sm:grid-cols-2">
+                {allFeatures.map((f) => (
+                  <li
+                    key={f.name}
+                    className="rounded border border-line bg-bg-2 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[12px] font-semibold text-ink-0">
+                        {f.label ?? f.name}
+                      </span>
+                      <span className="ml-auto font-mono text-[9.5px] text-ink-3">
+                        {paramCount(f)} param{paramCount(f) === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 font-mono text-[9.5px] text-ink-4">
+                      {f.name}
+                    </div>
+                    {f.description && (
+                      <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
+                        {f.description}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           <Card>
