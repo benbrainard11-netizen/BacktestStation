@@ -33,11 +33,20 @@ Auth, billing, Docker, Kubernetes, Postgres, walk-forward, Monte Carlo, websocke
 
 Also defer until explicitly scoped:
 
-- **In-app LLM chat.** The Prompt Generator emits a copyable prompt; the user runs it in Claude or GPT externally.
 - **Local LLM infrastructure** (Ollama, llama.cpp, etc.). Stay model-agnostic until a concrete use case forces the choice.
 - **Destructive cascade delete** for strategies or strategy versions with attached runs/trades/metrics. Archive instead. Current enforcement: `DELETE /api/strategies/{id}` returns 409 when versions exist; `DELETE /api/strategy-versions/{id}` returns 409 when runs exist. Use `PATCH /api/strategies/{id}` with `status=archived` or `PATCH /api/strategy-versions/{id}/archive`.
 - **Complex multi-agent systems** inside the app.
-- **Auto-applied AI suggestions.** Anything AI produces must land as a human-reviewable note, experiment, or decision — never modify strategies or configs directly.
+- **Auto-applied AI suggestions.** Anything AI produces must land as a human-reviewable note, experiment, or decision — never modify strategies or configs directly. The agent's "Apply to spec" button in the strategy builder is human-gated by design — the user clicks Apply on each suggestion.
+
+## In-app agent integration (allowed under these rules)
+
+The strategy builder ships an in-app agent chat (compose + author modes) that invokes Claude Code CLI as a subprocess. Allowed *because* it follows these constraints — break any of them and the rule reverts to "not built yet":
+
+1. **CLI subprocess only, never direct API.** `backend/app/services/cli_chat.py` spawns `claude` (and `codex`) via `asyncio.create_subprocess_exec`. The BacktestStation backend NEVER imports `anthropic` or `openai` SDKs and NEVER makes a direct API call to either provider. Cost stays flat-rate (Max sub / ChatGPT Plus). Tier 2 productization is the only place where direct Anthropic API call is permitted, with per-plan usage caps.
+2. **Strip billing keys from subprocess env.** `_strip_billing_keys()` blanks `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` before each spawn. If the strip ever drifts, billing flips silently to per-token. There's a unit test asserting it.
+3. **Scope file writes via `--add-dir`.** Compose mode uses a read-only tool whitelist (`Read`, `Glob`, `Grep`) — no writes possible. Author mode adds `--add-dir` for `backend/app/features/` and `backend/tests/` only — agent can write features + tests, never the engine, never strategies, never config.
+4. **No auto-commit.** Agent-touched files land in the working tree only. The user reviews `git diff` and commits manually.
+5. **Sessions persist in `chat_messages` table.** Each turn records `cli_session_id` (Claude only) so the next turn passes `--resume <id>` and context stitches across page reloads.
 
 ## Schema migration discipline
 
