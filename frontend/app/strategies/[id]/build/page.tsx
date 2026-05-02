@@ -191,6 +191,13 @@ export default function StrategyBuildPage() {
     return m;
   }, [features]);
 
+  const issues = useMemo(
+    () => validateSpec(spec, featureMap),
+    [spec, featureMap],
+  );
+
+  const [saveError, setSaveError] = useState<SaveError | null>(null);
+
   // ── recipe mutations ──────────────────────────────────────────────────────
 
   const addToSlot = useCallback((slot: EntrySlot, featureName: string) => {
@@ -234,27 +241,30 @@ export default function StrategyBuildPage() {
     [],
   );
 
-  // ── save (gated by verify toggle, no-op round-trip for now) ───────────────
+  // ── save: pre-validate, PATCH, surface 422 detail ────────────────────────
 
   async function save() {
     if (!verified) {
       throw new Error('Toggle "I verified the spec_json contract" first.');
     }
     if (versionId == null) throw new Error("Pick a version first.");
+    if (issues.some((i) => i.severity === "error")) {
+      throw new Error(
+        `${issues.filter((i) => i.severity === "error").length} validation error${
+          issues.filter((i) => i.severity === "error").length === 1 ? "" : "s"
+        } — fix before saving`,
+      );
+    }
+    setSaveError(null);
     const r = await fetch(`/api/strategy-versions/${versionId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ spec_json: spec }),
     });
     if (!r.ok) {
-      let msg = `${r.status} ${r.statusText}`;
-      try {
-        const j = (await r.json()) as { detail?: string };
-        if (j.detail) msg = j.detail;
-      } catch {
-        /* ignore */
-      }
-      throw new Error(msg);
+      const err = await parseSaveError(r);
+      setSaveError(err);
+      throw new Error(err.summary);
     }
   }
 
@@ -296,6 +306,15 @@ export default function StrategyBuildPage() {
           </div>
         }
       />
+
+      {issues.length > 0 && <IssueBanner issues={issues} />}
+
+      {saveError && (
+        <SaveErrorBanner
+          error={saveError}
+          onDismiss={() => setSaveError(null)}
+        />
+      )}
 
       <Card className="mt-2 border-warn/30 bg-warn/10">
         <div className="px-5 py-4 text-[12px] text-warn">
@@ -508,6 +527,243 @@ function allPublished(spec: Spec): string[] {
   for (const c of spec.entry_short)
     out.push(...metadataFor(c.feature).publishes);
   return unique(out);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Validation
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Issue = {
+  severity: "error" | "warn";
+  message: string;
+  /** Path inside the spec, e.g. "entry_long[2].feature" or "stop.type". */
+  path: string;
+};
+
+function validateSpec(
+  spec: Spec,
+  featureMap: Map<string, FeatureDef>,
+): Issue[] {
+  const out: Issue[] = [];
+
+  // Empty everything = no-op strategy. Engine accepts but warn the user.
+  if (spec.entry_long.length === 0 && spec.entry_short.length === 0) {
+    out.push({
+      severity: "warn",
+      path: "entry_*",
+      message:
+        "no entries defined — strategy will run but never trade. Add at least one feature to entry_long or entry_short.",
+    });
+  }
+
+  for (const slot of ["entry_long", "entry_short"] as const) {
+    spec[slot].forEach((call, i) => {
+      const def = featureMap.get(call.feature);
+      if (!def) {
+        out.push({
+          severity: "error",
+          path: `${slot}[${i}].feature`,
+          message: `feature "${call.feature}" is not in the registry`,
+        });
+        return;
+      }
+      const schema = def.param_schema ?? {};
+      for (const key of Object.keys(schema)) {
+        const entry = schema[key];
+        const v = call.params[key];
+        if (entry?.enum && entry.enum.length > 0) {
+          if (v === undefined || v === null || v === "") {
+            out.push({
+              severity: "error",
+              path: `${slot}[${i}].params.${key}`,
+              message: `${entry.label ?? key}: pick one of ${entry.enum.join(", ")}`,
+            });
+            continue;
+          }
+          if (!entry.enum.map(String).includes(String(v))) {
+            out.push({
+              severity: "error",
+              path: `${slot}[${i}].params.${key}`,
+              message: `${entry.label ?? key}: ${String(v)} not in ${entry.enum.join(", ")}`,
+            });
+          }
+          continue;
+        }
+        if (entry?.type === "integer" || entry?.type === "number") {
+          const n = typeof v === "number" ? v : Number(v);
+          if (v == null || v === "" || Number.isNaN(n)) {
+            out.push({
+              severity: "warn",
+              path: `${slot}[${i}].params.${key}`,
+              message: `${entry.label ?? key}: empty (engine will use default)`,
+            });
+            continue;
+          }
+          if (entry.min != null && n < entry.min) {
+            out.push({
+              severity: "error",
+              path: `${slot}[${i}].params.${key}`,
+              message: `${entry.label ?? key}: ${n} < min (${entry.min})`,
+            });
+          }
+          if (entry.max != null && n > entry.max) {
+            out.push({
+              severity: "error",
+              path: `${slot}[${i}].params.${key}`,
+              message: `${entry.label ?? key}: ${n} > max (${entry.max})`,
+            });
+          }
+        }
+      }
+    });
+  }
+
+  // Stop / target type sanity
+  if (!["fixed_pts", "fvg_buffer"].includes(spec.stop.type)) {
+    out.push({
+      severity: "error",
+      path: "stop.type",
+      message: `unknown stop.type "${spec.stop.type}"`,
+    });
+  }
+  if (!["r_multiple", "fixed_pts"].includes(spec.target.type)) {
+    out.push({
+      severity: "error",
+      path: "target.type",
+      message: `unknown target.type "${spec.target.type}"`,
+    });
+  }
+
+  return out;
+}
+
+function IssueBanner({ issues }: { issues: Issue[] }) {
+  const errors = issues.filter((i) => i.severity === "error");
+  const warns = issues.filter((i) => i.severity === "warn");
+  const tone = errors.length > 0 ? "neg" : "warn";
+  return (
+    <Card
+      className={cn(
+        "mt-2",
+        tone === "neg"
+          ? "border-neg/40 bg-neg/10"
+          : "border-warn/40 bg-warn/10",
+      )}
+    >
+      <div className="px-4 py-3">
+        <div
+          className={cn(
+            "font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
+            tone === "neg" ? "text-neg" : "text-warn",
+          )}
+        >
+          {errors.length > 0
+            ? `${errors.length} error${errors.length === 1 ? "" : "s"} block${errors.length === 1 ? "s" : ""} save`
+            : `${warns.length} warning${warns.length === 1 ? "" : "s"}`}
+        </div>
+        <ul className="m-0 mt-1 list-disc pl-5 text-[11px] text-ink-1">
+          {issues.slice(0, 12).map((iss, i) => (
+            <li key={i}>
+              <code className="font-mono text-[10.5px] text-ink-3">
+                {iss.path}
+              </code>{" "}
+              — {iss.message}
+            </li>
+          ))}
+          {issues.length > 12 && (
+            <li className="text-ink-3">…+{issues.length - 12} more</li>
+          )}
+        </ul>
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Save error parsing + display
+// ─────────────────────────────────────────────────────────────────────────────
+
+type PydanticErr = { loc?: (string | number)[]; msg: string; type?: string };
+
+type SaveError =
+  | { kind: "string"; status: number; summary: string }
+  | { kind: "pydantic"; status: number; summary: string; items: PydanticErr[] };
+
+async function parseSaveError(r: Response): Promise<SaveError> {
+  const status = r.status;
+  let body: unknown = null;
+  try {
+    body = await r.json();
+  } catch {
+    return {
+      kind: "string",
+      status,
+      summary: `${status} ${r.statusText || "Request failed"}`,
+    };
+  }
+  const detail = (body as { detail?: unknown })?.detail;
+  if (typeof detail === "string") {
+    return { kind: "string", status, summary: detail };
+  }
+  if (Array.isArray(detail)) {
+    return {
+      kind: "pydantic",
+      status,
+      summary: `${status} validation failed (${detail.length} field${
+        detail.length === 1 ? "" : "s"
+      })`,
+      items: detail as PydanticErr[],
+    };
+  }
+  return {
+    kind: "string",
+    status,
+    summary: `${status} ${r.statusText || "Request failed"}`,
+  };
+}
+
+function SaveErrorBanner({
+  error,
+  onDismiss,
+}: {
+  error: SaveError;
+  onDismiss: () => void;
+}) {
+  return (
+    <Card className="mt-2 border-neg/40 bg-neg/10">
+      <div className="flex items-start gap-3 px-4 py-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-neg">
+              save failed · {error.status}
+            </span>
+            <span className="font-mono text-[10.5px] text-neg/80">
+              {error.summary}
+            </span>
+          </div>
+          {error.kind === "pydantic" && (
+            <ul className="m-0 mt-1 list-disc pl-5 text-[11px] text-ink-1">
+              {error.items.map((it, i) => (
+                <li key={i}>
+                  <code className="font-mono text-[10.5px] text-ink-3">
+                    {(it.loc ?? []).join(".")}
+                  </code>{" "}
+                  — {it.msg}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="rounded border border-line bg-bg-2 px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-2 hover:border-line-3"
+        >
+          dismiss
+        </button>
+      </div>
+    </Card>
+  );
 }
 
 function StopCard({
