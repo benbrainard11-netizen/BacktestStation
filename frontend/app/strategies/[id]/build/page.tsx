@@ -386,6 +386,10 @@ export default function StrategyBuildPage() {
             target={spec.target}
             onChange={(target) => setSpec((s) => ({ ...s, target }))}
           />
+          <AuxSymbolsCard
+            aux={spec.aux_symbols}
+            onChange={(aux_symbols) => setSpec((s) => ({ ...s, aux_symbols }))}
+          />
           <CapsCard
             spec={spec}
             onChange={(patch) => setSpec((s) => ({ ...s, ...patch }))}
@@ -622,6 +626,139 @@ function TargetCard({
             onChange={(v) => onChange({ ...target, target_pts: numOrUndef(v) })}
           />
         )}
+      </div>
+    </Card>
+  );
+}
+
+function AuxSymbolsCard({
+  aux,
+  onChange,
+}: {
+  aux: string[];
+  onChange: (next: string[]) => void;
+}) {
+  // Common futures continuous-contract symbols; cheap presets.
+  // Add custom via the text input.
+  const PRESETS = [
+    "NQ.c.0",
+    "ES.c.0",
+    "YM.c.0",
+    "RTY.c.0",
+    "CL.c.0",
+    "GC.c.0",
+    "ZB.c.0",
+    "ZN.c.0",
+  ];
+  const [draft, setDraft] = useState("");
+
+  function add(sym: string) {
+    const s = sym.trim();
+    if (!s) return;
+    if (aux.includes(s)) return;
+    onChange([...aux, s]);
+    setDraft("");
+  }
+
+  return (
+    <Card>
+      <CardHead
+        title="Aux symbols"
+        eyebrow="reads from"
+        right={
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+            {aux.length} extra
+          </span>
+        }
+      />
+      <div className="grid gap-3 px-4 py-3">
+        <p className="text-[11px] leading-relaxed text-ink-3">
+          Symbols this strategy reads alongside its primary. Required for
+          cross-symbol features like SMT (NQ vs ES divergence). Empty =
+          single-symbol mode. Per-run config can override at backtest time.
+        </p>
+
+        {aux.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {aux.map((s) => (
+              <span
+                key={s}
+                className="inline-flex items-center gap-1 rounded border border-accent-line bg-accent-soft px-2 py-1 font-mono text-[11px] text-accent"
+              >
+                {s}
+                <button
+                  type="button"
+                  onClick={() => onChange(aux.filter((x) => x !== s))}
+                  className="ml-1 text-ink-3 hover:text-neg"
+                  aria-label={`Remove ${s}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3 hover:text-neg"
+            >
+              clear
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+            Presets
+          </span>
+          {PRESETS.map((p) => {
+            const already = aux.includes(p);
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => add(p)}
+                disabled={already}
+                className={cn(
+                  "rounded border px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.06em] transition",
+                  already
+                    ? "border-line text-ink-4 opacity-50"
+                    : "border-line bg-bg-2 text-ink-2 hover:border-line-3 hover:text-accent",
+                )}
+              >
+                {p}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-end gap-2">
+          <label className="grid flex-1 gap-1">
+            <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+              Custom symbol
+            </span>
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  add(draft);
+                }
+              }}
+              placeholder="e.g. 6E.c.0"
+              className="rounded border border-line bg-bg-2 px-2 py-1 font-mono text-[12px]"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => add(draft)}
+            disabled={!draft.trim()}
+            className="rounded border border-accent bg-accent px-3 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.06em] text-bg-0 disabled:opacity-50"
+          >
+            + Add
+          </button>
+        </div>
       </div>
     </Card>
   );
