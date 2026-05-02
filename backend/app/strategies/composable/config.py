@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass(frozen=True)
 class FeatureCall:
-    """One entry in the entry_long / entry_short / filters list."""
+    """One entry in any of the role buckets."""
 
     feature: str  # registered name in app.features.FEATURES
     params: dict[str, Any] = field(default_factory=dict)
@@ -32,25 +36,48 @@ class TargetRule:
     target_pts: float = 30.0  # used by fixed_pts
 
 
+@dataclass(frozen=True)
+class SetupWindow:
+    """How long a fired setup arms the trigger window, per direction.
+
+    None = persistent until end of session (the safe default — a setup
+    arms the rest of the session unless the user opts into a tighter
+    bars-based expiry).
+    """
+
+    long: int | None = None
+    short: int | None = None
+
+
 @dataclass
 class ComposableSpec:
     """Parsed, typed strategy spec."""
 
+    # Role-tagged buckets. AND-within-bucket. Engine eval order per bar:
+    # setup → arm window → trigger (within window) → filters all pass → enter.
+    setup_long: list[FeatureCall] = field(default_factory=list)
+    trigger_long: list[FeatureCall] = field(default_factory=list)
+    setup_short: list[FeatureCall] = field(default_factory=list)
+    trigger_short: list[FeatureCall] = field(default_factory=list)
+    filter: list[FeatureCall] = field(default_factory=list)  # global, both directions
+    filter_long: list[FeatureCall] = field(default_factory=list)
+    filter_short: list[FeatureCall] = field(default_factory=list)
+    setup_window: SetupWindow = field(default_factory=SetupWindow)
+
+    # Deprecated — read at deserialization for backward compat with old
+    # specs that only know the flat entry_long/entry_short shape. New
+    # callers should use trigger_long/trigger_short instead.
     entry_long: list[FeatureCall] = field(default_factory=list)
     entry_short: list[FeatureCall] = field(default_factory=list)
+
     stop: StopRule = field(default_factory=lambda: StopRule(type="fixed_pts"))
     target: TargetRule = field(default_factory=lambda: TargetRule(type="r_multiple"))
     qty: int = 1
     max_trades_per_day: int = 2
     entry_dedup_minutes: int = 15
     max_hold_bars: int = 120
-    # Hard risk caps applied AFTER stop/target math. Keep loose by default.
     max_risk_pts: float = 150.0
     min_risk_pts: float = 0.0
-    # Additional symbols this strategy reads alongside its primary (e.g.
-    # SMT divergence needs NQ + ES). Empty = primary-symbol-only. The
-    # API layer merges this into RunConfig.aux_symbols when launching a
-    # backtest; the run can override per-launch for ablation testing.
     aux_symbols: list[str] = field(default_factory=list)
 
     @classmethod
@@ -59,16 +86,51 @@ class ComposableSpec:
 
         Raises ValueError on unknown keys / bad shapes — surfaces
         early rather than at first bar.
+
+        Backward compat: an input with only ``entry_long``/``entry_short``
+        (the pre-2026-05-02 shape) is migrated into ``trigger_long``/
+        ``trigger_short`` automatically. If both old and new keys are
+        present, the new keys win and a warning is logged.
         """
-        long_calls = [_parse_call(c, "entry_long") for c in raw.get("entry_long", [])]
-        short_calls = [_parse_call(c, "entry_short") for c in raw.get("entry_short", [])]
-        stop_raw = raw.get("stop", {"type": "fixed_pts"})
-        target_raw = raw.get("target", {"type": "r_multiple"})
+        has_old_long = "entry_long" in raw
+        has_old_short = "entry_short" in raw
+        has_new_long = "trigger_long" in raw
+        has_new_short = "trigger_short" in raw
+
+        if (has_old_long or has_old_short) and (has_new_long or has_new_short):
+            logger.warning(
+                "ComposableSpec: both old (entry_long/entry_short) and new "
+                "(trigger_long/trigger_short) keys present; using new keys"
+            )
+
+        # Resolve trigger sources with old-shape fallback.
+        long_src = raw.get("trigger_long") if has_new_long else raw.get("entry_long", [])
+        short_src = raw.get("trigger_short") if has_new_short else raw.get("entry_short", [])
+
+        trigger_long = [_parse_call(c, "trigger_long") for c in (long_src or [])]
+        trigger_short = [_parse_call(c, "trigger_short") for c in (short_src or [])]
+        setup_long = [_parse_call(c, "setup_long") for c in raw.get("setup_long", [])]
+        setup_short = [_parse_call(c, "setup_short") for c in raw.get("setup_short", [])]
+        filt = [_parse_call(c, "filter") for c in raw.get("filter", [])]
+        filt_long = [_parse_call(c, "filter_long") for c in raw.get("filter_long", [])]
+        filt_short = [_parse_call(c, "filter_short") for c in raw.get("filter_short", [])]
+
         return cls(
-            entry_long=long_calls,
-            entry_short=short_calls,
-            stop=_parse_stop(stop_raw),
-            target=_parse_target(target_raw),
+            setup_long=setup_long,
+            trigger_long=trigger_long,
+            setup_short=setup_short,
+            trigger_short=trigger_short,
+            filter=filt,
+            filter_long=filt_long,
+            filter_short=filt_short,
+            setup_window=_parse_setup_window(raw.get("setup_window", {})),
+            # Mirror triggers into the deprecated fields so the pre-rewrite
+            # engine (which still reads entry_long/entry_short) keeps working
+            # between this chunk and the engine state-machine rewrite.
+            entry_long=list(trigger_long),
+            entry_short=list(trigger_short),
+            stop=_parse_stop(raw.get("stop", {"type": "fixed_pts"})),
+            target=_parse_target(raw.get("target", {"type": "r_multiple"})),
             qty=int(raw.get("qty", 1)),
             max_trades_per_day=int(raw.get("max_trades_per_day", 2)),
             entry_dedup_minutes=int(raw.get("entry_dedup_minutes", 15)),
@@ -132,3 +194,26 @@ def _parse_aux_symbols(raw: Any) -> list[str]:
             )
         out.append(sym)
     return out
+
+
+def _parse_setup_window(raw: Any) -> SetupWindow:
+    if raw is None:
+        return SetupWindow()
+    if not isinstance(raw, dict):
+        raise ValueError(
+            f"setup_window must be an object, got {type(raw).__name__}"
+        )
+    return SetupWindow(
+        long=_parse_window_value(raw.get("long"), "setup_window.long"),
+        short=_parse_window_value(raw.get("short"), "setup_window.short"),
+    )
+
+
+def _parse_window_value(raw: Any, where: str) -> int | None:
+    if raw is None:
+        return None
+    if isinstance(raw, bool) or not isinstance(raw, int):
+        raise ValueError(f"{where} must be an int (bars) or null, got {type(raw).__name__}")
+    if raw < 1:
+        raise ValueError(f"{where} must be >= 1 bar (got {raw}) or null for persistent")
+    return raw

@@ -101,6 +101,135 @@ def test_spec_rejects_non_string_aux_symbol_entry():
         ComposableSpec.from_dict({"aux_symbols": [42]})
 
 
+# ── role-tagged buckets (setup / trigger / filter) ────────────────────
+
+
+def test_spec_role_buckets_default_empty():
+    spec = ComposableSpec.from_dict({})
+    assert spec.setup_long == []
+    assert spec.trigger_long == []
+    assert spec.setup_short == []
+    assert spec.trigger_short == []
+    assert spec.filter == []
+    assert spec.filter_long == []
+    assert spec.filter_short == []
+
+
+def test_spec_setup_window_default_persistent():
+    spec = ComposableSpec.from_dict({})
+    assert spec.setup_window.long is None
+    assert spec.setup_window.short is None
+
+
+def test_spec_setup_window_round_trip():
+    spec = ComposableSpec.from_dict(
+        {"setup_window": {"long": 5, "short": 12}}
+    )
+    assert spec.setup_window.long == 5
+    assert spec.setup_window.short == 12
+
+
+def test_spec_setup_window_rejects_non_int():
+    with pytest.raises(ValueError, match="setup_window.long"):
+        ComposableSpec.from_dict({"setup_window": {"long": "five"}})
+
+
+def test_spec_setup_window_rejects_zero():
+    with pytest.raises(ValueError, match="setup_window.short"):
+        ComposableSpec.from_dict({"setup_window": {"short": 0}})
+
+
+def test_spec_setup_window_rejects_negative():
+    with pytest.raises(ValueError, match="setup_window.long"):
+        ComposableSpec.from_dict({"setup_window": {"long": -3}})
+
+
+def test_spec_setup_window_null_means_persistent():
+    spec = ComposableSpec.from_dict({"setup_window": {"long": None, "short": 10}})
+    assert spec.setup_window.long is None
+    assert spec.setup_window.short == 10
+
+
+def test_spec_role_buckets_round_trip_each():
+    spec = ComposableSpec.from_dict(
+        {
+            "setup_long": [{"feature": "prior_level_sweep", "params": {"level": "PDH"}}],
+            "trigger_long": [{"feature": "decisive_close", "params": {"direction": "BULLISH"}}],
+            "setup_short": [{"feature": "prior_level_sweep", "params": {"level": "PDL"}}],
+            "trigger_short": [{"feature": "decisive_close", "params": {"direction": "BEARISH"}}],
+            "filter": [{"feature": "time_window", "params": {"start_hour": 9.5, "end_hour": 14}}],
+            "filter_long": [{"feature": "volume_filter", "params": {"min_mult": 1.5}}],
+            "filter_short": [{"feature": "volume_filter", "params": {"min_mult": 2.0}}],
+        }
+    )
+    assert spec.setup_long[0].feature == "prior_level_sweep"
+    assert spec.trigger_long[0].feature == "decisive_close"
+    assert spec.setup_short[0].params == {"level": "PDL"}
+    assert spec.trigger_short[0].params == {"direction": "BEARISH"}
+    assert spec.filter[0].feature == "time_window"
+    assert spec.filter_long[0].params == {"min_mult": 1.5}
+    assert spec.filter_short[0].params == {"min_mult": 2.0}
+
+
+def test_spec_filter_rejects_non_object_entry():
+    with pytest.raises(ValueError, match="filter:"):
+        ComposableSpec.from_dict({"filter": ["not_an_object"]})
+
+
+# ── backward compatibility: entry_long / entry_short → trigger_* ──────
+
+
+def test_spec_old_shape_migrates_entry_long_to_trigger_long():
+    """Old (pre-2026-05-02) specs with entry_long should populate trigger_long."""
+    spec = ComposableSpec.from_dict(
+        {
+            "entry_long": [{"feature": "decisive_close", "params": {"direction": "BULLISH"}}],
+            "entry_short": [{"feature": "decisive_close", "params": {"direction": "BEARISH"}}],
+        }
+    )
+    assert len(spec.trigger_long) == 1
+    assert spec.trigger_long[0].feature == "decisive_close"
+    assert spec.trigger_long[0].params == {"direction": "BULLISH"}
+    assert len(spec.trigger_short) == 1
+    assert spec.trigger_short[0].params == {"direction": "BEARISH"}
+    # Setup buckets stay empty (old shape had no notion of setup).
+    assert spec.setup_long == []
+    assert spec.setup_short == []
+
+
+def test_spec_old_shape_mirrors_into_entry_fields_for_engine_compat():
+    """During the migration window, the engine still reads entry_long.
+    Mirror triggers back so it keeps working."""
+    spec = ComposableSpec.from_dict(
+        {"entry_long": [{"feature": "decisive_close", "params": {}}]}
+    )
+    assert len(spec.entry_long) == 1
+    assert spec.entry_long[0].feature == "decisive_close"
+
+
+def test_spec_new_shape_overrides_old_when_both_present():
+    spec = ComposableSpec.from_dict(
+        {
+            "entry_long": [{"feature": "old_feature", "params": {}}],
+            "trigger_long": [{"feature": "new_feature", "params": {}}],
+        }
+    )
+    # New keys win; old is ignored (with a logged warning, not asserted here).
+    assert len(spec.trigger_long) == 1
+    assert spec.trigger_long[0].feature == "new_feature"
+
+
+def test_spec_new_shape_alone_works():
+    spec = ComposableSpec.from_dict(
+        {
+            "trigger_long": [{"feature": "decisive_close", "params": {}}],
+            "trigger_short": [],
+        }
+    )
+    assert spec.trigger_long[0].feature == "decisive_close"
+    assert spec.entry_long[0].feature == "decisive_close"  # mirrored
+
+
 # ── e2e: PDH-sweep + time-window ──────────────────────────────────────
 
 
