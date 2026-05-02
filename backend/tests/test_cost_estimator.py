@@ -8,9 +8,11 @@ plumbing, and the error paths that don't need a network round-trip.
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
-from app.ingest.cost_estimator import DATASET, UNIVERSE, main
+from app.ingest.cost_estimator import DATASET, UNIVERSE, estimate, main
 
 
 def test_universe_has_expected_categories() -> None:
@@ -33,9 +35,7 @@ def test_universe_categories_have_continuous_symbols() -> None:
     for category, symbols in UNIVERSE.items():
         assert symbols, f"category {category} is empty"
         for sym in symbols:
-            assert sym.endswith(".c.0"), (
-                f"{sym} in {category} is not a continuous symbol"
-            )
+            assert sym.endswith(".c.0"), f"{sym} in {category} is not a continuous symbol"
 
 
 def test_universe_symbols_are_unique_per_category() -> None:
@@ -57,6 +57,30 @@ def test_dataset_is_glbx_mdp3() -> None:
     """Ben's plan covers GLBX.MDP3 (CME Globex MDP3) — pin so we don't
     silently estimate against the wrong dataset."""
     assert DATASET == "GLBX.MDP3"
+
+
+def test_estimate_accepts_custom_dataset_for_vx() -> None:
+    client = MagicMock()
+    client.metadata.get_cost.return_value = 0
+
+    cost = estimate(
+        client,
+        ["VX.n.0"],
+        "ohlcv-1m",
+        "2026-03-01",
+        "2026-04-01",
+        dataset="XCBF.PITCH",
+    )
+
+    assert cost == 0.0
+    client.metadata.get_cost.assert_called_once_with(
+        dataset="XCBF.PITCH",
+        schema="ohlcv-1m",
+        symbols=["VX.n.0"],
+        stype_in="continuous",
+        start="2026-03-01",
+        end="2026-04-01",
+    )
 
 
 # --- CLI argument validation (no API calls) -----------------------------

@@ -37,7 +37,7 @@ These apply to every schema in this repo. Pin them.
 
 ### Symbols (instrument IDs)
 
-- The warehouse uses **canonical continuous symbols**: `NQ.c.0`, `ES.c.0`, `YM.c.0`, `RTY.c.0`. The `.c.0` suffix is Databento's continuous-front-month notation.
+- The warehouse uses **canonical continuous symbols**: `NQ.c.0`, `ES.c.0`, `YM.c.0`, `RTY.c.0`. The `.c.0` suffix is Databento's continuous-front-month notation. VIX futures use the CFE dataset `XCBF.PITCH` and Databento continuous symbols like `VX.n.0`.
 - **Never store exchange-specific contract symbols** (e.g. `NQM6`) in warehouse paths. They roll quarterly and break historical queries. Databento's symbology mapping handles the underlying contract resolution at ingest time.
 - Per-row `instrument_id` (uint32) is preserved in raw schemas — it's the Databento-internal numeric ID, useful for joining to the symbology mapping if needed.
 - Symbol partition values use the canonical form: `processed/tbbo/symbol=NQ.c.0/...`.

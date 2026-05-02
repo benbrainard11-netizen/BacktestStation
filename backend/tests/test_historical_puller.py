@@ -115,12 +115,36 @@ def test_pull_month_writes_per_symbol_files(data_root: Path) -> None:
     assert "GLBX.MDP3-mbp-1-2026-03-05-RTY.c.0.dbn" in names
 
 
+def test_pull_month_supports_custom_dataset_for_vx(data_root: Path) -> None:
+    """VX futures live in Databento's CFE dataset, not the CME dataset."""
+    client = _fake_client(rows_per_day=3)
+    result = historical.pull_month(
+        year=2026,
+        month=3,
+        client=client,
+        data_root=data_root,
+        max_days=1,
+        schema="ohlcv-1m",
+        dataset="XCBF.PITCH",
+        symbols=["VX.n.0"],
+    )
+    assert result.days_attempted == 1
+    assert result.days_written == 1
+
+    path = data_root / "raw" / "historical" / "XCBF.PITCH-ohlcv-1m-2026-03-01-VX.n.0.dbn"
+    assert path.exists()
+
+    kwargs = client.timeseries.get_range.call_args.kwargs
+    assert kwargs["dataset"] == "XCBF.PITCH"
+    assert kwargs["schema"] == "ohlcv-1m"
+    assert kwargs["symbols"] == ["VX.n.0"]
+    assert kwargs["stype_in"] == "continuous"
+
+
 def test_pull_month_skips_existing_files(data_root: Path) -> None:
     """Idempotent: existing files are not re-pulled."""
     # Pre-create one file as if a previous run got that day.
-    existing = (
-        data_root / "raw" / "historical" / "GLBX.MDP3-mbp-1-2026-03-01.dbn"
-    )
+    existing = data_root / "raw" / "historical" / "GLBX.MDP3-mbp-1-2026-03-01.dbn"
     existing.parent.mkdir(parents=True, exist_ok=True)
     existing.write_bytes(b"existing")
 
@@ -170,9 +194,7 @@ def test_pull_month_continues_on_per_symbol_error(data_root: Path) -> None:
             raise RuntimeError("Permission denied: invalid API key")
         store = MagicMock()
         ts = pd.Timestamp("2026-03-15 13:30:00", tz="UTC")
-        df = pd.DataFrame([{"ts_event": ts, "symbol": "NQ.c.0"}]).set_index(
-            "ts_event"
-        )
+        df = pd.DataFrame([{"ts_event": ts, "symbol": "NQ.c.0"}]).set_index("ts_event")
         store.to_df.return_value = df
         store.to_file.side_effect = lambda path: Path(path).write_bytes(b"X")
         return store
@@ -195,9 +217,7 @@ def test_pull_month_continues_on_per_symbol_error(data_root: Path) -> None:
     # day-level pull_day exceptions, which didn't happen here.
     assert result.errors == []
     # Verify only 3 of 4 symbols produced a file on that day.
-    files = list(
-        (data_root / "raw" / "historical").glob("GLBX.MDP3-mbp-1-2026-03-01-*.dbn")
-    )
+    files = list((data_root / "raw" / "historical").glob("GLBX.MDP3-mbp-1-2026-03-01-*.dbn"))
     assert len(files) == len(historical.SYMBOLS) - 1
 
 
@@ -213,9 +233,7 @@ def test_get_range_retries_on_transient_error(data_root: Path) -> None:
             raise RuntimeError("503 Service Unavailable")
         store = MagicMock()
         ts = pd.Timestamp("2026-03-15 13:30:00", tz="UTC")
-        df = pd.DataFrame([{"ts_event": ts, "symbol": "NQ.c.0"}]).set_index(
-            "ts_event"
-        )
+        df = pd.DataFrame([{"ts_event": ts, "symbol": "NQ.c.0"}]).set_index("ts_event")
         store.to_df.return_value = df
         store.to_file.side_effect = lambda path: Path(path).write_bytes(b"X")
         return store
@@ -234,9 +252,7 @@ def test_get_range_retries_on_transient_error(data_root: Path) -> None:
     # and succeeds; remaining 3 symbols succeed first try).
     assert result.days_written == 1
     assert result.errors == []
-    files = list(
-        (data_root / "raw" / "historical").glob("GLBX.MDP3-mbp-1-2026-03-01-*.dbn")
-    )
+    files = list((data_root / "raw" / "historical").glob("GLBX.MDP3-mbp-1-2026-03-01-*.dbn"))
     assert len(files) == len(historical.SYMBOLS)
     # Total calls = 5 (4 symbols + 1 retry).
     assert call_count["n"] == len(historical.SYMBOLS) + 1
@@ -257,9 +273,24 @@ def test_parse_args_defaults_to_none() -> None:
     args = historical._parse_args([])
     assert args.month is None
     assert args.max_days is None
+    assert args.dataset == historical.DATASET
+    assert args.stype_in == historical.STYPE_IN
 
 
 def test_parse_args_with_month() -> None:
-    args = historical._parse_args(["--month", "2026-03", "--max-days", "5"])
+    args = historical._parse_args(
+        [
+            "--month",
+            "2026-03",
+            "--max-days",
+            "5",
+            "--dataset",
+            "XCBF.PITCH",
+            "--stype-in",
+            "continuous",
+        ]
+    )
     assert args.month == "2026-03"
     assert args.max_days == 5
+    assert args.dataset == "XCBF.PITCH"
+    assert args.stype_in == "continuous"

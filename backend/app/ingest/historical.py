@@ -17,12 +17,16 @@ Usage:
     # Back-cap how many days to pull (useful for testing):
     python -m app.ingest.historical --month 2026-03 --max-days 5
 
+    # Pull CFE VIX futures 1-minute bars:
+    python -m app.ingest.historical --dataset XCBF.PITCH \
+        --schema ohlcv-1m --symbols VX.n.0 --month 2026-03
+
 Environment variables:
     DATABENTO_API_KEY   required. Same key the live ingester uses.
     BS_DATA_ROOT        optional. Same warehouse root.
 
 Output layout:
-    {DATA_ROOT}/raw/historical/{DATASET}-{SCHEMA}-{YYYY-MM-DD}.dbn
+    {DATA_ROOT}/raw/historical/{DATASET}-{SCHEMA}-{YYYY-MM-DD}-{SYMBOL}.dbn
 
 Idempotent: days that already have a non-empty .dbn file are skipped.
 Days where Databento returns no data (weekends, holidays, mid-day gaps)
@@ -49,9 +53,7 @@ from pathlib import Path
 try:
     import databento as db
 except ImportError:  # pragma: no cover
-    sys.stderr.write(
-        "databento package not installed. Run: pip install databento\n"
-    )
+    sys.stderr.write("databento package not installed. Run: pip install databento\n")
     sys.exit(1)
 
 
@@ -67,7 +69,13 @@ STYPE_IN = "continuous"
 # their MBP-1 endpoint returned "503 <empty message>" or "Response ended
 # prematurely" cascades on consecutive full-day requests; backing off
 # lets the rate-limit window clear. Keys: errors that should retry.
-_TRANSIENT_ERROR_PATTERNS = ("503", "ended prematurely", "Service Unavailable", "timeout", "Connection")
+_TRANSIENT_ERROR_PATTERNS = (
+    "503",
+    "ended prematurely",
+    "Service Unavailable",
+    "timeout",
+    "Connection",
+)
 _RETRY_BACKOFFS_SEC = (5, 30, 120, 600)
 _THROTTLE_BETWEEN_CALLS_SEC = 1.0
 
@@ -95,9 +103,7 @@ def _setup_logging(data_root: Path) -> logging.Logger:
     logger.setLevel(logging.INFO)
     if not logger.handlers:
         fh = logging.FileHandler(log_dir / "historical.log", encoding="utf-8")
-        fh.setFormatter(
-            logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-        )
+        fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
         logger.addHandler(fh)
         sh = logging.StreamHandler(sys.stderr)
         sh.setFormatter(fh.formatter)
@@ -108,6 +114,7 @@ def _setup_logging(data_root: Path) -> logging.Logger:
 def _data_root() -> Path:
     """Backwards-compat alias for `app.core.paths.warehouse_root`."""
     from app.core.paths import warehouse_root
+
     return warehouse_root()
 
 
@@ -135,29 +142,26 @@ def days_in_month(year: int, month: int) -> list[dt.date]:
 
 
 def file_for_date(
-    data_root: Path, day: dt.date, schema: str = DEFAULT_SCHEMA
+    data_root: Path,
+    day: dt.date,
+    schema: str = DEFAULT_SCHEMA,
+    dataset: str = DATASET,
 ) -> Path:
     """Legacy per-day path (multi-symbol). Kept for skip-existing checks
     on files written before the per-symbol refactor."""
-    return (
-        data_root
-        / "raw"
-        / "historical"
-        / f"{DATASET}-{schema}-{day.isoformat()}.dbn"
-    )
+    return data_root / "raw" / "historical" / f"{dataset}-{schema}-{day.isoformat()}.dbn"
 
 
 def file_for_date_symbol(
-    data_root: Path, day: dt.date, symbol: str, schema: str = DEFAULT_SCHEMA
+    data_root: Path,
+    day: dt.date,
+    symbol: str,
+    schema: str = DEFAULT_SCHEMA,
+    dataset: str = DATASET,
 ) -> Path:
     """Per-symbol-per-day path. This is the path produced by the current
     puller; mirror's _DBN_RE accepts both legacy and new layouts."""
-    return (
-        data_root
-        / "raw"
-        / "historical"
-        / f"{DATASET}-{schema}-{day.isoformat()}-{symbol}.dbn"
-    )
+    return data_root / "raw" / "historical" / f"{dataset}-{schema}-{day.isoformat()}-{symbol}.dbn"
 
 
 # --- Core pull -----------------------------------------------------------
@@ -175,6 +179,8 @@ def _get_range_with_retry(
     start: dt.datetime,
     end: dt.datetime,
     logger: logging.Logger,
+    dataset: str = DATASET,
+    stype_in: str = STYPE_IN,
 ) -> "db.DBNStore":
     """Call client.timeseries.get_range for ONE symbol with backoff retry
     on transient Databento errors. Non-transient errors propagate."""
@@ -190,10 +196,10 @@ def _get_range_with_retry(
             time.sleep(wait)
         try:
             return client.timeseries.get_range(
-                dataset=DATASET,
+                dataset=dataset,
                 schema=schema,
                 symbols=[symbol],
-                stype_in=STYPE_IN,
+                stype_in=stype_in,
                 start=start.isoformat(),
                 end=end.isoformat(),
             )
@@ -215,6 +221,8 @@ def pull_day(
     symbols: list[str],
     logger: logging.Logger,
     schema: str = DEFAULT_SCHEMA,
+    dataset: str = DATASET,
+    stype_in: str = STYPE_IN,
 ) -> tuple[bool, int]:
     """Fetch one day of `schema` data, ONE SYMBOL AT A TIME.
 
@@ -233,15 +241,13 @@ def pull_day(
         every symbol return (False, 0) -- absence of all per-symbol
         files is the "no data" signal.
     """
-    start = dt.datetime.combine(
-        day, dt.time(0, 0, tzinfo=dt.timezone.utc)
-    )
+    start = dt.datetime.combine(day, dt.time(0, 0, tzinfo=dt.timezone.utc))
     end = start + dt.timedelta(days=1)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger.info(
         f"pulling {day.isoformat()}: "
-        f"dataset={DATASET} schema={schema} symbols={symbols} "
+        f"dataset={dataset} schema={schema} symbols={symbols} "
         f"(per-symbol mode)"
     )
 
@@ -254,7 +260,7 @@ def pull_day(
     any_wrote = False
     total_bytes = 0
     for i, symbol in enumerate(symbols):
-        sym_path = file_for_date_symbol(data_root, day, symbol, schema)
+        sym_path = file_for_date_symbol(data_root, day, symbol, schema, dataset)
 
         # Idempotent skip: if this symbol-day file already exists and is
         # non-empty, leave it alone.
@@ -266,7 +272,7 @@ def pull_day(
 
         try:
             response = _get_range_with_retry(
-                client, schema, symbol, start, end, logger
+                client, schema, symbol, start, end, logger, dataset, stype_in
             )
         except RuntimeError as e:
             # Already-formatted error from _get_range_with_retry. Log per-
@@ -299,6 +305,8 @@ def pull_one_day_one_symbol(
     *,
     data_root: Path | None = None,
     schema: str = DEFAULT_SCHEMA,
+    dataset: str = DATASET,
+    stype_in: str = STYPE_IN,
     logger: logging.Logger | None = None,
 ) -> tuple[bool, int]:
     """Pull a single (date, symbol) DBN partition. Idempotent.
@@ -315,7 +323,7 @@ def pull_one_day_one_symbol(
     data_root = data_root or _data_root()
     logger = logger or _setup_logging(data_root)
 
-    out_path = file_for_date_symbol(data_root, day, symbol, schema)
+    out_path = file_for_date_symbol(data_root, day, symbol, schema, dataset)
     if out_path.exists() and out_path.stat().st_size > 0:
         logger.info(f"  skip existing: {out_path.name}")
         return True, out_path.stat().st_size
@@ -326,7 +334,7 @@ def pull_one_day_one_symbol(
 
     try:
         response = _get_range_with_retry(
-            client, schema, symbol, start, end, logger
+            client, schema, symbol, start, end, logger, dataset, stype_in
         )
     except RuntimeError as e:
         logger.error(f"  {symbol} {day.isoformat()}: {e}")
@@ -339,9 +347,7 @@ def pull_one_day_one_symbol(
 
     response.to_file(str(out_path))
     sz = out_path.stat().st_size
-    logger.info(
-        f"  wrote {out_path.name} ({sz:,} bytes, {len(df)} rows)"
-    )
+    logger.info(f"  wrote {out_path.name} ({sz:,} bytes, {len(df)} rows)")
     return True, sz
 
 
@@ -353,6 +359,8 @@ def pull_month(
     api_key: str | None = None,
     max_days: int | None = None,
     schema: str = DEFAULT_SCHEMA,
+    dataset: str = DATASET,
+    stype_in: str = STYPE_IN,
     *,
     client: "db.Historical | None" = None,
     logger: logging.Logger | None = None,
@@ -365,9 +373,7 @@ def pull_month(
     if not (1 <= month <= 12):
         raise ValueError(f"month must be 1..12, got {month}")
     if schema not in ALLOWED_SCHEMAS:
-        raise ValueError(
-            f"schema {schema!r} not in {ALLOWED_SCHEMAS}"
-        )
+        raise ValueError(f"schema {schema!r} not in {ALLOWED_SCHEMAS}")
 
     symbols = symbols or SYMBOLS
     data_root = data_root or _data_root()
@@ -386,13 +392,22 @@ def pull_month(
 
     for day in days:
         result.days_attempted += 1
-        out_path = file_for_date(data_root, day, schema)
+        out_path = file_for_date(data_root, day, schema, dataset)
         if out_path.exists() and out_path.stat().st_size > 0:
             result.days_skipped_existing += 1
             logger.info(f"skipping {day.isoformat()}: file exists")
             continue
         try:
-            wrote, size = pull_day(client, out_path, day, symbols, logger, schema)
+            wrote, size = pull_day(
+                client,
+                out_path,
+                day,
+                symbols,
+                logger,
+                schema,
+                dataset,
+                stype_in,
+            )
             if wrote:
                 result.days_written += 1
                 result.bytes_written += size
@@ -418,9 +433,7 @@ def pull_month(
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(
-        description="Pull a month of historical data from Databento"
-    )
+    p = argparse.ArgumentParser(description="Pull a month of historical data from Databento")
     p.add_argument(
         "--month",
         type=str,
@@ -439,9 +452,21 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=str,
         default=None,
         help=(
-            "Comma-separated continuous symbols, e.g. ES.c.0,YM.c.0. "
+            "Comma-separated symbols, e.g. ES.c.0,YM.c.0 or VX.n.0. "
             f"Defaults to {','.join(SYMBOLS)}."
         ),
+    )
+    p.add_argument(
+        "--dataset",
+        type=str,
+        default=DATASET,
+        help=f"Databento dataset ID (default: {DATASET}; VX uses XCBF.PITCH).",
+    )
+    p.add_argument(
+        "--stype-in",
+        type=str,
+        default=STYPE_IN,
+        help=f"Databento input symbology type (default: {STYPE_IN}).",
     )
     p.add_argument(
         "--max-days",
@@ -465,11 +490,7 @@ def main(argv: list[str] | None = None) -> int:
             sys.stderr.write(f"--month must be YYYY-MM, got {args.month!r}\n")
             return 1
 
-    symbols = (
-        [s.strip() for s in args.symbols.split(",") if s.strip()]
-        if args.symbols
-        else None
-    )
+    symbols = [s.strip() for s in args.symbols.split(",") if s.strip()] if args.symbols else None
 
     result = pull_month(
         year,
@@ -477,6 +498,8 @@ def main(argv: list[str] | None = None) -> int:
         symbols=symbols,
         max_days=args.max_days,
         schema=args.schema,
+        dataset=args.dataset,
+        stype_in=args.stype_in,
     )
     return 0 if not result.errors else 1
 

@@ -145,6 +145,9 @@ python -m app.ingest.historical --month 2026-03
 
 # Cap days for testing
 python -m app.ingest.historical --month 2026-03 --max-days 3
+
+# Pull CFE VIX futures 1-minute bars
+python -m app.ingest.historical --dataset XCBF.PITCH --schema ohlcv-1m --symbols VX.n.0 --month 2026-03
 ```
 
 Schedule monthly via Task Scheduler:
@@ -164,6 +167,7 @@ A full month of MBP-1 for 4 CME symbols takes 10-30 minutes depending on volume.
 ## Things to know
 
 - **TBBO not MBP-1 for live.** Databento's $180/mo CME plan only allows TBBO on the live feed; MBP-1 is historical-only.
+- **Dataset matters.** CME futures use `GLBX.MDP3`; VIX futures use CFE `XCBF.PITCH` with symbols like `VX.n.0`.
 - **Continuous symbology.** `NQ.c.0` etc. — Databento auto-resolves to current front-month, no rollover code needed here.
 - **UTC date for file rotation.** Cleaner than session-close logic. CME futures have a daily settlement around 5pm ET but TBBO records flow nearly 24h.
 - **Restart safety.** Append mode means a crash + restart resumes the same day's file. Some duplication possible across restart boundaries; downstream parquet conversion can dedup on `(timestamp, instrument_id, side)`.

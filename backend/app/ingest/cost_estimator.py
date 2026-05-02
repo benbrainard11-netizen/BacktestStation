@@ -10,6 +10,11 @@ CLI:
         --symbols NQ.c.0,ES.c.0 --schema tbbo \\
         --start 2025-01-01 --end 2026-01-01
 
+    # CFE VIX futures:
+    python -m app.ingest.cost_estimator \\
+        --dataset XCBF.PITCH --symbols VX.n.0 --schema ohlcv-1m \\
+        --start 2025-01-01 --end 2026-01-01
+
     # Universe summary (all asset categories x sane defaults):
     python -m app.ingest.cost_estimator --universe
 
@@ -35,16 +40,17 @@ except ImportError:  # pragma: no cover
 
 
 DATASET = "GLBX.MDP3"
+STYPE_IN = "continuous"
 
 # Asset universe. Add new continuous symbols here as the user's
 # trading interests broaden.
 UNIVERSE: dict[str, list[str]] = {
     "equity_index": ["ES.c.0", "YM.c.0", "RTY.c.0", "NQ.c.0"],
-    "metals":       ["GC.c.0", "SI.c.0", "PL.c.0", "PA.c.0", "HG.c.0"],
-    "energy":       ["CL.c.0", "HO.c.0", "RB.c.0", "NG.c.0", "BZ.c.0"],
-    "forex":        ["6E.c.0", "6B.c.0", "6J.c.0", "6A.c.0", "6C.c.0", "6S.c.0", "6N.c.0"],
-    "rates":        ["ZN.c.0", "ZB.c.0", "ZF.c.0", "ZT.c.0"],
-    "agriculture":  ["ZC.c.0", "ZS.c.0", "ZW.c.0"],
+    "metals": ["GC.c.0", "SI.c.0", "PL.c.0", "PA.c.0", "HG.c.0"],
+    "energy": ["CL.c.0", "HO.c.0", "RB.c.0", "NG.c.0", "BZ.c.0"],
+    "forex": ["6E.c.0", "6B.c.0", "6J.c.0", "6A.c.0", "6C.c.0", "6S.c.0", "6N.c.0"],
+    "rates": ["ZN.c.0", "ZB.c.0", "ZF.c.0", "ZT.c.0"],
+    "agriculture": ["ZC.c.0", "ZS.c.0", "ZW.c.0"],
 }
 
 
@@ -54,14 +60,16 @@ def estimate(
     schema: str,
     start: str,
     end: str,
+    dataset: str = DATASET,
+    stype_in: str = STYPE_IN,
 ) -> float:
     """Return USD cost; 0 if the request is free under the user's plan."""
     return float(
         client.metadata.get_cost(
-            dataset=DATASET,
+            dataset=dataset,
             schema=schema,
             symbols=symbols,
-            stype_in="continuous",
+            stype_in=stype_in,
             start=start,
             end=end,
         )
@@ -128,6 +136,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Comma-separated continuous symbols.",
     )
     p.add_argument(
+        "--dataset",
+        type=str,
+        default=DATASET,
+        help=f"Databento dataset ID (default: {DATASET}; VX uses XCBF.PITCH).",
+    )
+    p.add_argument(
+        "--stype-in",
+        type=str,
+        default=STYPE_IN,
+        help=f"Databento input symbology type (default: {STYPE_IN}).",
+    )
+    p.add_argument(
         "--schema",
         type=str,
         default="ohlcv-1m",
@@ -159,7 +179,15 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     syms = [s.strip() for s in args.symbols.split(",") if s.strip()]
-    cost = estimate(client, syms, args.schema, args.start, args.end)
+    cost = estimate(
+        client,
+        syms,
+        args.schema,
+        args.start,
+        args.end,
+        dataset=args.dataset,
+        stype_in=args.stype_in,
+    )
     print(f"${cost:.2f}")
     return 0
 
