@@ -1,7 +1,11 @@
 import {
   Activity,
+  AudioWaveform,
   BarChart3,
   Beaker,
+  Book,
+  Briefcase,
+  Building2,
   Clipboard,
   Database,
   Download,
@@ -11,9 +15,12 @@ import {
   GitCompare,
   Home,
   Layers,
+  Microscope,
   Search,
   Settings as Cog,
   Shield,
+  Sparkles,
+  Wand2,
   Zap,
 } from "lucide-react";
 
@@ -35,6 +42,13 @@ const MAP: Record<IconName, typeof Home> = {
   compare: GitCompare,
   settings: Cog,
   search: Search,
+  book: Book,
+  microscope: Microscope,
+  sparkles: Sparkles,
+  waveform: AudioWaveform,
+  briefcase: Briefcase,
+  building: Building2,
+  wand: Wand2,
 };
 
 export function Icon({
