@@ -10,12 +10,16 @@ import type { FeatureDef } from "./FeatureRow";
 
 export type EntrySlot = "entry_long" | "entry_short";
 
+/** Pantry add target. "both" means add to entry_long AND entry_short with
+ *  direction params auto-flipped (BULLISH for long, BEARISH for short). */
+export type AddTarget = EntrySlot | "both";
+
 /**
  * FeaturePantry — searchable browser of every feature in the registry.
  *
  * Stop/target rules are configured directly in the recipe view (different
  * shape: typed object rather than feature-call list), so this pantry only
- * surfaces "+ entry_long" and "+ entry_short" actions per feature card.
+ * surfaces entry-list add actions per feature card.
  */
 export function FeaturePantry({
   features,
@@ -23,7 +27,7 @@ export function FeaturePantry({
   className,
 }: {
   features: FeatureDef[];
-  onAdd: (slot: EntrySlot, featureName: string) => void;
+  onAdd: (target: AddTarget, featureName: string) => void;
   className?: string;
 }) {
   const [q, setQ] = useState("");
@@ -83,7 +87,7 @@ function PantryCard({
   onAdd,
 }: {
   feature: FeatureDef;
-  onAdd: (slot: EntrySlot, featureName: string) => void;
+  onAdd: (target: AddTarget, featureName: string) => void;
 }) {
   const paramCount = feature.param_schema
     ? Object.keys(feature.param_schema).length
@@ -116,6 +120,11 @@ function PantryCard({
           onClick={() => onAdd("entry_short", feature.name)}
           tone="neg"
         />
+        <PantryAddButton
+          label="+ both"
+          onClick={() => onAdd("both", feature.name)}
+          tone="accent"
+        />
       </div>
     </li>
   );
@@ -128,7 +137,7 @@ function PantryAddButton({
 }: {
   label: string;
   onClick: () => void;
-  tone: "pos" | "neg";
+  tone: "pos" | "neg" | "accent";
 }) {
   return (
     <button
@@ -136,9 +145,10 @@ function PantryAddButton({
       onClick={onClick}
       className={cn(
         "rounded border px-2 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-[0.06em] transition hover:bg-bg-3",
-        tone === "pos"
-          ? "border-pos/40 text-pos hover:bg-pos/10"
-          : "border-neg/40 text-neg hover:bg-neg/10",
+        tone === "pos" && "border-pos/40 text-pos hover:bg-pos/10",
+        tone === "neg" && "border-neg/40 text-neg hover:bg-neg/10",
+        tone === "accent" &&
+          "border-accent-line text-accent hover:bg-accent-soft",
       )}
     >
       {label}

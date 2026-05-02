@@ -9,6 +9,7 @@ import { AsyncButton } from "@/components/ui/AsyncButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   FeaturePantry,
+  type AddTarget,
   type EntrySlot,
 } from "@/components/strategies/builder/FeaturePantry";
 import {
@@ -200,12 +201,32 @@ export default function StrategyBuildPage() {
 
   // ── recipe mutations ──────────────────────────────────────────────────────
 
-  const addToSlot = useCallback((slot: EntrySlot, featureName: string) => {
-    setSpec((s) => ({
-      ...s,
-      [slot]: [...s[slot], { feature: featureName, params: {} }],
-    }));
-  }, []);
+  const addToSlot = useCallback(
+    (target: AddTarget, featureName: string) => {
+      const def = featureMap.get(featureName);
+      if (target === "both") {
+        // Auto-flip the `direction` enum if the feature has one with
+        // BULLISH/BEARISH values. Other direction-style enums (e.g.
+        // prior_level_sweep's "above"/"below") get left blank since the
+        // user → trade direction mapping is feature-specific. Numeric
+        // params are duplicated as-is.
+        const longCall = makeCall(featureName, def, "BULLISH");
+        const shortCall = makeCall(featureName, def, "BEARISH");
+        setSpec((s) => ({
+          ...s,
+          entry_long: [...s.entry_long, longCall],
+          entry_short: [...s.entry_short, shortCall],
+        }));
+        return;
+      }
+      const slot = target;
+      setSpec((s) => ({
+        ...s,
+        [slot]: [...s[slot], { feature: featureName, params: {} }],
+      }));
+    },
+    [featureMap],
+  );
 
   const removeFromSlot = useCallback((slot: EntrySlot, index: number) => {
     setSpec((s) => ({
@@ -518,6 +539,22 @@ function RecipeSection({
 
 function unique(arr: string[]): string[] {
   return Array.from(new Set(arr));
+}
+
+function makeCall(
+  featureName: string,
+  def: FeatureDef | undefined,
+  preferredDirection: "BULLISH" | "BEARISH",
+): FeatureCall {
+  const params: Record<string, unknown> = {};
+  const dirSchema = def?.param_schema?.direction;
+  if (
+    dirSchema?.enum &&
+    dirSchema.enum.map(String).includes(preferredDirection)
+  ) {
+    params.direction = preferredDirection;
+  }
+  return { feature: featureName, params };
 }
 
 function allPublished(spec: Spec): string[] {
