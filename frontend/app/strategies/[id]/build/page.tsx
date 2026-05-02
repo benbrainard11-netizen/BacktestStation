@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardHead, Chip, PageHeader } from "@/components/atoms";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { AgentChatPanel } from "@/components/strategies/builder/AgentChatPanel";
 import {
   FeaturePantry,
   type AddTarget,
@@ -262,6 +263,50 @@ export default function StrategyBuildPage() {
     [],
   );
 
+  // Agent emits spec_json patches in fenced code blocks; AgentChatPanel
+  // parses and forwards them here. We whitelist fields so an off-base
+  // patch (e.g., agent inventing a new top-level key) can't corrupt the
+  // local spec state. Any field NOT in the patch is left untouched.
+  const applyAgentPatch = useCallback((patch: Record<string, unknown>) => {
+    setSpec((s) => {
+      const next: Spec = { ...s };
+      if (Array.isArray(patch.entry_long)) {
+        next.entry_long = patch.entry_long as FeatureCall[];
+      }
+      if (Array.isArray(patch.entry_short)) {
+        next.entry_short = patch.entry_short as FeatureCall[];
+      }
+      if (patch.stop && typeof patch.stop === "object") {
+        next.stop = patch.stop as StopRule;
+      }
+      if (patch.target && typeof patch.target === "object") {
+        next.target = patch.target as TargetRule;
+      }
+      if (typeof patch.qty === "number") next.qty = patch.qty;
+      if (typeof patch.max_trades_per_day === "number") {
+        next.max_trades_per_day = patch.max_trades_per_day;
+      }
+      if (typeof patch.entry_dedup_minutes === "number") {
+        next.entry_dedup_minutes = patch.entry_dedup_minutes;
+      }
+      if (typeof patch.max_hold_bars === "number") {
+        next.max_hold_bars = patch.max_hold_bars;
+      }
+      if (typeof patch.max_risk_pts === "number") {
+        next.max_risk_pts = patch.max_risk_pts;
+      }
+      if (typeof patch.min_risk_pts === "number") {
+        next.min_risk_pts = patch.min_risk_pts;
+      }
+      if (Array.isArray(patch.aux_symbols)) {
+        next.aux_symbols = patch.aux_symbols.filter(
+          (s): s is string => typeof s === "string",
+        );
+      }
+      return next;
+    });
+  }, []);
+
   // ── save: pre-validate, PATCH, surface 422 detail ────────────────────────
 
   async function save() {
@@ -395,7 +440,7 @@ export default function StrategyBuildPage() {
         </div>
       </Card>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)_360px]">
         <FeaturePantry features={features} onAdd={addToSlot} />
 
         <div className="grid gap-4">
@@ -433,6 +478,13 @@ export default function StrategyBuildPage() {
           <CapsCard
             spec={spec}
             onChange={(patch) => setSpec((s) => ({ ...s, ...patch }))}
+          />
+        </div>
+
+        <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
+          <AgentChatPanel
+            strategyId={strategyId}
+            onApplyPatch={applyAgentPatch}
           />
         </div>
       </div>
