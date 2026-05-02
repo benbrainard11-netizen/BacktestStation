@@ -102,6 +102,21 @@ def run_engine_backtest(
         if version.spec_json:
             run_params = {**version.spec_json, **run_params}
 
+    # Aux symbols: if the run didn't supply any, inherit from the saved
+    # spec_json. Per-run aux_symbols still wins (lets you do ablation
+    # testing — strip ES from a strategy that nominally needs it). The
+    # spec lists what the strategy was DESIGNED to read; the run config
+    # is what it ACTUALLY reads on this invocation.
+    effective_aux_symbols = list(payload.aux_symbols)
+    if (
+        not effective_aux_symbols
+        and payload.strategy_name == "composable"
+        and version.spec_json
+    ):
+        spec_aux = version.spec_json.get("aux_symbols")
+        if isinstance(spec_aux, list):
+            effective_aux_symbols = [s for s in spec_aux if isinstance(s, str)]
+
     config = RunConfig(
         strategy_name=payload.strategy_name,
         symbol=payload.symbol,
@@ -110,7 +125,7 @@ def run_engine_backtest(
         end=payload.end,
         initial_equity=payload.initial_equity,
         qty=payload.qty,
-        aux_symbols=payload.aux_symbols,
+        aux_symbols=effective_aux_symbols,
         params=run_params,
         slippage_ticks=payload.slippage_ticks,
         session_start_hour=payload.session_start_hour,

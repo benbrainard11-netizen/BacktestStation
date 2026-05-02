@@ -47,6 +47,11 @@ class ComposableSpec:
     # Hard risk caps applied AFTER stop/target math. Keep loose by default.
     max_risk_pts: float = 150.0
     min_risk_pts: float = 0.0
+    # Additional symbols this strategy reads alongside its primary (e.g.
+    # SMT divergence needs NQ + ES). Empty = primary-symbol-only. The
+    # API layer merges this into RunConfig.aux_symbols when launching a
+    # backtest; the run can override per-launch for ablation testing.
+    aux_symbols: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> "ComposableSpec":
@@ -70,6 +75,7 @@ class ComposableSpec:
             max_hold_bars=int(raw.get("max_hold_bars", 120)),
             max_risk_pts=float(raw.get("max_risk_pts", 150.0)),
             min_risk_pts=float(raw.get("min_risk_pts", 0.0)),
+            aux_symbols=_parse_aux_symbols(raw.get("aux_symbols", [])),
         )
 
 
@@ -109,3 +115,20 @@ def _parse_target(raw: Any) -> TargetRule:
         r=float(raw.get("r", 3.0)),
         target_pts=float(raw.get("target_pts", 30.0)),
     )
+
+
+def _parse_aux_symbols(raw: Any) -> list[str]:
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise ValueError(
+            f"aux_symbols must be a list of strings, got {type(raw).__name__}"
+        )
+    out: list[str] = []
+    for i, sym in enumerate(raw):
+        if not isinstance(sym, str) or not sym:
+            raise ValueError(
+                f"aux_symbols[{i}] must be a non-empty string, got {sym!r}"
+            )
+        out.append(sym)
+    return out

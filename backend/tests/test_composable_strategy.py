@@ -73,6 +73,34 @@ def test_spec_rejects_bad_stop_type():
         ComposableSpec.from_dict({"stop": {"type": "totally_made_up"}})
 
 
+def test_spec_aux_symbols_default_empty():
+    """Spec without aux_symbols field returns an empty list, not an error."""
+    spec = ComposableSpec.from_dict({"entry_long": [], "entry_short": []})
+    assert spec.aux_symbols == []
+
+
+def test_spec_aux_symbols_round_trip():
+    """aux_symbols list flows through from_dict cleanly."""
+    spec = ComposableSpec.from_dict(
+        {
+            "entry_long": [],
+            "entry_short": [],
+            "aux_symbols": ["ES.c.0", "YM.c.0"],
+        }
+    )
+    assert spec.aux_symbols == ["ES.c.0", "YM.c.0"]
+
+
+def test_spec_rejects_non_list_aux_symbols():
+    with pytest.raises(ValueError, match="aux_symbols must be a list"):
+        ComposableSpec.from_dict({"aux_symbols": "ES.c.0"})
+
+
+def test_spec_rejects_non_string_aux_symbol_entry():
+    with pytest.raises(ValueError, match="aux_symbols\\[0\\]"):
+        ComposableSpec.from_dict({"aux_symbols": [42]})
+
+
 # ── e2e: PDH-sweep + time-window ──────────────────────────────────────
 
 
