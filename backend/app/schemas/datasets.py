@@ -72,6 +72,7 @@ class DatasetCoverageRead(BaseModel):
 
     rows: list[DatasetCoverageRow]
     last_scan_at: datetime | None
+    stale_scan: bool
     generated_at: datetime
 
 

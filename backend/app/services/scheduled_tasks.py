@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # exactly what the install scripts use.
 KNOWN_TASKS: list[str] = [
     "BacktestStationParquetMirror",
+    "BacktestStationDatasetScan",
     "BacktestStationHistorical",
     "BacktestStationGapFiller",
     "BacktestStation - Import Live Trades",
@@ -150,9 +151,7 @@ def _parse_int(value) -> int | None:
         return None
 
 
-def _label_for_result(
-    result: int | None, last_run_ts: dt.datetime | None
-) -> str:
+def _label_for_result(result: int | None, last_run_ts: dt.datetime | None) -> str:
     """Map LastTaskResult into a human-readable label.
 
     Windows special case: 267011 = "task has not yet run" (gets returned

@@ -77,7 +77,9 @@ export default function CoverageReadinessPanel() {
       ? coverageLoading
         ? "loading…"
         : "—"
-      : `last scanned ${humanAge(coverage.last_scan_at)}`;
+      : coverage.stale_scan
+        ? `last scanned ${humanAge(coverage.last_scan_at)} · stale`
+        : `last scanned ${humanAge(coverage.last_scan_at)}`;
 
   return (
     <Panel title="Coverage & readiness" meta={meta}>
@@ -132,7 +134,14 @@ function CoverageTable({
   const symbols = Array.from(symbolMap.keys()).sort();
 
   return (
-    <div className="overflow-x-auto">
+    <>
+      {coverage.stale_scan ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-text-dim">
+          <Pill tone="warn">scan stale</Pill>
+          <span>Registry has not refreshed in over 30h.</span>
+        </div>
+      ) : null}
+      <div className="overflow-x-auto">
       <table className="w-full tabular-nums text-xs">
         <thead>
           <tr className="text-left text-[10px] text-text-mute">
@@ -173,7 +182,8 @@ function CoverageTable({
           })}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }
 

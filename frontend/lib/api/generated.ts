@@ -1918,6 +1918,8 @@ export interface components {
             last_scan_at: string | null;
             /** Rows */
             rows: components["schemas"]["DatasetCoverageRow"][];
+            /** Stale Scan */
+            stale_scan: boolean;
         };
         /**
          * DatasetCoverageRow

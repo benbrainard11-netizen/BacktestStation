@@ -84,9 +84,7 @@ def test_list_after_scan(client: TestClient, data_root: Path) -> None:
 
 
 def test_list_filters(client: TestClient, data_root: Path) -> None:
-    _write_old_file(
-        data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn", b"a"
-    )
+    _write_old_file(data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn", b"a")
     _write_old_file(
         data_root / "raw" / "historical" / "GLBX.MDP3-mbp-1-2026-03-15.dbn",
         b"b",
@@ -105,9 +103,7 @@ def test_list_filters(client: TestClient, data_root: Path) -> None:
     assert len(parquet_only) == 1
     assert parquet_only[0]["symbol"] == "NQ.c.0"
 
-    historical = client.get(
-        "/api/datasets", params={"source": "historical"}
-    ).json()
+    historical = client.get("/api/datasets", params={"source": "historical"}).json()
     assert len(historical) == 1
     assert historical[0]["schema"] == "mbp-1"
 
@@ -133,9 +129,7 @@ def test_list_supports_pagination(
     first_page = client.get("/api/datasets", params={"limit": 2}).json()
     assert len(first_page) == 2
 
-    second_page = client.get(
-        "/api/datasets", params={"limit": 2, "offset": 2}
-    ).json()
+    second_page = client.get("/api/datasets", params={"limit": 2, "offset": 2}).json()
     assert len(second_page) == 1
 
 
@@ -144,7 +138,8 @@ def test_list_supports_pagination(
 
 def test_scan_idempotent(client: TestClient, data_root: Path) -> None:
     _write_old_file(
-        data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn", b"x" * 100
+        data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn",
+        b"x" * 100,
     )
     first = client.post("/api/datasets/scan").json()
     assert first["added"] == 1
@@ -152,6 +147,24 @@ def test_scan_idempotent(client: TestClient, data_root: Path) -> None:
 
     second = client.post("/api/datasets/scan").json()
     assert second["added"] == 0
+    assert second["updated"] == 0
+    assert second["scanned"] == 1
+
+
+def test_scan_does_not_rehash_unchanged_files(
+    client: TestClient, data_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_old_file(
+        data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn",
+        b"x" * 100,
+    )
+    client.post("/api/datasets/scan")
+
+    def fail_if_called(path: Path, size: int) -> str | None:
+        raise AssertionError(f"unexpected rehash for {path} ({size})")
+
+    monkeypatch.setattr(dataset_scanner, "_sha256_if_small", fail_if_called)
+    second = client.post("/api/datasets/scan").json()
     assert second["updated"] == 0
     assert second["scanned"] == 1
 
@@ -170,9 +183,7 @@ def test_scan_detects_growth(client: TestClient, data_root: Path) -> None:
     assert rows[0]["file_size_bytes"] == 500
 
 
-def test_scan_removes_missing_files(
-    client: TestClient, data_root: Path
-) -> None:
+def test_scan_removes_missing_files(client: TestClient, data_root: Path) -> None:
     path = data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn"
     _write_old_file(path)
     client.post("/api/datasets/scan")
@@ -184,9 +195,7 @@ def test_scan_removes_missing_files(
     assert client.get("/api/datasets").json() == []
 
 
-def test_scan_skips_recent_files(
-    client: TestClient, data_root: Path
-) -> None:
+def test_scan_skips_recent_files(client: TestClient, data_root: Path) -> None:
     """File modified in the last minute is skipped (might be in-progress write)."""
     path = data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -198,9 +207,7 @@ def test_scan_skips_recent_files(
     assert result["skipped"] == 1
 
 
-def test_scan_skips_unrecognized_filenames(
-    client: TestClient, data_root: Path
-) -> None:
+def test_scan_skips_unrecognized_filenames(client: TestClient, data_root: Path) -> None:
     """Random files in the warehouse don't crash the scanner."""
     _write_old_file(data_root / "raw" / "live" / "garbage.txt", b"junk")
     result = client.post("/api/datasets/scan").json()
@@ -234,9 +241,7 @@ def test_scanner_parses_parquet_path(
     assert result.added == 1
 
     with session_factory() as session:
-        rows = list(session.scalars(
-            __import__("sqlalchemy").select(models.Dataset)
-        ).all())
+        rows = list(session.scalars(__import__("sqlalchemy").select(models.Dataset)).all())
         assert len(rows) == 1
         assert rows[0].symbol == "ES.c.0"
         assert rows[0].schema == "ohlcv-1m"
@@ -265,18 +270,14 @@ def test_scanner_parses_hive_raw_parquet(
     assert result.added == 1
 
     with session_factory() as session:
-        rows = list(
-            session.scalars(__import__("sqlalchemy").select(models.Dataset)).all()
-        )
+        rows = list(session.scalars(__import__("sqlalchemy").select(models.Dataset)).all())
         assert len(rows) == 1
         assert rows[0].symbol == "NQ.c.0"
         assert rows[0].schema == "tbbo"
         assert rows[0].kind == "parquet"
 
 
-def test_scanner_parses_hive_bars(
-    session_factory: sessionmaker[Session], tmp_path: Path
-) -> None:
+def test_scanner_parses_hive_bars(session_factory: sessionmaker[Session], tmp_path: Path) -> None:
     """Post-rewrite Hive-partitioned 1m bars."""
     root = tmp_path / "data"
     parquet = (
@@ -296,9 +297,7 @@ def test_scanner_parses_hive_bars(
     assert result.added == 1
 
     with session_factory() as session:
-        rows = list(
-            session.scalars(__import__("sqlalchemy").select(models.Dataset)).all()
-        )
+        rows = list(session.scalars(__import__("sqlalchemy").select(models.Dataset)).all())
         assert len(rows) == 1
         assert rows[0].symbol == "NQ.c.0"
         assert rows[0].schema == "ohlcv-1m"
@@ -332,8 +331,7 @@ def _seed_dataset(
         if last_seen_at is None:
             last_seen_at = _dt.now(_tz.utc)
         row = models.Dataset(
-            file_path=file_path
-            or f"/fake/{symbol or 'global'}/{schema}/{file_date.date()}",
+            file_path=file_path or f"/fake/{symbol or 'global'}/{schema}/{file_date.date()}",
             dataset_code="GLBX.MDP3",
             schema=schema,
             symbol=symbol,
@@ -357,6 +355,7 @@ def test_coverage_empty_returns_no_rows(client: TestClient) -> None:
     body = response.json()
     assert body["rows"] == []
     assert body["last_scan_at"] is None
+    assert body["stale_scan"] is True
     assert "generated_at" in body
 
 
@@ -450,6 +449,36 @@ def test_coverage_includes_last_seen_at_per_row_and_envelope(
     rows_by_symbol = {r["symbol"]: r for r in body["rows"]}
     assert rows_by_symbol["NQ.c.0"]["last_seen_at"].startswith("2026-04-01T12:00")
     assert rows_by_symbol["ES.c.0"]["last_seen_at"].startswith("2026-04-05T12:00")
+
+
+def test_coverage_marks_stale_scan_when_registry_not_refreshed_recently(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    _seed_dataset(
+        session_factory,
+        symbol="NQ.c.0",
+        schema="ohlcv-1m",
+        last_seen_at=_dt.now(_tz.utc) - _td(hours=31),
+        file_path="/fake/stale-scan",
+    )
+
+    body = client.get("/api/datasets/coverage").json()
+    assert body["stale_scan"] is True
+
+
+def test_coverage_does_not_mark_recent_scan_stale(
+    client: TestClient, session_factory: sessionmaker[Session]
+) -> None:
+    _seed_dataset(
+        session_factory,
+        symbol="NQ.c.0",
+        schema="ohlcv-1m",
+        last_seen_at=_dt.now(_tz.utc),
+        file_path="/fake/fresh-scan",
+    )
+
+    body = client.get("/api/datasets/coverage").json()
+    assert body["stale_scan"] is False
 
 
 def test_readiness_ready_when_all_weekdays_present(

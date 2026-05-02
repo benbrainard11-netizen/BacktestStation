@@ -36,6 +36,11 @@ router = APIRouter(prefix="/datasets", tags=["datasets"])
 # Friday data turns "stale" Tuesday morning until ingestion catches up.
 _STALE_DATA_DAYS = 3
 
+# The registry is now expected to be refreshed daily by the
+# BacktestStationDatasetScan scheduled task. Give it a little slack so a
+# delayed machine wake-up does not flash stale immediately at 24h + 1m.
+_STALE_SCAN_HOURS = 30
+
 # The schema label the bar reader pulls 1m partitions from. Higher
 # timeframes derive from these — see app/data/reader.py:_BAR_TIMEFRAMES.
 _OHLCV_1M_SCHEMA = "ohlcv-1m"
@@ -44,7 +49,15 @@ _OHLCV_1M_SCHEMA = "ohlcv-1m"
 def _data_root() -> Path:
     """Backwards-compat alias for `app.core.paths.warehouse_root`."""
     from app.core.paths import warehouse_root
+
     return warehouse_root()
+
+
+def _naive_utc(value: datetime) -> datetime:
+    """Normalize DB/API datetimes for SQLite's tz-naive UTC convention."""
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 @router.get("", response_model=list[DatasetRead])
@@ -69,11 +82,15 @@ def list_datasets(
         statement = statement.where(Dataset.kind == kind)
     if dataset_code is not None:
         statement = statement.where(Dataset.dataset_code == dataset_code)
-    statement = statement.order_by(
-        Dataset.symbol.asc().nullsfirst(),
-        Dataset.schema.asc(),
-        Dataset.start_ts.desc().nullslast(),
-    ).offset(offset).limit(limit)
+    statement = (
+        statement.order_by(
+            Dataset.symbol.asc().nullsfirst(),
+            Dataset.schema.asc(),
+            Dataset.start_ts.desc().nullslast(),
+        )
+        .offset(offset)
+        .limit(limit)
+    )
     return list(db.scalars(statement).all())
 
 
@@ -87,7 +104,8 @@ def coverage(
     sqlite vs. postgres date_trunc semantics aren't worth the SQL.
     """
     rows_in = list(db.scalars(select(Dataset)).all())
-    today = datetime.now(timezone.utc).date()
+    now = datetime.now(timezone.utc)
+    today = now.date()
     stale_cutoff = today - timedelta(days=_STALE_DATA_DAYS)
 
     grouped: dict[
@@ -131,10 +149,16 @@ def coverage(
         (r.last_seen_at for r in out_rows if r.last_seen_at is not None),
         default=None,
     )
+    now_naive = now.replace(tzinfo=None)
+    last_scan_naive = _naive_utc(last_scan_at) if last_scan_at is not None else None
     return DatasetCoverageRead(
         rows=out_rows,
         last_scan_at=last_scan_at,
-        generated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        stale_scan=(
+            last_scan_naive is None
+            or last_scan_naive < now_naive - timedelta(hours=_STALE_SCAN_HOURS)
+        ),
+        generated_at=now_naive,
     )
 
 
@@ -196,13 +220,9 @@ def readiness(
     if not available_days and not missing_days:
         # Range collapses to weekend-only with no data — degenerate but
         # not "ready" because we can't say data covers anything.
-        message = (
-            f"No 1m bars found for {symbol} between {start} and {end}."
-        )
+        message = f"No 1m bars found for {symbol} between {start} and {end}."
     elif not available_days:
-        message = (
-            f"No 1m bars found for {symbol} between {start} and {end}."
-        )
+        message = f"No 1m bars found for {symbol} between {start} and {end}."
     elif missing_days:
         message = (
             f"{len(missing_days)} of {len(weekday_days)} weekday(s) missing"

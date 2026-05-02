@@ -34,7 +34,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.db.models import Dataset
@@ -110,26 +110,36 @@ def scan_datasets(db: Session, data_root: Path) -> ScanResult:
         return result
 
     seen_paths: set[str] = set()
+    seen_unchanged_paths: list[str] = []
+    scan_seen_at = datetime.now(timezone.utc)
     cutoff = datetime.now(timezone.utc) - timedelta(seconds=SKIP_RECENT_SEC)
+    existing_rows = list(db.scalars(select(Dataset)).all())
+    existing_by_path = {row.file_path: row for row in existing_rows}
 
     for parsed in _walk(data_root, cutoff, result):
         result.scanned += 1
         seen_paths.add(parsed.file_path)
-        existing = db.scalars(
-            select(Dataset).where(Dataset.file_path == parsed.file_path)
-        ).first()
+        existing = existing_by_path.get(parsed.file_path)
         if existing is None:
-            db.add(_to_model(parsed))
+            db.add(_to_model(parsed, last_seen_at=scan_seen_at))
             result.added += 1
         elif existing.file_size_bytes != parsed.file_size_bytes:
-            _update_model(existing, parsed)
+            _update_model(existing, parsed, last_seen_at=scan_seen_at)
             result.updated += 1
         else:
-            existing.last_seen_at = datetime.now(timezone.utc)
+            seen_unchanged_paths.append(parsed.file_path)
+
+    # Touch unchanged rows in chunks instead of dirtying thousands of ORM
+    # objects one-by-one. This keeps the daily scheduled scan cheap even
+    # when the warehouse has six figures of partitions.
+    for chunk in _chunks(seen_unchanged_paths, 900):
+        db.execute(
+            update(Dataset).where(Dataset.file_path.in_(chunk)).values(last_seen_at=scan_seen_at),
+            execution_options={"synchronize_session": False},
+        )
 
     # Reap rows whose files no longer exist anywhere under data_root.
-    rows = db.scalars(select(Dataset)).all()
-    for row in rows:
+    for row in existing_rows:
         if row.file_path not in seen_paths and not Path(row.file_path).exists():
             db.delete(row)
             result.removed += 1
@@ -141,9 +151,7 @@ def scan_datasets(db: Session, data_root: Path) -> ScanResult:
 # --- Walker --------------------------------------------------------------
 
 
-def _walk(
-    data_root: Path, cutoff: datetime, result: ScanResult
-) -> list[_FileInfo]:
+def _walk(data_root: Path, cutoff: datetime, result: ScanResult) -> list[_FileInfo]:
     """Yield-style return so the caller stays linear."""
     out: list[_FileInfo] = []
 
@@ -231,9 +239,7 @@ def _parse_dbn(path: Path, source: str) -> _FileInfo | None:
     m = _DBN_RE.match(path.name)
     if m is None:
         return None
-    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(
-        tzinfo=timezone.utc
-    )
+    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(tzinfo=timezone.utc)
     size = path.stat().st_size
     return _FileInfo(
         file_path=str(path),
@@ -245,7 +251,7 @@ def _parse_dbn(path: Path, source: str) -> _FileInfo | None:
         start_ts=date_obj,
         end_ts=date_obj + timedelta(days=1),
         file_size_bytes=size,
-        sha256=_sha256_if_small(path, size),
+        sha256=None,
     )
 
 
@@ -254,9 +260,7 @@ def _parse_hive_raw_parquet(path: Path) -> _FileInfo | None:
     m = _HIVE_RAW_RE.search(str(path))
     if m is None:
         return None
-    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(
-        tzinfo=timezone.utc
-    )
+    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(tzinfo=timezone.utc)
     size = path.stat().st_size
     return _FileInfo(
         file_path=str(path),
@@ -268,7 +272,7 @@ def _parse_hive_raw_parquet(path: Path) -> _FileInfo | None:
         start_ts=date_obj,
         end_ts=date_obj + timedelta(days=1),
         file_size_bytes=size,
-        sha256=_sha256_if_small(path, size),
+        sha256=None,
     )
 
 
@@ -277,9 +281,7 @@ def _parse_hive_bars_parquet(path: Path) -> _FileInfo | None:
     m = _HIVE_BARS_RE.search(str(path))
     if m is None:
         return None
-    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(
-        tzinfo=timezone.utc
-    )
+    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(tzinfo=timezone.utc)
     size = path.stat().st_size
     timeframe = m.group("timeframe")
     return _FileInfo(
@@ -292,7 +294,7 @@ def _parse_hive_bars_parquet(path: Path) -> _FileInfo | None:
         start_ts=date_obj,
         end_ts=date_obj + timedelta(days=1),
         file_size_bytes=size,
-        sha256=_sha256_if_small(path, size),
+        sha256=None,
     )
 
 
@@ -306,9 +308,7 @@ def _parse_legacy_parquet(path: Path) -> _FileInfo | None:
     m = _LEGACY_PARQUET_RE.search(str(path))
     if m is None:
         return None
-    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(
-        tzinfo=timezone.utc
-    )
+    date_obj = datetime.strptime(m.group("date"), "%Y-%m-%d").replace(tzinfo=timezone.utc)
     size = path.stat().st_size
     return _FileInfo(
         file_path=str(path),
@@ -320,15 +320,14 @@ def _parse_legacy_parquet(path: Path) -> _FileInfo | None:
         start_ts=date_obj,
         end_ts=date_obj + timedelta(days=1),
         file_size_bytes=size,
-        sha256=_sha256_if_small(path, size),
+        sha256=None,
     )
 
 
 # --- Model helpers ------------------------------------------------------
 
 
-def _to_model(parsed: _FileInfo) -> Dataset:
-    now = datetime.now(timezone.utc)
+def _to_model(parsed: _FileInfo, *, last_seen_at: datetime) -> Dataset:
     return Dataset(
         file_path=parsed.file_path,
         dataset_code=parsed.dataset_code,
@@ -340,15 +339,21 @@ def _to_model(parsed: _FileInfo) -> Dataset:
         end_ts=parsed.end_ts,
         file_size_bytes=parsed.file_size_bytes,
         row_count=None,  # filled by parquet mirror or historical puller later
-        sha256=parsed.sha256,
-        last_seen_at=now,
+        sha256=parsed.sha256 or _sha256_if_small(Path(parsed.file_path), parsed.file_size_bytes),
+        last_seen_at=last_seen_at,
     )
 
 
-def _update_model(existing: Dataset, parsed: _FileInfo) -> None:
+def _update_model(existing: Dataset, parsed: _FileInfo, *, last_seen_at: datetime) -> None:
     existing.file_size_bytes = parsed.file_size_bytes
-    existing.sha256 = parsed.sha256
-    existing.last_seen_at = datetime.now(timezone.utc)
+    existing.sha256 = parsed.sha256 or _sha256_if_small(
+        Path(parsed.file_path), parsed.file_size_bytes
+    )
+    existing.last_seen_at = last_seen_at
+
+
+def _chunks(values: list[str], size: int) -> list[list[str]]:
+    return [values[i : i + size] for i in range(0, len(values), size)]
 
 
 def _sha256_if_small(path: Path, size: int) -> str | None:

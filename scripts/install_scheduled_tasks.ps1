@@ -1,9 +1,11 @@
-# Register the two recurring BacktestStation tasks on a Windows collection
+# Register recurring BacktestStation tasks on a Windows collection
 # node:
 #
 #   1. BacktestStationParquetMirror -- hourly DBN -> parquet conversion so
 #      /data and downstream queries stay current.
-#   2. BacktestStationHistorical    -- monthly (day 1, 02:00 local) MBP-1
+#   2. BacktestStationDatasetScan   -- daily datasets-table registry refresh
+#      so /data-health coverage/readiness stays current.
+#   3. BacktestStationHistorical    -- monthly (day 1, 02:00 local) MBP-1
 #      backfill so May 1 just works without manual setup.
 #
 # Both run as the current user with -LogonType S4U so they execute without
@@ -18,6 +20,7 @@
 #
 # Tear down:
 #   Unregister-ScheduledTask -TaskName BacktestStationParquetMirror -Confirm:$false
+#   Unregister-ScheduledTask -TaskName BacktestStationDatasetScan  -Confirm:$false
 #   Unregister-ScheduledTask -TaskName BacktestStationHistorical    -Confirm:$false
 
 $ErrorActionPreference = "Stop"
@@ -279,6 +282,42 @@ if (-not (Get-ScheduledTask -TaskName 'BacktestStationGapFiller' -ErrorAction Si
 }
 Write-Host "  registered. First run $gfStart local (next Sunday 03:00)."
 
+# --- 5c. Register dataset registry scan (daily, 04:30 local) -----------
+
+Write-Host ""
+Write-Host "Registering BacktestStationDatasetScan (daily at 04:30)..." -ForegroundColor Cyan
+
+$scanAction = New-ScheduledTaskAction `
+    -Execute $pythonExe `
+    -Argument '-m app.cli.scan_datasets' `
+    -WorkingDirectory $BackendDir
+
+$scanTrigger = New-ScheduledTaskTrigger `
+    -Daily `
+    -At (Get-Date '04:30:00')
+
+$scanSettings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 1) `
+    -MultipleInstances IgnoreNew
+
+Register-ScheduledTask `
+    -TaskName 'BacktestStationDatasetScan' `
+    -Description 'Refresh BacktestStation datasets registry from BS_DATA_ROOT daily' `
+    -Action $scanAction `
+    -Trigger $scanTrigger `
+    -Settings $scanSettings `
+    -Principal $pmPrincipal `
+    -Force | Out-Null
+
+if (-not (Get-ScheduledTask -TaskName 'BacktestStationDatasetScan' -ErrorAction SilentlyContinue)) {
+    Write-Host "ERROR: BacktestStationDatasetScan did not register. See errors above." -ForegroundColor Red
+    exit 1
+}
+Write-Host "  registered. Runs daily at 04:30 local."
+
 # --- 6. Summary ---------------------------------------------------------
 
 Write-Host ""
@@ -293,5 +332,6 @@ Get-ScheduledTask | Where-Object { $_.TaskName -like 'BacktestStation*' } | `
 Write-Host "Manage:"
 Write-Host "  Get-ScheduledTask -TaskName BacktestStation*   # status"
 Write-Host "  Start-ScheduledTask BacktestStationParquetMirror  # run-now"
+Write-Host "  Start-ScheduledTask BacktestStationDatasetScan    # refresh registry now"
 Write-Host "  Unregister-ScheduledTask <name> -Confirm:`$false  # remove"
 Write-Host ""

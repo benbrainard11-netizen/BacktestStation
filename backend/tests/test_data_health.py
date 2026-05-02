@@ -20,7 +20,6 @@ from app.db.session import (
 from app.main import app
 from app.services import data_health, scheduled_tasks
 
-
 # --- Fixtures ------------------------------------------------------------
 
 
@@ -189,28 +188,20 @@ def test_scheduled_tasks_returns_empty_on_non_windows(session: Session) -> None:
     assert payload.scheduled_tasks_supported is False
 
 
+def test_dataset_scan_task_is_known() -> None:
+    assert "BacktestStationDatasetScan" in scheduled_tasks.KNOWN_TASKS
+
+
 def test_scheduled_tasks_label_for_result_maps_correctly() -> None:
     """The 0/267011/None mapping is load-bearing for the UI's status dot."""
-    assert (
-        scheduled_tasks._label_for_result(0, dt.datetime(2026, 4, 27))
-        == "ok"
-    )
-    assert (
-        scheduled_tasks._label_for_result(1, dt.datetime(2026, 4, 27))
-        == "failed"
-    )
+    assert scheduled_tasks._label_for_result(0, dt.datetime(2026, 4, 27)) == "ok"
+    assert scheduled_tasks._label_for_result(1, dt.datetime(2026, 4, 27)) == "failed"
     # Special Windows sentinel for "task has not yet run".
-    assert (
-        scheduled_tasks._label_for_result(267011, dt.datetime(2026, 4, 27))
-        == "never_run"
-    )
+    assert scheduled_tasks._label_for_result(267011, dt.datetime(2026, 4, 27)) == "never_run"
     # No last run yet (last_run_ts None) — also "never_run".
     assert scheduled_tasks._label_for_result(0, None) == "never_run"
     # Result is None (couldn't read) — "unknown".
-    assert (
-        scheduled_tasks._label_for_result(None, dt.datetime(2026, 4, 27))
-        == "unknown"
-    )
+    assert scheduled_tasks._label_for_result(None, dt.datetime(2026, 4, 27)) == "unknown"
 
 
 # --- API endpoint --------------------------------------------------------
