@@ -19,6 +19,10 @@ import {
   ParamControl,
   type ParamSchemaEntry,
 } from "@/components/strategies/builder/ParamControl";
+import {
+  STOP_TYPE_REQUIRES,
+  metadataFor,
+} from "@/components/strategies/builder/featureMetadata";
 import { usePoll } from "@/lib/poll";
 import { cn } from "@/lib/utils";
 
@@ -376,6 +380,7 @@ export default function StrategyBuildPage() {
           <StopCard
             stop={spec.stop}
             onChange={(stop) => setSpec((s) => ({ ...s, stop }))}
+            allPublished={allPublished(spec)}
           />
           <TargetCard
             target={spec.target}
@@ -412,6 +417,20 @@ function RecipeSection({
   onRemove: (i: number) => void;
   onMove: (i: number, d: -1 | 1) => void;
 }) {
+  // Walk the recipe step by step: at index i, availableMetadata is the
+  // union of every prior step's `publishes`. So smt_at_level placed AFTER
+  // prior_level_sweep sees `swept_level` available; placed BEFORE, it
+  // doesn't, and the row warns the user.
+  const perStepAvailable: string[][] = [];
+  let runningAvailable: string[] = [];
+  for (const call of calls) {
+    perStepAvailable.push([...runningAvailable]);
+    runningAvailable = unique([
+      ...runningAvailable,
+      ...metadataFor(call.feature).publishes,
+    ]);
+  }
+
   return (
     <Card>
       <CardHead
@@ -431,21 +450,42 @@ function RecipeSection({
           </div>
         ) : (
           <div className="grid gap-2">
-            {calls.map((call, i) => (
-              <FeatureRow
-                key={`${slot}-${i}-${call.feature}`}
-                index={i}
-                featureName={call.feature}
-                feature={featureMap.get(call.feature)}
-                params={call.params}
-                onParamChange={(k, v) => onParamChange(i, k, v)}
-                onRemove={() => onRemove(i)}
-                onMoveUp={() => onMove(i, -1)}
-                onMoveDown={() => onMove(i, 1)}
-                canMoveUp={i > 0}
-                canMoveDown={i < calls.length - 1}
-              />
-            ))}
+            {calls.map((call, i) => {
+              const meta = metadataFor(call.feature);
+              const def = featureMap.get(call.feature);
+              const enrichedDef: FeatureDef | undefined = def
+                ? { ...def, produces: meta.publishes }
+                : undefined;
+              const available = perStepAvailable[i];
+              const missingReads = meta.reads.filter(
+                (r) => !available.includes(r),
+              );
+              return (
+                <div key={`${slot}-${i}-${call.feature}`}>
+                  <FeatureRow
+                    index={i}
+                    featureName={call.feature}
+                    feature={enrichedDef}
+                    params={call.params}
+                    onParamChange={(k, v) => onParamChange(i, k, v)}
+                    onRemove={() => onRemove(i)}
+                    onMoveUp={() => onMove(i, -1)}
+                    onMoveDown={() => onMove(i, 1)}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < calls.length - 1}
+                    availableMetadata={available}
+                  />
+                  {missingReads.length > 0 && (
+                    <div className="mt-1 rounded border border-warn/40 bg-warn/10 px-3 py-1.5 font-mono text-[10.5px] text-warn">
+                      ⚠ this step reads {missingReads.join(", ")} — no earlier
+                      step in {slot.replace("_", " ")} publishes that. Move a
+                      producer (e.g. <code>prior_level_sweep</code>) above this
+                      step.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -453,13 +493,30 @@ function RecipeSection({
   );
 }
 
+function unique(arr: string[]): string[] {
+  return Array.from(new Set(arr));
+}
+
+function allPublished(spec: Spec): string[] {
+  const out: string[] = [];
+  for (const c of spec.entry_long)
+    out.push(...metadataFor(c.feature).publishes);
+  for (const c of spec.entry_short)
+    out.push(...metadataFor(c.feature).publishes);
+  return unique(out);
+}
+
 function StopCard({
   stop,
   onChange,
+  allPublished,
 }: {
   stop: StopRule;
   onChange: (next: StopRule) => void;
+  allPublished: string[];
 }) {
+  const required = STOP_TYPE_REQUIRES[stop.type] ?? [];
+  const missing = required.filter((r) => !allPublished.includes(r));
   const stopSchema: Record<string, ParamSchemaEntry> = {
     stop_pts: {
       type: "number",
@@ -504,6 +561,13 @@ function StopCard({
           />
         )}
       </div>
+      {missing.length > 0 && (
+        <div className="m-3 mt-0 rounded border border-warn/40 bg-warn/10 px-3 py-1.5 font-mono text-[10.5px] text-warn">
+          ⚠ stop type <code>{stop.type}</code> needs {missing.join(", ")} — add
+          an <code>fvg_touch_recent</code> step in entry_long or entry_short so
+          the stop has an FVG to anchor to.
+        </div>
+      )}
     </Card>
   );
 }
