@@ -111,6 +111,7 @@ register(
     "smt_at_level",
     FeatureSpec(
         fn=smt_at_level,
+        roles=("setup", "trigger"),
         label="SMT divergence (multi-asset)",
         description=(
             "NQ vs ES vs YM divergence over the trailing window. "

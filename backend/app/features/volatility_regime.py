@@ -78,6 +78,7 @@ register(
     "volatility_regime",
     FeatureSpec(
         fn=volatility_regime,
+        roles=("filter",),
         label="Volatility regime gate",
         description=(
             "Mean bar-range (ATR-ish) over the lookback bucketed into "

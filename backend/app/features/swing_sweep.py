@@ -108,6 +108,7 @@ register(
     "swing_sweep",
     FeatureSpec(
         fn=swing_sweep,
+        roles=("setup", "trigger"),
         label="Swing pivot sweep",
         description=(
             "Detects when the current bar's high or low pierced a "

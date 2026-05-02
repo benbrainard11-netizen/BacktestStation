@@ -132,6 +132,7 @@ register(
     "prior_level_sweep",
     FeatureSpec(
         fn=prior_level_sweep,
+        roles=("setup", "trigger"),
         label="Prior level sweep (PDH / PDL)",
         description=(
             "Detects when the current bar's high or low pierced the prior "

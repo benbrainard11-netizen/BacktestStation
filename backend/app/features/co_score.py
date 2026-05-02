@@ -51,6 +51,7 @@ register(
     "co_score",
     FeatureSpec(
         fn=co_score,
+        roles=("trigger", "filter"),
         label="Continuation-OF score gate",
         description=(
             "Compound 8-sub-feature OHLCV score (volume fade, delta "

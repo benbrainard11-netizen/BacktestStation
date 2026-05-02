@@ -90,6 +90,7 @@ register(
     "fvg_touch_recent",
     FeatureSpec(
         fn=fvg_touch_recent,
+        roles=("setup", "trigger"),
         label="FVG touch (recent)",
         description=(
             "Looks back over a window, resamples to LTF candles, detects "

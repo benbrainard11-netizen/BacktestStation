@@ -331,3 +331,70 @@ def test_all_features_registered():
         assert spec.label
         assert spec.description
         assert isinstance(spec.param_schema, dict)
+
+
+def test_every_feature_has_at_least_one_role():
+    """Every feature must declare at least one role so the UI knows
+    which bucket(s) it belongs in."""
+    for name, spec in FEATURES.items():
+        assert spec.roles, f"feature {name!r} has no roles declared"
+        for role in spec.roles:
+            assert role in ("setup", "trigger", "filter"), (
+                f"feature {name!r} declares unknown role {role!r}"
+            )
+
+
+def test_role_taxonomy_matches_intent():
+    """Lock in the canonical role assignments. If you move a feature
+    between buckets, update this test deliberately — it's the audit
+    trail for the visual builder's pantry chip layout."""
+    expected = {
+        "co_score": {"trigger", "filter"},
+        "decisive_close": {"trigger"},
+        "fvg_touch_recent": {"setup", "trigger"},
+        "prior_level_sweep": {"setup", "trigger"},
+        "smt_at_level": {"setup", "trigger"},
+        "swing_sweep": {"setup", "trigger"},
+        "time_window": {"filter"},
+        "volatility_regime": {"filter"},
+    }
+    for name, expected_roles in expected.items():
+        assert set(FEATURES[name].roles) == expected_roles, (
+            f"feature {name!r} roles drifted: "
+            f"got {FEATURES[name].roles}, expected {expected_roles}"
+        )
+
+
+def test_register_rejects_feature_without_roles():
+    """The register() guard blocks shipping a roles-less feature."""
+    import pytest
+
+    from app.features import FeatureSpec, register
+
+    spec = FeatureSpec(
+        fn=lambda **_: None,
+        label="bad",
+        description="bad",
+        param_schema={},
+        roles=(),
+    )
+    with pytest.raises(ValueError, match="must declare at least one role"):
+        register("__test_bad_feature__", spec)
+
+
+def test_features_api_response_includes_roles():
+    """End-to-end via FastAPI TestClient: /api/features exposes roles."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    client = TestClient(app)
+    res = client.get("/api/features")
+    assert res.status_code == 200
+    body = res.json()
+    assert isinstance(body, list)
+    assert body, "expected at least one feature"
+    for entry in body:
+        assert "roles" in entry, f"missing roles in {entry['name']!r}"
+        assert isinstance(entry["roles"], list)
+        assert entry["roles"], f"empty roles in {entry['name']!r}"
