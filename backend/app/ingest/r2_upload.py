@@ -52,6 +52,13 @@ UPLOAD_LOG_NAME = "r2_upload.log"
 RUN_LOG_NAME = "r2_upload_runs.json"
 RUN_LOG_KEEP = 200
 
+# Flush _inventory.json to R2 every N successful uploads during a long
+# run. Keeps the inventory observable to clients (Husky's bsdata fetches
+# this) instead of going stale for hours during the multi-day initial
+# backfill. 500 = ~1 inventory-write every ~15 min at 30 uploads/min,
+# which is a small fraction of R2 Class A ops budget.
+INVENTORY_FLUSH_EVERY = 500
+
 
 @dataclass
 class UploadStats:
@@ -62,6 +69,32 @@ class UploadStats:
     skipped_existing: int = 0
     inventory_partitions: int = 0
     errors: list[str] = field(default_factory=list)
+
+
+def _flush_inventory(
+    client,
+    bucket: str,
+    kept: list[Partition],
+    existing_entries: list[dict],
+) -> int:
+    """Merge this-run's kept Partitions with existing inventory entries we
+    haven't seen this iteration, then PUT the result as `_inventory.json`.
+
+    Used both at mid-run flush intervals and at end-of-run. Returns the
+    number of partitions in the resulting inventory.
+    """
+    kept_keys = {p.r2_key for p in kept}
+    merged = [to_inventory_dict(p) for p in kept] + [
+        e for e in existing_entries if e["r2_key"] not in kept_keys
+    ]
+    write_inventory(
+        client,
+        bucket,
+        schema_version=SCHEMA_VERSION,
+        generator_version=GENERATOR_VERSION,
+        partitions=merged,
+    )
+    return len(merged)
 
 
 def run(
@@ -116,6 +149,9 @@ def run(
                 f"{len(known_partitions)} partitions already in R2"
             )
 
+        existing_entries: list[dict] = (existing_inventory or {}).get(
+            "partitions", []
+        )
         kept_for_inventory: list[Partition] = []
 
         for p in partitions:
@@ -144,29 +180,28 @@ def run(
             except Exception as e:
                 stats.errors.append(f"{p.r2_key}: {e}")
                 logger.error(f"UPLOAD FAILED {p.r2_key}: {e}")
+                continue
 
-        # Merge: anything we kept this run + anything in existing inventory
-        # that we didn't process this iteration (either because limit broke
-        # us out early or because the partition no longer exists locally).
-        # This way --limit runs don't shrink the inventory.
-        kept_keys = {p.r2_key for p in kept_for_inventory}
-        carried_over: list[dict] = [
-            entry
-            for entry in (existing_inventory or {}).get("partitions", [])
-            if entry["r2_key"] not in kept_keys
-        ]
+            # Mid-run inventory flush. Keeps the catalog observable to
+            # bsdata clients during multi-day initial backfills instead
+            # of leaving them with a stale snapshot until the run ends.
+            if stats.uploaded > 0 and stats.uploaded % INVENTORY_FLUSH_EVERY == 0:
+                try:
+                    count = _flush_inventory(
+                        client, bucket, kept_for_inventory, existing_entries
+                    )
+                    logger.info(
+                        f"FLUSHED {INVENTORY_KEY} mid-run with {count} "
+                        f"partitions (uploaded so far this run: {stats.uploaded})"
+                    )
+                except Exception as e:
+                    # Non-fatal: keep grinding uploads, retry inventory at
+                    # next flush interval or end-of-run.
+                    logger.warning(f"mid-run inventory flush failed: {e}")
 
-        merged_inventory_partitions = (
-            [to_inventory_dict(p) for p in kept_for_inventory] + carried_over
+        stats.inventory_partitions = _flush_inventory(
+            client, bucket, kept_for_inventory, existing_entries
         )
-        write_inventory(
-            client,
-            bucket,
-            schema_version=SCHEMA_VERSION,
-            generator_version=GENERATOR_VERSION,
-            partitions=merged_inventory_partitions,
-        )
-        stats.inventory_partitions = len(merged_inventory_partitions)
         logger.info(
             f"wrote {INVENTORY_KEY} with {stats.inventory_partitions} partitions"
         )
