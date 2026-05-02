@@ -1,16 +1,24 @@
-import Btn from "@/components/ui/Btn";
+import Link from "next/link";
 
-export default function BacktestNotFound() {
+export default function NotFound() {
   return (
-    <div className="px-8 pb-10 pt-6">
-      <div className="mb-4">
-        <Btn href="/backtests">← All runs</Btn>
+    <div className="mx-auto max-w-[600px] px-6 py-16 text-center">
+      <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-4">
+        404
       </div>
-      <div className="rounded-lg border border-border bg-surface p-4">
-        <p className="m-0 text-xs text-text-mute">Not found</p>
-        <p className="m-0 mt-2 text-[13px] text-text-dim">
-          No backtest run exists with that ID.
-        </p>
+      <h1 className="mt-3 text-[22px] font-semibold text-ink-0">
+        Backtest not found
+      </h1>
+      <p className="mt-2 text-[13px] text-ink-3">
+        This run doesn&apos;t exist or was deleted.
+      </p>
+      <div className="mt-6">
+        <Link
+          href="/backtests"
+          className="font-mono text-[12px] text-accent hover:underline"
+        >
+          ← Back to backtests
+        </Link>
       </div>
     </div>
   );

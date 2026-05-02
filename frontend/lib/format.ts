@@ -1,49 +1,49 @@
-export function formatUSD(value: number, digits = 2): string {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
+/** Formatting helpers — pure, no React. */
+
+export function fmtPnl(n: number | null | undefined): string {
+  if (n == null) return "—";
+  const sign = n >= 0 ? "+" : "−";
+  return `${sign}$${Math.abs(n).toFixed(2)}`;
+}
+
+export function fmtR(n: number | null | undefined): string {
+  if (n == null) return "—";
+  const sign = n >= 0 ? "+" : "−";
+  return `${sign}${Math.abs(n).toFixed(2)}R`;
+}
+
+export function fmtPrice(n: number | null | undefined, decimals = 2): string {
+  if (n == null) return "—";
+  return n.toFixed(decimals);
+}
+
+export function fmtInt(n: number | null | undefined): string {
+  if (n == null) return "—";
+  return n.toLocaleString("en-US");
+}
+
+export function fmtClock(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
   });
 }
 
-export function formatUSDCompact(value: number): string {
-  if (Math.abs(value) >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(2)}M`;
-  }
-  if (Math.abs(value) >= 1_000) {
-    return `$${(value / 1_000).toFixed(0)}K`;
-  }
-  return formatUSD(value);
+export function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toISOString().slice(0, 10);
 }
 
-export function formatNumber(value: number, digits = 0): string {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
-}
-
-export function formatSigned(value: number, digits = 2): string {
-  const fixed = Math.abs(value).toFixed(digits);
-  if (value > 0) return `+${fixed}`;
-  if (value < 0) return `-${fixed}`;
-  return fixed;
-}
-
-export function formatPercent(value: number, digits = 2): string {
-  return `${value.toFixed(digits)}%`;
-}
-
-export function formatSignedPercent(value: number, digits = 2): string {
-  const fixed = Math.abs(value).toFixed(digits);
-  if (value > 0) return `+${fixed}%`;
-  if (value < 0) return `-${fixed}%`;
-  return `${fixed}%`;
-}
-
-export function toneFor(value: number): "positive" | "negative" | "neutral" {
-  if (value > 0) return "positive";
-  if (value < 0) return "negative";
-  return "neutral";
+export function tone(n: number | null | undefined): "pos" | "neg" | "default" {
+  if (n == null) return "default";
+  if (n > 0) return "pos";
+  if (n < 0) return "neg";
+  return "default";
 }

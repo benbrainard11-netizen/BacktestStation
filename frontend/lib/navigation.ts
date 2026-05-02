@@ -1,72 +1,137 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  Activity,
-  BarChart3,
-  BookOpen,
-  BrainCircuit,
-  Building2,
-  Database,
-  Dices,
-  Download,
-  FlaskConical,
-  GitCompareArrows,
-  History,
-  LayoutDashboard,
-  Notebook,
-  Rewind,
-  Settings as SettingsIcon,
-} from "lucide-react";
+/**
+ * App navigation source of truth — pruned per Ben's 2026-05-01 triage:
+ * default to CUT, port only what's on the strategy-cards-first critical path.
+ *
+ * Top-level: 3 profiles (Dashboard / Research / Strategies) shown as tabs.
+ * Each profile has groups; each group has items; each item is a sub-nav row
+ * that maps to a Next.js route.
+ */
 
-export type NavGroup = "research" | "prop_firm" | "live" | "system";
+export type IconName =
+  | "home"
+  | "pulse"
+  | "clipboard"
+  | "database"
+  | "cog"
+  | "download"
+  | "flask"
+  | "beaker"
+  | "bolt"
+  | "film"
+  | "shield"
+  | "layers"
+  | "compare"
+  | "settings"
+  | "search";
 
-export interface NavItem {
-  href: string;
+export type NavItem = {
+  id: string;
   label: string;
-  group: NavGroup;
-  icon: LucideIcon;
-}
-
-export const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Command Center", group: "research", icon: LayoutDashboard },
-  { href: "/research", label: "Research", group: "research", icon: FlaskConical },
-  { href: "/import", label: "Import", group: "research", icon: Download },
-  { href: "/strategies", label: "Strategies", group: "research", icon: BookOpen },
-  { href: "/knowledge", label: "Knowledge", group: "research", icon: BrainCircuit },
-  { href: "/backtests", label: "Backtests", group: "research", icon: BarChart3 },
-  { href: "/trade-replay", label: "Trade Replay", group: "research", icon: Rewind },
-
-  { href: "/prop-simulator", label: "Simulator", group: "prop_firm", icon: Dices },
-  { href: "/prop-simulator/firms", label: "Firm Rules", group: "prop_firm", icon: Building2 },
-  { href: "/prop-simulator/runs", label: "Simulation Runs", group: "prop_firm", icon: History },
-  { href: "/prop-simulator/compare", label: "Compare", group: "prop_firm", icon: GitCompareArrows },
-
-  { href: "/monitor", label: "Monitor", group: "live", icon: Activity },
-  { href: "/journal", label: "Journal", group: "live", icon: Notebook },
-
-  { href: "/data-health", label: "Data Health", group: "system", icon: Database },
-  { href: "/settings", label: "Settings", group: "system", icon: SettingsIcon },
-];
-
-export const NAV_GROUPS: { key: NavGroup; label: string }[] = [
-  { key: "research", label: "Research" },
-  { key: "prop_firm", label: "Prop Firm" },
-  { key: "live", label: "Live" },
-  { key: "system", label: "System" },
-];
-
-// Top-tab items live in the new horizontal nav above the page content.
-// Sidebar filters these hrefs out so we don't double up.
-export interface TopTabItem {
+  icon: IconName;
   href: string;
-  label: string;
-}
+  live?: boolean;
+};
 
-export const TOP_TAB_ITEMS: TopTabItem[] = [
-  { href: "/", label: "Dashboard" },
-  { href: "/research", label: "Research" },
-  { href: "/strategies", label: "Strategies" },
+export type NavGroup = {
+  title: string;
+  items: NavItem[];
+};
+
+export type Profile = {
+  id: "dashboard" | "research" | "strategies";
+  label: string;
+  kbd: "1" | "2" | "3";
+  groups: NavGroup[];
+};
+
+export const PROFILES: Profile[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    kbd: "1",
+    groups: [
+      {
+        title: "Live",
+        items: [
+          { id: "overview", label: "Overview", icon: "home", href: "/" },
+          { id: "monitor", label: "Monitor", icon: "pulse", href: "/monitor", live: true },
+          { id: "notes", label: "Notes", icon: "clipboard", href: "/notes" },
+        ],
+      },
+      {
+        title: "System",
+        items: [
+          { id: "datahealth", label: "Data Health", icon: "database", href: "/data-health" },
+          { id: "settings", label: "Settings", icon: "cog", href: "/settings" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "research",
+    label: "Research",
+    kbd: "2",
+    groups: [
+      {
+        title: "Research",
+        items: [
+          { id: "import", label: "Import", icon: "download", href: "/import" },
+          { id: "experiments", label: "Experiments", icon: "flask", href: "/experiments" },
+        ],
+      },
+      {
+        title: "Test",
+        items: [
+          { id: "backtests", label: "Backtests", icon: "bolt", href: "/backtests" },
+          { id: "replay", label: "Replay", icon: "film", href: "/replay" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "strategies",
+    label: "Strategies",
+    kbd: "3",
+    groups: [
+      {
+        title: "Build",
+        items: [
+          {
+            id: "strategies_list",
+            label: "Strategy Catalog",
+            icon: "layers",
+            href: "/strategies",
+          },
+          { id: "risk", label: "Risk Profiles", icon: "shield", href: "/risk-profiles" },
+        ],
+      },
+    ],
+  },
 ];
 
-export const TOP_TAB_HREFS: ReadonlySet<string> = new Set(
-  TOP_TAB_ITEMS.map((i) => i.href),
+export const ALL_NAV_ITEMS = PROFILES.flatMap((p) =>
+  p.groups.flatMap((g) =>
+    g.items.map((it) => ({
+      ...it,
+      profile: p.id,
+      profileLabel: p.label,
+      group: g.title,
+    })),
+  ),
 );
+
+/** Resolve which profile owns a given pathname (longest-prefix match). */
+export function profileForPath(pathname: string): Profile["id"] {
+  let best: { profile: Profile["id"]; len: number } = { profile: "dashboard", len: 0 };
+  for (const p of PROFILES) {
+    for (const g of p.groups) {
+      for (const it of g.items) {
+        const matches = pathname === it.href || pathname.startsWith(it.href + "/");
+        if (matches && it.href.length > best.len) {
+          best = { profile: p.id, len: it.href.length };
+        }
+      }
+    }
+  }
+  return best.profile;
+}

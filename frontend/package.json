@@ -13,7 +13,8 @@
     "generate-types": "openapi-typescript ../shared/openapi.json --output lib/api/generated.ts",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "dev:clean": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",
