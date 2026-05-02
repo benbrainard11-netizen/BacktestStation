@@ -35,7 +35,7 @@ from app.data.schema import GENERATOR_VERSION, SCHEMA_VERSION
 from app.ingest.r2_client import (
     INVENTORY_KEY,
     make_s3_client,
-    object_exists_with_size,
+    read_inventory,
     upload_file,
     write_inventory,
 )
@@ -97,22 +97,45 @@ def run(
             return stats
 
         client, bucket = make_s3_client()
+
+        # Idempotency fast-path: trust the existing _inventory.json on R2
+        # rather than head_object'ing every candidate. With 100K+ partitions,
+        # per-file head_object would burn through R2's 1M Class A op/month
+        # free tier in hours. One Class B op (GET inventory) replaces it.
+        # Pass --rebuild to bypass this and force a full re-upload.
+        existing_inventory = None if rebuild else read_inventory(client, bucket)
+        known_partitions: dict[str, int] = (
+            {
+                p["r2_key"]: int(p["size"])
+                for p in (existing_inventory or {}).get("partitions", [])
+            }
+        )
+        if existing_inventory is not None:
+            logger.info(
+                f"loaded existing inventory: "
+                f"{len(known_partitions)} partitions already in R2"
+            )
+
         kept_for_inventory: list[Partition] = []
 
         for p in partitions:
-            already_present = not rebuild and object_exists_with_size(
-                client, bucket, p.r2_key, p.size
-            )
-            if already_present:
+            if limit is not None and stats.uploaded >= limit:
+                # Hard break — anything we haven't already-skipped this
+                # iteration won't be touched. Inventory will reflect only
+                # what we've actually uploaded this run + what was already
+                # in the inventory we loaded above (since we keep those
+                # entries by virtue of the merge below).
+                break
+
+            if not rebuild and known_partitions.get(p.r2_key) == p.size:
                 stats.skipped_existing += 1
                 kept_for_inventory.append(p)
                 continue
+
             if not validate(p):
                 stats.refused += 1
                 continue
             stats.validated += 1
-            if limit is not None and stats.uploaded >= limit:
-                continue
             try:
                 upload_file(client, bucket, p.local_path, p.r2_key)
                 stats.uploaded += 1
@@ -122,15 +145,31 @@ def run(
                 stats.errors.append(f"{p.r2_key}: {e}")
                 logger.error(f"UPLOAD FAILED {p.r2_key}: {e}")
 
+        # Merge: anything we kept this run + anything in existing inventory
+        # that we didn't process this iteration (either because limit broke
+        # us out early or because the partition no longer exists locally).
+        # This way --limit runs don't shrink the inventory.
+        kept_keys = {p.r2_key for p in kept_for_inventory}
+        carried_over: list[dict] = [
+            entry
+            for entry in (existing_inventory or {}).get("partitions", [])
+            if entry["r2_key"] not in kept_keys
+        ]
+
+        merged_inventory_partitions = (
+            [to_inventory_dict(p) for p in kept_for_inventory] + carried_over
+        )
         write_inventory(
             client,
             bucket,
             schema_version=SCHEMA_VERSION,
             generator_version=GENERATOR_VERSION,
-            partitions=[to_inventory_dict(p) for p in kept_for_inventory],
+            partitions=merged_inventory_partitions,
         )
-        stats.inventory_partitions = len(kept_for_inventory)
-        logger.info(f"wrote {INVENTORY_KEY} with {stats.inventory_partitions} partitions")
+        stats.inventory_partitions = len(merged_inventory_partitions)
+        logger.info(
+            f"wrote {INVENTORY_KEY} with {stats.inventory_partitions} partitions"
+        )
     finally:
         logger.info(
             f"=== r2_upload done | enumerated={stats.enumerated} "

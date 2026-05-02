@@ -1,8 +1,8 @@
 """Thin boto3 wrapper for the R2 uploader.
 
-Isolates the S3-compatible client setup and the three operations the
-uploader needs (head_object existence check, file upload, inventory
-write) so `r2_upload.py` stays focused on orchestration + validation.
+Isolates the S3-compatible client setup and the operations the uploader
+needs (head_object existence check, file upload, inventory read/write)
+so `r2_upload.py` stays focused on orchestration + validation.
 """
 
 from __future__ import annotations
@@ -73,6 +73,30 @@ def object_exists_with_size(client: Any, bucket: str, key: str, expected_size: i
 
 def upload_file(client: Any, bucket: str, local_path: Path, key: str) -> None:
     client.upload_file(str(local_path), bucket, key)
+
+
+def read_inventory(client: Any, bucket: str) -> dict | None:
+    """Fetch and parse `_inventory.json` from R2. Returns None if missing.
+
+    Used as the cheap idempotency cache: with 100K+ partitions, head_object
+    per file each run blows past R2's 1M Class A op/month free tier in
+    hours. Trusting inventory means one Class B op per run instead.
+
+    The trade-off: if someone uploads to the bucket outside this uploader,
+    we won't see those files until next inventory rewrite. For the
+    single-uploader BacktestStation setup that's fine; pass `--rebuild`
+    to force a full re-upload if you suspect drift.
+    """
+    from botocore.exceptions import ClientError
+
+    try:
+        obj = client.get_object(Bucket=bucket, Key=INVENTORY_KEY)
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "")
+        if code in ("404", "NoSuchKey", "NotFound"):
+            return None
+        raise
+    return json.loads(obj["Body"].read().decode("utf-8"))
 
 
 def write_inventory(
