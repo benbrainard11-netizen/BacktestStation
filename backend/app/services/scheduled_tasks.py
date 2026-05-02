@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 KNOWN_TASKS: list[str] = [
     "BacktestStationParquetMirror",
     "BacktestStationDatasetScan",
+    "BacktestStationR2Upload",
     "BacktestStationHistorical",
     "BacktestStationGapFiller",
     "BacktestStation - Import Live Trades",

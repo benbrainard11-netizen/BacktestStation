@@ -7,10 +7,12 @@
 #      so /data-health coverage/readiness stays current.
 #   3. BacktestStationHistorical    -- monthly (day 1, 02:00 local) MBP-1
 #      backfill so May 1 just works without manual setup.
+#   4. BacktestStationR2Upload      -- hourly Cloudflare R2 mirror for the
+#      cloud distribution channel (skipped when BS_R2_* env vars unset).
 #
-# Both run as the current user with -LogonType S4U so they execute without
-# requiring an interactive logon AND inherit User-scope env vars
-# (BS_DATA_ROOT, DATABENTO_API_KEY) the same way other processes do.
+# All run as the current user with -LogonType S4U so they execute without
+# requiring an interactive logon AND inherit env vars (BS_DATA_ROOT,
+# DATABENTO_API_KEY, BS_R2_*) the same way other processes do.
 #
 # Run AFTER setup_ingester.ps1 has set the env vars. Needs admin (Task
 # Scheduler registration is admin-only at the machine scope).
@@ -22,6 +24,7 @@
 #   Unregister-ScheduledTask -TaskName BacktestStationParquetMirror -Confirm:$false
 #   Unregister-ScheduledTask -TaskName BacktestStationDatasetScan  -Confirm:$false
 #   Unregister-ScheduledTask -TaskName BacktestStationHistorical    -Confirm:$false
+#   Unregister-ScheduledTask -TaskName BacktestStationR2Upload      -Confirm:$false
 
 $ErrorActionPreference = "Stop"
 
@@ -317,6 +320,51 @@ if (-not (Get-ScheduledTask -TaskName 'BacktestStationDatasetScan' -ErrorAction 
     exit 1
 }
 Write-Host "  registered. Runs daily at 04:30 local."
+
+# --- 5d. Register R2 uploader (hourly at HH:15) -------------------------
+
+Write-Host ""
+Write-Host "Registering BacktestStationR2Upload (hourly at HH:15)..." -ForegroundColor Cyan
+
+# 15 min after parquet_mirror's HH:00 fire, so the uploader sees a stable
+# snapshot. If BS_R2_* env vars aren't set yet, the uploader raises
+# RuntimeError and Task Scheduler records a visible failure. That's noisy
+# but intentional: cloud distribution is not healthy until credentials
+# exist and uploads succeed.
+
+$r2Action = New-ScheduledTaskAction `
+    -Execute $pythonExe `
+    -Argument '-m app.ingest.r2_upload' `
+    -WorkingDirectory $BackendDir
+
+# 15 minutes past the hour, every hour, indefinitely. Same RepetitionDuration
+# omission rationale as parquet_mirror -- empty Duration = repeat forever.
+$r2Trigger = New-ScheduledTaskTrigger `
+    -Once `
+    -At (Get-Date).Date.AddHours((Get-Date).Hour + 1).AddMinutes(15) `
+    -RepetitionInterval (New-TimeSpan -Hours 1)
+
+$r2Settings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 2) `
+    -MultipleInstances IgnoreNew
+
+Register-ScheduledTask `
+    -TaskName 'BacktestStationR2Upload' `
+    -Description 'Mirror parquet warehouse to Cloudflare R2 for cloud-side backtests' `
+    -Action $r2Action `
+    -Trigger $r2Trigger `
+    -Settings $r2Settings `
+    -Principal $pmPrincipal `
+    -Force | Out-Null
+
+if (-not (Get-ScheduledTask -TaskName 'BacktestStationR2Upload' -ErrorAction SilentlyContinue)) {
+    Write-Host "ERROR: BacktestStationR2Upload did not register. See errors above." -ForegroundColor Red
+    exit 1
+}
+Write-Host "  registered. Runs hourly at HH:15. Requires BS_R2_* env vars (see docs/R2_SETUP.md)."
 
 # --- 6. Summary ---------------------------------------------------------
 

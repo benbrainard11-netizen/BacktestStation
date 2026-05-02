@@ -67,6 +67,35 @@ class LiveSignalRead(BaseModel):
     executed: bool
 
 
+class R2UploadRunSummary(BaseModel):
+    """One row from `{BS_DATA_ROOT}/logs/r2_upload_runs.json` (latest first)."""
+
+    ts: datetime
+    dry_run: bool = False
+    enumerated: int = 0
+    validated: int = 0
+    refused: int = 0
+    uploaded: int = 0
+    skipped_existing: int = 0
+    inventory_partitions: int = 0
+    errors: list[str] = Field(default_factory=list)
+
+
+class R2UploadStatus(BaseModel):
+    """Health snapshot of the Cloudflare R2 uploader.
+
+    Surfaces `refused` and `errors` counts visibly per CLAUDE.md
+    discipline rule 6 — a silent uploader that refuses every parquet
+    (e.g. schema drift in parquet_mirror) needs to be visible without
+    digging into log files.
+    """
+
+    log_path: str
+    log_exists: bool
+    last_run: R2UploadRunSummary | None
+    recent_runs: list[R2UploadRunSummary]
+
+
 class IngesterStatus(BaseModel):
     """Live ingester heartbeat — mirror of {DATA_ROOT}/heartbeat/live_ingester.json.
 

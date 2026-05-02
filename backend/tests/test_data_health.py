@@ -192,6 +192,10 @@ def test_dataset_scan_task_is_known() -> None:
     assert "BacktestStationDatasetScan" in scheduled_tasks.KNOWN_TASKS
 
 
+def test_r2_upload_task_is_known() -> None:
+    assert "BacktestStationR2Upload" in scheduled_tasks.KNOWN_TASKS
+
+
 def test_scheduled_tasks_label_for_result_maps_correctly() -> None:
     """The 0/267011/None mapping is load-bearing for the UI's status dot."""
     assert scheduled_tasks._label_for_result(0, dt.datetime(2026, 4, 27)) == "ok"

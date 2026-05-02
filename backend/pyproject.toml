@@ -12,6 +12,9 @@ dependencies = [
     # Parquet / dataframes for reading local candle + TBBO files.
     "pandas>=2.2",
     "pyarrow>=17",
+    # Cloudflare R2 uploader/client use the S3-compatible API.
+    "boto3>=1.34",
+    "botocore>=1.34",
     # Forward Drift Monitor uses chi2_contingency for entry-time drift.
     "scipy>=1.11",
 ]

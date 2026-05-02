@@ -30,6 +30,14 @@
   - Pinned schemas (`SCHEMA_SPEC.md`), Hive partitioning, kv-metadata lineage.
   - Live TBBO ingester running on ben-247.
   - Historical puller, parquet mirror, legacy importers, bulk free pull, cost estimator, warehouse sync. (See "Orphan modules" for the per-script story.)
+- **Cloud distribution via Cloudflare R2 (2026-05-01)** (`app/data/storage.py`, `app/ingest/r2_upload.py`, `client/bsdata/`)
+  - Storage abstraction: `LocalStorage` (BS_DATA_ROOT) and `R2Storage` (S3-compat against R2). One reader codepath; backend selected by `BS_DATA_BACKEND` env var.
+  - R2 uploader CLI (`python -m app.ingest.r2_upload`) with validation gate — refuses any parquet whose `bs.schema.version` doesn't match current `SCHEMA_VERSION` or fails `DataSchema.validate_table()`. Hourly scheduled task at HH:15.
+  - Inventory at `{bucket}/_inventory.json`; clients fetch this rather than recursive LIST.
+  - Client package `bsdata` (`client/bsdata/`) with R2-then-local-cache reader. Same loader signatures as `app.data.reader`. Setup docs: `docs/R2_SETUP.md` + `client/bsdata/README.md`.
+  - `/api/monitor/r2-upload` surfaces refused/error counts (CLAUDE.md discipline rule 6: pipeline silent failures = active problem).
+  - **Tier 1 only**: scoped read tokens distributed manually. Tier 2 (auth proxy + presigned URLs) deferred per CLAUDE.md "no auth, no billing yet."
+  - **Caveat at ship time:** the validation gate found that ALL existing parquet on benpc was being refused due to a `string vs dictionary` schema mismatch in `parquet_mirror`'s output. The uploader is correctly gating; the upstream `parquet_mirror` bug needs its own fix before R2 will hold any data. See `OVERNIGHT_2026-04-28-PM.md` and the dry-run output for context.
 - **Schema-first API** (`app/schemas/`, `shared/openapi.json`, `frontend/lib/api/generated.ts`)
   - Pydantic schemas are the source of truth; TS types regenerated via `bash scripts/generate-types.sh`.
 - **Schema migration discipline** (`app/db/session.py:_run_data_migrations`)

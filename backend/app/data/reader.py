@@ -18,23 +18,18 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
-import re
 from pathlib import Path
-
-from app.core.paths import warehouse_root
 
 import pyarrow as pa
 import pyarrow.compute as pc
-import pyarrow.dataset as ds
-import pyarrow.parquet as pq
 
 from app.data.schema import (
     BARS_1M_SCHEMA,
     MBP1_SCHEMA,
-    SCHEMA_BY_NAME,
     TBBO_SCHEMA,
     DataSchema,
 )
+from app.data.storage import LocalStorage, Storage, get_storage
 
 logger = logging.getLogger(__name__)
 
@@ -58,18 +53,20 @@ _BAR_TIMEFRAMES = {
 # --- Path helpers --------------------------------------------------------
 
 
-def _data_root() -> Path:
-    """Backwards-compat alias for `app.core.paths.warehouse_root` so the
-    module-internal callers below don't need to be touched."""
-    return warehouse_root()
+def _raw_partition_prefix(schema: str) -> str:
+    return f"raw/databento/{schema}"
 
 
-def _raw_partition_root(data_root: Path, schema: str) -> Path:
-    return data_root / "raw" / "databento" / schema
+def _bars_partition_prefix(timeframe: str) -> str:
+    return f"processed/bars/timeframe={timeframe}"
 
 
-def _bars_partition_root(data_root: Path, timeframe: str) -> Path:
-    return data_root / "processed" / "bars" / f"timeframe={timeframe}"
+def _resolve_storage(data_root: Path | None) -> Storage:
+    """If `data_root` is explicitly passed, force LocalStorage there.
+    Otherwise pick the backend from env vars (`BS_DATA_BACKEND`)."""
+    if data_root is not None:
+        return LocalStorage(data_root)
+    return get_storage()
 
 
 # --- Date helpers --------------------------------------------------------
@@ -97,41 +94,26 @@ def _date_range(start: dt.date, end: dt.date) -> list[dt.date]:
 
 
 def _read_partitioned(
-    root: Path,
+    storage: Storage,
     *,
+    partition_root: str,
     symbol: str,
     dates: list[dt.date],
     schema: DataSchema,
     columns: list[str] | None,
 ) -> pa.Table:
-    """Read all matching partition files into one pyarrow Table."""
-    paths = []
-    for d in dates:
-        candidate = (
-            root
-            / f"symbol={symbol}"
-            / f"date={d.isoformat()}"
-            / "part-000.parquet"
-        )
-        if candidate.exists():
-            paths.append(candidate)
-        else:
-            logger.info(
-                f"missing partition: symbol={symbol} date={d} "
-                f"(expected {candidate})"
-            )
-
-    if not paths:
-        return schema.pa_schema.empty_table()
-
-    dataset = ds.dataset(paths, format="parquet")
-    if columns is not None:
+    """Read all matching partition files for `(symbol, date)` via `storage`."""
+    if columns is not None and schema.sort_key not in columns:
         # Always include the sort key so users can filter even if they
         # didn't request it — common ergonomic surprise otherwise.
-        if schema.sort_key not in columns:
-            columns = [schema.sort_key] + list(columns)
-    table = dataset.to_table(columns=columns)
-    return table
+        columns = [schema.sort_key] + list(columns)
+    return storage.read_partitions(
+        partition_root=partition_root,
+        symbol=symbol,
+        dates=dates,
+        empty_schema=schema.pa_schema,
+        columns=columns,
+    )
 
 
 def read_tbbo(
@@ -148,12 +130,13 @@ def read_tbbo(
     Returns a pandas DataFrame by default, or a pyarrow Table if
     `as_pandas=False`. Missing days are silently skipped.
     """
-    root = data_root or _data_root()
+    storage = _resolve_storage(data_root)
     start_d = _parse_date(start)
     end_d = _parse_date(end)
     dates = _date_range(start_d, end_d)
     table = _read_partitioned(
-        _raw_partition_root(root, "tbbo"),
+        storage,
+        partition_root=_raw_partition_prefix("tbbo"),
         symbol=symbol,
         dates=dates,
         schema=TBBO_SCHEMA,
@@ -172,10 +155,11 @@ def read_mbp1(
     data_root: Path | None = None,
 ):
     """Read MBP-1 records for `symbol` over [start, end)."""
-    root = data_root or _data_root()
+    storage = _resolve_storage(data_root)
     dates = _date_range(_parse_date(start), _parse_date(end))
     table = _read_partitioned(
-        _raw_partition_root(root, "mbp-1"),
+        storage,
+        partition_root=_raw_partition_prefix("mbp-1"),
         symbol=symbol,
         dates=dates,
         schema=MBP1_SCHEMA,
@@ -206,10 +190,11 @@ def read_bars(
         known = ", ".join(_BAR_TIMEFRAMES.keys())
         raise ValueError(f"unknown timeframe {timeframe!r}; known: {known}")
 
-    root = data_root or _data_root()
+    storage = _resolve_storage(data_root)
     dates = _date_range(_parse_date(start), _parse_date(end))
     base = _read_partitioned(
-        _bars_partition_root(root, "1m"),
+        storage,
+        partition_root=_bars_partition_prefix("1m"),
         symbol=symbol,
         dates=dates,
         schema=BARS_1M_SCHEMA,

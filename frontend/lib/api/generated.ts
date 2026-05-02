@@ -734,6 +734,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/monitor/r2-upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get R2 Upload Status
+         * @description Health snapshot of the Cloudflare R2 uploader.
+         *
+         *     Reads `{BS_DATA_ROOT}/logs/r2_upload_runs.json`, returns the last run
+         *     plus the last 10 for trend visibility. Surfaces refused/error counts
+         *     so silent failures (e.g. parquet schema drift causing every upload
+         *     to be refused) become visible without log diving.
+         */
+        get: operations["get_r2_upload_status_api_monitor_r2_upload_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/monitor/signals": {
         parameters: {
             query?: never;
@@ -3273,6 +3298,75 @@ export interface components {
             worst_day: components["schemas"]["PropFirmDayRow"] | null;
         };
         /**
+         * R2UploadRunSummary
+         * @description One row from `{BS_DATA_ROOT}/logs/r2_upload_runs.json` (latest first).
+         */
+        R2UploadRunSummary: {
+            /**
+             * Dry Run
+             * @default false
+             */
+            dry_run: boolean;
+            /**
+             * Enumerated
+             * @default 0
+             */
+            enumerated: number;
+            /**
+             * Errors
+             * @default []
+             */
+            errors: string[];
+            /**
+             * Inventory Partitions
+             * @default 0
+             */
+            inventory_partitions: number;
+            /**
+             * Refused
+             * @default 0
+             */
+            refused: number;
+            /**
+             * Skipped Existing
+             * @default 0
+             */
+            skipped_existing: number;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /**
+             * Uploaded
+             * @default 0
+             */
+            uploaded: number;
+            /**
+             * Validated
+             * @default 0
+             */
+            validated: number;
+        };
+        /**
+         * R2UploadStatus
+         * @description Health snapshot of the Cloudflare R2 uploader.
+         *
+         *     Surfaces `refused` and `errors` counts visibly per CLAUDE.md
+         *     discipline rule 6 — a silent uploader that refuses every parquet
+         *     (e.g. schema drift in parquet_mirror) needs to be visible without
+         *     digging into log files.
+         */
+        R2UploadStatus: {
+            last_run: components["schemas"]["R2UploadRunSummary"] | null;
+            /** Log Exists */
+            log_exists: boolean;
+            /** Log Path */
+            log_path: string;
+            /** Recent Runs */
+            recent_runs: components["schemas"]["R2UploadRunSummary"][];
+        };
+        /**
          * ReplayBar
          * @description One OHLCV bar in the replay timeline. ts is ISO-8601 UTC.
          */
@@ -5783,6 +5877,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LiveTradesPipelineStatus"];
+                };
+            };
+        };
+    };
+    get_r2_upload_status_api_monitor_r2_upload_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["R2UploadStatus"];
                 };
             };
         };

@@ -5173,6 +5173,101 @@
         "title": "PropFirmResultRead",
         "type": "object"
       },
+      "R2UploadRunSummary": {
+        "description": "One row from `{BS_DATA_ROOT}/logs/r2_upload_runs.json` (latest first).",
+        "properties": {
+          "dry_run": {
+            "default": false,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "enumerated": {
+            "default": 0,
+            "title": "Enumerated",
+            "type": "integer"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "inventory_partitions": {
+            "default": 0,
+            "title": "Inventory Partitions",
+            "type": "integer"
+          },
+          "refused": {
+            "default": 0,
+            "title": "Refused",
+            "type": "integer"
+          },
+          "skipped_existing": {
+            "default": 0,
+            "title": "Skipped Existing",
+            "type": "integer"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          },
+          "uploaded": {
+            "default": 0,
+            "title": "Uploaded",
+            "type": "integer"
+          },
+          "validated": {
+            "default": 0,
+            "title": "Validated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ts"
+        ],
+        "title": "R2UploadRunSummary",
+        "type": "object"
+      },
+      "R2UploadStatus": {
+        "description": "Health snapshot of the Cloudflare R2 uploader.\n\nSurfaces `refused` and `errors` counts visibly per CLAUDE.md\ndiscipline rule 6 \u2014 a silent uploader that refuses every parquet\n(e.g. schema drift in parquet_mirror) needs to be visible without\ndigging into log files.",
+        "properties": {
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/R2UploadRunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "log_exists": {
+            "title": "Log Exists",
+            "type": "boolean"
+          },
+          "log_path": {
+            "title": "Log Path",
+            "type": "string"
+          },
+          "recent_runs": {
+            "items": {
+              "$ref": "#/components/schemas/R2UploadRunSummary"
+            },
+            "title": "Recent Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "log_path",
+          "log_exists",
+          "last_run",
+          "recent_runs"
+        ],
+        "title": "R2UploadStatus",
+        "type": "object"
+      },
       "ReplayBar": {
         "description": "One OHLCV bar in the replay timeline. ts is ISO-8601 UTC.",
         "properties": {
@@ -10880,6 +10975,28 @@
           }
         },
         "summary": "Get Live Trades Pipeline Status",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
+    "/api/monitor/r2-upload": {
+      "get": {
+        "description": "Health snapshot of the Cloudflare R2 uploader.\n\nReads `{BS_DATA_ROOT}/logs/r2_upload_runs.json`, returns the last run\nplus the last 10 for trend visibility. Surfaces refused/error counts\nso silent failures (e.g. parquet schema drift causing every upload\nto be refused) become visible without log diving.",
+        "operationId": "get_r2_upload_status_api_monitor_r2_upload_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R2UploadStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get R2 Upload Status",
         "tags": [
           "monitor"
         ]

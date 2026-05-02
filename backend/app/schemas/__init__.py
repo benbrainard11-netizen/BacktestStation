@@ -57,6 +57,8 @@ from app.schemas.monitor import (
     LiveMonitorStatus,
     LiveSignalRead,
     LiveTradesPipelineStatus,
+    R2UploadRunSummary,
+    R2UploadStatus,
 )
 from app.schemas.notes import NoteCreate, NoteRead, NoteTypesRead, NoteUpdate
 from app.schemas.prompts import (
@@ -186,6 +188,8 @@ __all__ = [
     "PropFirmDayRow",
     "PropFirmPresetRead",
     "PropFirmResultRead",
+    "R2UploadRunSummary",
+    "R2UploadStatus",
     "RESEARCH_KINDS",
     "RESEARCH_STATUSES",
     "RISK_PROFILE_STATUSES",

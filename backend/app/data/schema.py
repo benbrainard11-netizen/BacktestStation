@@ -10,8 +10,10 @@ on-disk layout these schemas live in.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pyarrow as pa
+import pyarrow.parquet as pq
 
 # Bumped when ANY schema changes. Embedded in parquet metadata as
 # `bs.schema.version`. Readers refuse to load files with a future
@@ -188,3 +190,24 @@ def get_schema(name: str) -> DataSchema:
         known = ", ".join(SCHEMA_BY_NAME.keys())
         raise KeyError(f"unknown schema {name!r}; known: {known}")
     return SCHEMA_BY_NAME[name]
+
+
+def read_parquet_footer_metadata(path: Path) -> dict[str, str]:
+    """Read the `bs.*` key/value metadata stamped by `parquet_mirror._attach_metadata`.
+
+    Returns a UTF-8-decoded dict of all schema-level metadata keys present
+    in the parquet file footer (typically `bs.schema.version`,
+    `bs.generator.version`, `bs.source.sha256`, etc.). Returns an empty
+    dict if the file has no metadata.
+
+    Used by the R2 uploader to gate uploads (refuse files whose
+    `bs.schema.version` doesn't match the current `SCHEMA_VERSION`) and
+    by clients to detect cache invalidation.
+    """
+    schema_metadata = pq.read_schema(path).metadata or {}
+    out: dict[str, str] = {}
+    for raw_key, raw_val in schema_metadata.items():
+        key = raw_key.decode("utf-8") if isinstance(raw_key, bytes) else str(raw_key)
+        val = raw_val.decode("utf-8") if isinstance(raw_val, bytes) else str(raw_val)
+        out[key] = val
+    return out

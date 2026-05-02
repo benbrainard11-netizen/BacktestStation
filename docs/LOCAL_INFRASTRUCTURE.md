@@ -60,10 +60,36 @@ If the chain breaks, the `/monitor` page's "Live trades pipeline" panel surfaces
 
 ### Husky's data access
 
-Two options, pick whichever fits the work:
+Three options, pick whichever fits the work:
 
-- **Tailscale SMB share**: mount `\\insyncserver\D$\data` as `Z:` (or wherever) on Husky's machine. Set `BS_DATA_ROOT=Z:\` in his backend env. Reads go over the network; fine for occasional analysis.
-- **Local subset replication**: `python -m app.ingest.warehouse_sync --remote-root \\insyncserver\D$\data --local-root D:\data --symbols NQ.c.0,ES.c.0,YM.c.0 --start 2026-01-01 --end 2026-12-31 --schemas tbbo,bars-1m`. One-time copy of the slice he needs. Faster repeated reads.
+- **Tailscale SMB share**: mount `\\insyncserver\D$\data` as `Z:` (or wherever) on Husky's machine. Set `BS_DATA_ROOT=Z:\` in his backend env. Reads go over the network; fine for occasional analysis. Requires Tailscale; doesn't survive Husky leaving the tailnet.
+- **Local subset replication via SMB**: `python -m app.ingest.warehouse_sync --remote-root \\insyncserver\D$\data --local-root D:\data --symbols NQ.c.0,ES.c.0,YM.c.0 --start 2026-01-01 --end 2026-12-31 --schemas tbbo,bars-1m`. One-time copy of the slice he needs. Faster repeated reads. Same Tailscale requirement.
+- **Cloud R2 mirror** (recommended for new collaborators): use the `bsdata` client (`client/bsdata/`) which reads from a Cloudflare R2 mirror with a local cache. No Tailscale needed; works from anywhere with internet. Requires R2 credentials from Ben (sent via Signal). See "Cloud distribution (R2)" below.
+
+### Cloud distribution (R2)
+
+ben-247 mirrors the read-side warehouse (`processed/bars/` + `raw/databento/`) to a Cloudflare R2 bucket on an hourly schedule. R2 has zero egress fees, so collaborators can pull as much historical data as they want without a per-byte tax. Two halves:
+
+**Producer side (ben-247):**
+
+1. R2 bucket + tokens are configured per [`R2_SETUP.md`](R2_SETUP.md) (one-time).
+2. `BacktestStationR2Upload` scheduled task fires hourly at HH:15 (15 min after `BacktestStationParquetMirror`) and runs `python -m app.ingest.r2_upload`.
+3. The uploader walks the warehouse for read-side parquet, validates each file against `DataSchema.validate_table()` + footer metadata `bs.schema.version`, and refuses to upload anything that doesn't match. Refused counts surface at `/api/monitor/r2-upload`.
+4. After every pass, `_inventory.json` at the bucket root catalogs what's available; clients use this for inventory rather than recursive LIST.
+
+**Consumer side (Husky / new collaborator machine):**
+
+1. Clone the BacktestStation repo (the client imports `app.data.reader` for type unity — there's exactly one parquet-reading codepath everywhere).
+2. `pip install -e ./backend ./client/bsdata` from the repo root.
+3. Set `BS_R2_*` env vars per [`R2_SETUP.md`](R2_SETUP.md) (Husky receives the read-only token via Signal).
+4. Use `from bsdata import load_bars, load_tbbo, load_mbp1, get_inventory`. First call for a (symbol, date) pair downloads the parquet from R2 to `~/.bsdata/cache/`; subsequent calls hit the cache at native disk speed.
+
+**Engineering rules around R2:**
+
+- Read-only from the client side. Mutations only happen on ben-247.
+- Validation is the wall: anything that fails the schema check is refused (logged, never uploaded). This is the gate that prevents the parquet_mirror schema-mismatch bug from poisoning R2.
+- No auth proxy yet — credentials are static R2 API tokens scoped to the bucket. Tier 2 (per-session presigned URLs) deferred until 3+ external users.
+- `_test/` prefix in the bucket is reserved for the round-trip integration test (`backend/tests/test_r2_roundtrip.py`); production keys never start with `_`.
 
 ### Husky's code workflow
 

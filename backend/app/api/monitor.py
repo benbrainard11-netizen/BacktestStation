@@ -16,6 +16,7 @@ from app.core.paths import (
     LIVE_INBOX_LOG_PATH,
     LIVE_STATUS_PATH,
     ingester_heartbeat_path,
+    warehouse_root,
 )
 from app.db.models import BacktestRun, LiveSignal, StrategyVersion, Trade
 from app.db.session import get_session
@@ -25,6 +26,8 @@ from app.schemas import (
     LiveMonitorStatus,
     LiveSignalRead,
     LiveTradesPipelineStatus,
+    R2UploadRunSummary,
+    R2UploadStatus,
 )
 from app.services.drift_comparison import compute_drift_for_strategy
 from app.services.live_monitor import LiveStatusError, read_live_status
@@ -243,6 +246,38 @@ def list_live_signals(
         limit
     )
     return list(db.scalars(statement).all())
+
+
+@router.get("/r2-upload", response_model=R2UploadStatus)
+def get_r2_upload_status() -> R2UploadStatus:
+    """Health snapshot of the Cloudflare R2 uploader.
+
+    Reads `{BS_DATA_ROOT}/logs/r2_upload_runs.json`, returns the last run
+    plus the last 10 for trend visibility. Surfaces refused/error counts
+    so silent failures (e.g. parquet schema drift causing every upload
+    to be refused) become visible without log diving.
+    """
+    runs_path = warehouse_root() / "logs" / "r2_upload_runs.json"
+    if not runs_path.exists():
+        return R2UploadStatus(
+            log_path=str(runs_path),
+            log_exists=False,
+            last_run=None,
+            recent_runs=[],
+        )
+    try:
+        loaded = json.loads(runs_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        loaded = []
+    if not isinstance(loaded, list):
+        loaded = []
+    runs = [R2UploadRunSummary.model_validate(r) for r in loaded[-10:]]
+    return R2UploadStatus(
+        log_path=str(runs_path),
+        log_exists=True,
+        last_run=runs[-1] if runs else None,
+        recent_runs=list(reversed(runs)),
+    )
 
 
 @router.get(
