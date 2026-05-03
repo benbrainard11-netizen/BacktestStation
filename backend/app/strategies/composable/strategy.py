@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import datetime as dt
 import sys
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # Sentinel for "setup armed until end of trading day" (window=None case).
 # Day-rollover always clears armed state, so this is bounded in practice.
@@ -31,7 +32,22 @@ from app.features import FEATURES, FeatureResult
 from app.strategies.composable.config import (
     ComposableSpec,
     FeatureCall,
+    WindowSpec,
 )
+
+
+@dataclass(frozen=True)
+class ArmedUntil:
+    """Per-direction setup-armed expiry.
+
+    `kind="bar_idx"` → expires when `current_idx > idx`. Used for bars
+    windows and the persistent sentinel (idx == sys.maxsize).
+    `kind="clock"` → expires when `bar.ts_event >= deadline_ts` (UTC).
+    """
+
+    kind: Literal["bar_idx", "clock"]
+    idx: int = 0
+    deadline_ts: dt.datetime | None = None
 
 if TYPE_CHECKING:
     pass
@@ -61,9 +77,8 @@ class ComposableStrategy(Strategy):
         self._trades_today: int = 0
         self._entries_today: set[tuple[str, dt.datetime]] = set()
         # Per-direction setup-armed state. None = never armed (or expired).
-        # An int means "armed through bar with this index" (inclusive).
-        self._setup_armed_long_until_idx: int | None = None
-        self._setup_armed_short_until_idx: int | None = None
+        self._armed_until_long: ArmedUntil | None = None
+        self._armed_until_short: ArmedUntil | None = None
         self._validate_spec()
 
     # ------------------------------------------------------------------
@@ -90,8 +105,8 @@ class ComposableStrategy(Strategy):
         self._current_day = None
         self._trades_today = 0
         self._entries_today = set()
-        self._setup_armed_long_until_idx = None
-        self._setup_armed_short_until_idx = None
+        self._armed_until_long = None
+        self._armed_until_short = None
 
     def on_bar(self, bar: Bar, context: Context) -> list[OrderIntent]:
         for sym in self.aux_symbols:
@@ -111,8 +126,8 @@ class ComposableStrategy(Strategy):
             self._entries_today = set()
             # Setup arming is per-trading-day. A sweep that armed at the
             # previous session's close should not still arm a fresh open.
-            self._setup_armed_long_until_idx = None
-            self._setup_armed_short_until_idx = None
+            self._armed_until_long = None
+            self._armed_until_short = None
 
         if self._trades_today >= self.spec.max_trades_per_day:
             return []
@@ -166,7 +181,7 @@ class ComposableStrategy(Strategy):
         direction: Direction,
         setup_calls: list[FeatureCall],
         trigger_calls: list[FeatureCall],
-        window_bars: int | None,
+        window: WindowSpec | None,
         *,
         bar: Bar,
         history: list[Bar],
@@ -183,32 +198,34 @@ class ComposableStrategy(Strategy):
         if setup_calls:
             setup_passed, setup_meta = self._evaluate_features(
                 setup_calls,
+                bar=bar,
                 history=history,
                 current_idx=current_idx,
             )
             if setup_passed:
-                # Arm the window. window_bars=None → persistent (cleared
-                # at day rollover). int window_bars → inclusive bars from
-                # the firing bar. Re-fires while armed refresh the window
+                # Arm the window. Re-fires while armed extend the window
                 # to the further-out expiry (don't accumulate).
-                new_until = (
-                    _PERSISTENT_ARMED
-                    if window_bars is None
-                    else current_idx + int(window_bars)
+                new_until = _compute_arm_deadline(
+                    window,
+                    current_idx=current_idx,
+                    firing_bar_ts=bar.ts_event,
                 )
                 existing = self._armed_until(direction)
-                if existing is None or new_until > existing:
+                if existing is None or _is_further(new_until, existing):
                     self._set_armed_until(direction, new_until)
                 merged_metadata.update(setup_meta)
 
-            armed_until = self._armed_until(direction)
-            if armed_until is None or current_idx > armed_until:
+            armed = self._armed_until(direction)
+            if armed is None or not _armed_is_active(
+                armed, current_idx=current_idx, bar_ts=bar.ts_event
+            ):
                 # Never armed, or window expired and setup didn't re-fire.
                 return None
 
         # Step 2: triggers.
         trig_passed, trig_meta = self._evaluate_features(
             trigger_calls,
+            bar=bar,
             history=history,
             current_idx=current_idx,
         )
@@ -219,7 +236,7 @@ class ComposableStrategy(Strategy):
         # Step 3: filters (global first, then per-direction).
         if self.spec.filter:
             ok, _ = self._evaluate_features(
-                self.spec.filter, history=history, current_idx=current_idx
+                self.spec.filter, bar=bar, history=history, current_idx=current_idx
             )
             if not ok:
                 return None
@@ -228,7 +245,7 @@ class ComposableStrategy(Strategy):
         )
         if per_dir_filter:
             ok, _ = self._evaluate_features(
-                per_dir_filter, history=history, current_idx=current_idx
+                per_dir_filter, bar=bar, history=history, current_idx=current_idx
             )
             if not ok:
                 return None
@@ -258,12 +275,21 @@ class ComposableStrategy(Strategy):
         self,
         calls: list[FeatureCall],
         *,
+        bar: Bar,
         history: list[Bar],
         current_idx: int,
     ) -> tuple[bool, dict]:
-        """Run every feature; return (all_passed, merged_metadata)."""
+        """Run every feature; return (all_passed, merged_metadata).
+
+        Per-call `gate` (CallGate) is checked BEFORE invoking the
+        feature: outside the window, the call is treated as failed
+        without running. This is what makes a gated setup not arm
+        outside its time window.
+        """
         merged: dict = {}
         for call in calls:
+            if call.gate is not None and not _gate_admits(call.gate, bar.ts_event):
+                return False, merged
             spec = FEATURES.get(call.feature)
             if spec is None:
                 return False, merged
@@ -281,18 +307,17 @@ class ComposableStrategy(Strategy):
             merged.update(result.metadata)
         return True, merged
 
-    def _armed_until(self, direction: Direction) -> int | None:
-        """Per-direction armed-until index. None = not armed.
-        ``_PERSISTENT_ARMED`` (sys.maxsize) = persistent until day rollover."""
+    def _armed_until(self, direction: Direction) -> ArmedUntil | None:
+        """Per-direction armed-until handle. None = not armed."""
         if direction == "BULLISH":
-            return self._setup_armed_long_until_idx
-        return self._setup_armed_short_until_idx
+            return self._armed_until_long
+        return self._armed_until_short
 
-    def _set_armed_until(self, direction: Direction, value: int | None) -> None:
+    def _set_armed_until(self, direction: Direction, value: ArmedUntil | None) -> None:
         if direction == "BULLISH":
-            self._setup_armed_long_until_idx = value
+            self._armed_until_long = value
         else:
-            self._setup_armed_short_until_idx = value
+            self._armed_until_short = value
 
     # ------------------------------------------------------------------
     # Stop / target rule resolution
@@ -353,3 +378,128 @@ class ComposableStrategy(Strategy):
                 raise ValueError(
                     f"Unknown feature {call.feature!r}. Known: {known}"
                 )
+            if call.gate is not None:
+                # Defense in depth — `from_dict` already validates gates,
+                # but specs constructed directly in code skip the parser.
+                if call.gate.end_hour <= call.gate.start_hour:
+                    raise ValueError(
+                        f"{call.feature}: gate end_hour ({call.gate.end_hour}) "
+                        f"must be > start_hour ({call.gate.start_hour})"
+                    )
+                try:
+                    ZoneInfo(call.gate.tz)
+                except ZoneInfoNotFoundError as exc:
+                    raise ValueError(
+                        f"{call.feature}: unknown gate tz {call.gate.tz!r}"
+                    ) from exc
+
+
+def _gate_admits(gate, bar_ts: dt.datetime) -> bool:
+    """True iff the bar's local time in `gate.tz` is in [start, end)."""
+    local = bar_ts.astimezone(ZoneInfo(gate.tz))
+    hour_frac = local.hour + local.minute / 60.0 + local.second / 3600.0
+    return gate.start_hour <= hour_frac < gate.end_hour
+
+
+def _compute_arm_deadline(
+    window: WindowSpec | None,
+    *,
+    current_idx: int,
+    firing_bar_ts: dt.datetime,
+) -> ArmedUntil:
+    """Translate a WindowSpec into an ArmedUntil rooted at the firing bar."""
+    if window is None:
+        # Persistent — armed until day rollover clears it.
+        return ArmedUntil(kind="bar_idx", idx=_PERSISTENT_ARMED)
+    if window.kind == "bars":
+        assert window.n is not None
+        return ArmedUntil(kind="bar_idx", idx=current_idx + window.n)
+    if window.kind == "minutes":
+        assert window.n is not None
+        return ArmedUntil(
+            kind="clock",
+            deadline_ts=firing_bar_ts + dt.timedelta(minutes=window.n),
+        )
+    if window.kind == "until_clock":
+        assert window.end_hour is not None
+        deadline = _resolve_clock_deadline(
+            firing_bar_ts=firing_bar_ts,
+            end_hour=window.end_hour,
+            tz=window.tz,
+        )
+        return ArmedUntil(kind="clock", deadline_ts=deadline)
+    raise ValueError(f"unknown window kind: {window.kind!r}")
+
+
+def _resolve_clock_deadline(
+    *,
+    firing_bar_ts: dt.datetime,
+    end_hour: float,
+    tz: str,
+) -> dt.datetime:
+    """Anchor `end_hour` to the firing bar's *trading day* in `tz`.
+
+    Trading day uses the Globex roll convention (firing bar past 18:00
+    ET belongs to the next calendar day) so an arming bar at 17:55 with
+    end_hour=10 isn't ambiguous: it points at tomorrow's 10:00.
+    """
+    zi = ZoneInfo(tz)
+    local = firing_bar_ts.astimezone(zi)
+    # Globex roll uses ET; for non-ET tzs the roll convention still
+    # applies because day-rollover in `on_bar` is in ET. We compute
+    # trading_day in ET then map the time-of-day into the requested tz.
+    bar_et = firing_bar_ts.astimezone(ET)
+    trading_day = (
+        (bar_et + dt.timedelta(days=1)).date() if bar_et.hour >= 18 else bar_et.date()
+    )
+    h = int(end_hour)
+    m = int(round((end_hour - h) * 60))
+    if h == 24:
+        # 24:00 means end-of-day → midnight of trading_day + 1
+        deadline_local = dt.datetime.combine(
+            trading_day + dt.timedelta(days=1),
+            dt.time(0, 0),
+            tzinfo=zi,
+        )
+    else:
+        deadline_local = dt.datetime.combine(
+            trading_day, dt.time(h, m), tzinfo=zi
+        )
+    # If the resolved deadline is at or before the firing bar (e.g.
+    # firing at 11:00 with end_hour=10 on the same trading day),
+    # roll forward one trading day so the window is at least valid
+    # in the immediate future.
+    if deadline_local <= local:
+        deadline_local = deadline_local + dt.timedelta(days=1)
+    return deadline_local
+
+
+def _armed_is_active(armed: ArmedUntil, *, current_idx: int, bar_ts: dt.datetime) -> bool:
+    """True iff the current bar is still inside the armed window."""
+    if armed.kind == "bar_idx":
+        return current_idx <= armed.idx
+    # clock
+    assert armed.deadline_ts is not None
+    return bar_ts < armed.deadline_ts
+
+
+def _is_further(new: ArmedUntil, existing: ArmedUntil) -> bool:
+    """True iff `new` extends the armed window past `existing`.
+
+    Cross-kind comparison: a clock deadline is treated as further than
+    any bar_idx deadline EXCEPT _PERSISTENT_ARMED, and vice versa.
+    Same-kind comparison uses the obvious ordering.
+    """
+    if new.kind == existing.kind == "bar_idx":
+        return new.idx > existing.idx
+    if new.kind == existing.kind == "clock":
+        assert new.deadline_ts is not None and existing.deadline_ts is not None
+        return new.deadline_ts > existing.deadline_ts
+    # Cross-kind: persistent (idx == _PERSISTENT_ARMED) wins; otherwise
+    # the new one wins to keep the freshly fired setup arming the
+    # window even if the existing was a different kind.
+    if existing.kind == "bar_idx" and existing.idx == _PERSISTENT_ARMED:
+        return False
+    if new.kind == "bar_idx" and new.idx == _PERSISTENT_ARMED:
+        return True
+    return True

@@ -108,6 +108,7 @@ from app.features import (  # noqa: E402,F401
     co_score,
     decisive_close,
     fvg_touch_recent,
+    orderblock_engulf,
     prior_level_sweep,
     smt_at_level,
     swing_sweep,

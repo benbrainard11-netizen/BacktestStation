@@ -122,11 +122,16 @@ def test_spec_setup_window_default_persistent():
 
 
 def test_spec_setup_window_round_trip():
+    """Bare int → BarsWindow (backward compat with pre-2026-05-03 specs)."""
     spec = ComposableSpec.from_dict(
         {"setup_window": {"long": 5, "short": 12}}
     )
-    assert spec.setup_window.long == 5
-    assert spec.setup_window.short == 12
+    assert spec.setup_window.long is not None
+    assert spec.setup_window.long.kind == "bars"
+    assert spec.setup_window.long.n == 5
+    assert spec.setup_window.short is not None
+    assert spec.setup_window.short.kind == "bars"
+    assert spec.setup_window.short.n == 12
 
 
 def test_spec_setup_window_rejects_non_int():
@@ -147,7 +152,143 @@ def test_spec_setup_window_rejects_negative():
 def test_spec_setup_window_null_means_persistent():
     spec = ComposableSpec.from_dict({"setup_window": {"long": None, "short": 10}})
     assert spec.setup_window.long is None
-    assert spec.setup_window.short == 10
+    assert spec.setup_window.short is not None
+    assert spec.setup_window.short.kind == "bars"
+    assert spec.setup_window.short.n == 10
+
+
+def test_spec_setup_window_bars_dict_form():
+    spec = ComposableSpec.from_dict(
+        {"setup_window": {"long": {"type": "bars", "n": 7}}}
+    )
+    assert spec.setup_window.long is not None
+    assert spec.setup_window.long.kind == "bars"
+    assert spec.setup_window.long.n == 7
+
+
+def test_spec_setup_window_minutes_form():
+    spec = ComposableSpec.from_dict(
+        {"setup_window": {"short": {"type": "minutes", "n": 30}}}
+    )
+    assert spec.setup_window.short is not None
+    assert spec.setup_window.short.kind == "minutes"
+    assert spec.setup_window.short.n == 30
+
+
+def test_spec_setup_window_until_clock_form():
+    spec = ComposableSpec.from_dict({
+        "setup_window": {
+            "long": {"type": "until_clock", "end_hour": 11.0, "tz": "America/New_York"}
+        }
+    })
+    assert spec.setup_window.long is not None
+    assert spec.setup_window.long.kind == "until_clock"
+    assert spec.setup_window.long.end_hour == 11.0
+    assert spec.setup_window.long.tz == "America/New_York"
+
+
+def test_spec_setup_window_until_clock_default_tz():
+    spec = ComposableSpec.from_dict(
+        {"setup_window": {"long": {"type": "until_clock", "end_hour": 11.0}}}
+    )
+    assert spec.setup_window.long is not None
+    assert spec.setup_window.long.tz == "America/New_York"
+
+
+def test_spec_setup_window_rejects_unknown_type():
+    with pytest.raises(ValueError, match="setup_window.long.type"):
+        ComposableSpec.from_dict(
+            {"setup_window": {"long": {"type": "halfsies", "n": 2}}}
+        )
+
+
+def test_spec_setup_window_rejects_bad_tz():
+    with pytest.raises(ValueError, match="unknown timezone"):
+        ComposableSpec.from_dict({
+            "setup_window": {
+                "long": {"type": "until_clock", "end_hour": 11.0, "tz": "NotAZone/Made_Up"}
+            }
+        })
+
+
+def test_spec_setup_window_minutes_rejects_zero():
+    with pytest.raises(ValueError, match="setup_window.long.n"):
+        ComposableSpec.from_dict(
+            {"setup_window": {"long": {"type": "minutes", "n": 0}}}
+        )
+
+
+# ── per-call gate parsing ─────────────────────────────────────────────
+
+
+def test_call_gate_parses_hhmm_strings():
+    spec = ComposableSpec.from_dict({
+        "trigger_long": [{
+            "feature": "decisive_close",
+            "params": {"direction": "BULLISH"},
+            "gate": {"start": "08:00", "end": "10:30"},
+        }],
+    })
+    g = spec.trigger_long[0].gate
+    assert g is not None
+    assert g.start_hour == 8.0
+    assert g.end_hour == 10.5
+    assert g.tz == "America/New_York"
+
+
+def test_call_gate_parses_fractional_hours():
+    spec = ComposableSpec.from_dict({
+        "trigger_long": [{
+            "feature": "decisive_close",
+            "params": {"direction": "BULLISH"},
+            "gate": {"start": 8.5, "end": 9.75, "tz": "Europe/London"},
+        }],
+    })
+    g = spec.trigger_long[0].gate
+    assert g is not None
+    assert g.start_hour == 8.5
+    assert g.end_hour == 9.75
+    assert g.tz == "Europe/London"
+
+
+def test_call_gate_rejects_end_le_start():
+    with pytest.raises(ValueError, match="must be > start"):
+        ComposableSpec.from_dict({
+            "trigger_long": [{
+                "feature": "decisive_close",
+                "params": {"direction": "BULLISH"},
+                "gate": {"start": "10:00", "end": "10:00"},
+            }],
+        })
+
+
+def test_call_gate_rejects_unknown_tz():
+    with pytest.raises(ValueError, match="unknown timezone"):
+        ComposableSpec.from_dict({
+            "trigger_long": [{
+                "feature": "decisive_close",
+                "params": {"direction": "BULLISH"},
+                "gate": {"start": "08:00", "end": "10:00", "tz": "NotAZone"},
+            }],
+        })
+
+
+def test_call_gate_rejects_bad_hhmm_format():
+    with pytest.raises(ValueError, match="HH:MM"):
+        ComposableSpec.from_dict({
+            "trigger_long": [{
+                "feature": "decisive_close",
+                "params": {"direction": "BULLISH"},
+                "gate": {"start": "8am", "end": "10:00"},
+            }],
+        })
+
+
+def test_call_gate_default_none():
+    spec = ComposableSpec.from_dict({
+        "trigger_long": [{"feature": "decisive_close", "params": {"direction": "BULLISH"}}],
+    })
+    assert spec.trigger_long[0].gate is None
 
 
 def test_spec_role_buckets_round_trip_each():
@@ -556,6 +697,175 @@ def test_setup_refires_while_armed_extends_window():
     })
     result = engine_run(ComposableStrategy(spec), bars, _make_config())
     # Last sweep was at idx 9, window=4 → armed through idx 13. Trigger at idx 12 → enters.
+    assert len(result.trades) == 1
+
+
+# ── per-call gate semantics ───────────────────────────────────────────
+
+
+def test_trigger_gate_blocks_entry_outside_window():
+    """Trigger with gate 08:00-10:00 ET. Bar fires at 07:55 ET → no entry."""
+    # 11:55 UTC on Apr 25 = 07:55 ET (DST, UTC-4)
+    early = _utc(2026, 4, 25, 11, 55)
+    bars = [
+        _bar(early + dt.timedelta(minutes=i), open_=21000, high=21010, low=20999, close=21009)
+        for i in range(3)
+    ]
+    spec = ComposableSpec.from_dict({
+        "trigger_long": [{
+            "feature": "decisive_close",
+            "params": {"direction": "BULLISH", "min_body_pct": 0.6, "min_range_pts": 1.0},
+            "gate": {"start": "08:00", "end": "10:00"},
+        }],
+        "stop": {"type": "fixed_pts", "stop_pts": 5.0},
+        "target": {"type": "r_multiple", "r": 2.0},
+    })
+    result = engine_run(ComposableStrategy(spec), bars, _make_config())
+    assert result.trades == []
+
+
+def test_trigger_gate_admits_entry_inside_window():
+    """Same trigger + gate; bar fires at 09:00 ET → enters."""
+    # 13:00 UTC on Apr 25 = 09:00 ET (DST)
+    inside = _utc(2026, 4, 25, 13, 0)
+    bars = [
+        _bar(inside + dt.timedelta(minutes=i), open_=21000, high=21010, low=20999, close=21009)
+        for i in range(3)
+    ]
+    spec = ComposableSpec.from_dict({
+        "trigger_long": [{
+            "feature": "decisive_close",
+            "params": {"direction": "BULLISH", "min_body_pct": 0.6, "min_range_pts": 1.0},
+            "gate": {"start": "08:00", "end": "10:00"},
+        }],
+        "stop": {"type": "fixed_pts", "stop_pts": 5.0},
+        "target": {"type": "r_multiple", "r": 2.0},
+    })
+    result = engine_run(ComposableStrategy(spec), bars, _make_config())
+    # First bar emits intent, fills on next bar.
+    assert len(result.trades) >= 1
+
+
+def test_setup_gate_does_not_arm_outside_window():
+    """Setup with gate 08:00-10:00 firing at 07:55 ET must NOT arm.
+
+    Sequence: day-1 history (PDH=21010), day-2 sweep at 07:55 (gated out),
+    decisive bear close at 09:55 (inside gate but no arm). Expect no trade.
+    """
+    day1 = _utc(2026, 4, 24, 14, 30)
+    bars: list[Bar] = []
+    for i in range(5):
+        bars.append(_bar(day1 + dt.timedelta(minutes=i), open_=21000, high=21010, low=20995, close=21005))
+    # Day 2 bar 0: sweep at 07:55 ET (11:55 UTC) — gated OUT, must NOT arm.
+    early = _utc(2026, 4, 25, 11, 55)
+    bars.append(_bar(early, open_=21015, high=21020, low=21013, close=21012))
+    # Filler bars to advance to 09:55 ET = 13:55 UTC
+    for i in range(1, 121):
+        bars.append(_bar(early + dt.timedelta(minutes=i), open_=21008, high=21009, low=21005, close=21008))
+    # Bar at 13:55 UTC = 09:55 ET: decisive bear close (inside gate).
+    bars.append(_bar(_utc(2026, 4, 25, 13, 55), open_=21008, high=21009, low=20995, close=20996))
+    bars.append(_bar(_utc(2026, 4, 25, 13, 56), open_=20996, high=20997, low=20990, close=20991))
+
+    spec = ComposableSpec.from_dict({
+        "setup_short": [{
+            "feature": "prior_level_sweep",
+            "params": {"level": "PDH", "direction": "above"},
+            "gate": {"start": "08:00", "end": "10:00"},
+        }],
+        "trigger_short": [{"feature": "decisive_close", "params": {"direction": "BEARISH", "min_body_pct": 0.6}}],
+        "setup_window": {"short": None},  # persistent — would normally hold across the day
+        "stop": {"type": "fixed_pts", "stop_pts": 10.0},
+        "target": {"type": "r_multiple", "r": 3.0},
+    })
+    result = engine_run(ComposableStrategy(spec), bars, _make_config())
+    # Setup never armed (gated out at 07:55), so no entry even though trigger
+    # fires at 09:55 (inside gate but irrelevant — gate is on the SETUP).
+    assert result.trades == []
+
+
+# ── new setup-window variants: minutes, until_clock ───────────────────
+
+
+def test_setup_window_minutes_expires():
+    """Setup at 09:30 ET, window=minutes:5. Trigger at 09:36 ET → no entry."""
+    day1 = _utc(2026, 4, 24, 14, 30)
+    bars: list[Bar] = []
+    for i in range(5):
+        bars.append(_bar(day1 + dt.timedelta(minutes=i), open_=21000, high=21010, low=20995, close=21005))
+    # Day 2 bar 0: sweep at 09:30 ET (13:30 UTC)
+    base = _utc(2026, 4, 25, 13, 30)
+    bars.append(_bar(base, open_=21015, high=21020, low=21013, close=21012))
+    # 6 quiet minutes — past the 5-min window.
+    for i in range(1, 7):
+        bars.append(_bar(base + dt.timedelta(minutes=i), open_=21008, high=21009, low=21005, close=21008))
+    # Decisive bear close at 09:37 ET (13:37 UTC) — past window.
+    bars.append(_bar(base + dt.timedelta(minutes=7), open_=21008, high=21009, low=20995, close=20996))
+    bars.append(_bar(base + dt.timedelta(minutes=8), open_=20996, high=20997, low=20990, close=20991))
+
+    spec = ComposableSpec.from_dict({
+        "setup_short": [{"feature": "prior_level_sweep", "params": {"level": "PDH", "direction": "above"}}],
+        "trigger_short": [{"feature": "decisive_close", "params": {"direction": "BEARISH", "min_body_pct": 0.6}}],
+        "setup_window": {"short": {"type": "minutes", "n": 5}},
+        "stop": {"type": "fixed_pts", "stop_pts": 10.0},
+        "target": {"type": "r_multiple", "r": 3.0},
+    })
+    result = engine_run(ComposableStrategy(spec), bars, _make_config())
+    assert result.trades == []
+
+
+def test_setup_window_until_clock_expires():
+    """Setup at 09:30 ET, until_clock end_hour=10.0. Trigger at 10:05 → no entry."""
+    day1 = _utc(2026, 4, 24, 14, 30)
+    bars: list[Bar] = []
+    for i in range(5):
+        bars.append(_bar(day1 + dt.timedelta(minutes=i), open_=21000, high=21010, low=20995, close=21005))
+    # Day 2 bar 0: sweep at 09:30 ET (13:30 UTC)
+    base = _utc(2026, 4, 25, 13, 30)
+    bars.append(_bar(base, open_=21015, high=21020, low=21013, close=21012))
+    # Quiet through 10:04, then decisive bear at 10:05 — past 10:00 deadline.
+    for i in range(1, 36):
+        bars.append(_bar(base + dt.timedelta(minutes=i), open_=21008, high=21009, low=21005, close=21008))
+    # 14:05 UTC = 10:05 ET
+    bars.append(_bar(_utc(2026, 4, 25, 14, 5), open_=21008, high=21009, low=20995, close=20996))
+    bars.append(_bar(_utc(2026, 4, 25, 14, 6), open_=20996, high=20997, low=20990, close=20991))
+
+    spec = ComposableSpec.from_dict({
+        "setup_short": [{"feature": "prior_level_sweep", "params": {"level": "PDH", "direction": "above"}}],
+        "trigger_short": [{"feature": "decisive_close", "params": {"direction": "BEARISH", "min_body_pct": 0.6}}],
+        "setup_window": {
+            "short": {"type": "until_clock", "end_hour": 10.0, "tz": "America/New_York"}
+        },
+        "stop": {"type": "fixed_pts", "stop_pts": 10.0},
+        "target": {"type": "r_multiple", "r": 3.0},
+    })
+    result = engine_run(ComposableStrategy(spec), bars, _make_config())
+    assert result.trades == []
+
+
+def test_setup_window_until_clock_admits_entry_inside():
+    """Same setup, until_clock end_hour=10.0. Trigger at 09:55 → enters."""
+    day1 = _utc(2026, 4, 24, 14, 30)
+    bars: list[Bar] = []
+    for i in range(5):
+        bars.append(_bar(day1 + dt.timedelta(minutes=i), open_=21000, high=21010, low=20995, close=21005))
+    base = _utc(2026, 4, 25, 13, 30)  # 09:30 ET
+    bars.append(_bar(base, open_=21015, high=21020, low=21013, close=21012))
+    for i in range(1, 25):
+        bars.append(_bar(base + dt.timedelta(minutes=i), open_=21008, high=21009, low=21005, close=21008))
+    # 13:55 UTC = 09:55 ET — inside the until-10:00 window.
+    bars.append(_bar(_utc(2026, 4, 25, 13, 55), open_=21008, high=21009, low=20995, close=20996))
+    bars.append(_bar(_utc(2026, 4, 25, 13, 56), open_=20996, high=20997, low=20990, close=20991))
+
+    spec = ComposableSpec.from_dict({
+        "setup_short": [{"feature": "prior_level_sweep", "params": {"level": "PDH", "direction": "above"}}],
+        "trigger_short": [{"feature": "decisive_close", "params": {"direction": "BEARISH", "min_body_pct": 0.6}}],
+        "setup_window": {
+            "short": {"type": "until_clock", "end_hour": 10.0, "tz": "America/New_York"}
+        },
+        "stop": {"type": "fixed_pts", "stop_pts": 10.0},
+        "target": {"type": "r_multiple", "r": 3.0},
+    })
+    result = engine_run(ComposableStrategy(spec), bars, _make_config())
     assert len(result.trades) == 1
 
 

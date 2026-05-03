@@ -16,6 +16,7 @@ from app.features import FEATURES, FeatureResult
 from app.features.co_score import co_score
 from app.features.decisive_close import decisive_close
 from app.features.fvg_touch_recent import fvg_touch_recent
+from app.features.orderblock_engulf import orderblock_engulf
 from app.features.prior_level_sweep import prior_level_sweep
 from app.features.smt_at_level import smt_at_level
 from app.features.swing_sweep import swing_sweep
@@ -276,6 +277,91 @@ def test_volatility_regime_not_low_filter():
         require="low",
     )
     assert not r_low.passed
+
+
+# ── orderblock_engulf ─────────────────────────────────────────────────
+
+
+def test_orderblock_engulf_bullish_passes():
+    """Down-close at idx 1 (open 21010, close 21005). Up-close at idx 3
+    with close 21012 > 21010 → BULLISH engulf passes."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [
+        _bar(base + dt.timedelta(minutes=0), open_=21000, high=21006, low=20999, close=21005),
+        # Down-close: open 21010, close 21005
+        _bar(base + dt.timedelta(minutes=1), open_=21010, high=21011, low=21004, close=21005),
+        # Quiet bar
+        _bar(base + dt.timedelta(minutes=2), open_=21005, high=21008, low=21003, close=21006),
+        # Current: close 21012 > down-bar open 21010
+        _bar(base + dt.timedelta(minutes=3), open_=21006, high=21013, low=21005, close=21012),
+    ]
+    r = orderblock_engulf(
+        bars=bars, aux={}, current_idx=3,
+        direction="BULLISH", lookback=6, min_body_pct=0.0,
+    )
+    assert r.passed, r.metadata
+    assert r.direction == "BULLISH"
+    assert r.metadata["counter_idx"] == 1
+    assert r.metadata["counter_open"] == 21010
+
+
+def test_orderblock_engulf_bearish_passes():
+    """Up-close at idx 1 (open 21000, close 21010). Current close 20998 < 21000."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [
+        _bar(base + dt.timedelta(minutes=0), open_=21005, high=21006, low=21000, close=21002),
+        # Up-close: open 21000, close 21010
+        _bar(base + dt.timedelta(minutes=1), open_=21000, high=21011, low=20999, close=21010),
+        # Quiet
+        _bar(base + dt.timedelta(minutes=2), open_=21010, high=21012, low=21003, close=21006),
+        # Current: close 20998 < up-bar open 21000
+        _bar(base + dt.timedelta(minutes=3), open_=21006, high=21008, low=20996, close=20998),
+    ]
+    r = orderblock_engulf(
+        bars=bars, aux={}, current_idx=3,
+        direction="BEARISH", lookback=6, min_body_pct=0.0,
+    )
+    assert r.passed, r.metadata
+    assert r.direction == "BEARISH"
+    assert r.metadata["counter_idx"] == 1
+
+
+def test_orderblock_engulf_no_counter_close_in_lookback_fails():
+    """All bars are up-closes; BULLISH lookup finds no down-close → fails."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [
+        _bar(base + dt.timedelta(minutes=i), open_=21000 + i, high=21010 + i, low=20999 + i, close=21008 + i)
+        for i in range(5)
+    ]
+    r = orderblock_engulf(
+        bars=bars, aux={}, current_idx=4,
+        direction="BULLISH", lookback=4, min_body_pct=0.0,
+    )
+    assert not r.passed
+    assert r.metadata.get("reason") == "no counter-close in lookback"
+
+
+def test_orderblock_engulf_min_body_pct_filter():
+    """Body % below threshold rejects even with valid engulf geometry."""
+    base = _utc(2026, 4, 24, 13, 30)
+    bars = [
+        # Down-close at idx 0
+        _bar(base + dt.timedelta(minutes=0), open_=21010, high=21015, low=20990, close=21005),
+        # Current: weak body — close 21011 > 21010 (engulf), but body 1pt vs range 25pt = 4%
+        _bar(base + dt.timedelta(minutes=1), open_=21010, high=21025, low=21000, close=21011),
+    ]
+    r = orderblock_engulf(
+        bars=bars, aux={}, current_idx=1,
+        direction="BULLISH", lookback=6, min_body_pct=0.5,
+    )
+    assert not r.passed
+
+
+def test_orderblock_engulf_registered_in_FEATURES():
+    assert "orderblock_engulf" in FEATURES
+    spec = FEATURES["orderblock_engulf"]
+    assert "trigger" in spec.roles
+    assert "direction" in spec.param_schema
 
 
 # ── decisive_close ────────────────────────────────────────────────────
