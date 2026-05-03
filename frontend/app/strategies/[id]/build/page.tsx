@@ -8,12 +8,14 @@ import { Card, CardHead, Chip, PageHeader } from "@/components/atoms";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AgentChatPanel } from "@/components/strategies/builder/AgentChatPanel";
+import { CollapsibleSection } from "@/components/strategies/builder/CollapsibleSection";
 import {
   FeaturePantry,
   type AddTarget,
   type BucketSlot,
 } from "@/components/strategies/builder/FeaturePantry";
 import { type FeatureDef } from "@/components/strategies/builder/FeatureRow";
+import { NextStepCard } from "@/components/strategies/builder/NextStepCard";
 import { PipelineStage } from "@/components/strategies/builder/PipelineStage";
 import { StrategyPipeline } from "@/components/strategies/builder/StrategyPipeline";
 import {
@@ -24,6 +26,7 @@ import {
   STOP_TYPE_REQUIRES,
   metadataFor,
 } from "@/components/strategies/builder/featureMetadata";
+import type { StarterTemplate } from "@/lib/strategies/templates";
 import { usePoll } from "@/lib/poll";
 import {
   DEFAULT_SPEC,
@@ -200,8 +203,6 @@ type StrategyDetail = {
   versions: StrategyVersion[];
 };
 
-const VERIFY_KEY = "bs.strategy_builder.spec_verified";
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
@@ -218,18 +219,6 @@ export default function StrategyBuildPage() {
 
   const [versionId, setVersionId] = useState<number | null>(null);
   const [spec, setSpec] = useState<Spec>(DEFAULT_SPEC);
-  const [verified, setVerified] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setVerified(window.localStorage.getItem(VERIFY_KEY) === "1");
-  }, []);
-  function toggleVerified(next: boolean) {
-    setVerified(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(VERIFY_KEY, next ? "1" : "0");
-    }
-  }
 
   // Default-pick the newest non-archived version on first data load
   useEffect(() => {
@@ -332,6 +321,17 @@ export default function StrategyBuildPage() {
     [],
   );
 
+  const updateGate = useCallback(
+    (slot: BucketSlot, index: number, gate: CallGate | null) => {
+      setSpec((s) => {
+        const arr = [...s[slot]];
+        arr[index] = { ...arr[index], gate };
+        return { ...s, [slot]: arr };
+      });
+    },
+    [],
+  );
+
   const setWindow = useCallback(
     (direction: "long" | "short", next: WindowSpec | null) => {
       setSpec((s) => ({
@@ -341,6 +341,10 @@ export default function StrategyBuildPage() {
     },
     [],
   );
+
+  const applyTemplate = useCallback((template: StarterTemplate) => {
+    setSpec(template.spec);
+  }, []);
 
   // Agent emits spec_json patches in fenced code blocks; AgentChatPanel
   // parses and forwards them here. We whitelist fields so an off-base
@@ -406,9 +410,6 @@ export default function StrategyBuildPage() {
   // ── save: pre-validate, PATCH, surface 422 detail ────────────────────────
 
   async function save() {
-    if (!verified) {
-      throw new Error('Toggle "I verified the spec_json contract" first.');
-    }
     if (versionId == null) throw new Error("Pick a version first.");
     if (issues.some((i) => i.severity === "error")) {
       throw new Error(
@@ -447,12 +448,21 @@ export default function StrategyBuildPage() {
     strategy.kind === "data" ? strategy.data.name : `Strategy #${strategyId}`;
   const versions = strategy.kind === "data" ? strategy.data.versions : [];
 
+  // Section completion flags drive whether the section renders open or
+  // collapsed by default. Open while incomplete; collapse when filled in.
+  const longComplete =
+    spec.trigger_long.length > 0 || spec.setup_long.length > 0;
+  const shortComplete =
+    spec.trigger_short.length > 0 || spec.setup_short.length > 0;
+  const stopSummary = describeStop(spec.stop);
+  const targetSummary = describeTarget(spec.target);
+
   return (
     <div className="mx-auto max-w-[1480px] px-6 py-8">
       <PageHeader
-        eyebrow="STRATEGY BUILDER · EXPERIMENTAL"
+        eyebrow="STRATEGY BUILDER"
         title={`Build: ${stratName}`}
-        sub="Compose entry / exit / stop / target rules from the feature pantry. Save persists to the version's spec_json field."
+        sub="Compose setup / trigger / stop / target rules from the feature pantry. Save persists to the version's spec_json field."
         right={
           <div className="flex items-center gap-2">
             <Link href="/strategies/builder" className="btn">
@@ -461,9 +471,9 @@ export default function StrategyBuildPage() {
             <AsyncButton
               onClick={save}
               variant="primary"
-              disabled={!verified || versionId == null}
+              disabled={versionId == null}
             >
-              {verified ? "Save spec" : "Save (locked)"}
+              Save spec
             </AsyncButton>
           </div>
         }
@@ -477,36 +487,6 @@ export default function StrategyBuildPage() {
           onDismiss={() => setSaveError(null)}
         />
       )}
-
-      <Card className="mt-2 border-warn/30 bg-warn/10">
-        <div className="px-5 py-4 text-[12px] text-warn">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em]">
-              EXPERIMENTAL
-            </span>
-            <span className="font-mono text-[10.5px] text-warn/70">
-              spec_json contract not verified against backend
-            </span>
-          </div>
-          <p className="mt-1 leading-relaxed">
-            Save is disabled until you toggle below. Verify the round-trip shape
-            between this UI and{" "}
-            <code className="font-mono">
-              app.strategies.composable.config.ComposableSpec
-            </code>{" "}
-            in a code review first.
-          </p>
-          <label className="mt-3 inline-flex items-center gap-2 text-[12px] text-warn">
-            <input
-              type="checkbox"
-              checked={verified}
-              onChange={(e) => toggleVerified(e.target.checked)}
-              className="h-3.5 w-3.5"
-            />
-            I verified the spec_json contract — enable Save
-          </label>
-        </div>
-      </Card>
 
       <Card className="mt-4">
         <CardHead title="Version" eyebrow="pick one" />
@@ -540,49 +520,113 @@ export default function StrategyBuildPage() {
         <FeaturePantry features={features} onAdd={addToSlot} />
 
         <div className="grid gap-4">
-          <StrategyPipeline
-            direction="long"
+          <NextStepCard
+            strategyId={strategyId}
             spec={spec}
-            featureMap={featureMap}
-            updateParam={updateParam}
-            removeFromSlot={removeFromSlot}
-            moveInSlot={moveInSlot}
-            onWindowChange={setWindow}
-          />
-          <StrategyPipeline
-            direction="short"
-            spec={spec}
-            featureMap={featureMap}
-            updateParam={updateParam}
-            removeFromSlot={removeFromSlot}
-            moveInSlot={moveInSlot}
-            onWindowChange={setWindow}
-          />
-          <GlobalFilterRow
-            calls={spec.filter}
-            featureMap={featureMap}
-            updateParam={updateParam}
-            removeFromSlot={removeFromSlot}
-            moveInSlot={moveInSlot}
+            onApplyTemplate={applyTemplate}
           />
 
-          <StopCard
-            stop={spec.stop}
-            onChange={(stop) => setSpec((s) => ({ ...s, stop }))}
-            allPublished={allPublished(spec)}
-          />
-          <TargetCard
-            target={spec.target}
-            onChange={(target) => setSpec((s) => ({ ...s, target }))}
-          />
-          <AuxSymbolsCard
-            aux={spec.aux_symbols}
-            onChange={(aux_symbols) => setSpec((s) => ({ ...s, aux_symbols }))}
-          />
-          <CapsCard
-            spec={spec}
-            onChange={(patch) => setSpec((s) => ({ ...s, ...patch }))}
-          />
+          <CollapsibleSection
+            title="Long entries"
+            eyebrow="pipeline"
+            tone="pos"
+            defaultOpen={!longComplete || !shortComplete}
+            summary={pipelineSummary(spec, "long")}
+          >
+            <StrategyPipeline
+              direction="long"
+              spec={spec}
+              featureMap={featureMap}
+              updateParam={updateParam}
+              updateGate={updateGate}
+              removeFromSlot={removeFromSlot}
+              moveInSlot={moveInSlot}
+              onWindowChange={setWindow}
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Short entries"
+            eyebrow="pipeline"
+            tone="neg"
+            defaultOpen={!longComplete || !shortComplete}
+            summary={pipelineSummary(spec, "short")}
+          >
+            <StrategyPipeline
+              direction="short"
+              spec={spec}
+              featureMap={featureMap}
+              updateParam={updateParam}
+              updateGate={updateGate}
+              removeFromSlot={removeFromSlot}
+              moveInSlot={moveInSlot}
+              onWindowChange={setWindow}
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Global filter"
+            eyebrow="gates both directions"
+            tone="accent"
+            defaultOpen={spec.filter.length > 0}
+            summary={
+              spec.filter.length === 0
+                ? "(none)"
+                : `${spec.filter.length} feature${spec.filter.length === 1 ? "" : "s"}`
+            }
+          >
+            <GlobalFilterRow
+              calls={spec.filter}
+              featureMap={featureMap}
+              updateParam={updateParam}
+              updateGate={updateGate}
+              removeFromSlot={removeFromSlot}
+              moveInSlot={moveInSlot}
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Stop rule"
+            eyebrow="exit · stop"
+            defaultOpen={false}
+            summary={stopSummary}
+          >
+            <StopCard
+              stop={spec.stop}
+              onChange={(stop) => setSpec((s) => ({ ...s, stop }))}
+              allPublished={allPublished(spec)}
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Target rule"
+            eyebrow="exit · target"
+            defaultOpen={false}
+            summary={targetSummary}
+          >
+            <TargetCard
+              target={spec.target}
+              onChange={(target) => setSpec((s) => ({ ...s, target }))}
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Advanced"
+            eyebrow="aux symbols, sizing, caps"
+            defaultOpen={false}
+            summary={`${spec.aux_symbols.length} aux · qty ${spec.qty} · max ${spec.max_trades_per_day}/day`}
+          >
+            <div className="grid gap-4">
+              <AuxSymbolsCard
+                aux={spec.aux_symbols}
+                onChange={(aux_symbols) => setSpec((s) => ({ ...s, aux_symbols }))}
+              />
+              <CapsCard
+                spec={spec}
+                onChange={(patch) => setSpec((s) => ({ ...s, ...patch }))}
+              />
+            </div>
+          </CollapsibleSection>
         </div>
 
         <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
@@ -596,6 +640,30 @@ export default function StrategyBuildPage() {
   );
 }
 
+function describeStop(stop: StopRule): string {
+  if (stop.type === "fixed_pts") return `fixed · ${stop.stop_pts ?? 10} pts`;
+  if (stop.type === "fvg_buffer") return `FVG far edge + ${stop.buffer_pts ?? 5} pts`;
+  return stop.type;
+}
+
+function describeTarget(target: TargetRule): string {
+  if (target.type === "r_multiple") return `${target.r ?? 3}R of stop`;
+  if (target.type === "fixed_pts") return `fixed · ${target.target_pts ?? 30} pts`;
+  return target.type;
+}
+
+function pipelineSummary(spec: Spec, direction: "long" | "short"): string {
+  const setupCount =
+    direction === "long" ? spec.setup_long.length : spec.setup_short.length;
+  const triggerCount =
+    direction === "long" ? spec.trigger_long.length : spec.trigger_short.length;
+  if (setupCount === 0 && triggerCount === 0) return "(empty — won't fire)";
+  const parts: string[] = [];
+  parts.push(setupCount === 0 ? "no setup" : `${setupCount} setup`);
+  parts.push(triggerCount === 0 ? "no trigger" : `${triggerCount} trigger`);
+  return parts.join(" · ");
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Recipe sections
 // ─────────────────────────────────────────────────────────────────────────────
@@ -604,30 +672,25 @@ function GlobalFilterRow({
   calls,
   featureMap,
   updateParam,
+  updateGate,
   removeFromSlot,
   moveInSlot,
 }: {
   calls: FeatureCall[];
   featureMap: Map<string, FeatureDef>;
   updateParam: (slot: BucketSlot, i: number, k: string, v: unknown) => void;
+  updateGate?: (slot: BucketSlot, i: number, gate: CallGate | null) => void;
   removeFromSlot: (slot: BucketSlot, i: number) => void;
   moveInSlot: (slot: BucketSlot, i: number, d: -1 | 1) => void;
 }) {
   return (
     <section className="rounded-lg border border-line bg-bg-1/40 p-3">
-      <header className="mb-2 flex items-center gap-2">
-        <span className="rounded bg-accent-soft px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">
-          Global filter
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-3">
-          gates BOTH directions
-        </span>
-      </header>
       <PipelineStage
         role="filter"
         calls={calls}
         featureMap={featureMap}
         onParamChange={(i, k, v) => updateParam("filter", i, k, v)}
+        onGateChange={updateGate ? (i, g) => updateGate("filter", i, g) : undefined}
         onRemove={(i) => removeFromSlot("filter", i)}
         onMove={(i, d) => moveInSlot("filter", i, d)}
         emptyHint="(no global blocks — entries pass straight to per-direction filters)"

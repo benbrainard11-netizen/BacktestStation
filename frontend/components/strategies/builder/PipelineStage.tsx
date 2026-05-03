@@ -4,11 +4,17 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { FeatureRow, type FeatureDef, type FeatureRole } from "./FeatureRow";
+import {
+  FeatureRow,
+  type CallGate,
+  type FeatureDef,
+  type FeatureRole,
+} from "./FeatureRow";
 
 type FeatureCall = {
   feature: string;
   params: Record<string, unknown>;
+  gate?: CallGate | null;
 };
 
 const ROLE_TITLE: Record<FeatureRole, string> = {
@@ -34,6 +40,7 @@ export function PipelineStage({
   calls,
   featureMap,
   onParamChange,
+  onGateChange,
   onRemove,
   onMove,
   emptyHint,
@@ -42,6 +49,7 @@ export function PipelineStage({
   calls: FeatureCall[];
   featureMap: Map<string, FeatureDef>;
   onParamChange: (i: number, k: string, v: unknown) => void;
+  onGateChange?: (i: number, gate: CallGate | null) => void;
   onRemove: (i: number) => void;
   onMove: (i: number, d: -1 | 1) => void;
   emptyHint?: string;
@@ -113,7 +121,11 @@ export function PipelineStage({
                       featureName={call.feature}
                       feature={def}
                       params={call.params}
+                      gate={call.gate ?? null}
                       onParamChange={(k, v) => onParamChange(i, k, v)}
+                      onGateChange={
+                        onGateChange ? (g) => onGateChange(i, g) : undefined
+                      }
                       onRemove={() => onRemove(i)}
                       onMoveUp={() => onMove(i, -1)}
                       onMoveDown={() => onMove(i, 1)}

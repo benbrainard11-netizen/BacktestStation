@@ -7,10 +7,12 @@ import { PipelineArrow } from "./PipelineArrow";
 import { PipelineStage } from "./PipelineStage";
 import { SetupWindowControl } from "./SetupWindowControl";
 
+type CallGate = { start_hour: number; end_hour: number; tz: string };
+
 type FeatureCall = {
   feature: string;
   params: Record<string, unknown>;
-  gate?: { start_hour: number; end_hour: number; tz: string } | null;
+  gate?: CallGate | null;
 };
 
 export type BucketSlot =
@@ -68,6 +70,7 @@ export function StrategyPipeline({
   spec,
   featureMap,
   updateParam,
+  updateGate,
   removeFromSlot,
   moveInSlot,
   onWindowChange,
@@ -76,6 +79,7 @@ export function StrategyPipeline({
   spec: SpecForPipeline;
   featureMap: Map<string, FeatureDef>;
   updateParam: (slot: BucketSlot, i: number, k: string, v: unknown) => void;
+  updateGate?: (slot: BucketSlot, i: number, gate: CallGate | null) => void;
   removeFromSlot: (slot: BucketSlot, i: number) => void;
   moveInSlot: (slot: BucketSlot, i: number, d: -1 | 1) => void;
   onWindowChange: (direction: "long" | "short", next: WindowSpec | null) => void;
@@ -119,6 +123,9 @@ export function StrategyPipeline({
           calls={spec[setupSlot]}
           featureMap={featureMap}
           onParamChange={(i, k, v) => updateParam(setupSlot, i, k, v)}
+          onGateChange={
+            updateGate ? (i, g) => updateGate(setupSlot, i, g) : undefined
+          }
           onRemove={(i) => removeFromSlot(setupSlot, i)}
           onMove={(i, d) => moveInSlot(setupSlot, i, d)}
         />
@@ -139,6 +146,9 @@ export function StrategyPipeline({
           calls={spec[triggerSlot]}
           featureMap={featureMap}
           onParamChange={(i, k, v) => updateParam(triggerSlot, i, k, v)}
+          onGateChange={
+            updateGate ? (i, g) => updateGate(triggerSlot, i, g) : undefined
+          }
           onRemove={(i) => removeFromSlot(triggerSlot, i)}
           onMove={(i, d) => moveInSlot(triggerSlot, i, d)}
         />
@@ -150,6 +160,9 @@ export function StrategyPipeline({
           calls={spec[filterSlot]}
           featureMap={featureMap}
           onParamChange={(i, k, v) => updateParam(filterSlot, i, k, v)}
+          onGateChange={
+            updateGate ? (i, g) => updateGate(filterSlot, i, g) : undefined
+          }
           onRemove={(i) => removeFromSlot(filterSlot, i)}
           onMove={(i, d) => moveInSlot(filterSlot, i, d)}
           emptyHint="(empty / per-direction)"
