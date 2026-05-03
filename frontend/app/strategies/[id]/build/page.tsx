@@ -11,7 +11,7 @@ import { AgentChatPanel } from "@/components/strategies/builder/AgentChatPanel";
 import {
   FeaturePantry,
   type AddTarget,
-  type EntrySlot,
+  type BucketSlot,
 } from "@/components/strategies/builder/FeaturePantry";
 import {
   FeatureRow,
@@ -52,9 +52,20 @@ type TargetRule = {
   target_pts?: number;
 };
 
+type SetupWindow = {
+  long: number | null;
+  short: number | null;
+};
+
 type Spec = {
-  entry_long: FeatureCall[];
-  entry_short: FeatureCall[];
+  setup_long: FeatureCall[];
+  trigger_long: FeatureCall[];
+  setup_short: FeatureCall[];
+  trigger_short: FeatureCall[];
+  filter: FeatureCall[];
+  filter_long: FeatureCall[];
+  filter_short: FeatureCall[];
+  setup_window: SetupWindow;
   stop: StopRule;
   target: TargetRule;
   qty: number;
@@ -66,9 +77,27 @@ type Spec = {
   aux_symbols: string[];
 };
 
+/** Subset of Spec keys whose values are FeatureCall[] — usable wherever
+ *  we operate on a recipe bucket generically. */
+const BUCKET_KEYS: BucketSlot[] = [
+  "setup_long",
+  "trigger_long",
+  "setup_short",
+  "trigger_short",
+  "filter",
+  "filter_long",
+  "filter_short",
+];
+
 const DEFAULT_SPEC: Spec = {
-  entry_long: [],
-  entry_short: [],
+  setup_long: [],
+  trigger_long: [],
+  setup_short: [],
+  trigger_short: [],
+  filter: [],
+  filter_long: [],
+  filter_short: [],
+  setup_window: { long: null, short: null },
   stop: { type: "fixed_pts", stop_pts: 10, buffer_pts: 5 },
   target: { type: "r_multiple", r: 3, target_pts: 30 },
   qty: 1,
@@ -80,15 +109,50 @@ const DEFAULT_SPEC: Spec = {
   aux_symbols: [],
 };
 
+function callArray(j: Record<string, unknown>, key: string): FeatureCall[] {
+  return Array.isArray(j[key]) ? (j[key] as FeatureCall[]) : [];
+}
+
 function specFromJson(raw: unknown): Spec {
   const j = (raw ?? {}) as Record<string, unknown>;
-  return {
-    entry_long: Array.isArray(j.entry_long)
+  // Backward-compat: an old-shape spec_json with only `entry_long`/`entry_short`
+  // (pre-2026-05-02) becomes trigger_long/trigger_short at load time. The
+  // backend deserializer does the same thing on the engine side; mirroring
+  // it here keeps the UI in lockstep so users editing an old strategy see
+  // their features in the trigger buckets immediately.
+  const hasNewLong = Array.isArray(j.trigger_long);
+  const hasNewShort = Array.isArray(j.trigger_short);
+  const hasOldLong = Array.isArray(j.entry_long);
+  const hasOldShort = Array.isArray(j.entry_short);
+  const trigger_long = hasNewLong
+    ? (j.trigger_long as FeatureCall[])
+    : hasOldLong
       ? (j.entry_long as FeatureCall[])
-      : [],
-    entry_short: Array.isArray(j.entry_short)
+      : [];
+  const trigger_short = hasNewShort
+    ? (j.trigger_short as FeatureCall[])
+    : hasOldShort
       ? (j.entry_short as FeatureCall[])
-      : [],
+      : [];
+  const sw = (j.setup_window as Partial<SetupWindow> | undefined) ?? {};
+  return {
+    setup_long: callArray(j, "setup_long"),
+    trigger_long,
+    setup_short: callArray(j, "setup_short"),
+    trigger_short,
+    filter: callArray(j, "filter"),
+    filter_long: callArray(j, "filter_long"),
+    filter_short: callArray(j, "filter_short"),
+    setup_window: {
+      long:
+        typeof sw.long === "number" || sw.long === null
+          ? (sw.long as number | null)
+          : null,
+      short:
+        typeof sw.short === "number" || sw.short === null
+          ? (sw.short as number | null)
+          : null,
+    },
     stop: (j.stop as StopRule) ?? DEFAULT_SPEC.stop,
     target: (j.target as TargetRule) ?? DEFAULT_SPEC.target,
     qty: typeof j.qty === "number" ? j.qty : DEFAULT_SPEC.qty,
@@ -205,18 +269,23 @@ export default function StrategyBuildPage() {
   const addToSlot = useCallback(
     (target: AddTarget, featureName: string) => {
       const def = featureMap.get(featureName);
-      if (target === "both") {
-        // Auto-flip the `direction` enum if the feature has one with
-        // BULLISH/BEARISH values. Other direction-style enums (e.g.
-        // prior_level_sweep's "above"/"below") get left blank since the
-        // user → trade direction mapping is feature-specific. Numeric
-        // params are duplicated as-is.
+      if (target === "both_trigger") {
         const longCall = makeCall(featureName, def, "BULLISH");
         const shortCall = makeCall(featureName, def, "BEARISH");
         setSpec((s) => ({
           ...s,
-          entry_long: [...s.entry_long, longCall],
-          entry_short: [...s.entry_short, shortCall],
+          trigger_long: [...s.trigger_long, longCall],
+          trigger_short: [...s.trigger_short, shortCall],
+        }));
+        return;
+      }
+      if (target === "both_setup") {
+        const longCall = makeCall(featureName, def, "BULLISH");
+        const shortCall = makeCall(featureName, def, "BEARISH");
+        setSpec((s) => ({
+          ...s,
+          setup_long: [...s.setup_long, longCall],
+          setup_short: [...s.setup_short, shortCall],
         }));
         return;
       }
@@ -229,7 +298,7 @@ export default function StrategyBuildPage() {
     [featureMap],
   );
 
-  const removeFromSlot = useCallback((slot: EntrySlot, index: number) => {
+  const removeFromSlot = useCallback((slot: BucketSlot, index: number) => {
     setSpec((s) => ({
       ...s,
       [slot]: s[slot].filter((_, i) => i !== index),
@@ -237,7 +306,7 @@ export default function StrategyBuildPage() {
   }, []);
 
   const moveInSlot = useCallback(
-    (slot: EntrySlot, index: number, dir: -1 | 1) => {
+    (slot: BucketSlot, index: number, dir: -1 | 1) => {
       setSpec((s) => {
         const arr = [...s[slot]];
         const j = index + dir;
@@ -250,7 +319,7 @@ export default function StrategyBuildPage() {
   );
 
   const updateParam = useCallback(
-    (slot: EntrySlot, index: number, key: string, value: unknown) => {
+    (slot: BucketSlot, index: number, key: string, value: unknown) => {
       setSpec((s) => {
         const arr = [...s[slot]];
         arr[index] = {
@@ -270,11 +339,33 @@ export default function StrategyBuildPage() {
   const applyAgentPatch = useCallback((patch: Record<string, unknown>) => {
     setSpec((s) => {
       const next: Spec = { ...s };
-      if (Array.isArray(patch.entry_long)) {
-        next.entry_long = patch.entry_long as FeatureCall[];
+      // Map old-shape keys (entry_long/entry_short) into trigger_* so the
+      // agent's older fenced-JSON examples still apply cleanly. Otherwise
+      // the patch keys take their literal slot.
+      if (Array.isArray(patch.entry_long) && !Array.isArray(patch.trigger_long)) {
+        next.trigger_long = patch.entry_long as FeatureCall[];
       }
-      if (Array.isArray(patch.entry_short)) {
-        next.entry_short = patch.entry_short as FeatureCall[];
+      if (Array.isArray(patch.entry_short) && !Array.isArray(patch.trigger_short)) {
+        next.trigger_short = patch.entry_short as FeatureCall[];
+      }
+      for (const k of BUCKET_KEYS) {
+        const v = patch[k];
+        if (Array.isArray(v)) {
+          next[k] = v as FeatureCall[];
+        }
+      }
+      if (patch.setup_window && typeof patch.setup_window === "object") {
+        const sw = patch.setup_window as Partial<SetupWindow>;
+        next.setup_window = {
+          long:
+            typeof sw.long === "number" || sw.long === null
+              ? (sw.long as number | null)
+              : next.setup_window.long,
+          short:
+            typeof sw.short === "number" || sw.short === null
+              ? (sw.short as number | null)
+              : next.setup_window.short,
+        };
       }
       if (patch.stop && typeof patch.stop === "object") {
         next.stop = patch.stop as StopRule;
@@ -445,23 +536,35 @@ export default function StrategyBuildPage() {
 
         <div className="grid gap-4">
           <RecipeSection
-            title="Entry — long"
-            slot="entry_long"
-            calls={spec.entry_long}
+            title="Filter — global"
+            blurb="Block conditions evaluated against any candidate entry, both directions."
+            slot="filter"
+            calls={spec.filter}
             featureMap={featureMap}
-            onParamChange={(i, k, v) => updateParam("entry_long", i, k, v)}
-            onRemove={(i) => removeFromSlot("entry_long", i)}
-            onMove={(i, d) => moveInSlot("entry_long", i, d)}
+            onParamChange={(i, k, v) => updateParam("filter", i, k, v)}
+            onRemove={(i) => removeFromSlot("filter", i)}
+            onMove={(i, d) => moveInSlot("filter", i, d)}
           />
-          <RecipeSection
-            title="Entry — short"
-            slot="entry_short"
-            calls={spec.entry_short}
-            featureMap={featureMap}
-            onParamChange={(i, k, v) => updateParam("entry_short", i, k, v)}
-            onRemove={(i) => removeFromSlot("entry_short", i)}
-            onMove={(i, d) => moveInSlot("entry_short", i, d)}
-          />
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <DirectionColumn
+              direction="long"
+              spec={spec}
+              featureMap={featureMap}
+              updateParam={updateParam}
+              removeFromSlot={removeFromSlot}
+              moveInSlot={moveInSlot}
+            />
+            <DirectionColumn
+              direction="short"
+              spec={spec}
+              featureMap={featureMap}
+              updateParam={updateParam}
+              removeFromSlot={removeFromSlot}
+              moveInSlot={moveInSlot}
+            />
+          </div>
+
           <StopCard
             stop={spec.stop}
             onChange={(stop) => setSpec((s) => ({ ...s, stop }))}
@@ -496,8 +599,77 @@ export default function StrategyBuildPage() {
 // Recipe sections
 // ─────────────────────────────────────────────────────────────────────────────
 
+function DirectionColumn({
+  direction,
+  spec,
+  featureMap,
+  updateParam,
+  removeFromSlot,
+  moveInSlot,
+}: {
+  direction: "long" | "short";
+  spec: Spec;
+  featureMap: Map<string, FeatureDef>;
+  updateParam: (slot: BucketSlot, i: number, k: string, v: unknown) => void;
+  removeFromSlot: (slot: BucketSlot, i: number) => void;
+  moveInSlot: (slot: BucketSlot, i: number, d: -1 | 1) => void;
+}) {
+  const setupSlot: BucketSlot = direction === "long" ? "setup_long" : "setup_short";
+  const triggerSlot: BucketSlot =
+    direction === "long" ? "trigger_long" : "trigger_short";
+  const filterSlot: BucketSlot =
+    direction === "long" ? "filter_long" : "filter_short";
+  const tone = direction === "long" ? "pos" : "neg";
+
+  return (
+    <div className="grid gap-3">
+      <div
+        className={cn(
+          "rounded-md border px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
+          tone === "pos"
+            ? "border-pos/40 bg-pos/10 text-pos"
+            : "border-neg/40 bg-neg/10 text-neg",
+        )}
+      >
+        {direction === "long" ? "Long entries" : "Short entries"}
+      </div>
+      <RecipeSection
+        title="Setup"
+        blurb="Persistent state that arms the entry window. Empty = always armed."
+        slot={setupSlot}
+        calls={spec[setupSlot]}
+        featureMap={featureMap}
+        onParamChange={(i, k, v) => updateParam(setupSlot, i, k, v)}
+        onRemove={(i) => removeFromSlot(setupSlot, i)}
+        onMove={(i, d) => moveInSlot(setupSlot, i, d)}
+      />
+      <RecipeSection
+        title="Trigger"
+        blurb="Moment-in-time fire signal. Required for any entry."
+        slot={triggerSlot}
+        calls={spec[triggerSlot]}
+        featureMap={featureMap}
+        onParamChange={(i, k, v) => updateParam(triggerSlot, i, k, v)}
+        onRemove={(i) => removeFromSlot(triggerSlot, i)}
+        onMove={(i, d) => moveInSlot(triggerSlot, i, d)}
+      />
+      <RecipeSection
+        title="Filter"
+        blurb={`Block conditions for ${direction} entries only (additional to global filter).`}
+        slot={filterSlot}
+        calls={spec[filterSlot]}
+        featureMap={featureMap}
+        onParamChange={(i, k, v) => updateParam(filterSlot, i, k, v)}
+        onRemove={(i) => removeFromSlot(filterSlot, i)}
+        onMove={(i, d) => moveInSlot(filterSlot, i, d)}
+      />
+    </div>
+  );
+}
+
 function RecipeSection({
   title,
+  blurb,
   slot,
   calls,
   featureMap,
@@ -506,7 +678,8 @@ function RecipeSection({
   onMove,
 }: {
   title: string;
-  slot: EntrySlot;
+  blurb?: string;
+  slot: BucketSlot;
   calls: FeatureCall[];
   featureMap: Map<string, FeatureDef>;
   onParamChange: (i: number, k: string, v: unknown) => void;
@@ -538,11 +711,15 @@ function RecipeSection({
           </span>
         }
       />
+      {blurb && (
+        <p className="px-4 pt-2 text-[11px] leading-relaxed text-ink-3">
+          {blurb}
+        </p>
+      )}
       <div className="px-3 py-3">
         {calls.length === 0 ? (
-          <div className="rounded border border-dashed border-line py-6 text-center text-[11px] text-ink-3">
-            Add a feature from the pantry to start the {slot.replace("_", " ")}{" "}
-            recipe.
+          <div className="rounded border border-dashed border-line py-4 text-center text-[10.5px] text-ink-3">
+            Add a feature from the pantry → {slot.replace(/_/g, " ")}.
           </div>
         ) : (
           <div className="grid gap-2">
@@ -574,7 +751,7 @@ function RecipeSection({
                   {missingReads.length > 0 && (
                     <div className="mt-1 rounded border border-warn/40 bg-warn/10 px-3 py-1.5 font-mono text-[10.5px] text-warn">
                       ⚠ this step reads {missingReads.join(", ")} — no earlier
-                      step in {slot.replace("_", " ")} publishes that. Move a
+                      step in {slot.replace(/_/g, " ")} publishes that. Move a
                       producer (e.g. <code>prior_level_sweep</code>) above this
                       step.
                     </div>
@@ -611,10 +788,11 @@ function makeCall(
 
 function allPublished(spec: Spec): string[] {
   const out: string[] = [];
-  for (const c of spec.entry_long)
-    out.push(...metadataFor(c.feature).publishes);
-  for (const c of spec.entry_short)
-    out.push(...metadataFor(c.feature).publishes);
+  for (const slot of BUCKET_KEYS) {
+    for (const c of spec[slot]) {
+      out.push(...metadataFor(c.feature).publishes);
+    }
+  }
   return unique(out);
 }
 
@@ -635,17 +813,35 @@ function validateSpec(
 ): Issue[] {
   const out: Issue[] = [];
 
-  // Empty everything = no-op strategy. Engine accepts but warn the user.
-  if (spec.entry_long.length === 0 && spec.entry_short.length === 0) {
+  // Empty triggers = no-op strategy. Engine accepts but warn the user.
+  if (spec.trigger_long.length === 0 && spec.trigger_short.length === 0) {
     out.push({
       severity: "warn",
-      path: "entry_*",
+      path: "trigger_*",
       message:
-        "no entries defined — strategy will run but never trade. Add at least one feature to entry_long or entry_short.",
+        "no triggers defined — strategy will run but never enter. Add at least one feature to trigger_long or trigger_short.",
     });
   }
 
-  for (const slot of ["entry_long", "entry_short"] as const) {
+  // Setup without a trigger never fires.
+  if (spec.setup_long.length > 0 && spec.trigger_long.length === 0) {
+    out.push({
+      severity: "error",
+      path: "setup_long",
+      message:
+        "setup_long has features but trigger_long is empty — setup arms a window but nothing fires the entry.",
+    });
+  }
+  if (spec.setup_short.length > 0 && spec.trigger_short.length === 0) {
+    out.push({
+      severity: "error",
+      path: "setup_short",
+      message:
+        "setup_short has features but trigger_short is empty — setup arms a window but nothing fires the entry.",
+    });
+  }
+
+  for (const slot of BUCKET_KEYS) {
     spec[slot].forEach((call, i) => {
       const def = featureMap.get(call.feature);
       if (!def) {
@@ -1149,8 +1345,14 @@ function CapsCard({
       step: 0.5,
     },
     // Other Spec keys aren't numeric caps; ignored here.
-    entry_long: { type: "string" },
-    entry_short: { type: "string" },
+    setup_long: { type: "string" },
+    trigger_long: { type: "string" },
+    setup_short: { type: "string" },
+    trigger_short: { type: "string" },
+    filter: { type: "string" },
+    filter_long: { type: "string" },
+    filter_short: { type: "string" },
+    setup_window: { type: "string" },
     stop: { type: "string" },
     target: { type: "string" },
     aux_symbols: { type: "string" },

@@ -8,15 +8,21 @@ import { ParamControl, type ParamSchemaEntry } from "./ParamControl";
 /**
  * Feature definition as returned by /api/features.
  */
+export type FeatureRole = "setup" | "trigger" | "filter";
+
 export type FeatureDef = {
   name: string;
   label?: string;
   description?: string;
   param_schema?: Record<string, ParamSchemaEntry>;
+  // Which buckets this feature can sit in. Comes from
+  // /api/features as of 2026-05-02 — backfilled per registry. UI uses
+  // this to render role chips on the pantry card and gate which add
+  // buttons are visible.
+  roles?: FeatureRole[];
   // Outputs the feature publishes into the metadata bag for downstream
-  // features in the same recipe to read. The backend doesn't expose this
-  // formally yet; for v1 we infer it from a hand-maintained map (see
-  // METADATA_OUTPUTS in the builder page).
+  // features in the same recipe to read. Hand-curated client-side map
+  // in featureMetadata.ts (publishes/reads — separate from roles).
   produces?: string[];
 };
 
