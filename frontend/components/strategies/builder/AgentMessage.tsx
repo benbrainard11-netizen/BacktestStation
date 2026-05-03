@@ -143,15 +143,42 @@ function summarizeToolCall(c: ToolCallView): string {
  * malformed JSON.
  */
 function extractSpecPatch(text: string): Record<string, unknown> | null {
-  // Match ```json spec_json\n...\n``` OR ```spec_json\n...\n```
-  const match =
+  // Match in priority order:
+  //   ```json spec_json\n...\n```   (preferred — explicit tag)
+  //   ```spec_json\n...\n```        (alternate)
+  //   ```json\n...\n```             (lenient — model often drops the tag)
+  // For the lenient case, only treat it as a spec patch if at least one
+  // top-level key looks like one of our recipe buckets (otherwise random
+  // ```json blocks unrelated to specs would trigger an Apply button).
+  const tagged =
     text.match(/```json\s+spec_json\s*\n([\s\S]*?)\n```/) ??
     text.match(/```spec_json\s*\n([\s\S]*?)\n```/);
-  if (!match) return null;
+  const lenient = tagged ?? text.match(/```json\s*\n([\s\S]*?)\n```/);
+  if (!lenient) return null;
   try {
-    const parsed = JSON.parse(match[1]) as unknown;
+    const parsed = JSON.parse(lenient[1]) as unknown;
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return null;
+    }
+    if (!tagged) {
+      const SPEC_KEYS = [
+        "setup_long",
+        "trigger_long",
+        "setup_short",
+        "trigger_short",
+        "filter",
+        "filter_long",
+        "filter_short",
+        "setup_window",
+        "entry_long",
+        "entry_short",
+        "stop",
+        "target",
+      ];
+      const hasSpecKey = Object.keys(parsed as object).some((k) =>
+        SPEC_KEYS.includes(k),
+      );
+      if (!hasSpecKey) return null;
     }
     return parsed as Record<string, unknown>;
   } catch {

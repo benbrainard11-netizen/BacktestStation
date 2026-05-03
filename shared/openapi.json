@@ -730,6 +730,49 @@
         "title": "ChatMessageRead",
         "type": "object"
       },
+      "ChatStreamRequest": {
+        "additionalProperties": false,
+        "description": "POST body for a streaming chat turn (Claude only).\n\nCodex CLI doesn't expose a streaming output format, so streaming is\nClaude-only for now. The synchronous POST /chat endpoint still\nsupports both models.\n\n`mode` controls the permission posture for the agent's toolbox:\n- \"compose\": read-only \u2014 Read/Glob/Grep only. Suggests spec_json\n  patches via fenced JSON blocks; never writes files.\n- \"author\":  read+write scoped to backend/app/features/ and\n  backend/tests/. Default toolset (Read/Write/Edit/Bash).",
+        "properties": {
+          "mode": {
+            "default": "compose",
+            "enum": [
+              "compose",
+              "author"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "model": {
+            "const": "claude",
+            "default": "claude",
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt": {
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "title": "ChatStreamRequest",
+        "type": "object"
+      },
       "ChatTurnRequest": {
         "additionalProperties": false,
         "description": "POST body for a new chat turn.",
@@ -10418,7 +10461,7 @@
     },
     "/api/features": {
       "get": {
-        "description": "Return the FEATURES registry as a flat list.\n\nEach entry: { name, label, description, param_schema }. Frontend\nrenders one card per entry in the feature pantry; clicking \"+ Add\"\ninstantiates a `{feature: name, params: {}}` block in the strategy\nspec.",
+        "description": "Return the FEATURES registry as a flat list.\n\nEach entry: { name, label, description, param_schema, roles }.\nFrontend renders one card per entry in the feature pantry; clicking\n\"+ Add\" instantiates a `{feature: name, params: {}}` block in the\nstrategy spec. `roles` is the set of buckets the feature can be\nplaced in: any subset of `setup`, `trigger`, `filter`.",
         "operationId": "list_features_api_features_get",
         "responses": {
           "200": {
@@ -12617,6 +12660,57 @@
           }
         },
         "summary": "Post Chat Turn",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/strategies/{strategy_id}/chat-stream": {
+      "post": {
+        "description": "Streaming variant of POST /chat. Returns NDJSON of StreamEvents.\n\nEach line is one JSON object with `type` and `payload`:\n  - {\"type\":\"text\",\"payload\":{\"delta\":\"...\"}}\n  - {\"type\":\"tool_use\",\"payload\":{\"name\":\"Write\",\"input\":{...}}}\n  - {\"type\":\"tool_result\",\"payload\":{\"is_error\":false,\"content\":\"...\"}}\n  - {\"type\":\"done\",\"payload\":{\"text\":\"...\",\"session_id\":\"...\",\"cost_usd\":..}}\n  - {\"type\":\"error\",\"payload\":{\"message\":\"...\"}}\n\nPersists the user message before the stream starts (so a reload\nmid-stream still shows what was asked) and the assistant message\nafter the stream emits a successful \"done\" event.",
+        "operationId": "post_chat_turn_streaming_api_strategies__strategy_id__chat_stream_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "strategy_id",
+            "required": true,
+            "schema": {
+              "title": "Strategy Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Chat Turn Streaming",
         "tags": [
           "chat"
         ]
