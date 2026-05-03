@@ -219,6 +219,11 @@ export default function StrategyBuildPage() {
 
   const [versionId, setVersionId] = useState<number | null>(null);
   const [spec, setSpec] = useState<Spec>(DEFAULT_SPEC);
+  /** Versions created in-page since the last poll tick reconciled. Merged
+   *  into the rendered version list so creating v1 unblocks the user
+   *  immediately instead of waiting up to 60s for the strategy poll. */
+  const [localVersions, setLocalVersions] = useState<StrategyVersion[]>([]);
+  const [creatingVersion, setCreatingVersion] = useState(false);
 
   // Default-pick the newest non-archived version on first data load
   useEffect(() => {
@@ -346,6 +351,28 @@ export default function StrategyBuildPage() {
     setSpec(template.spec);
   }, []);
 
+  async function createInitialVersion() {
+    if (creatingVersion) return;
+    setCreatingVersion(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(`/api/strategies/${strategyId}/versions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version: "v1" }),
+      });
+      if (!res.ok) {
+        setSaveError(await parseSaveError(res));
+        return;
+      }
+      const v = (await res.json()) as StrategyVersion;
+      setLocalVersions((prev) => [...prev, v]);
+      setVersionId(v.id);
+    } finally {
+      setCreatingVersion(false);
+    }
+  }
+
   // Agent emits spec_json patches in fenced code blocks; AgentChatPanel
   // parses and forwards them here. We whitelist fields so an off-base
   // patch (e.g., agent inventing a new top-level key) can't corrupt the
@@ -446,7 +473,15 @@ export default function StrategyBuildPage() {
 
   const stratName =
     strategy.kind === "data" ? strategy.data.name : `Strategy #${strategyId}`;
-  const versions = strategy.kind === "data" ? strategy.data.versions : [];
+  // Merge poll'd versions with locally-created ones (de-duplicated by id)
+  // so a freshly-created v1 lights up immediately instead of waiting for
+  // the next 60s poll tick.
+  const versions = (() => {
+    const polled = strategy.kind === "data" ? strategy.data.versions : [];
+    const polledIds = new Set(polled.map((v) => v.id));
+    const fresh = localVersions.filter((lv) => !polledIds.has(lv.id));
+    return [...polled, ...fresh];
+  })();
 
   // Section completion flags drive whether the section renders open or
   // collapsed by default. Open while incomplete; collapse when filled in.
@@ -492,7 +527,19 @@ export default function StrategyBuildPage() {
         <CardHead title="Version" eyebrow="pick one" />
         <div className="flex flex-wrap items-center gap-2 px-4 py-3">
           {versions.length === 0 ? (
-            <span className="text-[12px] text-ink-3">no versions</span>
+            <>
+              <span className="font-mono text-[11px] text-ink-3">
+                No versions yet — strategies need at least one to save a spec.
+              </span>
+              <button
+                type="button"
+                onClick={() => void createInitialVersion()}
+                disabled={creatingVersion}
+                className="rounded border border-pos/40 bg-pos/10 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-pos hover:bg-pos/20 disabled:opacity-50"
+              >
+                {creatingVersion ? "creating…" : "+ Create v1"}
+              </button>
+            </>
           ) : (
             versions.map((v) => (
               <button
