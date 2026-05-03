@@ -25,6 +25,7 @@ import {
   STOP_TYPE_REQUIRES,
   metadataFor,
 } from "@/components/strategies/builder/featureMetadata";
+import { SetupWindowControl } from "@/components/strategies/builder/SetupWindowControl";
 import { usePoll } from "@/lib/poll";
 import { cn } from "@/lib/utils";
 
@@ -332,6 +333,13 @@ export default function StrategyBuildPage() {
     [],
   );
 
+  const setWindow = useCallback((direction: "long" | "short", next: number | null) => {
+    setSpec((s) => ({
+      ...s,
+      setup_window: { ...s.setup_window, [direction]: next },
+    }));
+  }, []);
+
   // Agent emits spec_json patches in fenced code blocks; AgentChatPanel
   // parses and forwards them here. We whitelist fields so an off-base
   // patch (e.g., agent inventing a new top-level key) can't corrupt the
@@ -554,6 +562,7 @@ export default function StrategyBuildPage() {
               updateParam={updateParam}
               removeFromSlot={removeFromSlot}
               moveInSlot={moveInSlot}
+              onWindowChange={setWindow}
             />
             <DirectionColumn
               direction="short"
@@ -562,6 +571,7 @@ export default function StrategyBuildPage() {
               updateParam={updateParam}
               removeFromSlot={removeFromSlot}
               moveInSlot={moveInSlot}
+              onWindowChange={setWindow}
             />
           </div>
 
@@ -606,6 +616,7 @@ function DirectionColumn({
   updateParam,
   removeFromSlot,
   moveInSlot,
+  onWindowChange,
 }: {
   direction: "long" | "short";
   spec: Spec;
@@ -613,6 +624,7 @@ function DirectionColumn({
   updateParam: (slot: BucketSlot, i: number, k: string, v: unknown) => void;
   removeFromSlot: (slot: BucketSlot, i: number) => void;
   moveInSlot: (slot: BucketSlot, i: number, d: -1 | 1) => void;
+  onWindowChange: (direction: "long" | "short", next: number | null) => void;
 }) {
   const setupSlot: BucketSlot = direction === "long" ? "setup_long" : "setup_short";
   const triggerSlot: BucketSlot =
@@ -620,6 +632,8 @@ function DirectionColumn({
   const filterSlot: BucketSlot =
     direction === "long" ? "filter_long" : "filter_short";
   const tone = direction === "long" ? "pos" : "neg";
+  const windowValue =
+    direction === "long" ? spec.setup_window.long : spec.setup_window.short;
 
   return (
     <div className="grid gap-3">
@@ -642,6 +656,13 @@ function DirectionColumn({
         onParamChange={(i, k, v) => updateParam(setupSlot, i, k, v)}
         onRemove={(i) => removeFromSlot(setupSlot, i)}
         onMove={(i, d) => moveInSlot(setupSlot, i, d)}
+        headerExtra={
+          <SetupWindowControl
+            direction={direction}
+            value={windowValue}
+            onChange={(v) => onWindowChange(direction, v)}
+          />
+        }
       />
       <RecipeSection
         title="Trigger"
@@ -676,6 +697,7 @@ function RecipeSection({
   onParamChange,
   onRemove,
   onMove,
+  headerExtra,
 }: {
   title: string;
   blurb?: string;
@@ -685,6 +707,7 @@ function RecipeSection({
   onParamChange: (i: number, k: string, v: unknown) => void;
   onRemove: (i: number) => void;
   onMove: (i: number, d: -1 | 1) => void;
+  headerExtra?: React.ReactNode;
 }) {
   // Walk the recipe step by step: at index i, availableMetadata is the
   // union of every prior step's `publishes`. So smt_at_level placed AFTER
@@ -706,9 +729,12 @@ function RecipeSection({
         title={title}
         eyebrow={slot}
         right={
-          <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
-            {calls.length} step{calls.length === 1 ? "" : "s"}
-          </span>
+          <div className="flex items-center gap-3">
+            {headerExtra}
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+              {calls.length} step{calls.length === 1 ? "" : "s"}
+            </span>
+          </div>
         }
       />
       {blurb && (
@@ -839,6 +865,18 @@ function validateSpec(
       message:
         "setup_short has features but trigger_short is empty — setup arms a window but nothing fires the entry.",
     });
+  }
+
+  // Window must be ≥1 bar or null (persistent).
+  for (const dir of ["long", "short"] as const) {
+    const w = spec.setup_window[dir];
+    if (w !== null && (!Number.isFinite(w) || w < 1)) {
+      out.push({
+        severity: "error",
+        path: `setup_window.${dir}`,
+        message: `window must be ≥ 1 bar or persistent (uncheck the "until close" box and pick a bar count)`,
+      });
+    }
   }
 
   for (const slot of BUCKET_KEYS) {
