@@ -183,56 +183,53 @@ function PantryCard({
       <div className="mt-2 grid gap-1.5">
         {isTrigger && (
           <ButtonRow label="Trigger">
-            <PantryAddButton
-              label="+ long"
+            <PantryPrimaryButton
+              label="+ both directions"
+              onClick={() => onAdd("both_trigger", feature.name)}
+            />
+            <PantrySecondaryButton
+              label="long only"
               onClick={() => onAdd("trigger_long", feature.name)}
               tone="pos"
             />
-            <PantryAddButton
-              label="+ short"
+            <PantrySecondaryButton
+              label="short only"
               onClick={() => onAdd("trigger_short", feature.name)}
               tone="neg"
-            />
-            <PantryAddButton
-              label="+ both"
-              onClick={() => onAdd("both_trigger", feature.name)}
-              tone="accent"
             />
           </ButtonRow>
         )}
         {isSetup && (
           <ButtonRow label="Setup">
-            <PantryAddButton
-              label="+ long"
+            <PantryPrimaryButton
+              label="+ both directions"
+              onClick={() => onAdd("both_setup", feature.name)}
+            />
+            <PantrySecondaryButton
+              label="long only"
               onClick={() => onAdd("setup_long", feature.name)}
               tone="pos"
             />
-            <PantryAddButton
-              label="+ short"
+            <PantrySecondaryButton
+              label="short only"
               onClick={() => onAdd("setup_short", feature.name)}
               tone="neg"
-            />
-            <PantryAddButton
-              label="+ both"
-              onClick={() => onAdd("both_setup", feature.name)}
-              tone="accent"
             />
           </ButtonRow>
         )}
         {isFilter && (
           <ButtonRow label="Filter">
-            <PantryAddButton
-              label="+ global"
+            <PantryPrimaryButton
+              label="+ global (both)"
               onClick={() => onAdd("filter", feature.name)}
-              tone="accent"
             />
-            <PantryAddButton
-              label="+ long"
+            <PantrySecondaryButton
+              label="long only"
               onClick={() => onAdd("filter_long", feature.name)}
               tone="pos"
             />
-            <PantryAddButton
-              label="+ short"
+            <PantrySecondaryButton
+              label="short only"
               onClick={() => onAdd("filter_short", feature.name)}
               tone="neg"
             />
@@ -281,25 +278,41 @@ function ButtonRow({
   );
 }
 
-function PantryAddButton({
+function PantryPrimaryButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-1 rounded border border-accent-line bg-accent-soft px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-accent transition hover:bg-accent hover:text-bg-0"
+    >
+      {label}
+    </button>
+  );
+}
+
+function PantrySecondaryButton({
   label,
   onClick,
   tone,
 }: {
   label: string;
   onClick: () => void;
-  tone: "pos" | "neg" | "accent";
+  tone: "pos" | "neg";
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.06em] transition hover:bg-bg-3",
-        tone === "pos" && "border-pos/40 text-pos hover:bg-pos/10",
-        tone === "neg" && "border-neg/40 text-neg hover:bg-neg/10",
-        tone === "accent" &&
-          "border-accent-line text-accent hover:bg-accent-soft",
+        "rounded border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.06em] transition hover:bg-bg-3",
+        tone === "pos" && "border-pos/30 text-pos hover:bg-pos/10",
+        tone === "neg" && "border-neg/30 text-neg hover:bg-neg/10",
       )}
     >
       {label}
