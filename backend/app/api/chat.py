@@ -427,6 +427,8 @@ def _build_system_prompt(strategy: Strategy, db: Session) -> str:
             if card.body:
                 lines.append(f"  Notes: {_cap_knowledge_context(card.body)}")
 
+    lines.append(_SPEC_AUTHORING_GUIDE)
+
     lines.append(
         "\n---\n\nWhen the user asks about results, refer to these numbers. "
         "When they ask about rules, reference the markdown above. Keep "
@@ -436,6 +438,65 @@ def _build_system_prompt(strategy: Strategy, db: Session) -> str:
         "research memory."
     )
     return "\n".join(lines)
+
+
+_SPEC_AUTHORING_GUIDE = """
+## Strategy spec taxonomy (for compose-mode patches)
+
+Every BacktestStation strategy has features grouped into three roles:
+
+- **setup** — persistent state that ARMS an entry window. Example:
+  "PDH was swept" or "we are in a high-volatility regime". Setup features
+  re-evaluate every bar; once they all pass, the engine arms the
+  trigger window for that direction.
+- **trigger** — moment-in-time signal that FIRES the entry. Example:
+  "decisive bear close" or "FVG touch". Trigger features must all pass
+  on the bar where the entry is placed.
+- **filter** — block conditions evaluated against any candidate entry.
+  Global `filter` applies to both directions; `filter_long` /
+  `filter_short` apply only to that direction. Example: "RTH only",
+  "skip when ATR < 8 pts".
+
+Engine eval order, per bar, per direction:
+
+    setup features all pass → arm setup window (refresh if armed)
+    setup currently armed?    (empty setup = always armed)
+    trigger features all pass
+    global filter + per-direction filter all pass
+                             → enter
+
+`setup_window: { long: int|null, short: int|null }` controls how many
+bars after firing the setup stays armed. `null` = persistent until end
+of trading day (the safe default; cleared on Globex 18:00 ET rollover).
+
+When suggesting a strategy patch, emit a fenced JSON block tagged
+`spec_json`. The user clicks "Apply to spec" to merge it into the
+recipe. Use the new shape (setup/trigger/filter) — old `entry_long`/
+`entry_short` keys still work but are deprecated.
+
+Example (PDH-sweep + decisive bear close, RTH only):
+
+```json spec_json
+{
+  "setup_short": [
+    {"feature": "prior_level_sweep", "params": {"level": "PDH", "direction": "above"}}
+  ],
+  "trigger_short": [
+    {"feature": "decisive_close", "params": {"direction": "BEARISH", "min_body_pct": 0.6}}
+  ],
+  "filter": [
+    {"feature": "time_window", "params": {"start_hour": 9.5, "end_hour": 14.0}}
+  ],
+  "setup_window": {"short": 10},
+  "stop": {"type": "fixed_pts", "stop_pts": 10},
+  "target": {"type": "r_multiple", "r": 3}
+}
+```
+
+A feature may declare multiple roles (`prior_level_sweep` works as both
+setup and trigger). The user picks one when adding it to the recipe.
+Within a single bucket the semantics is AND — all features must pass.
+"""
 
 
 def _cap_chat_context(text: str) -> str:
