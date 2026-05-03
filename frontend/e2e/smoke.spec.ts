@@ -1,125 +1,88 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Smoke test — boots the dev server, opens every primary route, asserts
- * the page returns 200 and the expected H1 / page header renders. Doesn't
- * touch backend-mutating actions; it's safe to run against a live DB.
+ * Primary route smoke pass.
  *
- * Backend may or may not be reachable. Pages have empty-state fallbacks
- * for API failure, so the smoke pass works either way.
+ * Boots the dev server, opens every primary route, asserts the page returns
+ * < 500 and the expected page header renders. Doesn't touch backend-mutating
+ * actions, so it's safe to run against a live DB. Pages have empty-state
+ * fallbacks for API failure, so the smoke pass works whether the backend is
+ * reachable or not.
  */
 
+const ROUTES: { path: string; heading: string }[] = [
+  { path: "/", heading: "Today at a glance." },
+  { path: "/monitor", heading: "Monitor" },
+  { path: "/notes", heading: "Notes" },
+  { path: "/data-health", heading: "Data Health" },
+  { path: "/settings", heading: "Settings" },
+
+  { path: "/import", heading: "Import a backtest" },
+  { path: "/experiments", heading: "Experiments" },
+  { path: "/knowledge", heading: "Knowledge Cards" },
+  { path: "/research", heading: "Research" },
+  { path: "/prompts", heading: "AI Prompts" },
+
+  { path: "/backtests", heading: "Backtests" },
+  { path: "/replay", heading: "1m Replay" },
+  { path: "/trade-replay", heading: "Tick Replay" },
+  { path: "/compare", heading: "Compare runs" },
+
+  { path: "/strategies", heading: "Strategy Catalog" },
+  { path: "/risk-profiles", heading: "Risk Profiles" },
+  { path: "/strategies/builder", heading: "Strategy Builder" },
+
+  { path: "/prop-firm", heading: "Prop Firm Simulator" },
+  { path: "/prop-firm/runs", heading: "Simulation Runs" },
+  { path: "/prop-firm/firms", heading: "Firm Rules" },
+  { path: "/prop-firm/new", heading: "New simulation" },
+];
+
 test.describe("Primary route smoke pass", () => {
-  test("/ — Command Center renders", async ({ page }) => {
-    const response = await page.goto("/");
-    expect(response?.status()).toBeLessThan(500);
-    // Either greeting (active strategy) OR pick-strategy CTA.
-    await expect(
-      page.getByText(/Good morning|Good afternoon|Good evening|Working late|Pick a strategy/i),
-    ).toBeVisible();
-  });
-
-  test("/strategies — Strategies hub renders", async ({ page }) => {
-    const response = await page.goto("/strategies");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Strategies", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/research - Research Dashboard renders", async ({ page }) => {
-    const response = await page.goto("/research");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Research Dashboard", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/monitor — Monitor renders", async ({ page }) => {
-    const response = await page.goto("/monitor");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Monitor", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/backtests — Backtests list renders", async ({ page }) => {
-    const response = await page.goto("/backtests");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Backtests", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/journal — Journal renders", async ({ page }) => {
-    const response = await page.goto("/journal");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Journal", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/knowledge — Knowledge Library renders", async ({ page }) => {
-    const response = await page.goto("/knowledge");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Knowledge Library", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/prop-simulator — Simulator dashboard renders", async ({ page }) => {
-    const response = await page.goto("/prop-simulator");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Prop Firm Simulator" }),
-    ).toBeVisible();
-  });
-
-  test("/prop-simulator/firms — Firm rules renders", async ({ page }) => {
-    const response = await page.goto("/prop-simulator/firms");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Firm Rules", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/prop-simulator/runs — Simulation runs renders", async ({ page }) => {
-    const response = await page.goto("/prop-simulator/runs");
-    expect(response?.status()).toBeLessThan(500);
-    await expect(
-      page.getByRole("heading", { name: "Simulation Runs", exact: true }),
-    ).toBeVisible();
-  });
-
-  test("/data — Data renders", async ({ page }) => {
-    const response = await page.goto("/data");
-    expect(response?.status()).toBeLessThan(500);
-  });
-
-  test("/settings — Settings renders", async ({ page }) => {
-    const response = await page.goto("/settings");
-    expect(response?.status()).toBeLessThan(500);
-  });
+  for (const { path, heading } of ROUTES) {
+    test(`${path} renders ${JSON.stringify(heading)}`, async ({ page }) => {
+      const response = await page.goto(path);
+      expect(response?.status() ?? 0).toBeLessThan(500);
+      await expect(
+        page.getByRole("heading", { level: 1, name: heading }),
+      ).toBeVisible();
+    });
+  }
 });
 
-test.describe("Strategy picker flow", () => {
-  test("/ shows the strategy picker when none is selected", async ({
+test.describe("Command palette", () => {
+  test("Cmd/Ctrl+K opens, typing filters, Enter navigates", async ({
     page,
-    context,
   }) => {
-    // Force a clean slate: no localStorage carryover.
-    await context.clearCookies();
     await page.goto("/");
-    await page.evaluate(() => window.localStorage.clear());
-    await page.reload();
-
-    const choose = page.getByRole("button", { name: /Choose strategy/i });
-    await expect(choose).toBeVisible();
-
-    // Click into the picker; assert it opens.
-    await choose.click();
     await expect(
-      page.getByRole("dialog", { name: /Select a strategy/i }),
+      page.getByRole("heading", { level: 1, name: "Today at a glance." }),
+    ).toBeVisible();
+
+    // Focus the body so the keydown reaches the window-level listener — by
+    // default Playwright leaves focus on the URL bar after page.goto.
+    await page.locator("body").click({ position: { x: 5, y: 5 } });
+    await page.keyboard.press("Control+k");
+
+    const dialog = page.getByRole("dialog", { name: /command palette/i });
+    await expect(dialog).toBeVisible();
+
+    const input = dialog.getByLabel(/search commands/i);
+    await input.fill("monitor");
+
+    await page.keyboard.press("Enter");
+
+    await expect(page).toHaveURL(/\/monitor$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Monitor" }),
+    ).toBeVisible();
+  });
+
+  test("subnav search pill opens the palette", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Search.*jump.*run/i }).click();
+    await expect(
+      page.getByRole("dialog", { name: /command palette/i }),
     ).toBeVisible();
   });
 });

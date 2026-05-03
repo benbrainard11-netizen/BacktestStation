@@ -471,7 +471,7 @@ function EvaluatePanel({
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-3">
-          Evaluate "{profileName}" against backtest run
+          Evaluate &ldquo;{profileName}&rdquo; against backtest run
         </span>
         <span className="flex items-center gap-2">
           <input

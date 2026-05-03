@@ -69,7 +69,10 @@ export default function PromptsPage() {
     }
   }, [modesPoll, mode]);
 
-  const allStrategies = strategies.kind === "data" ? strategies.data : [];
+  const allStrategies = useMemo<Strategy[]>(
+    () => (strategies.kind === "data" ? strategies.data : []),
+    [strategies],
+  );
   const allModes = modesPoll.kind === "data" ? modesPoll.data.modes : [];
 
   const selectedStrategy = useMemo(

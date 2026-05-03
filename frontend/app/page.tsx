@@ -1,12 +1,20 @@
 "use client";
 
+import {
+  Activity,
+  Database,
+  Download,
+  Film,
+  Layers,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Card, CardHead, Chip, PageHeader, Stat, StatusDot } from "@/components/atoms";
 import type { components } from "@/lib/api/generated";
 import { fmtPnl, fmtR, tone } from "@/lib/format";
 import { ago, usePoll } from "@/lib/poll";
-import { cn } from "@/lib/utils";
 
 type LiveStatus = components["schemas"]["LiveMonitorStatus"];
 type Strategy = components["schemas"]["StrategyRead"];
@@ -37,20 +45,27 @@ export default function OverviewPage() {
   const runList = backtests.kind === "data" ? backtests.data : [];
   const lastRun = runList[0];
 
+  const headerTone = liveOk ? "pos" : live.kind === "error" ? "neg" : "default";
+  const headerLabel = liveOk
+    ? "backend ok"
+    : live.kind === "error"
+      ? "backend down"
+      : "checking";
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <PageHeader
         eyebrow={liveOk ? "OVERVIEW · LIVE" : "OVERVIEW"}
-        title="Welcome back."
-        sub="Today at a glance. Realized P&L, prop-firm compliance, recent activity."
+        title="Today at a glance."
+        sub="Live P&L, prop-firm compliance, and one click to whatever's next."
         right={
-          <Chip tone={liveOk ? "pos" : live.kind === "error" ? "neg" : "default"}>
+          <Chip tone={headerTone}>
             <StatusDot
               tone={liveOk ? "pos" : live.kind === "error" ? "neg" : "muted"}
               pulsing={liveOk}
               size={6}
             />
-            {liveOk ? "backend ok" : live.kind === "error" ? "backend down" : "checking"}
+            {headerLabel}
           </Chip>
         }
       />
@@ -88,29 +103,15 @@ export default function OverviewPage() {
         </Card>
       </div>
 
-      {/* TPT compliance + Quick actions */}
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <TptComplianceCard todayPnl={todayPnl} />
-        <Card>
-          <CardHead eyebrow="quick actions" title="Get going" />
-          <div className="grid gap-2 px-4 py-4">
-            <ActionRow href="/strategies" label="Open strategy catalog" />
-            <ActionRow href="/backtests" label="Inspect a backtest run" />
-            <ActionRow href="/monitor" label="Watch live monitor" />
-            <ActionRow href="/settings" label="Customize the look" />
-          </div>
-        </Card>
+        <NextActionsCard live={live} lastRun={lastRun} />
       </div>
     </div>
   );
 }
 
-/**
- * TPT compliance — single-account assumption (one TradersPost relay).
- * Daily loss against TPT_RULES, drawdown placeholder until Ben wires firm rules.
- */
 function TptComplianceCard({ todayPnl }: { todayPnl: number | null }) {
-  // Daily-loss usage: how much of the $1,500 floor we've consumed today.
   const dailyLossUsed = todayPnl != null && todayPnl < 0 ? Math.abs(todayPnl) : 0;
   const dailyLossPct = Math.min(100, (dailyLossUsed / TPT_RULES.dailyLossUSD) * 100);
   const status: "compliant" | "at-risk" | "breached" =
@@ -122,7 +123,6 @@ function TptComplianceCard({ todayPnl }: { todayPnl: number | null }) {
   const statusTone =
     status === "breached" ? "neg" : status === "at-risk" ? "warn" : "pos";
 
-  // Trailing drawdown — placeholder. Real value needs /api/prop-firm wired.
   const trailingDDPct = 0;
 
   return (
@@ -163,6 +163,71 @@ function TptComplianceCard({ todayPnl }: { todayPnl: number | null }) {
             TPT default · ${TPT_RULES.startingBalanceUSD.toLocaleString()} starting
           </span>
         </div>
+      </div>
+    </Card>
+  );
+}
+
+function NextActionsCard({
+  live,
+  lastRun,
+}: {
+  live: ReturnType<typeof usePoll<LiveStatus>>;
+  lastRun: BacktestRun | undefined;
+}) {
+  const liveOk = live.kind === "data" && live.data.source_exists;
+  const liveSub = liveOk
+    ? `bot ${live.data.strategy_status} · ${live.data.current_symbol ?? "—"}`
+    : live.kind === "error"
+      ? "backend not reachable"
+      : "checking…";
+
+  const lastRunHref = lastRun ? `/backtests/${lastRun.id}` : "/backtests";
+  const lastRunSub = lastRun
+    ? `BT-${lastRun.id} · ${lastRun.symbol} · ${ago(lastRun.created_at)}`
+    : "no runs yet";
+
+  return (
+    <Card>
+      <CardHead eyebrow="next action" title="What now?" />
+      <div className="grid gap-2 px-4 py-4">
+        <ActionRow
+          href="/monitor"
+          icon={Activity}
+          label="Live monitor"
+          sub={liveSub}
+          tone={liveOk ? "pos" : live.kind === "error" ? "neg" : "default"}
+        />
+        <ActionRow
+          href="/data-health"
+          icon={Database}
+          label="Data health"
+          sub="warehouse + ingester status"
+        />
+        <ActionRow
+          href={lastRunHref}
+          icon={Layers}
+          label="Inspect last backtest"
+          sub={lastRunSub}
+        />
+        <ActionRow
+          href="/import"
+          icon={Download}
+          label="Import a CSV / parquet result"
+          sub="bring an external run into the warehouse"
+        />
+        <ActionRow
+          href="/replay"
+          icon={Film}
+          label="Replay a trading day"
+          sub="step through 1m bars + entries"
+        />
+        <ActionRow
+          href="/strategies"
+          icon={Zap}
+          label="Run a new backtest"
+          sub="open the strategy catalog"
+        />
       </div>
     </Card>
   );
@@ -220,17 +285,48 @@ function Meter({
   );
 }
 
-function ActionRow({ href, label }: { href: string; label: string }) {
+function ActionRow({
+  href,
+  icon: Icon,
+  label,
+  sub,
+  tone = "default",
+}: {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  sub?: string;
+  tone?: "default" | "pos" | "neg";
+}) {
+  const iconColor =
+    tone === "pos"
+      ? "text-pos"
+      : tone === "neg"
+        ? "text-neg"
+        : "text-ink-3 group-hover:text-accent";
   return (
     <Link
       href={href}
-      className={cn(
-        "group flex items-center justify-between rounded border border-line bg-bg-2 px-3 py-2.5 text-sm text-ink-1 transition-colors",
-        "hover:border-accent-line hover:bg-accent-soft hover:text-accent",
-      )}
+      className="group flex items-center gap-3 rounded border border-line bg-bg-2 px-3 py-2.5 text-sm text-ink-1 transition-colors hover:border-accent-line hover:bg-accent-soft"
     >
-      <span>{label}</span>
-      <span className="font-mono text-[11px] text-ink-4 group-hover:text-accent">→</span>
+      <span
+        className={`grid h-7 w-7 flex-shrink-0 place-items-center rounded border border-line bg-bg-1 ${iconColor}`}
+      >
+        <Icon size={14} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-ink-1 group-hover:text-accent">
+          {label}
+        </span>
+        {sub ? (
+          <span className="block truncate font-mono text-[10.5px] text-ink-3">
+            {sub}
+          </span>
+        ) : null}
+      </span>
+      <span className="font-mono text-[12px] text-ink-4 group-hover:text-accent">
+        →
+      </span>
     </Link>
   );
 }

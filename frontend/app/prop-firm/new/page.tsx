@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card, CardHead, PageHeader } from "@/components/atoms";
 import { AsyncButton } from "@/components/ui/AsyncButton";
@@ -65,7 +65,10 @@ export default function NewPropFirmSimulationPage() {
   const [startingBalance, setStartingBalance] = useState(50000);
   const [riskPerTrade, setRiskPerTrade] = useState(500);
 
-  const allFirms = firms.kind === "data" ? firms.data : [];
+  const allFirms = useMemo<FirmProfile[]>(
+    () => (firms.kind === "data" ? firms.data : []),
+    [firms],
+  );
 
   // Default first firm and reflect its account size into the inputs
   useEffect(() => {

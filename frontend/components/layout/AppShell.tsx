@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import { CommandPalette } from "./CommandPalette";
 import { SubNav } from "./SubNav";
 import { TopTabs } from "./TopTabs";
 
@@ -19,6 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SubNav pathname={pathname} />
         <div className="app-content">{children}</div>
       </main>
+      <CommandPalette />
     </div>
   );
 }

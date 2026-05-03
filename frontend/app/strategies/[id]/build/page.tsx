@@ -248,8 +248,10 @@ export default function StrategyBuildPage() {
     setSpec(specFromJson(v.spec_json ?? {}));
   }, [strategy, versionId]);
 
-  const features: FeatureDef[] =
-    featuresPoll.kind === "data" ? featuresPoll.data : [];
+  const features: FeatureDef[] = useMemo(
+    () => (featuresPoll.kind === "data" ? featuresPoll.data : []),
+    [featuresPoll],
+  );
   const featureMap = useMemo(() => {
     const m = new Map<string, FeatureDef>();
     for (const f of features) m.set(f.name, f);

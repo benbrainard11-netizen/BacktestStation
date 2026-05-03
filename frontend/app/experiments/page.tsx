@@ -57,7 +57,7 @@ function EmptyRow() {
   return (
     <tr>
       <td colSpan={8} className="px-4 py-10 text-center text-[13px] text-ink-3">
-        No experiments yet — create the first one with "New experiment".
+        No experiments yet — create the first one with &ldquo;New experiment&rdquo;.
       </td>
     </tr>
   );

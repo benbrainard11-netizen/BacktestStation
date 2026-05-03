@@ -12,8 +12,10 @@ import {
   type SeriesMarker,
   type Time,
 } from "lightweight-charts";
+import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Card, CardHead, Chip } from "@/components/atoms";
 import type { components } from "@/lib/api/generated";
 
 import { type FvgZoneInput, FvgZonesPrimitive } from "./FvgZonesPrimitive";
@@ -21,10 +23,10 @@ import { type FvgZoneInput, FvgZonesPrimitive } from "./FvgZonesPrimitive";
 type ReplayPayload = components["schemas"]["ReplayPayload"];
 
 const SPEED_PRESETS = [
-  { label: "1x", ms: 1000 },
-  { label: "5x", ms: 200 },
-  { label: "30x", ms: 33 },
-  { label: "60x", ms: 16 },
+  { label: "1×", ms: 1000 },
+  { label: "5×", ms: 200 },
+  { label: "30×", ms: 33 },
+  { label: "60×", ms: 16 },
 ] as const;
 
 interface Props {
@@ -43,13 +45,14 @@ export default function ReplayChart({ payload }: Props) {
   const [speedMs, setSpeedMs] = useState<number>(SPEED_PRESETS[1].ms);
   const [showZones, setShowZones] = useState(true);
 
-  const bars = payload.bars ?? [];
-  const entries = payload.entries ?? [];
-  const zones = payload.fvg_zones ?? [];
+  const bars = useMemo(() => payload.bars ?? [], [payload.bars]);
+  const entries = useMemo(() => payload.entries ?? [], [payload.entries]);
+  const zones = useMemo(() => payload.fvg_zones ?? [], [payload.fvg_zones]);
+
   const candles: CandlestickData[] = useMemo(
     () =>
       bars.map((b) => ({
-        time: (Math.floor(new Date(b.ts).getTime() / 1000) as Time),
+        time: Math.floor(new Date(b.ts).getTime() / 1000) as Time,
         open: b.open,
         high: b.high,
         low: b.low,
@@ -76,32 +79,38 @@ export default function ReplayChart({ payload }: Props) {
     [zones],
   );
 
-  // Mount the chart once.
+  // Mount the chart once. Token-driven colors so theme switches still work.
   useEffect(() => {
     if (!containerRef.current) return;
+    const css = getComputedStyle(document.documentElement);
+    const bg1 = css.getPropertyValue("--bg-1").trim() || "#0f1115";
+    const ink2 = css.getPropertyValue("--ink-2").trim() || "#a0a8b3";
+    const line = css.getPropertyValue("--line").trim() || "#1d2128";
+    const pos = css.getPropertyValue("--pos").trim() || "#34d399";
+    const neg = css.getPropertyValue("--neg").trim() || "#f87171";
+
     const chart = createChart(containerRef.current, {
       autoSize: true,
       layout: {
-        background: { type: ColorType.Solid, color: "#09090b" },
-        textColor: "#a1a1aa",
+        background: { type: ColorType.Solid, color: bg1 },
+        textColor: ink2,
       },
       grid: {
-        vertLines: { color: "#27272a" },
-        horzLines: { color: "#27272a" },
+        vertLines: { color: line },
+        horzLines: { color: line },
       },
       timeScale: { timeVisible: true, secondsVisible: false },
-      rightPriceScale: { borderColor: "#27272a" },
+      rightPriceScale: { borderColor: line },
     });
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: "#22c55e",
-      downColor: "#ef4444",
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
+      upColor: pos,
+      downColor: neg,
+      wickUpColor: pos,
+      wickDownColor: neg,
       borderVisible: false,
     });
     chartRef.current = chart;
     seriesRef.current = series;
-    // v5 markers are a series-attached primitive, not a series method.
     markersRef.current = createSeriesMarkers(series, []);
     const zonesPrimitive = new FvgZonesPrimitive();
     series.attachPrimitive(zonesPrimitive);
@@ -121,8 +130,7 @@ export default function ReplayChart({ payload }: Props) {
     };
   }, []);
 
-  // Push zone inputs into the primitive whenever they change or the toggle
-  // flips. The primitive renders behind candles; an empty list clears it.
+  // Push zone inputs into the primitive whenever they change or the toggle flips.
   useEffect(() => {
     const primitive = zonesPrimitiveRef.current;
     if (!primitive) return;
@@ -138,15 +146,16 @@ export default function ReplayChart({ payload }: Props) {
     chartRef.current?.timeScale().fitContent();
   }, [candles, cursorIndex]);
 
-  // Entry markers on the candle series. Markers stay at fixed positions;
-  // they "appear" as the cursor reaches their bar because we only render
-  // the visible slice.
+  // Entry markers on the candle series.
   useEffect(() => {
     if (!seriesRef.current || candles.length === 0) return;
     const candleTimeSet = new Set(candles.map((c) => c.time));
+    const css = getComputedStyle(document.documentElement);
+    const pos = css.getPropertyValue("--pos").trim() || "#34d399";
+    const neg = css.getPropertyValue("--neg").trim() || "#f87171";
     const markers: SeriesMarker<Time>[] = entries
       .map((e) => {
-        const ts = (Math.floor(new Date(e.entry_ts).getTime() / 1000) as Time);
+        const ts = Math.floor(new Date(e.entry_ts).getTime() / 1000) as Time;
         if (!candleTimeSet.has(ts)) return null;
         const isLong = e.side.toLowerCase() === "long";
         const pnlText =
@@ -156,7 +165,7 @@ export default function ReplayChart({ payload }: Props) {
         return {
           time: ts,
           position: isLong ? "belowBar" : "aboveBar",
-          color: isLong ? "#22c55e" : "#ef4444",
+          color: isLong ? pos : neg,
           shape: isLong ? "arrowUp" : "arrowDown",
           text: `${e.side} @${e.entry_price.toFixed(2)}${pnlText}`,
         } as SeriesMarker<Time>;
@@ -193,110 +202,163 @@ export default function ReplayChart({ payload }: Props) {
 
   if (candles.length === 0) {
     return (
-      <div className="border border-zinc-800 bg-zinc-950 p-6 font-mono text-xs text-zinc-500">
-        No bars in the warehouse for {payload.symbol} on{" "}
-        {String(payload.date)}. The data may not be backfilled for this date,
-        or the symbol may not be in the universe.
-      </div>
+      <Card>
+        <CardHead eyebrow="replay" title={`${payload.symbol} · ${String(payload.date)}`} />
+        <div className="px-6 py-10 text-center font-mono text-[12px] text-ink-3">
+          No bars in the warehouse for {payload.symbol} on{" "}
+          {String(payload.date)}. The data may not be backfilled for this date,
+          or the symbol may not be in the universe.
+        </div>
+      </Card>
     );
   }
 
   const currentBar = bars[cursorIndex];
+  const currentBarTs = currentBar
+    ? new Date(currentBar.ts).toISOString().slice(11, 19)
+    : "—";
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="border border-zinc-800 bg-zinc-950 p-3">
-        <div
-          ref={containerRef}
-          className="h-[480px] w-full"
-          aria-label={`Replay chart for ${payload.symbol} on ${String(payload.date)}`}
-        />
-      </div>
-      <div className="flex items-center gap-3 border border-zinc-800 bg-zinc-950 p-3 font-mono text-xs">
-        <button
-          type="button"
-          onClick={() => setCursorIndex(0)}
-          className="border border-zinc-800 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
-          title="Reset to first bar"
-        >
-          ⏮
-        </button>
-        <button
-          type="button"
-          onClick={() => setPlaying((p) => !p)}
-          className="border border-zinc-700 bg-zinc-900 px-3 py-1 hover:bg-zinc-800"
-        >
-          {playing ? "⏸ Pause" : "▶ Play"}
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setCursorIndex((prev) => Math.min(candles.length - 1, prev + 1))
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHead
+          eyebrow={`replay · ${payload.symbol}`}
+          title={`${String(payload.date)}`}
+          right={
+            <div className="flex items-center gap-2">
+              <Chip>
+                {cursorIndex + 1}/{candles.length} bars
+              </Chip>
+              {currentBar && (
+                <Chip tone="accent">
+                  {currentBarTs} · {currentBar.close.toFixed(2)}
+                </Chip>
+              )}
+              {entries.length > 0 && (
+                <Chip tone="pos">{entries.length} entries</Chip>
+              )}
+              {zoneInputs.length > 0 && (
+                <Chip tone={showZones ? "accent" : "default"}>
+                  {zoneInputs.length} FVG
+                </Chip>
+              )}
+            </div>
           }
-          className="border border-zinc-800 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
-          title="Step forward 1 bar"
-        >
-          ⏭
-        </button>
-        {zoneInputs.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setShowZones((s) => !s)}
-            className={
-              showZones
-                ? "border border-zinc-700 bg-zinc-900 px-2 py-1 text-zinc-100 hover:bg-zinc-800"
-                : "border border-zinc-800 bg-zinc-900 px-2 py-1 text-zinc-500 hover:bg-zinc-800"
-            }
-            title={
-              showZones
-                ? "Hide FVG zones"
-                : "Show FVG zones (5m, both directions)"
-            }
-          >
-            FVG ({zoneInputs.length})
-          </button>
-        ) : null}
-        <span className="text-zinc-500">Speed</span>
-        {SPEED_PRESETS.map((preset) => (
-          <button
-            key={preset.label}
-            type="button"
-            onClick={() => setSpeedMs(preset.ms)}
-            className={
-              speedMs === preset.ms
-                ? "border border-zinc-100 bg-zinc-100 px-2 py-1 text-zinc-950"
-                : "border border-zinc-800 bg-zinc-900 px-2 py-1 hover:bg-zinc-800"
-            }
-          >
-            {preset.label}
-          </button>
-        ))}
-        <input
-          type="range"
-          min={0}
-          max={Math.max(0, candles.length - 1)}
-          value={cursorIndex}
-          onChange={(e) => {
-            setPlaying(false);
-            setCursorIndex(Number.parseInt(e.target.value, 10));
-          }}
-          className="ml-2 flex-1 accent-zinc-500"
-          aria-label="Scrub timeline"
         />
-        <span className="ml-2 tabular-nums text-zinc-500">
-          {cursorIndex + 1}/{candles.length}
-        </span>
-        {currentBar ? (
-          <span className="tabular-nums text-zinc-400">
-            {new Date(currentBar.ts).toISOString().slice(11, 19)} UTC ·{" "}
-            {currentBar.close.toFixed(2)}
-          </span>
-        ) : null}
-      </div>
-      <EntriesList
-        bars={bars}
-        entries={entries}
-        cursorIndex={cursorIndex}
-      />
+        <div className="p-3">
+          <div
+            ref={containerRef}
+            className="h-[480px] w-full"
+            aria-label={`Replay chart for ${payload.symbol} on ${String(payload.date)}`}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-3 border-t border-line bg-bg-1 px-3 py-3">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setCursorIndex(0)}
+              className="btn btn-sm"
+              title="Reset to first bar"
+              aria-label="Reset to first bar"
+            >
+              <SkipBack size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlaying((p) => !p)}
+              className="btn btn-primary btn-sm"
+              aria-label={playing ? "Pause" : "Play"}
+            >
+              {playing ? (
+                <>
+                  <Pause size={14} /> Pause
+                </>
+              ) : (
+                <>
+                  <Play size={14} /> Play
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setCursorIndex((prev) => Math.min(candles.length - 1, prev + 1))
+              }
+              className="btn btn-sm"
+              title="Step forward 1 bar"
+              aria-label="Step forward"
+            >
+              <SkipForward size={14} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+              speed
+            </span>
+            <div
+              role="radiogroup"
+              aria-label="Playback speed"
+              className="inline-flex rounded border border-line-2 bg-bg-2 p-0.5"
+            >
+              {SPEED_PRESETS.map((preset) => {
+                const active = speedMs === preset.ms;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setSpeedMs(preset.ms)}
+                    className={
+                      active
+                        ? "rounded-[3px] bg-accent px-2 py-0.5 font-mono text-[11px] font-semibold text-[#031419]"
+                        : "rounded-[3px] px-2 py-0.5 font-mono text-[11px] text-ink-2 hover:text-ink-0"
+                    }
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {zoneInputs.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowZones((s) => !s)}
+              aria-pressed={showZones}
+              className={
+                showZones
+                  ? "btn btn-sm border-accent-line text-accent"
+                  : "btn btn-sm"
+              }
+              title={
+                showZones
+                  ? "Hide FVG zones"
+                  : "Show FVG zones (5m, both directions)"
+              }
+            >
+              FVG {showZones ? "on" : "off"}
+            </button>
+          )}
+
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, candles.length - 1)}
+            value={cursorIndex}
+            onChange={(e) => {
+              setPlaying(false);
+              setCursorIndex(Number.parseInt(e.target.value, 10));
+            }}
+            className="ml-auto min-w-[200px] flex-1 accent-[var(--accent)]"
+            aria-label="Scrub timeline"
+          />
+        </div>
+      </Card>
+
+      <EntriesList bars={bars} entries={entries} cursorIndex={cursorIndex} />
     </div>
   );
 }
@@ -314,11 +376,12 @@ function EntriesList({
   const cursorTs = bars[cursorIndex]?.ts ?? bars[0]?.ts ?? null;
   const cursorMs = cursorTs ? new Date(cursorTs).getTime() : 0;
   return (
-    <div className="border border-zinc-800 bg-zinc-950 p-3 font-mono text-xs">
-      <p className="mb-2 uppercase tracking-widest text-[10px] text-zinc-500">
-        Entries this day ({entries.length})
-      </p>
-      <ul className="flex flex-col gap-1">
+    <Card>
+      <CardHead
+        eyebrow={`entries · ${entries.length} this day`}
+        title="Entry log"
+      />
+      <ul className="divide-y divide-line">
         {entries.map((e) => {
           const fired = new Date(e.entry_ts).getTime() <= cursorMs;
           return (
@@ -326,29 +389,35 @@ function EntriesList({
               key={e.trade_id}
               className={
                 fired
-                  ? "text-zinc-200"
-                  : "text-zinc-600"
+                  ? "flex items-center gap-3 px-4 py-2 font-mono text-[12px] text-ink-1"
+                  : "flex items-center gap-3 px-4 py-2 font-mono text-[12px] text-ink-4"
               }
             >
-              {new Date(e.entry_ts).toISOString().slice(11, 19)} UTC{" "}
+              <span className="w-20 text-ink-3">
+                {new Date(e.entry_ts).toISOString().slice(11, 19)}
+              </span>
               <span
                 className={
-                  e.side === "long" ? "text-emerald-300" : "text-rose-300"
+                  e.side === "long"
+                    ? "w-12 font-semibold text-pos"
+                    : "w-12 font-semibold text-neg"
                 }
               >
                 {e.side.toUpperCase()}
-              </span>{" "}
-              @{e.entry_price.toFixed(2)}
-              {e.pnl !== null && e.pnl !== undefined
-                ? ` · ${e.pnl >= 0 ? "+" : ""}$${Math.abs(e.pnl).toFixed(0)}${
-                    e.pnl >= 0 ? "" : " loss"
-                  }`
-                : ""}
-              {e.exit_reason ? ` · ${e.exit_reason}` : ""}
+              </span>
+              <span className="w-20">@{e.entry_price.toFixed(2)}</span>
+              {e.pnl !== null && e.pnl !== undefined ? (
+                <span className={e.pnl >= 0 ? "text-pos" : "text-neg"}>
+                  {e.pnl >= 0 ? "+" : "-"}${Math.abs(e.pnl).toFixed(0)}
+                </span>
+              ) : null}
+              {e.exit_reason ? (
+                <span className="text-ink-3">· {e.exit_reason}</span>
+              ) : null}
             </li>
           );
         })}
       </ul>
-    </div>
+    </Card>
   );
 }

@@ -65,7 +65,10 @@ export default function BacktestsPage() {
   const [symbolFilter, setSymbolFilter] = useState<string>("all");
 
   // Per-run metrics: lazy-loaded on demand by the list (we'll just show what BacktestRunRead has)
-  const allRuns = runs.kind === "data" ? runs.data : [];
+  const allRuns = useMemo<BacktestRun[]>(
+    () => (runs.kind === "data" ? runs.data : []),
+    [runs],
+  );
 
   const now = Date.now();
   const weekMs = 7 * 24 * 60 * 60 * 1000;

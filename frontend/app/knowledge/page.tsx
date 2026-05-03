@@ -57,7 +57,10 @@ export default function KnowledgePage() {
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [editing, setEditing] = useState<KnowledgeCard | "new" | null>(null);
 
-  const all = cards.kind === "data" ? cards.data : [];
+  const all = useMemo<KnowledgeCard[]>(
+    () => (cards.kind === "data" ? cards.data : []),
+    [cards],
+  );
   const kindList = vocabList(kinds, "kinds");
   const statusList = vocabList(statuses, "statuses");
 

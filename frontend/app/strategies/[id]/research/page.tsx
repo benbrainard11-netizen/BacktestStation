@@ -81,7 +81,10 @@ export default function StrategyResearchPage() {
   const [editing, setEditing] = useState<ResearchEntry | "new" | null>(null);
   const [promoting, setPromoting] = useState<ResearchEntry | null>(null);
 
-  const all = entries.kind === "data" ? entries.data : [];
+  const all = useMemo<ResearchEntry[]>(
+    () => (entries.kind === "data" ? entries.data : []),
+    [entries],
+  );
   const filtered = useMemo(
     () => all.filter((e) => kindFilter === ALL || e.kind === kindFilter),
     [all, kindFilter],

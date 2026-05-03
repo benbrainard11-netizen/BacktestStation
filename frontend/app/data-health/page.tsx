@@ -395,7 +395,10 @@ function DatasetsTab() {
   const [schemaFilter, setSchemaFilter] = useState<string>("");
   const [sourceFilter, setSourceFilter] = useState<string>("");
 
-  const all = datasets.kind === "data" ? datasets.data : [];
+  const all = useMemo<Dataset[]>(
+    () => (datasets.kind === "data" ? datasets.data : []),
+    [datasets],
+  );
 
   const symbols = useMemo(
     () =>

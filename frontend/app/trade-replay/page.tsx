@@ -35,7 +35,10 @@ export default function TradeReplayPage() {
     kind: "idle",
   });
 
-  const allRuns = runs.kind === "data" ? runs.data : [];
+  const allRuns = useMemo<RunRead[]>(
+    () => (runs.kind === "data" ? runs.data : []),
+    [runs],
+  );
 
   // Default first run with available trades
   useEffect(() => {

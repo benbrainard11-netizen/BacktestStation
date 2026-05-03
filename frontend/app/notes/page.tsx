@@ -46,7 +46,10 @@ export default function NotesPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  const all = notes.kind === "data" ? notes.data : [];
+  const all = useMemo<Note[]>(
+    () => (notes.kind === "data" ? notes.data : []),
+    [notes],
+  );
   const allTypes = (types.kind === "data" ? types.data.types ?? [] : []).slice();
 
   const filtered = useMemo(
