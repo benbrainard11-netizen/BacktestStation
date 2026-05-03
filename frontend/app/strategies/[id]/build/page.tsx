@@ -13,10 +13,9 @@ import {
   type AddTarget,
   type BucketSlot,
 } from "@/components/strategies/builder/FeaturePantry";
-import {
-  FeatureRow,
-  type FeatureDef,
-} from "@/components/strategies/builder/FeatureRow";
+import { type FeatureDef } from "@/components/strategies/builder/FeatureRow";
+import { PipelineStage } from "@/components/strategies/builder/PipelineStage";
+import { StrategyPipeline } from "@/components/strategies/builder/StrategyPipeline";
 import {
   ParamControl,
   type ParamSchemaEntry,
@@ -25,7 +24,6 @@ import {
   STOP_TYPE_REQUIRES,
   metadataFor,
 } from "@/components/strategies/builder/featureMetadata";
-import { SetupWindowControl } from "@/components/strategies/builder/SetupWindowControl";
 import { usePoll } from "@/lib/poll";
 import { cn } from "@/lib/utils";
 
@@ -543,37 +541,31 @@ export default function StrategyBuildPage() {
         <FeaturePantry features={features} onAdd={addToSlot} />
 
         <div className="grid gap-4">
-          <RecipeSection
-            title="Filter — global"
-            blurb="Block conditions evaluated against any candidate entry, both directions."
-            slot="filter"
+          <StrategyPipeline
+            direction="long"
+            spec={spec}
+            featureMap={featureMap}
+            updateParam={updateParam}
+            removeFromSlot={removeFromSlot}
+            moveInSlot={moveInSlot}
+            onWindowChange={setWindow}
+          />
+          <StrategyPipeline
+            direction="short"
+            spec={spec}
+            featureMap={featureMap}
+            updateParam={updateParam}
+            removeFromSlot={removeFromSlot}
+            moveInSlot={moveInSlot}
+            onWindowChange={setWindow}
+          />
+          <GlobalFilterRow
             calls={spec.filter}
             featureMap={featureMap}
-            onParamChange={(i, k, v) => updateParam("filter", i, k, v)}
-            onRemove={(i) => removeFromSlot("filter", i)}
-            onMove={(i, d) => moveInSlot("filter", i, d)}
+            updateParam={updateParam}
+            removeFromSlot={removeFromSlot}
+            moveInSlot={moveInSlot}
           />
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <DirectionColumn
-              direction="long"
-              spec={spec}
-              featureMap={featureMap}
-              updateParam={updateParam}
-              removeFromSlot={removeFromSlot}
-              moveInSlot={moveInSlot}
-              onWindowChange={setWindow}
-            />
-            <DirectionColumn
-              direction="short"
-              spec={spec}
-              featureMap={featureMap}
-              updateParam={updateParam}
-              removeFromSlot={removeFromSlot}
-              moveInSlot={moveInSlot}
-              onWindowChange={setWindow}
-            />
-          </div>
 
           <StopCard
             stop={spec.stop}
@@ -609,186 +601,39 @@ export default function StrategyBuildPage() {
 // Recipe sections
 // ─────────────────────────────────────────────────────────────────────────────
 
-function DirectionColumn({
-  direction,
-  spec,
+function GlobalFilterRow({
+  calls,
   featureMap,
   updateParam,
   removeFromSlot,
   moveInSlot,
-  onWindowChange,
 }: {
-  direction: "long" | "short";
-  spec: Spec;
+  calls: FeatureCall[];
   featureMap: Map<string, FeatureDef>;
   updateParam: (slot: BucketSlot, i: number, k: string, v: unknown) => void;
   removeFromSlot: (slot: BucketSlot, i: number) => void;
   moveInSlot: (slot: BucketSlot, i: number, d: -1 | 1) => void;
-  onWindowChange: (direction: "long" | "short", next: number | null) => void;
 }) {
-  const setupSlot: BucketSlot = direction === "long" ? "setup_long" : "setup_short";
-  const triggerSlot: BucketSlot =
-    direction === "long" ? "trigger_long" : "trigger_short";
-  const filterSlot: BucketSlot =
-    direction === "long" ? "filter_long" : "filter_short";
-  const tone = direction === "long" ? "pos" : "neg";
-  const windowValue =
-    direction === "long" ? spec.setup_window.long : spec.setup_window.short;
-
   return (
-    <div className="grid gap-3">
-      <div
-        className={cn(
-          "rounded-md border px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
-          tone === "pos"
-            ? "border-pos/40 bg-pos/10 text-pos"
-            : "border-neg/40 bg-neg/10 text-neg",
-        )}
-      >
-        {direction === "long" ? "Long entries" : "Short entries"}
-      </div>
-      <RecipeSection
-        title="Setup"
-        blurb="Persistent state that arms the entry window. Empty = always armed."
-        slot={setupSlot}
-        calls={spec[setupSlot]}
+    <section className="rounded-lg border border-line bg-bg-1/40 p-3">
+      <header className="mb-2 flex items-center gap-2">
+        <span className="rounded bg-accent-soft px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">
+          Global filter
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-3">
+          gates BOTH directions
+        </span>
+      </header>
+      <PipelineStage
+        role="filter"
+        calls={calls}
         featureMap={featureMap}
-        onParamChange={(i, k, v) => updateParam(setupSlot, i, k, v)}
-        onRemove={(i) => removeFromSlot(setupSlot, i)}
-        onMove={(i, d) => moveInSlot(setupSlot, i, d)}
-        headerExtra={
-          <SetupWindowControl
-            direction={direction}
-            value={windowValue}
-            onChange={(v) => onWindowChange(direction, v)}
-          />
-        }
+        onParamChange={(i, k, v) => updateParam("filter", i, k, v)}
+        onRemove={(i) => removeFromSlot("filter", i)}
+        onMove={(i, d) => moveInSlot("filter", i, d)}
+        emptyHint="(no global blocks — entries pass straight to per-direction filters)"
       />
-      <RecipeSection
-        title="Trigger"
-        blurb="Moment-in-time fire signal. Required for any entry."
-        slot={triggerSlot}
-        calls={spec[triggerSlot]}
-        featureMap={featureMap}
-        onParamChange={(i, k, v) => updateParam(triggerSlot, i, k, v)}
-        onRemove={(i) => removeFromSlot(triggerSlot, i)}
-        onMove={(i, d) => moveInSlot(triggerSlot, i, d)}
-      />
-      <RecipeSection
-        title="Filter"
-        blurb={`Block conditions for ${direction} entries only (additional to global filter).`}
-        slot={filterSlot}
-        calls={spec[filterSlot]}
-        featureMap={featureMap}
-        onParamChange={(i, k, v) => updateParam(filterSlot, i, k, v)}
-        onRemove={(i) => removeFromSlot(filterSlot, i)}
-        onMove={(i, d) => moveInSlot(filterSlot, i, d)}
-      />
-    </div>
-  );
-}
-
-function RecipeSection({
-  title,
-  blurb,
-  slot,
-  calls,
-  featureMap,
-  onParamChange,
-  onRemove,
-  onMove,
-  headerExtra,
-}: {
-  title: string;
-  blurb?: string;
-  slot: BucketSlot;
-  calls: FeatureCall[];
-  featureMap: Map<string, FeatureDef>;
-  onParamChange: (i: number, k: string, v: unknown) => void;
-  onRemove: (i: number) => void;
-  onMove: (i: number, d: -1 | 1) => void;
-  headerExtra?: React.ReactNode;
-}) {
-  // Walk the recipe step by step: at index i, availableMetadata is the
-  // union of every prior step's `publishes`. So smt_at_level placed AFTER
-  // prior_level_sweep sees `swept_level` available; placed BEFORE, it
-  // doesn't, and the row warns the user.
-  const perStepAvailable: string[][] = [];
-  let runningAvailable: string[] = [];
-  for (const call of calls) {
-    perStepAvailable.push([...runningAvailable]);
-    runningAvailable = unique([
-      ...runningAvailable,
-      ...metadataFor(call.feature).publishes,
-    ]);
-  }
-
-  return (
-    <Card>
-      <CardHead
-        title={title}
-        eyebrow={slot}
-        right={
-          <div className="flex items-center gap-3">
-            {headerExtra}
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
-              {calls.length} step{calls.length === 1 ? "" : "s"}
-            </span>
-          </div>
-        }
-      />
-      {blurb && (
-        <p className="px-4 pt-2 text-[11px] leading-relaxed text-ink-3">
-          {blurb}
-        </p>
-      )}
-      <div className="px-3 py-3">
-        {calls.length === 0 ? (
-          <div className="rounded border border-dashed border-line py-4 text-center text-[10.5px] text-ink-3">
-            Add a feature from the pantry → {slot.replace(/_/g, " ")}.
-          </div>
-        ) : (
-          <div className="grid gap-2">
-            {calls.map((call, i) => {
-              const meta = metadataFor(call.feature);
-              const def = featureMap.get(call.feature);
-              const enrichedDef: FeatureDef | undefined = def
-                ? { ...def, produces: meta.publishes }
-                : undefined;
-              const available = perStepAvailable[i];
-              const missingReads = meta.reads.filter(
-                (r) => !available.includes(r),
-              );
-              return (
-                <div key={`${slot}-${i}-${call.feature}`}>
-                  <FeatureRow
-                    index={i}
-                    featureName={call.feature}
-                    feature={enrichedDef}
-                    params={call.params}
-                    onParamChange={(k, v) => onParamChange(i, k, v)}
-                    onRemove={() => onRemove(i)}
-                    onMoveUp={() => onMove(i, -1)}
-                    onMoveDown={() => onMove(i, 1)}
-                    canMoveUp={i > 0}
-                    canMoveDown={i < calls.length - 1}
-                    availableMetadata={available}
-                  />
-                  {missingReads.length > 0 && (
-                    <div className="mt-1 rounded border border-warn/40 bg-warn/10 px-3 py-1.5 font-mono text-[10.5px] text-warn">
-                      ⚠ this step reads {missingReads.join(", ")} — no earlier
-                      step in {slot.replace(/_/g, " ")} publishes that. Move a
-                      producer (e.g. <code>prior_level_sweep</code>) above this
-                      step.
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </Card>
+    </section>
   );
 }
 
