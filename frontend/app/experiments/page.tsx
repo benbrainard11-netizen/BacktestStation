@@ -575,7 +575,7 @@ export default function ExperimentsPage() {
               setShowCreate((v) => !v);
               setExpanded(null);
             }}
-            className="inline-flex items-center gap-2 rounded border border-accent-line bg-accent-soft px-4 py-2 font-mono text-[12px] font-semibold text-accent transition hover:bg-accent/20"
+            className="btn btn-primary btn-sm"
           >
             {showCreate ? "Cancel" : "+ New experiment"}
           </button>

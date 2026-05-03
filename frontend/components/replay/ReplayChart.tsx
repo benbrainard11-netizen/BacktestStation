@@ -15,10 +15,30 @@ import {
 import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { useAppearance } from "@/components/AppearanceProvider";
 import { Card, CardHead, Chip } from "@/components/atoms";
 import type { components } from "@/lib/api/generated";
 
 import { type FvgZoneInput, FvgZonesPrimitive } from "./FvgZonesPrimitive";
+
+type ChartTokens = {
+  bg1: string;
+  ink2: string;
+  line: string;
+  pos: string;
+  neg: string;
+};
+
+function readChartTokens(): ChartTokens {
+  const css = getComputedStyle(document.documentElement);
+  return {
+    bg1: css.getPropertyValue("--bg-1").trim() || "#0f1115",
+    ink2: css.getPropertyValue("--ink-2").trim() || "#a0a8b3",
+    line: css.getPropertyValue("--line").trim() || "#1d2128",
+    pos: css.getPropertyValue("--pos").trim() || "#34d399",
+    neg: css.getPropertyValue("--neg").trim() || "#f87171",
+  };
+}
 
 type ReplayPayload = components["schemas"]["ReplayPayload"];
 
@@ -44,6 +64,12 @@ export default function ReplayChart({ payload }: Props) {
   const [playing, setPlaying] = useState(false);
   const [speedMs, setSpeedMs] = useState<number>(SPEED_PRESETS[1].ms);
   const [showZones, setShowZones] = useState(true);
+
+  // Subscribe to the appearance context so theme/accent/density changes
+  // re-fire the apply-options + markers effects below. The actual color
+  // values still come from CSS custom properties (the canonical signal),
+  // but we need *something* React-observable to know when to re-read.
+  const { appearance } = useAppearance();
 
   const bars = useMemo(() => payload.bars ?? [], [payload.bars]);
   const entries = useMemo(() => payload.entries ?? [], [payload.entries]);
@@ -82,31 +108,26 @@ export default function ReplayChart({ payload }: Props) {
   // Mount the chart once. Token-driven colors so theme switches still work.
   useEffect(() => {
     if (!containerRef.current) return;
-    const css = getComputedStyle(document.documentElement);
-    const bg1 = css.getPropertyValue("--bg-1").trim() || "#0f1115";
-    const ink2 = css.getPropertyValue("--ink-2").trim() || "#a0a8b3";
-    const line = css.getPropertyValue("--line").trim() || "#1d2128";
-    const pos = css.getPropertyValue("--pos").trim() || "#34d399";
-    const neg = css.getPropertyValue("--neg").trim() || "#f87171";
+    const t = readChartTokens();
 
     const chart = createChart(containerRef.current, {
       autoSize: true,
       layout: {
-        background: { type: ColorType.Solid, color: bg1 },
-        textColor: ink2,
+        background: { type: ColorType.Solid, color: t.bg1 },
+        textColor: t.ink2,
       },
       grid: {
-        vertLines: { color: line },
-        horzLines: { color: line },
+        vertLines: { color: t.line },
+        horzLines: { color: t.line },
       },
       timeScale: { timeVisible: true, secondsVisible: false },
-      rightPriceScale: { borderColor: line },
+      rightPriceScale: { borderColor: t.line },
     });
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: pos,
-      downColor: neg,
-      wickUpColor: pos,
-      wickDownColor: neg,
+      upColor: t.pos,
+      downColor: t.neg,
+      wickUpColor: t.pos,
+      wickDownColor: t.neg,
       borderVisible: false,
     });
     chartRef.current = chart;
@@ -138,6 +159,33 @@ export default function ReplayChart({ payload }: Props) {
     chartRef.current?.timeScale().applyOptions({});
   }, [zoneInputs, showZones]);
 
+  // Re-apply colors to the chart + candle series whenever the appearance
+  // context changes (theme, accent, density, motion). lightweight-charts
+  // supports applyOptions hot, no need to remount.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series) return;
+    const t = readChartTokens();
+    chart.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: t.bg1 },
+        textColor: t.ink2,
+      },
+      grid: {
+        vertLines: { color: t.line },
+        horzLines: { color: t.line },
+      },
+      rightPriceScale: { borderColor: t.line },
+    });
+    series.applyOptions({
+      upColor: t.pos,
+      downColor: t.neg,
+      wickUpColor: t.pos,
+      wickDownColor: t.neg,
+    });
+  }, [appearance]);
+
   // Push the visible slice of candles whenever cursor moves or data changes.
   useEffect(() => {
     if (!seriesRef.current) return;
@@ -150,9 +198,7 @@ export default function ReplayChart({ payload }: Props) {
   useEffect(() => {
     if (!seriesRef.current || candles.length === 0) return;
     const candleTimeSet = new Set(candles.map((c) => c.time));
-    const css = getComputedStyle(document.documentElement);
-    const pos = css.getPropertyValue("--pos").trim() || "#34d399";
-    const neg = css.getPropertyValue("--neg").trim() || "#f87171";
+    const t = readChartTokens();
     const markers: SeriesMarker<Time>[] = entries
       .map((e) => {
         const ts = Math.floor(new Date(e.entry_ts).getTime() / 1000) as Time;
@@ -165,14 +211,14 @@ export default function ReplayChart({ payload }: Props) {
         return {
           time: ts,
           position: isLong ? "belowBar" : "aboveBar",
-          color: isLong ? pos : neg,
+          color: isLong ? t.pos : t.neg,
           shape: isLong ? "arrowUp" : "arrowDown",
           text: `${e.side} @${e.entry_price.toFixed(2)}${pnlText}`,
         } as SeriesMarker<Time>;
       })
       .filter((m): m is SeriesMarker<Time> => m !== null);
     markersRef.current?.setMarkers(markers);
-  }, [entries, candles]);
+  }, [entries, candles, appearance]);
 
   // Playback tick.
   useEffect(() => {

@@ -27,11 +27,7 @@ export default function SettingsPage() {
         title="Settings"
         sub="Stored in this browser. Backend endpoints are read-only inspection — appearance never round-trips."
         right={
-          <button
-            type="button"
-            onClick={reset}
-            className="h-8 rounded border border-line bg-bg-1 px-3 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-2 hover:border-line-3 hover:text-ink-0"
-          >
+          <button type="button" onClick={reset} className="btn btn-sm">
             Reset all
           </button>
         }

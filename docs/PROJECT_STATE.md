@@ -1,4 +1,4 @@
-# Project State — 2026-04-27
+# Project State — 2026-04-27 (last truth-pass: 2026-05-02)
 
 > **What this doc is.** A single, scannable snapshot of "what's where, what's working, what's broken" across BacktestStation. Updated as a checkpoint, not on every commit. When in doubt, the code wins — but this saves you 30 minutes of re-discovery before you start.
 
@@ -51,10 +51,11 @@
 - **Imported runs**: import + visualize CSV/JSON result bundles.
 - **Live monitor page** (`/monitor`): ingester health, live-trades pipeline panel, **Forward Drift v1 panels (WR drift + entry-time drift, 2026-04-28)**, live status from the bot, and (added 2026-04-27 by Husky) per-strategy session journal + signals feed.
 - **Trade replay** (`/trade-replay`): TBBO + 1m/5m/15m/30m bar replay anchored to a live trade, ET time axis.
-- **Per-day chart replay** (`/replay`): symbol/date picker, 1m candles, optional run-overlay entry markers. Backend now also returns `fvg_zones` (frontend overlay rendering deferred).
-- **Prop firm simulator UI** (`/prop-simulator`): runs, runs detail, scope view. Firm rules editor (`/prop-simulator/firms`, un-mocked 2026-04-27 by Husky) is DB-backed with seed-from-`PRESETS`, verification stamp, reset-to-seed flow.
+- **Per-day chart replay** (`/replay`): symbol/date picker, 1m candles, optional run-overlay entry markers, FVG zone overlay (lightweight-charts primitive with on/off toggle), theme-reactive colors via `useAppearance()`. Replay frontend redesigned 2026-05-02 to use the shared design system (`Card`/`CardHead`/`Chip` + `.btn` family).
+- **Prop firm simulator UI** (`/prop-firm`, renamed from `/prop-simulator` 2026-05-01): dashboard, runs list + detail, firm rules editor, new-run wizard. Firm rules editor (un-mocked 2026-04-27 by Husky) is DB-backed with seed-from-`PRESETS`, verification stamp, reset-to-seed flow.
 - **Data Health** (`/data-health`, 2026-04-28): warehouse inventory by schema (partition counts, symbols, date ranges), scheduled-task health (parquet mirror / historical / gap-filler / live-trades import) via PowerShell shell-out, free disk, "Re-scan now" trigger.
-- **Settings** (`/settings`, 2026-04-28): read-only system info v1 (BS_DATA_ROOT, DATABENTO_API_KEY presence, version, git SHA + dirty flag, platform, python version, free disk, UTC + ET wall clocks). Editable prefs deferred to a later PR.
+- **Settings** (`/settings`, full editable UI as of 2026-05-02): appearance (accent presets + custom HSL sliders, theme variants `default` / `darker` / `dim`, density `compact` / `regular` / `comfy`, motion on/off), behavior (live refresh seconds, timezone, decimal precision), backend (base URL + live ping + version), about (app version, repo link). Persisted via `AppearanceProvider` to localStorage; CSS vars and `data-*` attributes on `<html>` drive every surface live, no reload required.
+- **Command palette** (Cmd/Ctrl+K, also via topbar cmd icon and subnav search pill): v1 navigation/search only — searches every nav item by label / group / profile / route. Accessible: `role="dialog"`, `aria-modal`, focus capture/restore, focus trap (Tab/Shift+Tab cycle), Escape to close. No mutating actions yet (deferred to v2 per `docs/UX_AUDIT.md`).
 
 ### Tests + CI
 
@@ -101,7 +102,7 @@ The remaining unmatched live trade (2026-04-24 13:31 short, entry 27196.83): por
 
 **Note:** the three debug CLIs above were Lane-C-investigation diagnostics. They were removed as part of the trusted-strategy retirement. If a future port-vs-live divergence comes up, recreate the diagnostic from the test_signal_helpers_isolated patterns rather than chasing the deleted scripts.
 
-### Prop-simulator UI completion (Husky's domain)
+### Prop-firm UI completion (Husky's domain)
 
 - Backend done; `/prop-firm/runs/[id]` dossier wired.
 - Firm-presets page + side-by-side compare are partially mocked — Husky's pending work, do not stomp.

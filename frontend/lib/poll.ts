@@ -11,19 +11,31 @@ export type PollState<T> =
  * Poll a JSON endpoint at a fixed interval. Returns a discriminated state plus
  * the last fetched timestamp. Re-creates the timer if intervalMs changes.
  * Aborts in-flight requests on unmount.
+ *
+ * Pass `null`/`undefined` for `url` to disable polling (the hook stays in its
+ * current state and does not fetch). When `url` flips to a string later, the
+ * effect re-runs and starts polling.
  */
-export function usePoll<T>(url: string, intervalMs: number): PollState<T> {
+export function usePoll<T>(
+  url: string | null | undefined,
+  intervalMs: number,
+): PollState<T> {
   const [state, setState] = useState<PollState<T>>({ kind: "loading" });
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    if (!url) return;
+    const targetUrl: string = url;
     let cancelled = false;
     async function tick() {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       try {
-        const r = await fetch(url, { cache: "no-store", signal: controller.signal });
+        const r = await fetch(targetUrl, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (!r.ok) {
           if (!cancelled)
             setState({

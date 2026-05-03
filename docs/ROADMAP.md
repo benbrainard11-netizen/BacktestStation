@@ -49,10 +49,10 @@ The data layer the rest of the system depends on. Already mostly built; needs to
 
 Parallel lane, Husky-owned. Don't stomp his WIP.
 
-- ✅ `/prop-simulator/firms` un-mocked 2026-04-27 — DB-backed editor with seed-from-`PRESETS`, verification stamp, reset-to-seed.
+- ✅ `/prop-firm/firms` un-mocked 2026-04-27 — DB-backed editor with seed-from-`PRESETS`, verification stamp, reset-to-seed.
 - ✅ Live-session journal panel on `/monitor` + stage-gated `LivePerformanceCard` on `/strategies/[id]` (Husky, 2026-04-27).
-- Still mocked: `/prop-simulator` dashboard, `/prop-simulator/compare`. Backend exists; remaining work is wiring + UX.
-- The simulator runs page (`/prop-simulator/runs`) is already on real data.
+- Still mocked: `/prop-firm` dashboard, `/compare`. Backend exists; remaining work is wiring + UX.
+- The simulator runs page (`/prop-firm/runs`) is already on real data.
 
 ### DEFERRED — do not build until current focus is done
 
@@ -81,15 +81,17 @@ What's in `main` already, so you don't accidentally re-build it:
 - **Live-trades pipeline health panel** on `/monitor` — surfaces silent failures.
 - **Forward Drift Monitor v1 backend** — WR + entry-time chi-square against a baseline run.
 - **`merge-review` subagent** at `.claude/agents/merge-review.md` — run before merging a branch.
-- **Firm rules editor** at `/prop-simulator/firms` — DB-backed, seed-from-`PRESETS`, verification + reset (Husky, 2026-04-27).
+- **Firm rules editor** at `/prop-firm/firms` — DB-backed, seed-from-`PRESETS`, verification + reset (Husky, 2026-04-27).
 - **Session journal v1** on `/monitor` + `LivePerformanceCard` on `/strategies/[id]` (Husky, 2026-04-27).
 - **Per-symbol historical puller** with retry-with-backoff. 27 days of March 2026 MBP-1 on disk for NQ/ES/YM/RTY.
 - **Drift v1 frontend panels** at `/monitor` — WR + entry-time cards with status dots (2026-04-28 overnight).
 - **Ready-for-capital gate CLI** — `python -m app.cli.ready_for_capital_check` evaluates live trades vs ROADMAP §A criteria, exits 0/1 (2026-04-28 overnight).
 - **Weekly gap-filler** — `app.ingest.gap_filler` + `BacktestStationGapFiller` Sunday 03:00 task, $0-cost guardrail (2026-04-28 overnight).
-- **FVG zone detection in /api/replay** — backend ships zones in `ReplayPayload.fvg_zones`; frontend rendering deferred (2026-04-28 overnight).
+- **FVG zone detection in /api/replay** — backend ships zones in `ReplayPayload.fvg_zones`; frontend renders them via a lightweight-charts primitive with an on/off toggle (shipped 2026-05-02).
 - **Data Health page** at `/data-health` — warehouse inventory + scheduled-task health + disk space + re-scan trigger (2026-04-28).
-- **Settings page** at `/settings` — read-only system info v1 (BS_DATA_ROOT, key presence, version, git SHA, free disk, ET clock). Editable prefs deferred (2026-04-28).
+- **Settings page** at `/settings` — full editable UI (2026-05-02): accent presets + custom HSL, theme/density/motion, refresh/timezone/precision, backend URL + ping. Persisted via `AppearanceProvider` to localStorage; CSS vars + `data-*` attrs on `<html>` drive every surface live.
+- **Command palette v1** (Cmd/Ctrl+K) — read-only nav launcher: searches every nav item, listbox+dialog semantics, focus trap + restore, Escape (shipped 2026-05-02).
+- **UX foundation pass** — shared `.btn` family, replay redesign in the design system, Overview as a real "what now?" page, full route coverage in Playwright smoke (shipped 2026-05-02).
 - **506 backend tests**, all green.
 
 ---
@@ -101,7 +103,7 @@ These are the rules for *should we build X?* — engineering rules ("how do we b
 1. **Vision is destination, not permission.** Default answer to "should we add X?" is **no** unless X serves Current Focus tier (A, B, or C). When the vision tempts a future-tier build, point at this doc and ask Ben before writing code.
 2. **No 2nd custom strategy until Fractal AMD trades real money.** One at a time. A 2nd strategy is a 2x maintenance load on tests, drift comparisons, and dossier UI.
 3. **No ML / model-training work** until both: ≥6 months of own-collected TBBO/MBP-1 data, AND a concrete falsifiable hypothesis. ML is research, not infrastructure.
-4. **Mocked pages must declare themselves.** A page rendering hardcoded data must show `[MOCK]` in its visible header (not just a code comment) so future sessions don't read it as functional. Applies retroactively to `/prop-simulator/*` pages until Husky un-mocks them.
+4. **Mocked pages must declare themselves.** A page rendering hardcoded data must show `[MOCK]` in its visible header (not just a code comment) so future sessions don't read it as functional. Applies retroactively to any `/prop-firm/*` pages still rendering mock data until Husky un-mocks them.
 5. **New warehouse schemas don't ship until existing schemas are queryable in a UI flow** — i.e., you can run a backtest from them or render a chart from them. Don't ingest data the app can't actually use.
 6. **One feature per PR per lane.** Don't bundle warehouse work into a UI PR or strategy work into a data PR. The merge-review agent flags this.
 7. **Daily command center stability is sacred.** Experimental ML, warehouse experiments, and one-off research go in dedicated routes (`/experiments`, `/data-health`), never in `/`, `/backtests`, `/monitor`, `/replay`, or `/trade-replay`.

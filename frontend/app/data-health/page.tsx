@@ -594,7 +594,7 @@ function severityTone(s: string): "default" | "pos" | "warn" | "neg" {
 function DataQualityTab() {
   const [runId, setRunId] = useState<number | null>(null);
   const report = usePoll<DataQualityReport>(
-    runId == null ? "" : `/api/backtests/${runId}/data-quality`,
+    runId == null ? null : `/api/backtests/${runId}/data-quality`,
     60_000,
   );
 

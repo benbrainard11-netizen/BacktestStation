@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import { Card, CardHead, Chip, PageHeader, Stat } from "@/components/atoms";
 import type { components } from "@/lib/api/generated";
@@ -42,12 +42,6 @@ function dateRange(start: string | null, end: string | null): string {
   const e = end ? end.slice(0, 10) : "—";
   if (s === "—" && e === "—") return "—";
   return `${s} → ${e}`;
-}
-
-function weekAgo(): boolean {
-  // used for "runs this week" count
-  const t = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  return false; // placeholder, used inline
 }
 
 /* ============================================================
@@ -97,13 +91,17 @@ export default function BacktestsPage() {
 
   return (
     <div className="mx-auto max-w-[1280px] px-6 py-8">
+      <Suspense fallback={null}>
+        <NewParamWatcher onTrigger={() => setShowModal(true)} />
+      </Suspense>
       <PageHeader
         eyebrow={`BACKTESTS · ${allRuns.length} RUNS`}
         title="Backtests"
         sub="Engine runs, imported bundles, and live runs. Click a row to inspect equity, trades, and metrics."
         right={
           <button
-            className="inline-flex h-8 items-center gap-2 rounded border border-accent bg-accent/10 px-3 text-[12.5px] font-semibold text-accent transition-colors hover:bg-accent/20"
+            type="button"
+            className="btn btn-primary btn-sm"
             onClick={() => setShowModal(true)}
           >
             + Run backtest
@@ -193,6 +191,23 @@ export default function BacktestsPage() {
       )}
     </div>
   );
+}
+
+/**
+ * Watches for `?new=1` in the URL and fires `onTrigger` once when present.
+ * Lives inside <Suspense> because `useSearchParams()` opts the page out of
+ * static prerender otherwise (Next 15).
+ */
+function NewParamWatcher({ onTrigger }: { onTrigger: () => void }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      onTrigger();
+      router.replace("/backtests", { scroll: false });
+    }
+  }, [searchParams, router, onTrigger]);
+  return null;
 }
 
 /* ============================================================

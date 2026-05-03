@@ -691,11 +691,7 @@ function NewProfileDialog({
 
   if (phase.kind === "closed") {
     return (
-      <button
-        type="button"
-        onClick={open}
-        className="rounded border border-pos/40 bg-pos/10 px-3 py-1.5 font-mono text-[11px] font-semibold text-pos hover:bg-pos/20"
-      >
+      <button type="button" onClick={open} className="btn btn-primary btn-sm">
         + New profile
       </button>
     );

@@ -223,10 +223,10 @@ function NextActionsCard({
           sub="step through 1m bars + entries"
         />
         <ActionRow
-          href="/strategies"
+          href="/backtests?new=1"
           icon={Zap}
           label="Run a new backtest"
-          sub="open the strategy catalog"
+          sub="opens the run-backtest modal"
         />
       </div>
     </Card>

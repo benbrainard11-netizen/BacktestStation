@@ -188,7 +188,7 @@ No spacing or shadow scale tokens — values are inline (8 / 10 / 12 / 14 / 18 /
 
 ## 5. Page / view inventory
 
-10 implemented pages + 7 stub pages, organized by 3 top-level **Profiles** (Dashboard / Research / Strategies), each with sub-nav groups. App is single-page-tabbed: profile = top tab, page = sub-nav item. Layout for every page: `.page-head` (eyebrow + 32px title + sub) flanked right by 1–3 buttons, then `.stat-grid` row, then a 1- or 2-column card grid. Max width 1500px (1480px in Strategy Builder's `content-wide`).
+As of the last truth-pass, every primary route in the navigation has a real implementation (some still partially mocked — see §6 for the per-router status). Originally drafted as 10 implemented + 7 stubs from the Artifacts bundle; the stub list has shrunk as Settings, Replay, Prompts, and Research have been built out. Layout for every page: `.page-head` (eyebrow + 32px title + sub) flanked right by 1–3 buttons, then `.stat-grid` row, then a 1- or 2-column card grid. Max width 1500px (1480px in Strategy Builder's `content-wide`).
 
 | # | Page (`PAGES` key) | Profile / group | Backend feature | Layout | Key components |
 |---|---|---|---|---|---|
@@ -240,17 +240,34 @@ No spacing or shadow scale tokens — values are inline (8 / 10 / 12 / 14 / 18 /
 | 12 | `prompts` | MISSING | – | Need: AI Prompt Generator page — mode picker (`researcher / critic / statistician / risk_manager / engineer / live_monitor`), focus-question textarea, generated markdown blob with copy button + `bundled_context_summary` chips + char count |
 | 13 | `prop_firm` | PARTIAL | `simulator` (MC fan + violations + risk sweep) | Firm-profile editor (`firm_rules` stub), simulation history (`simulation_runs` stub), and verification stamp UI (`unverified/verified/demo` chip) all missing |
 | 14 | `risk_profiles` | COVERED | `risk` (3-card grid + 24-hour heat strip) | Evaluate-against-run flow not wired (no UI to pick a run and show violations) |
-| 15 | `settings` | MISSING (stub) | `settings` stub | Need: connections, env paths, theme variants (already have `data-theme="darker"|"raised"`), keybindings, telemetry toggles |
+| 15 | `settings` | COVERED | `/settings` page | Appearance (accent presets + custom HSL, theme `default/darker/dim`, density `compact/regular/comfy`, motion on/off), behavior (refresh / timezone / precision), backend (base URL + ping + version), about. Persisted via `AppearanceProvider` to localStorage; live-applied to `<html>` via CSS vars + `data-*` attrs. No reload required. Shipped 2026-05-02. |
 | 16 | `monitor` | COVERED | `monitor` (drift chart + pipeline health + journal) | Forward-drift detail breakdown (chi² components) and ingester metrics drill-down could expand |
-| 17 | `replay` | MISSING | – | NOT the same as `trade_replay`. Need: per-day 1m chart for one symbol/date with optional entry/exit markers + auto-detected FVG zones (5m). Distinct from page #7 |
+| 17 | `replay` | COVERED | `/replay` page | 1m candles + entry markers + 5m FVG zone overlay primitive with on/off toggle. Theme-reactive (re-applies layout/series colors on appearance change). Shipped 2026-04-28 → 2026-05-02. Distinct from page #7. |
 | 18 | `trade_replay` | COVERED | `replay` page (TBBO ticks for live run) | tbbo_available disabled-row treatment + run-picker not yet drawn |
 
-**Tally:**
-- COVERED ✅ — 8 routers (strategies, backtests, backtest_export, data_health, autopsy, experiments, risk_profiles, monitor, trade_replay) → 9 actually
-- PARTIAL 🟡 — 3 routers (datasets, notes, prop_firm)
-- MISSING ❌ — 6 routers (health, imports, data_quality, prompts, settings, replay)
+**Tally (last truth-pass 2026-05-02):**
+- COVERED ✅ — 12 routers (strategies, backtests, backtest_export, data_health, autopsy, experiments, risk_profiles, monitor, trade_replay, replay, settings, prompts).
+- PARTIAL 🟡 — 3 routers (datasets, notes, prop_firm).
+- MISSING ❌ — 3 routers (health, imports, data_quality).
 
-(Counts: COVERED=9, PARTIAL=3, MISSING=6 → 18.)
+(Counts: COVERED=12, PARTIAL=3, MISSING=3 → 18.)
+
+### Command palette — implemented (v1)
+
+Lives at `frontend/components/layout/CommandPalette.tsx`, mounted in `AppShell`.
+Read-only navigation launcher. Opens on Cmd/Ctrl+K, the topbar cmd icon, the
+subnav search pill, and the legacy `open-cmd` CustomEvent. Searches every
+entry in `ALL_NAV_ITEMS` (`frontend/lib/navigation.ts`) by label / group /
+profile / id / route.
+
+Accessibility: `role="dialog"` + `aria-modal="true"`, listbox/option
+semantics on the result list, focus capture-and-restore (mirrors
+`components/ui/Modal.tsx`), focus trap on Tab/Shift+Tab, Escape closes.
+
+**Not yet built (v2):** mutating actions (Run new backtest, Export run as
+CSV, Create experiment) and a recent-runs section sourced from
+`/api/backtests`. The shape is ready for a `kind: "navigate" | "action"`
+discriminator when those land.
 
 ---
 

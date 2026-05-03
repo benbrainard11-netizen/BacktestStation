@@ -26,6 +26,8 @@ export function CommandPalette() {
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   // Open via Cmd/Ctrl+K and via the "open-cmd" CustomEvent.
   useEffect(() => {
@@ -46,9 +48,21 @@ export function CommandPalette() {
     };
   }, []);
 
-  // Reset on every open and focus the input.
+  // Reset on every open and focus the input. Also save the previously-focused
+  // element so we can restore focus to it when the palette closes (mirrors
+  // components/ui/Modal.tsx).
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      const prev = previouslyFocusedRef.current;
+      previouslyFocusedRef.current = null;
+      // Restore focus only if the previous element is still in the DOM and
+      // focusable. Wrap in rAF so React finishes unmounting first.
+      if (prev && document.contains(prev)) {
+        requestAnimationFrame(() => prev.focus());
+      }
+      return;
+    }
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
     setQuery("");
     setActive(0);
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -103,6 +117,27 @@ export function CommandPalette() {
       if (target) navigate(target);
       return;
     }
+    if (e.key === "Tab") {
+      // Focus trap — keep keyboard focus inside the palette while open.
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusables = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute("disabled"));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && activeEl === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && activeEl === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
   }
 
   // Scroll the active item into view.
@@ -127,7 +162,7 @@ export function CommandPalette() {
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div className="cmd-box" onKeyDown={onKeyDown}>
+      <div ref={dialogRef} className="cmd-box" onKeyDown={onKeyDown}>
         <div className="cmd-input-row">
           <Search size={14} aria-hidden />
           <input

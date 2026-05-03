@@ -85,4 +85,49 @@ test.describe("Command palette", () => {
       page.getByRole("dialog", { name: /command palette/i }),
     ).toBeVisible();
   });
+
+  test("Escape closes the palette", async ({ page }) => {
+    await page.goto("/");
+    await page.locator("body").click({ position: { x: 5, y: 5 } });
+    await page.keyboard.press("Control+k");
+    const dialog = page.getByRole("dialog", { name: /command palette/i });
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  });
+
+  test("arrow keys walk the active option", async ({ page }) => {
+    await page.goto("/");
+    await page.locator("body").click({ position: { x: 5, y: 5 } });
+    await page.keyboard.press("Control+k");
+    const dialog = page.getByRole("dialog", { name: /command palette/i });
+    await expect(dialog).toBeVisible();
+
+    // Type something narrow enough to give a stable, predictable list.
+    const input = dialog.getByLabel(/search commands/i);
+    await input.fill("re");
+
+    const options = dialog.getByRole("option");
+    await expect(options.first()).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("ArrowDown");
+    await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("ArrowUp");
+    await expect(options.first()).toHaveAttribute("aria-selected", "true");
+  });
+});
+
+test.describe("Backtests deep link", () => {
+  test("/backtests?new=1 auto-opens the Run-backtest modal", async ({
+    page,
+  }) => {
+    await page.goto("/backtests?new=1");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Backtests" }),
+    ).toBeVisible();
+    // The modal header has a unique mono eyebrow "engine · synchronous"
+    // that doesn't appear elsewhere in the app.
+    await expect(page.getByText(/engine\s*·\s*synchronous/i)).toBeVisible();
+    // After opening, the page should strip the param.
+    await expect(page).toHaveURL(/\/backtests$/);
+  });
 });

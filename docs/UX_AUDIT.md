@@ -1,7 +1,8 @@
-# UX Audit — 2026-05-02
+# UX Audit — 2026-05-02 (foundation + correctness pass)
 
-Snapshot of the frontend after the overnight UX foundation pass. Source of
-truth for the visual language is `docs/DESIGN_SYSTEM_REFERENCE.md`.
+Snapshot of the frontend after the overnight UX foundation pass and the
+follow-up correctness pass the same day. Source of truth for the visual
+language is `docs/DESIGN_SYSTEM_REFERENCE.md`.
 
 ## What was improved this pass
 
@@ -47,17 +48,66 @@ truth for the visual language is `docs/DESIGN_SYSTEM_REFERENCE.md`.
   `/prop-firm/firms`, `/prop-firm/new`. Plus a command-palette test:
   open with Ctrl+K → type `monitor` → Enter → assert `/monitor` loads.
 
+## 2026-05-02 follow-up — correctness pass
+
+After the foundation pass landed, a focused correctness pass closed the
+obvious sharp edges:
+
+- **`usePoll` accepts `string | null` to disable.** `frontend/lib/poll.ts`
+  short-circuits when the URL is null/undefined — no fetch, no timer. Fixes
+  `DataQualityTab` calling `usePoll("")` (which fetched the current page
+  HTML) before the user picked a run. Existing string callers are
+  unaffected.
+- **Overview "Run a new backtest" lands where the action lives.**
+  `/backtests` now reads `?new=1` and auto-opens the Run-backtest modal
+  on mount, then strips the param so reload doesn't re-pop. The Overview
+  CTA points to `/backtests?new=1` instead of `/strategies`.
+- **Command palette: focus capture/restore + focus trap.** Mirrors
+  `components/ui/Modal.tsx`: saves the previously-focused element on open,
+  restores it on close, traps Tab/Shift+Tab inside the dialog. All existing
+  semantics preserved (Cmd/Ctrl+K, listbox/dialog, arrow nav, Enter,
+  Escape, mouse).
+- **Replay chart is theme-reactive.** Subscribes to `useAppearance()` so
+  switching theme / accent / density in Settings re-applies chart layout
+  + series colors via `chart.applyOptions` and `series.applyOptions`. No
+  remount, no reload. Markers re-emit with new colors. FVG primitive
+  unchanged (its visuals don't depend on theme).
+- **`/research` is a real landing page.** Replaces the `PageStub` with
+  four honest stat cards (strategies / open experiments / knowledge cards
+  / notes) sourced from existing polls, a strategies list deep-linking
+  to each `/strategies/[id]/research`, and a quick-link block to the
+  cross-strategy ledgers (Experiments, Knowledge, Notes, AI Prompts,
+  Compare). No invented data; empty states render when polls are empty
+  or backend is down.
+- **Active docs truth-pass.** `PROJECT_STATE.md`, `ROADMAP.md`,
+  `DESIGN_SYSTEM_REFERENCE.md` updated for: Settings is fully editable
+  (was claimed read-only), `/replay` FVG rendering shipped (was
+  "deferred"), prop firm routes live at `/prop-firm` (was
+  `/prop-simulator`), command palette is v1 navigation-only.
+- **More CTAs migrated to the shared `.btn` family.** `+ Run backtest`
+  (backtests page header), `+ New experiment` (experiments header),
+  `+ New profile` (risk-profiles header), `Reset all` (settings header)
+  all use `btn btn-primary btn-sm` / `btn btn-sm` instead of bespoke
+  Tailwind strings. Form save/cancel buttons inside modals were left
+  alone (they styling-match their input cluster — separate sweep).
+- **Dead code dropped.** `weekAgo()` helper in `app/backtests/page.tsx`
+  (placeholder, returned `false`) removed.
+
 ## Remaining UX gaps
 
-- **Inline buttons still drift.** Several pages (experiments, risk-profiles,
-  knowledge, notes, prop-firm) still hand-roll their primary action button
-  with custom `accent-soft / pos / neg` Tailwind strings instead of the
-  shared `.btn-primary`. Migrate one page at a time so the button family
-  reaches every CTA. Easy follow-up: replace the inline `accent-line bg-accent-soft px-...` patterns with `btn btn-primary`.
+- **In-form buttons still drift.** Save/Cancel buttons *inside* the
+  experiments/risk-profiles/notes/knowledge create-and-edit forms still
+  use bespoke Tailwind strings. They style-match their input clusters,
+  so converting them is bigger than a simple class swap. Separate sweep.
 - **Command palette is read-only.** v1 only navigates. No "Run new
   backtest" action, no "Import results" action, no recent-runs section
   (per `docs/DESIGN_SYSTEM_REFERENCE.md` §5). Adding actions requires a
   `kind: "navigate" | "action"` discriminator and a small action registry.
+- **Palette focus restoration not asserted in Playwright.**
+  `document.activeElement` checks via `page.evaluate` are brittle; we
+  rely on visual review and the trap+escape coverage instead. If a
+  regression slips through, add an assertion via the `:focus` CSS
+  pseudo-class on a known element.
 - **No global keyboard hints.** The footer of the palette explains its
   own shortcuts, but there's no "?" overlay listing the rest (`⌘1/2/3`
   for profiles, `⌘K` to open palette). Cheap to add: a single
