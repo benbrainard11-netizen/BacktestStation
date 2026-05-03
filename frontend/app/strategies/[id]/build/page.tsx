@@ -25,56 +25,19 @@ import {
   metadataFor,
 } from "@/components/strategies/builder/featureMetadata";
 import { usePoll } from "@/lib/poll";
+import {
+  DEFAULT_SPEC,
+  type CallGate,
+  type FeatureCall,
+  type SetupWindow,
+  type Spec,
+  type StopRule,
+  type StopType,
+  type TargetRule,
+  type TargetType,
+  type WindowSpec,
+} from "@/lib/strategies/spec";
 import { cn } from "@/lib/utils";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Spec types — must match backend ComposableSpec.from_dict() in
-// backend/app/strategies/composable/config.py.
-// ─────────────────────────────────────────────────────────────────────────────
-
-type FeatureCall = {
-  feature: string;
-  params: Record<string, unknown>;
-};
-
-type StopType = "fixed_pts" | "fvg_buffer";
-type StopRule = {
-  type: StopType;
-  stop_pts?: number;
-  buffer_pts?: number;
-};
-
-type TargetType = "r_multiple" | "fixed_pts";
-type TargetRule = {
-  type: TargetType;
-  r?: number;
-  target_pts?: number;
-};
-
-type SetupWindow = {
-  long: number | null;
-  short: number | null;
-};
-
-type Spec = {
-  setup_long: FeatureCall[];
-  trigger_long: FeatureCall[];
-  setup_short: FeatureCall[];
-  trigger_short: FeatureCall[];
-  filter: FeatureCall[];
-  filter_long: FeatureCall[];
-  filter_short: FeatureCall[];
-  setup_window: SetupWindow;
-  stop: StopRule;
-  target: TargetRule;
-  qty: number;
-  max_trades_per_day: number;
-  entry_dedup_minutes: number;
-  max_hold_bars: number;
-  max_risk_pts: number;
-  min_risk_pts: number;
-  aux_symbols: string[];
-};
 
 /** Subset of Spec keys whose values are FeatureCall[] — usable wherever
  *  we operate on a recipe bucket generically. */
@@ -88,28 +51,70 @@ const BUCKET_KEYS: BucketSlot[] = [
   "filter_short",
 ];
 
-const DEFAULT_SPEC: Spec = {
-  setup_long: [],
-  trigger_long: [],
-  setup_short: [],
-  trigger_short: [],
-  filter: [],
-  filter_long: [],
-  filter_short: [],
-  setup_window: { long: null, short: null },
-  stop: { type: "fixed_pts", stop_pts: 10, buffer_pts: 5 },
-  target: { type: "r_multiple", r: 3, target_pts: 30 },
-  qty: 1,
-  max_trades_per_day: 2,
-  entry_dedup_minutes: 15,
-  max_hold_bars: 120,
-  max_risk_pts: 150,
-  min_risk_pts: 0,
-  aux_symbols: [],
-};
+function parseGate(raw: unknown): CallGate | null {
+  if (raw == null) return null;
+  if (typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const start = parseClockValue(r.start ?? r.start_hour);
+  const end = parseClockValue(r.end ?? r.end_hour);
+  if (start == null || end == null || end <= start) return null;
+  const tz = typeof r.tz === "string" && r.tz ? r.tz : "America/New_York";
+  return { start_hour: start, end_hour: end, tz };
+}
+
+function parseClockValue(raw: unknown): number | null {
+  if (raw == null) return null;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  if (typeof raw === "string") {
+    const parts = raw.split(":");
+    if (parts.length !== 2) return null;
+    const h = Number.parseInt(parts[0], 10);
+    const m = Number.parseInt(parts[1], 10);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+    if (h < 0 || h > 24 || m < 0 || m >= 60) return null;
+    return h + m / 60;
+  }
+  return null;
+}
+
+function parseWindowValue(raw: unknown): WindowSpec | null {
+  // null / undefined = persistent
+  if (raw == null) return null;
+  // Backward compat: bare int → BarsWindow
+  if (typeof raw === "number" && Number.isFinite(raw) && raw >= 1) {
+    return { type: "bars", n: Math.floor(raw) };
+  }
+  if (typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const t = r.type;
+  if (t === "bars" && typeof r.n === "number" && r.n >= 1) {
+    return { type: "bars", n: Math.floor(r.n) };
+  }
+  if (t === "minutes" && typeof r.n === "number" && r.n >= 1) {
+    return { type: "minutes", n: Math.floor(r.n) };
+  }
+  if (t === "until_clock") {
+    const end = parseClockValue(r.end_hour);
+    if (end == null || end <= 0 || end > 24) return null;
+    const tz = typeof r.tz === "string" && r.tz ? r.tz : "America/New_York";
+    return { type: "until_clock", end_hour: end, tz };
+  }
+  return null;
+}
 
 function callArray(j: Record<string, unknown>, key: string): FeatureCall[] {
-  return Array.isArray(j[key]) ? (j[key] as FeatureCall[]) : [];
+  const arr = Array.isArray(j[key]) ? (j[key] as unknown[]) : [];
+  return arr.map((raw) => {
+    const c = (raw ?? {}) as Record<string, unknown>;
+    return {
+      feature: typeof c.feature === "string" ? c.feature : "",
+      params:
+        c.params && typeof c.params === "object"
+          ? (c.params as Record<string, unknown>)
+          : {},
+      gate: parseGate(c.gate),
+    };
+  });
 }
 
 function specFromJson(raw: unknown): Spec {
@@ -124,16 +129,16 @@ function specFromJson(raw: unknown): Spec {
   const hasOldLong = Array.isArray(j.entry_long);
   const hasOldShort = Array.isArray(j.entry_short);
   const trigger_long = hasNewLong
-    ? (j.trigger_long as FeatureCall[])
+    ? callArray(j, "trigger_long")
     : hasOldLong
-      ? (j.entry_long as FeatureCall[])
+      ? callArray(j, "entry_long")
       : [];
   const trigger_short = hasNewShort
-    ? (j.trigger_short as FeatureCall[])
+    ? callArray(j, "trigger_short")
     : hasOldShort
-      ? (j.entry_short as FeatureCall[])
+      ? callArray(j, "entry_short")
       : [];
-  const sw = (j.setup_window as Partial<SetupWindow> | undefined) ?? {};
+  const swRaw = (j.setup_window as Record<string, unknown> | undefined) ?? {};
   return {
     setup_long: callArray(j, "setup_long"),
     trigger_long,
@@ -143,14 +148,8 @@ function specFromJson(raw: unknown): Spec {
     filter_long: callArray(j, "filter_long"),
     filter_short: callArray(j, "filter_short"),
     setup_window: {
-      long:
-        typeof sw.long === "number" || sw.long === null
-          ? (sw.long as number | null)
-          : null,
-      short:
-        typeof sw.short === "number" || sw.short === null
-          ? (sw.short as number | null)
-          : null,
+      long: parseWindowValue(swRaw.long),
+      short: parseWindowValue(swRaw.short),
     },
     stop: (j.stop as StopRule) ?? DEFAULT_SPEC.stop,
     target: (j.target as TargetRule) ?? DEFAULT_SPEC.target,
@@ -333,12 +332,15 @@ export default function StrategyBuildPage() {
     [],
   );
 
-  const setWindow = useCallback((direction: "long" | "short", next: number | null) => {
-    setSpec((s) => ({
-      ...s,
-      setup_window: { ...s.setup_window, [direction]: next },
-    }));
-  }, []);
+  const setWindow = useCallback(
+    (direction: "long" | "short", next: WindowSpec | null) => {
+      setSpec((s) => ({
+        ...s,
+        setup_window: { ...s.setup_window, [direction]: next },
+      }));
+    },
+    [],
+  );
 
   // Agent emits spec_json patches in fenced code blocks; AgentChatPanel
   // parses and forwards them here. We whitelist fields so an off-base
@@ -351,28 +353,23 @@ export default function StrategyBuildPage() {
       // agent's older fenced-JSON examples still apply cleanly. Otherwise
       // the patch keys take their literal slot.
       if (Array.isArray(patch.entry_long) && !Array.isArray(patch.trigger_long)) {
-        next.trigger_long = patch.entry_long as FeatureCall[];
+        next.trigger_long = callArray({ trigger_long: patch.entry_long }, "trigger_long");
       }
       if (Array.isArray(patch.entry_short) && !Array.isArray(patch.trigger_short)) {
-        next.trigger_short = patch.entry_short as FeatureCall[];
+        next.trigger_short = callArray({ trigger_short: patch.entry_short }, "trigger_short");
       }
       for (const k of BUCKET_KEYS) {
         const v = patch[k];
         if (Array.isArray(v)) {
-          next[k] = v as FeatureCall[];
+          // Route through callArray so per-call gate is parsed/cleaned.
+          next[k] = callArray({ [k]: v }, k);
         }
       }
       if (patch.setup_window && typeof patch.setup_window === "object") {
-        const sw = patch.setup_window as Partial<SetupWindow>;
+        const sw = patch.setup_window as Record<string, unknown>;
         next.setup_window = {
-          long:
-            typeof sw.long === "number" || sw.long === null
-              ? (sw.long as number | null)
-              : next.setup_window.long,
-          short:
-            typeof sw.short === "number" || sw.short === null
-              ? (sw.short as number | null)
-              : next.setup_window.short,
+          long: "long" in sw ? parseWindowValue(sw.long) : next.setup_window.long,
+          short: "short" in sw ? parseWindowValue(sw.short) : next.setup_window.short,
         };
       }
       if (patch.stop && typeof patch.stop === "object") {
@@ -714,15 +711,26 @@ function validateSpec(
     });
   }
 
-  // Window must be ≥1 bar or null (persistent).
+  // Window must be a valid WindowSpec or null (persistent).
   for (const dir of ["long", "short"] as const) {
     const w = spec.setup_window[dir];
-    if (w !== null && (!Number.isFinite(w) || w < 1)) {
-      out.push({
-        severity: "error",
-        path: `setup_window.${dir}`,
-        message: `window must be ≥ 1 bar or persistent (uncheck the "until close" box and pick a bar count)`,
-      });
+    if (w === null) continue;
+    if (w.type === "bars" || w.type === "minutes") {
+      if (!Number.isFinite(w.n) || w.n < 1) {
+        out.push({
+          severity: "error",
+          path: `setup_window.${dir}`,
+          message: `${w.type} window n must be ≥ 1 (got ${w.n})`,
+        });
+      }
+    } else if (w.type === "until_clock") {
+      if (!Number.isFinite(w.end_hour) || w.end_hour <= 0 || w.end_hour > 24) {
+        out.push({
+          severity: "error",
+          path: `setup_window.${dir}`,
+          message: `until_clock end_hour must be in (0, 24] (got ${w.end_hour})`,
+        });
+      }
     }
   }
 

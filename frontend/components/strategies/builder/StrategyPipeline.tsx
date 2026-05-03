@@ -10,6 +10,7 @@ import { SetupWindowControl } from "./SetupWindowControl";
 type FeatureCall = {
   feature: string;
   params: Record<string, unknown>;
+  gate?: { start_hour: number; end_hour: number; tz: string } | null;
 };
 
 export type BucketSlot =
@@ -21,6 +22,11 @@ export type BucketSlot =
   | "filter_long"
   | "filter_short";
 
+export type WindowSpec =
+  | { type: "bars"; n: number }
+  | { type: "minutes"; n: number }
+  | { type: "until_clock"; end_hour: number; tz: string };
+
 export type SpecForPipeline = {
   setup_long: FeatureCall[];
   trigger_long: FeatureCall[];
@@ -28,8 +34,20 @@ export type SpecForPipeline = {
   trigger_short: FeatureCall[];
   filter_long: FeatureCall[];
   filter_short: FeatureCall[];
-  setup_window: { long: number | null; short: number | null };
+  setup_window: { long: WindowSpec | null; short: WindowSpec | null };
 };
+
+function describeWindow(w: WindowSpec | null): string {
+  if (w === null) return "arms · persist";
+  if (w.type === "bars") return `arms · ${w.n} bars`;
+  if (w.type === "minutes") return `arms · ${w.n} min`;
+  if (w.type === "until_clock") {
+    const h = Math.floor(w.end_hour);
+    const m = Math.round((w.end_hour - h) * 60);
+    return `arms · until ${h}:${m.toString().padStart(2, "0")}`;
+  }
+  return "arms";
+}
 
 /**
  * Horizontal flow diagram for one direction's eval pipeline.
@@ -60,7 +78,7 @@ export function StrategyPipeline({
   updateParam: (slot: BucketSlot, i: number, k: string, v: unknown) => void;
   removeFromSlot: (slot: BucketSlot, i: number) => void;
   moveInSlot: (slot: BucketSlot, i: number, d: -1 | 1) => void;
-  onWindowChange: (direction: "long" | "short", next: number | null) => void;
+  onWindowChange: (direction: "long" | "short", next: WindowSpec | null) => void;
 }) {
   const tone = direction === "long" ? "pos" : "neg";
   const setupSlot: BucketSlot = direction === "long" ? "setup_long" : "setup_short";
@@ -71,8 +89,7 @@ export function StrategyPipeline({
   const windowValue =
     direction === "long" ? spec.setup_window.long : spec.setup_window.short;
 
-  const armLabel =
-    windowValue === null ? "arms · persist" : `arms · ${windowValue} bars`;
+  const armLabel = describeWindow(windowValue);
 
   return (
     <section
