@@ -69,6 +69,7 @@ register(
     "decisive_close",
     FeatureSpec(
         fn=decisive_close,
+        roles=("trigger",),
         label="Decisive close (momentum candle)",
         description=(
             "Current bar is a strong directional candle: body >= "

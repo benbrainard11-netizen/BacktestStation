@@ -59,6 +59,9 @@ class FeatureResult:
 FeatureFn = Callable[..., FeatureResult]
 
 
+FeatureRole = Literal["setup", "trigger", "filter"]
+
+
 @dataclass
 class FeatureSpec:
     """Frontend-renderable description of one feature."""
@@ -69,6 +72,12 @@ class FeatureSpec:
     # JSON-Schema-ish shape, same convention as strategy_registry's
     # param_schema. Each property has type/label/min/max/step/enum.
     param_schema: dict[str, Any]
+    # Which buckets in a ComposableSpec recipe this feature can be
+    # placed in. Required — no default — so we can't ship a feature
+    # the UI can't categorize. See docs/COMPOSABLE_SPEC.md for the
+    # taxonomy: setup arms an entry window, trigger fires the entry,
+    # filter blocks any candidate entry.
+    roles: tuple[FeatureRole, ...] = ()
 
 
 # Registry. Populated by side-effect imports below.
@@ -79,6 +88,17 @@ def register(name: str, spec: FeatureSpec) -> None:
     """Register a feature. Called from each module's import."""
     if name in FEATURES:
         raise ValueError(f"feature {name!r} already registered")
+    if not spec.roles:
+        raise ValueError(
+            f"feature {name!r} must declare at least one role "
+            "(setup / trigger / filter)"
+        )
+    invalid = tuple(r for r in spec.roles if r not in ("setup", "trigger", "filter"))
+    if invalid:
+        raise ValueError(
+            f"feature {name!r} declares unknown roles {invalid!r}; "
+            "valid roles are setup, trigger, filter"
+        )
     FEATURES[name] = spec
 
 
@@ -88,6 +108,7 @@ from app.features import (  # noqa: E402,F401
     co_score,
     decisive_close,
     fvg_touch_recent,
+    orderblock_engulf,
     prior_level_sweep,
     smt_at_level,
     swing_sweep,

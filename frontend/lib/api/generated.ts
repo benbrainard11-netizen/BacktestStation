@@ -473,10 +473,11 @@ export interface paths {
          * List Features
          * @description Return the FEATURES registry as a flat list.
          *
-         *     Each entry: { name, label, description, param_schema }. Frontend
-         *     renders one card per entry in the feature pantry; clicking "+ Add"
-         *     instantiates a `{feature: name, params: {}}` block in the strategy
-         *     spec.
+         *     Each entry: { name, label, description, param_schema, roles }.
+         *     Frontend renders one card per entry in the feature pantry; clicking
+         *     "+ Add" instantiates a `{feature: name, params: {}}` block in the
+         *     strategy spec. `roles` is the set of buckets the feature can be
+         *     placed in: any subset of `setup`, `trigger`, `filter`.
          */
         get: operations["list_features_api_features_get"];
         put?: never;
@@ -1295,6 +1296,37 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/strategies/{strategy_id}/chat-stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Chat Turn Streaming
+         * @description Streaming variant of POST /chat. Returns NDJSON of StreamEvents.
+         *
+         *     Each line is one JSON object with `type` and `payload`:
+         *       - {"type":"text","payload":{"delta":"..."}}
+         *       - {"type":"tool_use","payload":{"name":"Write","input":{...}}}
+         *       - {"type":"tool_result","payload":{"is_error":false,"content":"..."}}
+         *       - {"type":"done","payload":{"text":"...","session_id":"...","cost_usd":..}}
+         *       - {"type":"error","payload":{"message":"..."}}
+         *
+         *     Persists the user message before the stream starts (so a reload
+         *     mid-stream still shows what was asked) and the assistant message
+         *     after the stream emits a successful "done" event.
+         */
+        post: operations["post_chat_turn_streaming_api_strategies__strategy_id__chat_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strategies/{strategy_id}/research": {
         parameters: {
             query?: never;
@@ -1811,6 +1843,38 @@ export interface components {
             section?: string | null;
             /** Strategy Id */
             strategy_id: number;
+        };
+        /**
+         * ChatStreamRequest
+         * @description POST body for a streaming chat turn (Claude only).
+         *
+         *     Codex CLI doesn't expose a streaming output format, so streaming is
+         *     Claude-only for now. The synchronous POST /chat endpoint still
+         *     supports both models.
+         *
+         *     `mode` controls the permission posture for the agent's toolbox:
+         *     - "compose": read-only — Read/Glob/Grep only. Suggests spec_json
+         *       patches via fenced JSON blocks; never writes files.
+         *     - "author":  read+write scoped to backend/app/features/ and
+         *       backend/tests/. Default toolset (Read/Write/Edit/Bash).
+         */
+        ChatStreamRequest: {
+            /**
+             * Mode
+             * @default compose
+             * @enum {string}
+             */
+            mode: "compose" | "author";
+            /**
+             * Model
+             * @default claude
+             * @constant
+             */
+            model: "claude";
+            /** Prompt */
+            prompt: string;
+            /** Section */
+            section?: string | null;
         };
         /**
          * ChatTurnRequest
@@ -3312,11 +3376,8 @@ export interface components {
              * @default 0
              */
             enumerated: number;
-            /**
-             * Errors
-             * @default []
-             */
-            errors: string[];
+            /** Errors */
+            errors?: string[];
             /**
              * Inventory Partitions
              * @default 0
@@ -6980,6 +7041,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChatTurnResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_chat_turn_streaming_api_strategies__strategy_id__chat_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatStreamRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

@@ -20,10 +20,11 @@ router = APIRouter(prefix="/features", tags=["features"])
 def list_features() -> list[dict[str, Any]]:
     """Return the FEATURES registry as a flat list.
 
-    Each entry: { name, label, description, param_schema }. Frontend
-    renders one card per entry in the feature pantry; clicking "+ Add"
-    instantiates a `{feature: name, params: {}}` block in the strategy
-    spec.
+    Each entry: { name, label, description, param_schema, roles }.
+    Frontend renders one card per entry in the feature pantry; clicking
+    "+ Add" instantiates a `{feature: name, params: {}}` block in the
+    strategy spec. `roles` is the set of buckets the feature can be
+    placed in: any subset of `setup`, `trigger`, `filter`.
     """
     out: list[dict[str, Any]] = []
     for name, spec in FEATURES.items():
@@ -33,6 +34,7 @@ def list_features() -> list[dict[str, Any]]:
                 "label": spec.label,
                 "description": spec.description,
                 "param_schema": spec.param_schema,
+                "roles": list(spec.roles),
             }
         )
     out.sort(key=lambda x: str(x["name"]))

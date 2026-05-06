@@ -42,6 +42,7 @@ register(
     "time_window",
     FeatureSpec(
         fn=time_window,
+        roles=("filter",),
         label="Time window filter",
         description=(
             "Only fire entries when the current bar's local time is in "

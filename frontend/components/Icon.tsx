@@ -7,6 +7,7 @@ import {
   Library,
   Search,
   Settings as Cog,
+  Wand2,
   Zap,
 } from "lucide-react";
 
@@ -17,6 +18,7 @@ const MAP: Record<IconName, typeof Inbox> = {
   bolt: Zap,
   film: Film,
   layers: Layers,
+  wand: Wand2,
   library: Library,
   settings: Cog,
 };
