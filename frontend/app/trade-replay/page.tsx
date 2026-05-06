@@ -290,7 +290,7 @@ function BarsPanel({
   if (bars.length === 0) {
     return (
       <div className="border border-zinc-800 bg-zinc-950 p-6 font-mono text-xs text-zinc-500">
-        No 1m bars in the warehouse for this trade's date. The bars
+        No 1m bars in the warehouse for this trade&apos;s date. The bars
         partition may not be backfilled yet.
       </div>
     );
