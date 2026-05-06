@@ -34,6 +34,14 @@ function readIdeaPrefill(sp: URLSearchParams): IdeaPrefill | null {
   };
 }
 
+/** Parse an "idea:N" tag back to the bare numeric idea id, or null. */
+function parseIdeaTag(tag: string): number | null {
+  const m = /^idea:(\d+)$/.exec(tag);
+  if (!m) return null;
+  const n = Number.parseInt(m[1], 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
 type StrategyDefinition = components["schemas"]["StrategyDefinitionRead"];
@@ -380,14 +388,30 @@ function RunsTable({
                 </div>
                 {r.tags && r.tags.length > 0 && (
                   <div className="mt-0.5 flex flex-wrap gap-1">
-                    {r.tags.slice(0, 3).map((t) => (
-                      <span
-                        key={t}
-                        className="font-mono text-[10px] text-ink-4"
-                      >
-                        #{t}
-                      </span>
-                    ))}
+                    {r.tags.slice(0, 3).map((t) => {
+                      const idea = parseIdeaTag(t);
+                      if (idea !== null) {
+                        return (
+                          <Link
+                            key={t}
+                            href={`/inbox`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded border border-accent-line bg-accent-soft px-1.5 py-0 font-mono text-[10px] text-accent hover:brightness-110"
+                            title={`Started from research_sidecar idea #${idea}`}
+                          >
+                            from #{idea}
+                          </Link>
+                        );
+                      }
+                      return (
+                        <span
+                          key={t}
+                          className="font-mono text-[10px] text-ink-4"
+                        >
+                          #{t}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </td>

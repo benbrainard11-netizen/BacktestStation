@@ -259,6 +259,16 @@ def run_engine_backtest(
     """Kick off a synchronous engine backtest. Loads bars, runs the strategy,
     writes outputs to disk, persists the BacktestRun row, returns it."""
     run_id = _execute_engine_backtest(payload, db)
+
+    # Mirror the async handler's idea-origin tag so sync-driven runs from
+    # /inbox are also traceable back to the originating sidecar idea.
+    if payload.idea_id is not None:
+        run = _require_run(db, run_id)
+        idea_tag = f"idea:{payload.idea_id}"
+        existing_tags = list(run.tags or [])
+        if idea_tag not in existing_tags:
+            run.tags = [*existing_tags, idea_tag]
+
     db.commit()
     return _attach_async_progress(_require_run(db, run_id))
 
