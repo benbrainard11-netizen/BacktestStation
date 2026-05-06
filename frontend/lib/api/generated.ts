@@ -42,6 +42,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backtests/run-async": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Engine Backtest Async
+         * @description Queue an engine backtest for bot/programmatic callers.
+         */
+        post: operations["run_engine_backtest_async_api_backtests_run_async_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backtests/strategies": {
         parameters: {
             query?: never;
@@ -1709,6 +1729,16 @@ export interface components {
             /** Strategy Name */
             strategy_name: string;
         };
+        /** AsyncBacktestRunQueued */
+        AsyncBacktestRunQueued: {
+            /** Run Id */
+            run_id: number;
+            /**
+             * Status
+             * @default queued
+             */
+            status: string;
+        };
         /** AutopsyConditionSlice */
         AutopsyConditionSlice: {
             /** Label */
@@ -1754,12 +1784,16 @@ export interface components {
             created_at: string;
             /** End Ts */
             end_ts: string | null;
+            /** Eta Seconds */
+            eta_seconds?: number | null;
             /** Id */
             id: number;
             /** Import Source */
             import_source: string | null;
             /** Name */
             name: string | null;
+            /** Progress Pct */
+            progress_pct?: number | null;
             /** Session Label */
             session_label: string | null;
             /** Source */
@@ -1786,6 +1820,8 @@ export interface components {
             aux_symbols?: string[];
             /** End */
             end: string;
+            /** Idea Id */
+            idea_id?: number | null;
             /**
              * Initial Equity
              * @default 25000
@@ -4959,6 +4995,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BacktestRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_engine_backtest_async_api_backtests_run_async_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BacktestRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AsyncBacktestRunQueued"];
                 };
             };
             /** @description Validation Error */

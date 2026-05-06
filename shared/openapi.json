@@ -135,6 +135,24 @@
         "title": "AiContextPreviewRead",
         "type": "object"
       },
+      "AsyncBacktestRunQueued": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "integer"
+          },
+          "status": {
+            "default": "queued",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "AsyncBacktestRunQueued",
+        "type": "object"
+      },
       "AutopsyConditionSlice": {
         "properties": {
           "label": {
@@ -270,6 +288,17 @@
             ],
             "title": "End Ts"
           },
+          "eta_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Seconds"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -295,6 +324,17 @@
               }
             ],
             "title": "Name"
+          },
+          "progress_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress Pct"
           },
           "session_label": {
             "anyOf": [
@@ -392,6 +432,18 @@
           "end": {
             "title": "End",
             "type": "string"
+          },
+          "idea_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idea Id"
           },
           "initial_equity": {
             "default": 25000.0,
@@ -9935,6 +9987,48 @@
           }
         },
         "summary": "Run Engine Backtest",
+        "tags": [
+          "backtests"
+        ]
+      }
+    },
+    "/api/backtests/run-async": {
+      "post": {
+        "description": "Queue an engine backtest for bot/programmatic callers.",
+        "operationId": "run_engine_backtest_async_api_backtests_run_async_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BacktestRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncBacktestRunQueued"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Engine Backtest Async",
         "tags": [
           "backtests"
         ]

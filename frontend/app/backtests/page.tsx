@@ -1,14 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import { Card, CardHead, Chip, PageHeader, Stat } from "@/components/atoms";
 import type { components } from "@/lib/api/generated";
 import { fmtDate, fmtR, tone } from "@/lib/format";
 import { usePoll } from "@/lib/poll";
 import { cn } from "@/lib/utils";
+
+/* ============================================================
+   Inbox handoff — params /inbox sets when linking here.
+   ============================================================ */
+
+interface IdeaPrefill {
+  ideaId: number;
+  timeframe: string | null;
+  name: string | null;
+  archetype: string | null;
+}
+
+function readIdeaPrefill(sp: URLSearchParams): IdeaPrefill | null {
+  const raw = sp.get("ideaId");
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return {
+    ideaId: n,
+    timeframe: sp.get("timeframe"),
+    name: sp.get("name"),
+    archetype: sp.get("archetype"),
+  };
+}
 
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type RunMetrics = components["schemas"]["RunMetricsRead"];
@@ -55,14 +79,58 @@ function weekAgo(): boolean {
    ============================================================ */
 
 export default function BacktestsPage() {
+  // Suspense boundary required because the inner component uses
+  // useSearchParams() — Next 15 forces this into dynamic rendering and
+  // refuses to prerender otherwise. Fallback renders immediately while
+  // the URL params resolve on the client.
+  return (
+    <Suspense fallback={<BacktestsLoadingShell />}>
+      <BacktestsPageInner />
+    </Suspense>
+  );
+}
+
+function BacktestsLoadingShell() {
+  return (
+    <div className="mx-auto max-w-[1280px] px-6 py-8">
+      <PageHeader
+        eyebrow="BACKTESTS"
+        title="Backtests"
+        sub="Loading…"
+      />
+    </div>
+  );
+}
+
+function BacktestsPageInner() {
   const runs = usePoll<BacktestRun[]>("/api/backtests", 30_000);
   const defs = usePoll<StrategyDefinition[]>("/api/backtests/strategies", 60_000);
   const strats = usePoll<StrategyRead[]>("/api/strategies", 60_000);
+
+  // /inbox links here with ?ideaId=…&timeframe=…&name=…&archetype=… so we
+  // can auto-open the run modal pre-filled with the idea's spec.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const ideaPrefill = useMemo(
+    () => readIdeaPrefill(searchParams),
+    [searchParams],
+  );
 
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stratFilter, setStratFilter] = useState<string>("all");
   const [symbolFilter, setSymbolFilter] = useState<string>("all");
+
+  // Open the modal exactly once when we land with an ideaId in the URL.
+  // After it opens, drop the ideaId query param so a manual refresh
+  // doesn't keep popping the modal open.
+  const ideaConsumedRef = useRef(false);
+  useEffect(() => {
+    if (ideaPrefill && !ideaConsumedRef.current) {
+      ideaConsumedRef.current = true;
+      setShowModal(true);
+    }
+  }, [ideaPrefill]);
 
   // Per-run metrics: lazy-loaded on demand by the list (we'll just show what BacktestRunRead has)
   const allRuns = runs.kind === "data" ? runs.data : [];
@@ -185,7 +253,13 @@ export default function BacktestsPage() {
         <RunModal
           defs={defs.kind === "data" ? defs.data : []}
           strats={strats.kind === "data" ? strats.data : []}
-          onClose={() => setShowModal(false)}
+          ideaPrefill={ideaPrefill}
+          onClose={() => {
+            setShowModal(false);
+            // If we opened from an inbox link, scrub the params so a
+            // refresh shows the plain backtests page instead of re-opening.
+            if (ideaPrefill) router.replace("/backtests");
+          }}
         />
       )}
     </div>
@@ -401,10 +475,12 @@ type SubmitState =
 function RunModal({
   defs,
   strats,
+  ideaPrefill,
   onClose,
 }: {
   defs: StrategyDefinition[];
   strats: StrategyRead[];
+  ideaPrefill: IdeaPrefill | null;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -418,6 +494,13 @@ function RunModal({
   const [qty, setQty] = useState("1");
   const [initialEquity, setInitialEquity] = useState("25000");
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
+
+  // Apply idea prefill to the form once on mount. Only fields that the
+  // inbox knows about (timeframe / name aren't form fields here, but
+  // they're kept in `ideaPrefill` so we can echo them back in the badge).
+  // Symbol stays at the default — research_sidecar's `asset_class` is
+  // too generic ("futures") to safely auto-pick a contract.
+  // Nothing to set explicitly today; the badge does the work.
 
   const versions = useMemo(() => {
     const flat: { label: string; id: number }[] = [];
@@ -448,21 +531,23 @@ function RunModal({
     }
     setState({ kind: "running" });
     try {
+      const body: Record<string, unknown> = {
+        strategy_name: stratName,
+        strategy_version_id: versionId,
+        symbol: symbol.trim(),
+        start,
+        end,
+        qty: Number.parseInt(qty, 10) || 1,
+        initial_equity: Number.parseFloat(initialEquity) || 25000,
+        timeframe: "1m",
+        session_tz: "America/New_York",
+        slippage_ticks: 1,
+      };
+      if (ideaPrefill) body.idea_id = ideaPrefill.ideaId;
       const res = await fetch("/api/backtests/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          strategy_name: stratName,
-          strategy_version_id: versionId,
-          symbol: symbol.trim(),
-          start,
-          end,
-          qty: Number.parseInt(qty, 10) || 1,
-          initial_equity: Number.parseFloat(initialEquity) || 25000,
-          timeframe: "1m",
-          session_tz: "America/New_York",
-          slippage_ticks: 1,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const err = await res.text();
@@ -513,6 +598,24 @@ function RunModal({
             <div className="mt-0.5 text-[16px] font-semibold text-ink-0">
               Run backtest
             </div>
+            {ideaPrefill && (
+              <div className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded border border-accent-line bg-accent-soft px-2 py-1 font-mono text-[10.5px] text-accent">
+                <span className="font-semibold uppercase tracking-[0.06em]">
+                  from idea #{ideaPrefill.ideaId}
+                </span>
+                {ideaPrefill.archetype && (
+                  <span className="text-ink-2">· {ideaPrefill.archetype}</span>
+                )}
+                {ideaPrefill.timeframe && (
+                  <span className="text-ink-2">· {ideaPrefill.timeframe}</span>
+                )}
+                {ideaPrefill.name && (
+                  <span className="max-w-[20ch] truncate text-ink-2">
+                    · &ldquo;{ideaPrefill.name}&rdquo;
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={onClose}
