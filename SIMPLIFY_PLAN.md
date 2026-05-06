@@ -174,37 +174,52 @@ Phase boundaries are sized so you can stop after any phase and still have a work
 - Fold `/risk-profiles` content into `/strategies` as a tab. Then delete those route folders.
 - Rewrite the Knowledge Library editor (create/edit/delete) against the new atoms — bring back the archive's full UI without the legacy `@/components/ui/*` deps.
 
-### Phase C — Sidecar HTTP API ⏱ ~1 session
-- New process: `research_sidecar/scripts/run_http_api.py` (FastAPI on `:9000`).
-- 5 endpoints from §5a.
-- NSSM service definition.
-- **Result:** sidecar exposes ideas over HTTP, even if BacktestStation doesn't consume them yet.
+### Phase C — Sidecar HTTP API ⏱ ~1 session  ✅ SHIPPED 2026-05-05
+- `research_sidecar/scripts/run_http_api.py` exposes 5 endpoints on `:9000`.
+- 20 unit tests, all green.
+- NSSM service definition lives in `BacktestStation/docs/SERVER_DEPLOYMENT.md`
+  (Phase G).
 
-### Phase D — Inbox UI ⏱ ~1 session
-- Real `/inbox` page in BacktestStation pulls from sidecar's `/ideas`.
-- Each row has a [Backtest] button → opens existing run-a-backtest form, pre-filled.
-- Submit → POST `/backtests/run` with `idea_id`.
-- **Result:** end-to-end flow works *via the UI*. Discord buttons not yet wired.
+### Phase D — Inbox UI ⏱ ~1 session  ✅ SHIPPED 2026-05-05
+- `/inbox` page pulls from sidecar via `/api/sidecar/*` Next rewrite.
+- Score-sorted IdeaCards with strategy spec, indicator/filter chips,
+  last-backtest summary, source link.
+- Filter toggle (promising / promising+review), optimistic Skip,
+  retry-on-error banner.
+- "Backtest" button → `/backtests?ideaId=…&timeframe=…&name=…`. The
+  Backtests page reads those params, auto-opens the run modal pre-
+  filled, and shows a "from idea #N" header badge. Submit posts
+  `idea_id` to `/api/backtests/run` (sync) — the run picks up an
+  `idea:N` tag, surfaced as a clickable accent chip in the runs list.
 
-### Phase E — Discord buttons ⏱ ~1 session
-- Extend sidecar `discord_bot/commands.py` with a `View` for high-score embeds.
-- Modal for editable params on [Backtest now].
-- BacktestStation polling loop in sidecar to pick up the result and edit the message.
-- **Result:** can drive the loop without ever opening the UI.
+### Phase E — Discord buttons ⏱ ~1 session  ✅ SHIPPED 2026-05-05
+- E.1 (BacktestStation backend, `ff7d82b`): async run mode at
+  `POST /api/backtests/run-async`, status/progress/eta on the run-read
+  shape, queued → running → complete state machine, 8 tests green.
+- E.2 (research_sidecar, `f39d93c`): `discord.ui.View` with
+  [🧪 Backtest now] / [⏭️ Skip] / [📖 Open]; Modal for editable run
+  params; adaptive polling loop edits the original embed with progress
+  and final result; 5 tests green.
+- "Open" button URL goes to `http://<TS_IP>:3000/inbox?idea=<id>`.
 
-### Phase F — Volume profile module ⏱ ~1 session
-- `backend/app/features/_volume_profile.py` (POC, VAH, VAL, HVN, LVN).
-- Tests against a known reference parquet.
-- Register as Library cards.
-- **Result:** ideas mentioning volume profile now actually match a runnable feature.
+### Phase F — Volume profile module ⏱ ~1 session  ✅ SHIPPED 2026-05-05
+- `backend/app/features/_volume_profile.py` — `compute_profile`,
+  `find_poc`, `find_value_area`, `position_vs_value_area`. Floor-anchored
+  bucketing (no banker's-rounding collisions).
+- `backend/app/features/volume_profile.py` — registered features
+  `vp_zone` (trigger+filter, all 6 zones) and `vp_in_va` (filter).
+- 32 tests green, 104/104 across the full feature suite.
+- HVN/LVN deferred — POC/VAH/VAL covers the common patterns.
 
-### Phase G — Server deployment ⏱ ~½ session + manual steps on server
-- Production build script: `next build && next export` → `frontend/out/`.
-- FastAPI mounts `StaticFiles`.
-- NSSM service definitions for: BacktestStation API, sidecar HTTP API.
-- Tailscale binding confirmed.
-- Ben pulls on server, registers services, restarts.
-- **Result:** 24/7 running, Discord-driven, accessible via Tailscale.
+### Phase G — Server deployment ⏱ ~½ session + manual server steps
+- ⚠️ PARTIALLY SHIPPED: documentation in `docs/SERVER_DEPLOYMENT.md`
+  describing 5 NSSM services (4 new + 1 frontend), Tailscale-IP
+  binding, env files, day-to-day ops. The actual server install is a
+  manual step on `ben-247` and not yet performed.
+- Static frontend export deferred — current recipe runs `next start`
+  as a 6th NSSM service. Single-process FastAPI-served frontend is a
+  later cleanup once the dynamic routes (`/backtests/[id]`,
+  `/strategies/[id]/build`) are made static-export-friendly.
 
 **Total: ~5–6 sessions of dev work.** Phase A through E gets you the working loop on this machine; F adds the missing feature; G is the move-to-server operation.
 
