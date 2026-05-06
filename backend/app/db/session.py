@@ -387,6 +387,71 @@ def _run_data_migrations(engine: Engine) -> None:
         if inspector.has_table("knowledge_cards"):
             _seed_default_knowledge_cards(connection)
 
+        # 2026-05-05: StrategyPromotionCheck table — per-candidate
+        # full-robustness verdict (paper / research_only / killed). Fresh
+        # DBs get the table from `Base.metadata.create_all()`; existing
+        # files need this guarded CREATE.
+        if not inspector.has_table("strategy_promotion_checks"):
+            connection.execute(
+                text(
+                    "CREATE TABLE strategy_promotion_checks ("
+                    " id INTEGER PRIMARY KEY,"
+                    " strategy_id INTEGER REFERENCES strategies(id),"
+                    " strategy_version_id INTEGER "
+                    "REFERENCES strategy_versions(id),"
+                    " backtest_run_id INTEGER REFERENCES backtest_runs(id),"
+                    " candidate_name VARCHAR(200) NOT NULL,"
+                    " candidate_config_id VARCHAR(200),"
+                    " source_repo VARCHAR(120),"
+                    " source_dir TEXT,"
+                    " findings_path TEXT,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'draft',"
+                    " final_verdict TEXT,"
+                    " notes TEXT,"
+                    " fail_reasons JSON,"
+                    " pass_reasons JSON,"
+                    " metrics_json JSON,"
+                    " robustness_json JSON,"
+                    " evidence_paths_json JSON,"
+                    " next_actions JSON,"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " updated_at DATETIME"
+                    ")"
+                )
+            )
+            for index_name, column in [
+                (
+                    "ix_strategy_promotion_checks_strategy_id",
+                    "strategy_id",
+                ),
+                (
+                    "ix_strategy_promotion_checks_strategy_version_id",
+                    "strategy_version_id",
+                ),
+                (
+                    "ix_strategy_promotion_checks_backtest_run_id",
+                    "backtest_run_id",
+                ),
+                (
+                    "ix_strategy_promotion_checks_candidate_name",
+                    "candidate_name",
+                ),
+                (
+                    "ix_strategy_promotion_checks_candidate_config_id",
+                    "candidate_config_id",
+                ),
+                (
+                    "ix_strategy_promotion_checks_status",
+                    "status",
+                ),
+            ]:
+                connection.execute(
+                    text(
+                        f"CREATE INDEX IF NOT EXISTS {index_name} "
+                        f"ON strategy_promotion_checks({column})"
+                    )
+                )
+
 
 def _seed_default_risk_profiles(connection) -> None:
     """Insert Conservative / Live-mirror / Aggressive defaults if missing.

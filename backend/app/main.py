@@ -18,6 +18,7 @@ from app.api import (
     knowledge,
     monitor,
     notes,
+    promotion_checks,
     prompts,
     prop_firm,
     replay,
@@ -67,3 +68,4 @@ app.include_router(chat.router, prefix="/api")
 app.include_router(ai_context.router, prefix="/api")
 app.include_router(features.router, prefix="/api")
 app.include_router(research.router, prefix="/api")
+app.include_router(promotion_checks.router, prefix="/api")

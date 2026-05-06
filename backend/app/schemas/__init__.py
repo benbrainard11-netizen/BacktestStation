@@ -75,6 +75,13 @@ from app.schemas.prop_firm import (
     PropFirmPresetRead,
     PropFirmResultRead,
 )
+from app.schemas.promotion_checks import (
+    PROMOTION_CHECK_STATUSES,
+    StrategyPromotionCheckCreate,
+    StrategyPromotionCheckRead,
+    StrategyPromotionCheckStatusesRead,
+    StrategyPromotionCheckUpdate,
+)
 from app.schemas.prop_simulator import (
     SimulationRunDetail,
     SimulationRunListRow,
@@ -181,6 +188,7 @@ __all__ = [
     "NoteRead",
     "NoteTypesRead",
     "NoteUpdate",
+    "PROMOTION_CHECK_STATUSES",
     "PromptGenerateRequest",
     "PromptGenerateResponse",
     "PromptModesRead",
@@ -213,6 +221,10 @@ __all__ = [
     "SimulationRunRequest",
     "RunMetricsRead",
     "StrategyCreate",
+    "StrategyPromotionCheckCreate",
+    "StrategyPromotionCheckRead",
+    "StrategyPromotionCheckStatusesRead",
+    "StrategyPromotionCheckUpdate",
     "StrategyRead",
     "StrategyStagesRead",
     "StrategyUpdate",

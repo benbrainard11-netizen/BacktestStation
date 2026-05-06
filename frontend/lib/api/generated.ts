@@ -847,6 +847,66 @@ export interface paths {
         patch: operations["update_note_api_notes__note_id__patch"];
         trace?: never;
     };
+    "/api/promotion-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Checks
+         * @description List promotion checks, newest first.
+         */
+        get: operations["list_checks_api_promotion_checks_get"];
+        put?: never;
+        /** Create Check */
+        post: operations["create_check_api_promotion_checks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/promotion-checks/statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Statuses
+         * @description Status vocabulary — mirrors /risk-profiles/statuses.
+         */
+        get: operations["list_statuses_api_promotion_checks_statuses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/promotion-checks/{check_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Check */
+        get: operations["get_check_api_promotion_checks__check_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Check */
+        delete: operations["delete_check_api_promotion_checks__check_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Check */
+        patch: operations["update_check_api_promotion_checks__check_id__patch"];
+        trace?: never;
+    };
     "/api/prompts/generate": {
         parameters: {
             query?: never;
@@ -4309,6 +4369,161 @@ export interface components {
              */
             type: string;
         };
+        /** StrategyPromotionCheckCreate */
+        StrategyPromotionCheckCreate: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Candidate Config Id */
+            candidate_config_id?: string | null;
+            /** Candidate Name */
+            candidate_name: string;
+            /** Evidence Paths Json */
+            evidence_paths_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Fail Reasons */
+            fail_reasons?: string[] | null;
+            /** Final Verdict */
+            final_verdict?: string | null;
+            /** Findings Path */
+            findings_path?: string | null;
+            /** Metrics Json */
+            metrics_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Next Actions */
+            next_actions?: string[] | null;
+            /** Notes */
+            notes?: string | null;
+            /** Pass Reasons */
+            pass_reasons?: string[] | null;
+            /** Robustness Json */
+            robustness_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Source Dir */
+            source_dir?: string | null;
+            /** Source Repo */
+            source_repo?: string | null;
+            /**
+             * Status
+             * @default draft
+             */
+            status: string;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+        };
+        /** StrategyPromotionCheckRead */
+        StrategyPromotionCheckRead: {
+            /** Backtest Run Id */
+            backtest_run_id: number | null;
+            /** Candidate Config Id */
+            candidate_config_id: string | null;
+            /** Candidate Name */
+            candidate_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Evidence Paths Json */
+            evidence_paths_json: {
+                [key: string]: unknown;
+            } | null;
+            /** Fail Reasons */
+            fail_reasons: string[] | null;
+            /** Final Verdict */
+            final_verdict: string | null;
+            /** Findings Path */
+            findings_path: string | null;
+            /** Id */
+            id: number;
+            /** Metrics Json */
+            metrics_json: {
+                [key: string]: unknown;
+            } | null;
+            /** Next Actions */
+            next_actions: string[] | null;
+            /** Notes */
+            notes: string | null;
+            /** Pass Reasons */
+            pass_reasons: string[] | null;
+            /** Robustness Json */
+            robustness_json: {
+                [key: string]: unknown;
+            } | null;
+            /** Source Dir */
+            source_dir: string | null;
+            /** Source Repo */
+            source_repo: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "pass_paper" | "research_only" | "killed" | "archived";
+            /** Strategy Id */
+            strategy_id: number | null;
+            /** Strategy Version Id */
+            strategy_version_id: number | null;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /**
+         * StrategyPromotionCheckStatusesRead
+         * @description GET /api/promotion-checks/statuses body.
+         */
+        StrategyPromotionCheckStatusesRead: {
+            /** Statuses */
+            statuses: string[];
+        };
+        /**
+         * StrategyPromotionCheckUpdate
+         * @description PATCH body — only fields present are applied.
+         */
+        StrategyPromotionCheckUpdate: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Candidate Config Id */
+            candidate_config_id?: string | null;
+            /** Candidate Name */
+            candidate_name?: string | null;
+            /** Evidence Paths Json */
+            evidence_paths_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Fail Reasons */
+            fail_reasons?: string[] | null;
+            /** Final Verdict */
+            final_verdict?: string | null;
+            /** Findings Path */
+            findings_path?: string | null;
+            /** Metrics Json */
+            metrics_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Next Actions */
+            next_actions?: string[] | null;
+            /** Notes */
+            notes?: string | null;
+            /** Pass Reasons */
+            pass_reasons?: string[] | null;
+            /** Robustness Json */
+            robustness_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Source Dir */
+            source_dir?: string | null;
+            /** Source Repo */
+            source_repo?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+        };
         /** StrategyRead */
         StrategyRead: {
             /**
@@ -6137,6 +6352,188 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NoteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_checks_api_promotion_checks_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                strategy_id?: number | null;
+                strategy_version_id?: number | null;
+                candidate_config_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyPromotionCheckRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_check_api_promotion_checks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyPromotionCheckCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyPromotionCheckRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_statuses_api_promotion_checks_statuses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyPromotionCheckStatusesRead"];
+                };
+            };
+        };
+    };
+    get_check_api_promotion_checks__check_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyPromotionCheckRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_check_api_promotion_checks__check_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_check_api_promotion_checks__check_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyPromotionCheckUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyPromotionCheckRead"];
                 };
             };
             /** @description Validation Error */

@@ -650,3 +650,58 @@ class KnowledgeCard(Base):
         DateTime, server_default=func.now()
     )
     updated_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class StrategyPromotionCheck(Base):
+    """Per-candidate promotion verdict — paper-ready / research-only / killed.
+
+    Distinct from `Experiment.decision`: an Experiment is a per-A/B-test
+    verdict, a PromotionCheck is the per-candidate full-robustness verdict
+    aggregating all evidence (walk-forward, LOO, slippage, prop sim,
+    sample size, findings docs). Both coexist; FK columns are present so
+    a check can optionally point at the strategy/version/run that backed
+    the decision, but none are required — many candidates start outside
+    the Strategy registry (e.g. raw FractalAMD CSV outputs) and are
+    promoted into it later.
+
+    `candidate_config_id` is the soft idempotency key for seed scripts
+    that re-import a fixed list of candidates. `findings_path` and the
+    `*_paths_json` columns point at the on-disk evidence; the row stores
+    pointers, not parsed CSV content (CSV parsing is a future pass).
+    """
+
+    __tablename__ = "strategy_promotion_checks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    strategy_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategies.id"), index=True
+    )
+    strategy_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategy_versions.id"), index=True
+    )
+    backtest_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True
+    )
+    candidate_name: Mapped[str] = mapped_column(String(200), index=True)
+    candidate_config_id: Mapped[str | None] = mapped_column(
+        String(200), index=True
+    )
+    source_repo: Mapped[str | None] = mapped_column(String(120))
+    source_dir: Mapped[str | None] = mapped_column(Text)
+    findings_path: Mapped[str | None] = mapped_column(Text)
+    # draft | pass_paper | research_only | killed | archived
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft", server_default="draft", index=True
+    )
+    final_verdict: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text)
+    fail_reasons: Mapped[list[str] | None] = mapped_column(JSON)
+    pass_reasons: Mapped[list[str] | None] = mapped_column(JSON)
+    metrics_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    robustness_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    evidence_paths_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    next_actions: Mapped[list[str] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime)
