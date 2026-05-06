@@ -38,21 +38,23 @@ ROWS: list[dict[str, Any]] = [
         ),
         "findings_path": (
             r"D:\data\research\fractal_regime\findings"
-            r"\findings_2026-05-05_fractal_regime_v05.md"
+            r"\findings_2026-05-06_pre10_v04_paper_readiness.md"
         ),
         "final_verdict": (
-            "Paper candidate only; expectation downgraded to 50-67% "
-            "Topstep pass after v05."
+            "Paper MNQ only: use 3 MNQ for paper research. Do not paper "
+            "1 NQ; Monte Carlo path-level DD failure risk is too high "
+            "relative to the $2K trailing drawdown."
         ),
         "fail_reasons": [
             "v04 raw 76.47% pass partly selection artifact",
-            "2026 only 3 cohorts",
-            "no slippage sweep beyond $5 yet",
+            "1 NQ Monte Carlo fail-DD was 37%, too close to the $2K trail-DD",
+            "recent-only MC from 2025-2026 dropped to 74.5% pass / 24% fail",
         ],
         "pass_reasons": [
             "best saved candidate",
-            "v05 HTF composite did not beat it",
-            "frozen v04 2025/2026 held at 66.7%/66.7%",
+            "frozen v04 reconstruction matched expected stats exactly",
+            "3 MNQ passed MC risk gate with 90% pass / 10% fail-DD",
+            "cost stress from $5-$15 slippage passed",
         ],
         "metrics_json": {
             "headline_topstep_pass_pct": 76.47,
@@ -60,7 +62,71 @@ ROWS: list[dict[str, Any]] = [
             "forward_expectation_topstep_pass_range": "50-67%",
             "frozen_2025_pass_pct": 66.67,
             "frozen_2026_pass_pct": 66.67,
+            "paper_recommended_size": "3_MNQ",
+            "paper_risk_per_r_dollars": 240.0,
+            "paper_risk_per_contract_dollars": 80.0,
+            "paper_risk_pct_of_2000_trail_dd": 12.0,
+            "topstep_like_monthly_pass_pct_3_mnq": 88.2,
+            "topstep_like_monthly_fail_trail_dd_pct_3_mnq": 3.9,
+            "topstep_like_monthly_median_days_to_pass_3_mnq": 119.0,
+            "mc_iid_pass_pct_3_mnq": 90.0,
+            "mc_iid_fail_dd_pct_3_mnq": 10.0,
+            "recent_only_mc_pass_pct": 74.5,
+            "recent_only_mc_fail_pct": 24.0,
+            "one_nq_mc_fail_dd_pct": 37.0,
         },
+        "robustness_json": {
+            "v09_verdict": "paper_mnq_only_3_mnq",
+            "frozen_reconstruction": {
+                "n_trades": 510,
+                "win_rate": 0.606,
+                "expectancy_r": 0.270,
+                "max_dd_r": 7.14,
+                "stop_exit_pct": 71.0,
+                "time_exit_pct": 29.0,
+            },
+            "stress_tests": {
+                "cost_stress_5_to_15_slippage": "passed",
+                "recent_year_worst_case_topstep_ge_50": "passed",
+                "one_nq_mc_fail_dd_le_30": "failed",
+                "one_nq_mc_pass_ge_70": "failed",
+                "three_mnq_mc_fail_dd_le_15": "passed",
+            },
+            "biggest_risk": (
+                "v05 selection plateau: tau_sell=0.60 was selected using "
+                "2025 validation behavior inside a flat 2022-2024 plateau."
+            ),
+        },
+        "evidence_paths_json": {
+            "findings": (
+                r"D:\data\research\fractal_regime\findings"
+                r"\findings_2026-05-06_pre10_v04_paper_readiness.md"
+            ),
+            "output_dir": (
+                r"C:\Users\benbr\FractalAMD-\production\vp_smt_outputs"
+                r"\fractal_regime_v09_pre10_readiness"
+            ),
+            "script": (
+                r"C:\Users\benbr\FractalAMD-\production"
+                r"\v09_pre10_paper_readiness_audit.py"
+            ),
+            "paper_monitor_plan": (
+                r"C:\Users\benbr\FractalAMD-\production\vp_smt_outputs"
+                r"\fractal_regime_v09_pre10_readiness"
+                r"\paper_monitor_plan.md"
+            ),
+        },
+        "next_actions": [
+            "Paper only with 3 MNQ; do not paper 1 NQ.",
+            "Use v09 paper monitor plan kill-switch thresholds.",
+            "Track realized slippage and pause if it exceeds the plan.",
+            "Reassess after 20, 40, and 60 paper trades.",
+        ],
+        "notes": (
+            "v09 paper-readiness audit changed the action from generic "
+            "paper candidate to specific 3 MNQ paper-only plan. 1 NQ is "
+            "not acceptable under MC drawdown risk."
+        ),
     },
     {
         "candidate_name": "Fractal Regime v05 HTF Composite",
