@@ -14,7 +14,11 @@ reloads.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
@@ -28,8 +32,20 @@ from app.db.models import (
     StrategyVersion,
 )
 from app.db.session import get_session
-from app.schemas.chat import ChatMessageRead, ChatTurnRequest, ChatTurnResponse
-from app.services.cli_chat import CliInvocationError, run_turn
+from app.schemas.chat import (
+    ChatMessageRead,
+    ChatStreamRequest,
+    ChatTurnRequest,
+    ChatTurnResponse,
+)
+from app.services.cli_chat import (
+    CliInvocationError,
+    run_claude_turn_streaming,
+    run_turn,
+)
+
+# backend/app/api/chat.py → ../../.. = repo root
+_REPO_ROOT = Path(__file__).resolve().parents[3]
 
 router = APIRouter(prefix="/strategies/{strategy_id}/chat", tags=["chat"])
 
@@ -162,6 +178,130 @@ async def post_chat_turn(
     )
 
 
+@router.post("-stream")
+async def post_chat_turn_streaming(
+    strategy_id: int,
+    payload: ChatStreamRequest,
+    db: Session = Depends(get_session),
+):
+    """Streaming variant of POST /chat. Returns NDJSON of StreamEvents.
+
+    Each line is one JSON object with `type` and `payload`:
+      - {"type":"text","payload":{"delta":"..."}}
+      - {"type":"tool_use","payload":{"name":"Write","input":{...}}}
+      - {"type":"tool_result","payload":{"is_error":false,"content":"..."}}
+      - {"type":"done","payload":{"text":"...","session_id":"...","cost_usd":..}}
+      - {"type":"error","payload":{"message":"..."}}
+
+    Persists the user message before the stream starts (so a reload
+    mid-stream still shows what was asked) and the assistant message
+    after the stream emits a successful "done" event.
+    """
+    strategy = _require_strategy(strategy_id, db)
+    system = _build_system_prompt(strategy, db)
+
+    # Resume Claude session per (strategy, section) — same logic as the
+    # synchronous endpoint.
+    statement = select(ChatMessage).where(
+        ChatMessage.strategy_id == strategy_id,
+        ChatMessage.role == "assistant",
+        ChatMessage.model == "claude",
+        ChatMessage.cli_session_id.is_not(None),
+    )
+    if payload.section is not None:
+        statement = statement.where(ChatMessage.section == payload.section)
+    else:
+        statement = statement.where(ChatMessage.section.is_(None))
+    prior = db.scalar(
+        statement.order_by(
+            desc(ChatMessage.created_at), desc(ChatMessage.id)
+        ).limit(1)
+    )
+    prior_session_id = prior.cli_session_id if prior is not None else None
+
+    # Persist user message FIRST so it's visible mid-stream and survives
+    # any agent-side error.
+    user_msg = ChatMessage(
+        strategy_id=strategy_id,
+        role="user",
+        content=payload.prompt,
+        model="claude",
+        section=payload.section,
+        cli_session_id=None,
+        cost_usd=None,
+    )
+    db.add(user_msg)
+    db.commit()
+
+    # Mode → permission posture mapping.
+    if payload.mode == "compose":
+        # Read-only: agent may inspect repo but never writes.
+        add_dirs: list[str] | None = None
+        allowed_tools: list[str] | None = ["Read", "Glob", "Grep"]
+    else:  # "author"
+        # Writes scoped to features registry + tests dir. Default toolset
+        # so the agent can run pytest after writing.
+        add_dirs = [
+            str(_REPO_ROOT / "backend" / "app" / "features"),
+            str(_REPO_ROOT / "backend" / "tests"),
+        ]
+        allowed_tools = None
+
+    state: dict = {
+        "final_text": "",
+        "session_id": None,
+        "cost_usd": None,
+        "saw_done": False,
+    }
+
+    async def event_stream():
+        try:
+            async for evt in run_claude_turn_streaming(
+                payload.prompt,
+                system=system,
+                prior_session_id=prior_session_id,
+                cwd=str(_REPO_ROOT),
+                add_dirs=add_dirs,
+                allowed_tools=allowed_tools,
+            ):
+                if evt.type == "done":
+                    state["saw_done"] = True
+                    state["final_text"] = evt.payload.get("text", "") or ""
+                    state["session_id"] = evt.payload.get("session_id")
+                    state["cost_usd"] = evt.payload.get("cost_usd")
+                yield (
+                    json.dumps({"type": evt.type, "payload": evt.payload})
+                    + "\n"
+                ).encode("utf-8")
+        except Exception as e:
+            yield (
+                json.dumps(
+                    {"type": "error", "payload": {"message": str(e)}}
+                )
+                + "\n"
+            ).encode("utf-8")
+            return
+
+        # Persist the assistant message after the stream closes
+        # successfully. Skip if the agent never produced text.
+        if state["saw_done"] and state["final_text"]:
+            assistant_msg = ChatMessage(
+                strategy_id=strategy_id,
+                role="assistant",
+                content=state["final_text"],
+                model="claude",
+                section=payload.section,
+                cli_session_id=state["session_id"],
+                cost_usd=state["cost_usd"],
+            )
+            db.add(assistant_msg)
+            db.commit()
+
+    return StreamingResponse(
+        event_stream(), media_type="application/x-ndjson"
+    )
+
+
 def _build_system_prompt(strategy: Strategy, db: Session) -> str:
     """Auto-inject strategy context so the user doesn't have to."""
     lines: list[str] = []
@@ -287,6 +427,8 @@ def _build_system_prompt(strategy: Strategy, db: Session) -> str:
             if card.body:
                 lines.append(f"  Notes: {_cap_knowledge_context(card.body)}")
 
+    lines.append(_SPEC_AUTHORING_GUIDE)
+
     lines.append(
         "\n---\n\nWhen the user asks about results, refer to these numbers. "
         "When they ask about rules, reference the markdown above. Keep "
@@ -296,6 +438,65 @@ def _build_system_prompt(strategy: Strategy, db: Session) -> str:
         "research memory."
     )
     return "\n".join(lines)
+
+
+_SPEC_AUTHORING_GUIDE = """
+## Strategy spec taxonomy (for compose-mode patches)
+
+Every BacktestStation strategy has features grouped into three roles:
+
+- **setup** — persistent state that ARMS an entry window. Example:
+  "PDH was swept" or "we are in a high-volatility regime". Setup features
+  re-evaluate every bar; once they all pass, the engine arms the
+  trigger window for that direction.
+- **trigger** — moment-in-time signal that FIRES the entry. Example:
+  "decisive bear close" or "FVG touch". Trigger features must all pass
+  on the bar where the entry is placed.
+- **filter** — block conditions evaluated against any candidate entry.
+  Global `filter` applies to both directions; `filter_long` /
+  `filter_short` apply only to that direction. Example: "RTH only",
+  "skip when ATR < 8 pts".
+
+Engine eval order, per bar, per direction:
+
+    setup features all pass → arm setup window (refresh if armed)
+    setup currently armed?    (empty setup = always armed)
+    trigger features all pass
+    global filter + per-direction filter all pass
+                             → enter
+
+`setup_window: { long: int|null, short: int|null }` controls how many
+bars after firing the setup stays armed. `null` = persistent until end
+of trading day (the safe default; cleared on Globex 18:00 ET rollover).
+
+When suggesting a strategy patch, emit a fenced JSON block tagged
+`spec_json`. The user clicks "Apply to spec" to merge it into the
+recipe. Use the new shape (setup/trigger/filter) — old `entry_long`/
+`entry_short` keys still work but are deprecated.
+
+Example (PDH-sweep + decisive bear close, RTH only):
+
+```json spec_json
+{
+  "setup_short": [
+    {"feature": "prior_level_sweep", "params": {"level": "PDH", "direction": "above"}}
+  ],
+  "trigger_short": [
+    {"feature": "decisive_close", "params": {"direction": "BEARISH", "min_body_pct": 0.6}}
+  ],
+  "filter": [
+    {"feature": "time_window", "params": {"start_hour": 9.5, "end_hour": 14.0}}
+  ],
+  "setup_window": {"short": 10},
+  "stop": {"type": "fixed_pts", "stop_pts": 10},
+  "target": {"type": "r_multiple", "r": 3}
+}
+```
+
+A feature may declare multiple roles (`prior_level_sweep` works as both
+setup and trigger). The user picks one when adding it to the recipe.
+Within a single bucket the semantics is AND — all features must pass.
+"""
 
 
 def _cap_chat_context(text: str) -> str:

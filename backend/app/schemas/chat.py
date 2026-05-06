@@ -46,3 +46,25 @@ class ChatTurnResponse(BaseModel):
 
     user: ChatMessageRead
     assistant: ChatMessageRead
+
+
+class ChatStreamRequest(BaseModel):
+    """POST body for a streaming chat turn (Claude only).
+
+    Codex CLI doesn't expose a streaming output format, so streaming is
+    Claude-only for now. The synchronous POST /chat endpoint still
+    supports both models.
+
+    `mode` controls the permission posture for the agent's toolbox:
+    - "compose": read-only — Read/Glob/Grep only. Suggests spec_json
+      patches via fenced JSON blocks; never writes files.
+    - "author":  read+write scoped to backend/app/features/ and
+      backend/tests/. Default toolset (Read/Write/Edit/Bash).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    prompt: str = Field(..., min_length=1)
+    model: Literal["claude"] = "claude"
+    section: str | None = Field(default=None, max_length=32)
+    mode: Literal["compose", "author"] = "compose"

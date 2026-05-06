@@ -20,8 +20,9 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 
 # Default Windows install location (npm-installed Claude Code CLI).
@@ -197,3 +198,238 @@ async def run_turn(
     if model == "codex":
         return await run_codex_turn(prompt, system=system)
     raise ValueError(f"unknown chat model {model!r}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Streaming variant — yields events for chat-stream endpoint
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class StreamEvent:
+    """One event in the stream of a Claude turn.
+
+    Translated from Claude CLI's stream-json format into a stable shape
+    the frontend can render directly. Always emit a final "done" event
+    on success (with assembled text + cost + session_id) or "error" on
+    failure.
+    """
+
+    type: Literal["text", "tool_use", "tool_result", "done", "error"]
+    payload: dict[str, Any]
+
+
+async def run_claude_turn_streaming(
+    prompt: str,
+    *,
+    system: str,
+    prior_session_id: str | None = None,
+    cwd: str | None = None,
+    add_dirs: list[str] | None = None,
+    allowed_tools: list[str] | None = None,
+) -> AsyncIterator[StreamEvent]:
+    """Stream a Claude CLI turn line-by-line as `StreamEvent`s.
+
+    Uses `--output-format stream-json --include-partial-messages` so the
+    CLI emits one JSON object per line as the assistant writes text and
+    invokes tools. We parse each line, translate Claude's internal event
+    shape into our minimal `StreamEvent` shape, and yield. The caller
+    persists the assembled final text to the DB after the stream closes.
+
+    Permission posture:
+    - `cwd` defaults to the current process cwd. Override to anchor the
+      agent in a specific dir (matters for Read/Glob/Grep relative paths).
+    - `add_dirs` are extra directories the agent can access (read + write).
+      Pass these for the author-features mode to scope writes.
+    - `allowed_tools` whitelists the tools the agent may invoke. Pass
+      `["Read", "Glob", "Grep"]` for read-only compose mode. Pass None to
+      allow the default toolset (read + write + bash). When passing a
+      whitelist, use `--permission-mode default`; when allowing writes,
+      use `bypassPermissions` so the agent doesn't prompt.
+    """
+    cmd: list[str] = [
+        _claude_bin(),
+        "-p",
+        "--output-format",
+        "stream-json",
+        "--include-partial-messages",
+        "--verbose",  # required by --include-partial-messages
+        "--system-prompt",
+        system,
+    ]
+    if prior_session_id:
+        cmd += ["--resume", prior_session_id]
+    if add_dirs:
+        cmd += ["--add-dir", *add_dirs]
+    if allowed_tools is not None:
+        cmd += ["--allowed-tools", *allowed_tools]
+        # Read-only whitelist: don't bypass permissions, just trust the
+        # whitelist itself to constrain.
+        cmd += ["--permission-mode", "default"]
+    else:
+        # No whitelist = default toolset = writes possible. Bypass the
+        # interactive permission prompts since this runs unattended.
+        cmd += ["--permission-mode", "bypassPermissions"]
+
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=_strip_billing_keys(os.environ),
+        cwd=cwd,
+    )
+    assert proc.stdin is not None
+    assert proc.stdout is not None
+
+    proc.stdin.write(prompt.encode("utf-8"))
+    await proc.stdin.drain()
+    proc.stdin.close()
+
+    assembled_text_parts: list[str] = []
+    saw_done = False
+
+    try:
+        while True:
+            try:
+                line = await asyncio.wait_for(
+                    proc.stdout.readline(), timeout=_CLI_TIMEOUT_SEC
+                )
+            except asyncio.TimeoutError:
+                yield StreamEvent(
+                    type="error",
+                    payload={
+                        "message": f"claude CLI timed out after {_CLI_TIMEOUT_SEC}s"
+                    },
+                )
+                return
+            if not line:
+                break
+            try:
+                evt = json.loads(line.decode("utf-8"))
+            except json.JSONDecodeError:
+                # Non-JSON noise on stdout — skip rather than crash.
+                continue
+            translated = _translate_claude_event(evt, assembled_text_parts)
+            if translated is None:
+                continue
+            if translated.type == "done":
+                saw_done = True
+            yield translated
+
+        await proc.wait()
+        if proc.returncode != 0:
+            err = await proc.stderr.read() if proc.stderr else b""
+            yield StreamEvent(
+                type="error",
+                payload={
+                    "message": (
+                        f"claude CLI exited {proc.returncode}: "
+                        f"{err.decode('utf-8', errors='replace')[:500]}"
+                    ),
+                },
+            )
+            return
+        # Synthesize a done event if the CLI exited cleanly without one.
+        if not saw_done:
+            yield StreamEvent(
+                type="done",
+                payload={
+                    "text": "".join(assembled_text_parts),
+                    "session_id": None,
+                    "cost_usd": None,
+                },
+            )
+    finally:
+        if proc.returncode is None:
+            proc.kill()
+            await proc.wait()
+
+
+def _translate_claude_event(
+    raw: dict[str, Any],
+    assembled_text_parts: list[str],
+) -> StreamEvent | None:
+    """Map one line of Claude's stream-json into our StreamEvent shape.
+
+    Claude's relevant event types:
+    - {"type": "stream_event", "event": {"type": "content_block_delta",
+        "delta": {"type": "text_delta", "text": "..."}}}  ← text chunks
+    - {"type": "assistant", "message": {"content": [{"type":"tool_use",
+        "name": "...", "input": {...}}]}}  ← tool invocation
+    - {"type": "user", "message": {"content": [{"type": "tool_result",
+        "content": "..."}]}}  ← tool result (echoed back)
+    - {"type": "result", "result": "...", "session_id": "...",
+        "total_cost_usd": ..., "is_error": bool}  ← final
+    - {"type": "system", ...}  ← initial system info, ignore
+    """
+    t = raw.get("type")
+
+    if t == "stream_event":
+        evt = raw.get("event", {})
+        if evt.get("type") == "content_block_delta":
+            delta = evt.get("delta", {})
+            if delta.get("type") == "text_delta":
+                text = delta.get("text", "")
+                if text:
+                    assembled_text_parts.append(text)
+                    return StreamEvent(type="text", payload={"delta": text})
+        return None
+
+    if t == "assistant":
+        msg = raw.get("message", {})
+        content = msg.get("content", [])
+        for block in content if isinstance(content, list) else []:
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                return StreamEvent(
+                    type="tool_use",
+                    payload={
+                        "name": block.get("name", "unknown"),
+                        "input": block.get("input", {}),
+                    },
+                )
+        return None
+
+    if t == "user":
+        msg = raw.get("message", {})
+        content = msg.get("content", [])
+        for block in content if isinstance(content, list) else []:
+            if isinstance(block, dict) and block.get("type") == "tool_result":
+                result_content = block.get("content", "")
+                if isinstance(result_content, list):
+                    # Sometimes content is [{"type":"text","text":"..."}]
+                    pieces = [
+                        c.get("text", "")
+                        for c in result_content
+                        if isinstance(c, dict)
+                    ]
+                    result_content = "".join(pieces)
+                return StreamEvent(
+                    type="tool_result",
+                    payload={
+                        "is_error": bool(block.get("is_error", False)),
+                        "content": str(result_content)[:2000],
+                    },
+                )
+        return None
+
+    if t == "result":
+        text = raw.get("result", "") or "".join(assembled_text_parts)
+        sid = raw.get("session_id")
+        cost = raw.get("total_cost_usd")
+        if raw.get("is_error"):
+            return StreamEvent(
+                type="error",
+                payload={"message": text or "Claude reported an error"},
+            )
+        return StreamEvent(
+            type="done",
+            payload={
+                "text": text,
+                "session_id": sid if isinstance(sid, str) else None,
+                "cost_usd": float(cost) if isinstance(cost, (int, float)) else None,
+            },
+        )
+
+    # Ignore system / init / other types.
+    return None
