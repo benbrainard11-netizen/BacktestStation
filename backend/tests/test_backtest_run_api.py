@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import time
 from collections.abc import Generator
 from pathlib import Path
 
@@ -107,6 +108,25 @@ def _valid_payload(strategy_version_id: int) -> dict:
     }
 
 
+def _wait_for_status(
+    client: TestClient,
+    run_id: int,
+    statuses: set[str],
+    *,
+    timeout: float = 5.0,
+) -> dict:
+    deadline = time.monotonic() + timeout
+    last_body: dict = {}
+    while time.monotonic() < deadline:
+        response = client.get(f"/api/backtests/{run_id}")
+        assert response.status_code == 200, response.text
+        last_body = response.json()
+        if last_body["status"] in statuses:
+            return last_body
+        time.sleep(0.02)
+    raise AssertionError(f"timed out waiting for {statuses}; last={last_body}")
+
+
 def test_run_creates_backtest_row_end_to_end(
     client: TestClient,
     session_factory: sessionmaker[Session],
@@ -138,6 +158,113 @@ def test_run_creates_backtest_row_end_to_end(
         config_snap = session.query(models.ConfigSnapshot).first()
         assert config_snap is not None
         assert config_snap.payload["engine_version"] == "1"
+
+
+def test_run_async_transitions_queued_running_complete(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+    warehouse: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_bars(warehouse, "NQ.c.0", dt.date(2026, 4, 24), minutes=20)
+    version_id = _seed_strategy(session_factory)
+
+    import app.api.backtests as backtests_api
+
+    original_engine_run = backtests_api.engine_run
+
+    def slow_engine_run(*args, progress_callback=None, **kwargs):
+        def wrapped_progress(done: int, total: int) -> None:
+            if progress_callback is not None:
+                progress_callback(done, total)
+            time.sleep(0.005)
+
+        return original_engine_run(
+            *args, progress_callback=wrapped_progress, **kwargs
+        )
+
+    monkeypatch.setattr(backtests_api, "engine_run", slow_engine_run)
+
+    response = client.post(
+        "/api/backtests/run-async",
+        json={**_valid_payload(version_id), "idea_id": 142},
+    )
+
+    assert response.status_code == 202, response.text
+    queued = response.json()
+    assert queued["status"] == "queued"
+    run_id = queued["run_id"]
+
+    first_read = client.get(f"/api/backtests/{run_id}").json()
+    assert first_read["status"] in {"queued", "running", "complete"}
+
+    running = _wait_for_status(client, run_id, {"running", "complete"})
+    if running["status"] == "running":
+        assert running["progress_pct"] is not None
+        assert running["eta_seconds"] is None or running["eta_seconds"] >= 0
+
+    complete = _wait_for_status(client, run_id, {"complete"})
+    assert complete["progress_pct"] == 100.0
+    assert complete["eta_seconds"] == 0
+
+    with session_factory() as session:
+        run = session.get(models.BacktestRun, run_id)
+        assert run is not None
+        assert run.status == "complete"
+        assert run.tags == ["idea:142"]
+        assert session.query(models.EquityPoint).count() == 20
+
+
+def test_run_async_returns_immediately_for_slow_engine(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+    warehouse: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_bars(warehouse, "NQ.c.0", dt.date(2026, 4, 24), minutes=10)
+    version_id = _seed_strategy(session_factory)
+
+    import app.api.backtests as backtests_api
+
+    original_engine_run = backtests_api.engine_run
+
+    def slow_engine_run(*args, **kwargs):
+        time.sleep(0.25)
+        return original_engine_run(*args, **kwargs)
+
+    monkeypatch.setattr(backtests_api, "engine_run", slow_engine_run)
+
+    started = time.monotonic()
+    response = client.post("/api/backtests/run-async", json=_valid_payload(version_id))
+    elapsed = time.monotonic() - started
+
+    assert response.status_code == 202, response.text
+    assert elapsed < 0.15
+    _wait_for_status(client, response.json()["run_id"], {"complete"})
+
+
+def test_run_async_marks_failed_when_background_run_errors(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+    warehouse: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_bars(warehouse, "NQ.c.0", dt.date(2026, 4, 24), minutes=10)
+    version_id = _seed_strategy(session_factory)
+
+    import app.api.backtests as backtests_api
+
+    def broken_engine_run(*args, **kwargs):
+        raise RuntimeError("strategy exploded")
+
+    monkeypatch.setattr(backtests_api, "engine_run", broken_engine_run)
+
+    response = client.post("/api/backtests/run-async", json=_valid_payload(version_id))
+
+    assert response.status_code == 202, response.text
+    failed = _wait_for_status(client, response.json()["run_id"], {"failed"})
+    assert failed["progress_pct"] is None
+    assert failed["eta_seconds"] is None
 
 
 def test_run_with_unknown_strategy_returns_422(

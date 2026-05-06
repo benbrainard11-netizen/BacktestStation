@@ -21,6 +21,7 @@ Event flow per bar:
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from zoneinfo import ZoneInfo
 
@@ -34,7 +35,6 @@ from app.backtest.metrics import (
 from app.backtest.orders import (
     BracketOrder,
     Fill,
-    Side,
     Trade,
 )
 from app.backtest.strategy import Bar, Context, Position, Strategy
@@ -103,6 +103,7 @@ def run(
     config: RunConfig,
     *,
     aux_bars: dict[str, dict[dt.datetime, Bar]] | None = None,
+    progress_callback: Callable[[int, int], None] | None = None,
 ) -> BacktestResult:
     """Run one backtest. Returns trades, equity, events, metrics.
 
@@ -167,6 +168,7 @@ def run(
 
     strategy.on_start(context)
 
+    total_bars = len(bars)
     for i, bar in enumerate(bars):
         context.now = bar.ts_event
         context.bar_index = i
@@ -249,6 +251,8 @@ def run(
                 <= local_hour
                 < config.session_end_hour
             ):
+                if progress_callback is not None:
+                    progress_callback(i + 1, total_bars)
                 continue
 
         # 5. Strategy decides what to do this bar.
@@ -290,6 +294,9 @@ def run(
                 )
             )
             strategy.on_fill(fill, context)
+
+        if progress_callback is not None:
+            progress_callback(i + 1, total_bars)
 
     # 6. Final-bar flatten if requested and a position is still open.
     if (
@@ -462,4 +469,4 @@ def _close_event(fill: Fill, trade: Trade, bar_index: int) -> Event:
 
 
 def _epoch() -> dt.datetime:
-    return dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
+    return dt.datetime(1970, 1, 1, tzinfo=dt.UTC)

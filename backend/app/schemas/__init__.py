@@ -1,31 +1,8 @@
 """Pydantic schemas exposed by the API."""
 
-from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.ai_context import AiContextMemoryItem, AiContextPreviewRead
+from app.schemas.autopsy import AutopsyConditionSlice, AutopsyReportRead
 from app.schemas.chat import ChatMessageRead, ChatTurnRequest, ChatTurnResponse
-from app.schemas.knowledge import (
-    KNOWLEDGE_CARD_KINDS,
-    KNOWLEDGE_CARD_STATUSES,
-    KnowledgeCardCreate,
-    KnowledgeCardKindsRead,
-    KnowledgeCardRead,
-    KnowledgeCardStatusesRead,
-    KnowledgeCardUpdate,
-)
-from app.schemas.knowledge_health import (
-    KnowledgeHealthCounts,
-    KnowledgeHealthIssue,
-    KnowledgeHealthRead,
-)
-from app.schemas.research import (
-    RESEARCH_KINDS,
-    RESEARCH_STATUSES,
-    ResearchEntryCreate,
-    ResearchEntryPromoteRequest,
-    ResearchEntryRead,
-    ResearchEntryUpdate,
-    ResearchExperimentCreate,
-)
 from app.schemas.data_health import (
     DataHealthPayload,
     DiskSpaceRead,
@@ -52,6 +29,20 @@ from app.schemas.experiments import (
     ExperimentRead,
     ExperimentUpdate,
 )
+from app.schemas.knowledge import (
+    KNOWLEDGE_CARD_KINDS,
+    KNOWLEDGE_CARD_STATUSES,
+    KnowledgeCardCreate,
+    KnowledgeCardKindsRead,
+    KnowledgeCardRead,
+    KnowledgeCardStatusesRead,
+    KnowledgeCardUpdate,
+)
+from app.schemas.knowledge_health import (
+    KnowledgeHealthCounts,
+    KnowledgeHealthIssue,
+    KnowledgeHealthRead,
+)
 from app.schemas.monitor import (
     IngesterStatus,
     LiveMonitorStatus,
@@ -61,6 +52,13 @@ from app.schemas.monitor import (
     R2UploadStatus,
 )
 from app.schemas.notes import NoteCreate, NoteRead, NoteTypesRead, NoteUpdate
+from app.schemas.promotion_checks import (
+    PROMOTION_CHECK_STATUSES,
+    StrategyPromotionCheckCreate,
+    StrategyPromotionCheckRead,
+    StrategyPromotionCheckStatusesRead,
+    StrategyPromotionCheckUpdate,
+)
 from app.schemas.prompts import (
     PromptGenerateRequest,
     PromptGenerateResponse,
@@ -75,24 +73,28 @@ from app.schemas.prop_firm import (
     PropFirmPresetRead,
     PropFirmResultRead,
 )
-from app.schemas.promotion_checks import (
-    PROMOTION_CHECK_STATUSES,
-    StrategyPromotionCheckCreate,
-    StrategyPromotionCheckRead,
-    StrategyPromotionCheckStatusesRead,
-    StrategyPromotionCheckUpdate,
-)
 from app.schemas.prop_simulator import (
     SimulationRunDetail,
     SimulationRunListRow,
     SimulationRunRequest,
 )
-from app.schemas.strategy_registry import (
-    StrategyDefinitionRead,
-    StrategyParamFieldSchema,
-    StrategyParamSchema,
+from app.schemas.replay import (
+    ReplayBar,
+    ReplayEntry,
+    ReplayFvgZone,
+    ReplayPayload,
+)
+from app.schemas.research import (
+    RESEARCH_KINDS,
+    RESEARCH_STATUSES,
+    ResearchEntryCreate,
+    ResearchEntryPromoteRequest,
+    ResearchEntryRead,
+    ResearchEntryUpdate,
+    ResearchExperimentCreate,
 )
 from app.schemas.results import (
+    AsyncBacktestRunQueued,
     BacktestRunRead,
     BacktestRunRequest,
     BacktestRunTagsUpdate,
@@ -110,13 +112,6 @@ from app.schemas.results import (
     StrategyVersionUpdate,
     TradeRead,
 )
-from app.schemas.replay import (
-    ReplayBar,
-    ReplayEntry,
-    ReplayFvgZone,
-    ReplayPayload,
-)
-from app.schemas.settings import SystemSettingsRead
 from app.schemas.risk_profile import (
     RISK_PROFILE_STATUSES,
     RiskEvaluationRead,
@@ -125,6 +120,12 @@ from app.schemas.risk_profile import (
     RiskProfileStatusesRead,
     RiskProfileUpdate,
     RiskViolation,
+)
+from app.schemas.settings import SystemSettingsRead
+from app.schemas.strategy_registry import (
+    StrategyDefinitionRead,
+    StrategyParamFieldSchema,
+    StrategyParamSchema,
 )
 from app.schemas.trade_replay import (
     TradeReplayAnchor,
@@ -143,6 +144,7 @@ __all__ = [
     "BacktestRunRequest",
     "BacktestRunTagsUpdate",
     "BacktestRunUpdate",
+    "AsyncBacktestRunQueued",
     "ChatMessageRead",
     "ChatTurnRequest",
     "ChatTurnResponse",

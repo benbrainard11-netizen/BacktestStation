@@ -44,27 +44,29 @@ from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+from sqlalchemy.orm import Session
 
 from app.backtest import ENGINE_VERSION
-from app.backtest.engine import BacktestResult, RunConfig, run as engine_run
-from app.backtest.orders import Trade
+from app.backtest.engine import BacktestResult, RunConfig
+from app.backtest.engine import run as engine_run
 from app.backtest.strategy import Bar, Strategy
 from app.data import read_bars
 from app.db.models import (
     BacktestRun,
     ConfigSnapshot,
-    EquityPoint as EquityPointModel,
     RunMetrics,
+)
+from app.db.models import (
+    EquityPoint as EquityPointModel,
+)
+from app.db.models import (
     Trade as TradeModel,
 )
 from app.db.session import (
     create_all,
-    get_session,
     make_engine,
     make_session_factory,
 )
-from sqlalchemy.orm import Session
-
 
 # --- Strategy resolution ----------------------------------------------
 
@@ -347,6 +349,7 @@ def persist_run_to_session(
     result: BacktestResult,
     out_dir: Path | None,
     strategy_version_id: int,
+    run_id: int | None = None,
 ) -> int:
     """Insert BacktestRun + trades/equity/metrics/config into the given session.
 
@@ -354,19 +357,33 @@ def persist_run_to_session(
     Used by both `insert_db_row` (CLI / standalone) and the `POST
     /api/backtests/run` endpoint (which passes its own FastAPI session).
     """
-    run = BacktestRun(
-        strategy_version_id=strategy_version_id,
-        name=f"{config.strategy_name} {config.start}..{config.end}",
-        symbol=config.symbol,
-        timeframe=config.timeframe,
-        start_ts=_iso_to_dt(config.start),
-        end_ts=_iso_to_dt(config.end),
-        import_source=str(out_dir) if out_dir is not None else None,
-        source="engine",
-        status="complete",
-    )
-    session.add(run)
-    session.flush()  # populate run.id
+    if run_id is None:
+        run = BacktestRun(
+            strategy_version_id=strategy_version_id,
+            name=f"{config.strategy_name} {config.start}..{config.end}",
+            symbol=config.symbol,
+            timeframe=config.timeframe,
+            start_ts=_iso_to_dt(config.start),
+            end_ts=_iso_to_dt(config.end),
+            import_source=str(out_dir) if out_dir is not None else None,
+            source="engine",
+            status="complete",
+        )
+        session.add(run)
+        session.flush()  # populate run.id
+    else:
+        run = session.get(BacktestRun, run_id)
+        if run is None:
+            raise ValueError(f"backtest run {run_id} not found")
+        run.name = f"{config.strategy_name} {config.start}..{config.end}"
+        run.symbol = config.symbol
+        run.timeframe = config.timeframe
+        run.start_ts = _iso_to_dt(config.start)
+        run.end_ts = _iso_to_dt(config.end)
+        run.import_source = str(out_dir) if out_dir is not None else None
+        run.source = "engine"
+        run.status = "complete"
+        session.flush()
 
     for t in result.trades:
         session.add(
@@ -448,14 +465,14 @@ def insert_db_row(
 
 
 def _iso_to_dt(value: str) -> dt.datetime:
-    return dt.datetime.fromisoformat(value).replace(tzinfo=dt.timezone.utc)
+    return dt.datetime.fromisoformat(value).replace(tzinfo=dt.UTC)
 
 
 def _strip_tz(value: Any) -> dt.datetime:
     """SQLAlchemy DateTime columns in this repo are tz-naive — strip tz."""
     if isinstance(value, dt.datetime):
         if value.tzinfo is not None:
-            return value.astimezone(dt.timezone.utc).replace(tzinfo=None)
+            return value.astimezone(dt.UTC).replace(tzinfo=None)
         return value
     return value
 
@@ -476,12 +493,12 @@ def run_backtest(
     used by tests. If `strategy_version_id` is None, no DB row is
     inserted either (file outputs only).
     """
-    started_at = dt.datetime.now(dt.timezone.utc)
+    started_at = dt.datetime.now(dt.UTC)
     bars = load_bars(config)
     aux_bars = load_aux_bars(config)
     strategy = _resolve_strategy(config.strategy_name, config.params, config)
     result = engine_run(strategy, bars, config, aux_bars=aux_bars)
-    completed_at = dt.datetime.now(dt.timezone.utc)
+    completed_at = dt.datetime.now(dt.UTC)
 
     out_dir: Path | None = None
     run_id: int | None = None

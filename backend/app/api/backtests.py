@@ -1,12 +1,16 @@
 """Backtest run endpoints: read + light mutations (rename) + engine kickoff."""
 
+import asyncio
 import datetime as dt
+import threading
+import time
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from app.backtest.engine import RunConfig, run as engine_run
+from app.backtest.engine import RunConfig
+from app.backtest.engine import run as engine_run
 from app.backtest.instruments import lookup as lookup_instrument
 from app.backtest.runner import (
     _data_root,
@@ -28,6 +32,7 @@ from app.db.models import (
 )
 from app.db.session import get_session
 from app.schemas import (
+    AsyncBacktestRunQueued,
     BacktestRunRead,
     BacktestRunRequest,
     BacktestRunTagsUpdate,
@@ -42,6 +47,9 @@ from app.services.run_deletion import delete_run as _delete_run_with_cleanup
 from app.services.strategy_registry import STRATEGY_DEFINITIONS
 
 router = APIRouter(prefix="/backtests", tags=["backtests"])
+
+_ASYNC_PROGRESS: dict[int, dict[str, float | int | None]] = {}
+_ASYNC_PROGRESS_LOCK = threading.RLock()
 
 
 @router.get("/strategies", response_model=list[StrategyDefinitionRead])
@@ -62,12 +70,52 @@ def _require_run(db: Session, backtest_id: int) -> BacktestRun:
     return run
 
 
-@router.post("/run", response_model=BacktestRunRead, status_code=201)
-def run_engine_backtest(
-    payload: BacktestRunRequest, db: Session = Depends(get_session)
-) -> BacktestRun:
-    """Kick off a synchronous engine backtest. Loads bars, runs the strategy,
-    writes outputs to disk, persists the BacktestRun row, returns it."""
+def _iso_to_utc(value: str) -> dt.datetime:
+    return dt.datetime.fromisoformat(value).replace(tzinfo=dt.UTC)
+
+
+def _set_progress(
+    run_id: int,
+    *,
+    progress_pct: float | None = None,
+    eta_seconds: int | None = None,
+) -> None:
+    with _ASYNC_PROGRESS_LOCK:
+        current = _ASYNC_PROGRESS.setdefault(
+            run_id,
+            {"progress_pct": None, "eta_seconds": None, "started_at": None},
+        )
+        current["progress_pct"] = progress_pct
+        current["eta_seconds"] = eta_seconds
+
+
+def _mark_progress_started(run_id: int) -> None:
+    with _ASYNC_PROGRESS_LOCK:
+        _ASYNC_PROGRESS[run_id] = {
+            "progress_pct": 0.0,
+            "eta_seconds": None,
+            "started_at": time.monotonic(),
+        }
+
+
+def _attach_async_progress(run: BacktestRun) -> BacktestRun:
+    with _ASYNC_PROGRESS_LOCK:
+        progress = dict(_ASYNC_PROGRESS.get(run.id, {}))
+    if run.status == "complete":
+        run.progress_pct = 100.0
+        run.eta_seconds = 0
+    elif run.status in {"queued", "running"}:
+        run.progress_pct = progress.get("progress_pct")
+        run.eta_seconds = progress.get("eta_seconds")
+    else:
+        run.progress_pct = None
+        run.eta_seconds = None
+    return run
+
+
+def _build_run_config_and_inputs(
+    payload: BacktestRunRequest, db: Session
+) -> tuple[RunConfig, object, list, dict]:
     version = db.get(StrategyVersion, payload.strategy_version_id)
     if version is None:
         raise HTTPException(
@@ -75,10 +123,6 @@ def run_engine_backtest(
             detail=f"strategy version {payload.strategy_version_id} not found",
         )
 
-    # Instrument-aware defaults — pull tick_size, contract_value, and
-    # commission from the per-instrument table keyed by the symbol's
-    # alpha prefix. Falls back to the RunConfig dataclass defaults
-    # (NQ values) when the prefix is unknown.
     spec = lookup_instrument(payload.symbol)
     instrument_kwargs: dict = {}
     if spec is not None:
@@ -88,11 +132,6 @@ def run_engine_backtest(
             "commission_per_contract": spec.commission_per_contract,
         }
 
-    # Composable strategies: if the run params are empty (or missing the
-    # entry lists), fall back to the version's saved spec_json. Lets the
-    # /build visual builder save the recipe once and the /backtest tab
-    # use it without re-pasting the spec on every run. Per-run overrides
-    # still win when the caller passes an explicit params dict.
     run_params = dict(payload.params or {})
     if (
         payload.strategy_name == "composable"
@@ -134,19 +173,130 @@ def run_engine_backtest(
             ),
         )
     aux_bars = load_aux_bars(config)
+    return config, strategy, bars, aux_bars
 
-    started_at = dt.datetime.now(dt.timezone.utc)
-    result = engine_run(strategy, bars, config, aux_bars=aux_bars)
-    completed_at = dt.datetime.now(dt.timezone.utc)
+
+def _execute_engine_backtest(
+    payload: BacktestRunRequest,
+    db: Session,
+    *,
+    existing_run_id: int | None = None,
+    progress_callback=None,
+) -> int:
+    config, strategy, bars, aux_bars = _build_run_config_and_inputs(payload, db)
+
+    started_at = dt.datetime.now(dt.UTC)
+    result = engine_run(
+        strategy,
+        bars,
+        config,
+        aux_bars=aux_bars,
+        progress_callback=progress_callback,
+    )
+    completed_at = dt.datetime.now(dt.UTC)
 
     out_dir, _ = make_run_dir(_data_root(), config.strategy_name, started_at)
     write_run(out_dir, result, started_at, completed_at, _git_sha())
 
-    run_id = persist_run_to_session(
-        db, config, result, out_dir, payload.strategy_version_id
+    return persist_run_to_session(
+        db,
+        config,
+        result,
+        out_dir,
+        payload.strategy_version_id,
+        run_id=existing_run_id,
     )
+
+
+def _run_async_backtest_worker(
+    payload: BacktestRunRequest,
+    session_factory: sessionmaker[Session],
+    run_id: int,
+) -> None:
+    _mark_progress_started(run_id)
+    with session_factory() as session:
+        run = session.get(BacktestRun, run_id)
+        if run is None:
+            return
+        run.status = "running"
+        session.commit()
+
+        started_at = time.monotonic()
+
+        def progress_callback(done: int, total: int) -> None:
+            if total <= 0:
+                return
+            pct = min(100.0, max(0.0, (done / total) * 100.0))
+            eta = None
+            if done > 0 and done < total:
+                elapsed = time.monotonic() - started_at
+                eta = int(max(0.0, (elapsed / done) * (total - done)))
+            _set_progress(run_id, progress_pct=pct, eta_seconds=eta)
+
+        try:
+            _execute_engine_backtest(
+                payload,
+                session,
+                existing_run_id=run_id,
+                progress_callback=progress_callback,
+            )
+            _set_progress(run_id, progress_pct=100.0, eta_seconds=0)
+            session.commit()
+        except Exception:
+            session.rollback()
+            failed = session.get(BacktestRun, run_id)
+            if failed is not None:
+                failed.status = "failed"
+                session.commit()
+            _set_progress(run_id, progress_pct=None, eta_seconds=None)
+            raise
+
+
+@router.post("/run", response_model=BacktestRunRead, status_code=201)
+def run_engine_backtest(
+    payload: BacktestRunRequest, db: Session = Depends(get_session)
+) -> BacktestRun:
+    """Kick off a synchronous engine backtest. Loads bars, runs the strategy,
+    writes outputs to disk, persists the BacktestRun row, returns it."""
+    run_id = _execute_engine_backtest(payload, db)
     db.commit()
-    return _require_run(db, run_id)
+    return _attach_async_progress(_require_run(db, run_id))
+
+
+@router.post("/run-async", response_model=AsyncBacktestRunQueued, status_code=202)
+async def run_engine_backtest_async(
+    payload: BacktestRunRequest, db: Session = Depends(get_session)
+) -> AsyncBacktestRunQueued:
+    """Queue an engine backtest for bot/programmatic callers."""
+    version = db.get(StrategyVersion, payload.strategy_version_id)
+    if version is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"strategy version {payload.strategy_version_id} not found",
+        )
+    run = BacktestRun(
+        strategy_version_id=payload.strategy_version_id,
+        name=f"{payload.strategy_name} {payload.start}..{payload.end}",
+        symbol=payload.symbol,
+        timeframe=payload.timeframe,
+        start_ts=_iso_to_utc(payload.start),
+        end_ts=_iso_to_utc(payload.end),
+        source="engine",
+        status="queued",
+        tags=[f"idea:{payload.idea_id}"] if payload.idea_id is not None else None,
+    )
+    db.add(run)
+    db.commit()
+    db.refresh(run)
+    _set_progress(run.id, progress_pct=0.0, eta_seconds=None)
+
+    factory: sessionmaker[Session] = sessionmaker(
+        bind=db.get_bind(), autoflush=False, autocommit=False
+    )
+    asyncio.create_task(
+        asyncio.to_thread(_run_async_backtest_worker, payload, factory, run.id)
+    )
+    return AsyncBacktestRunQueued(run_id=run.id)
 
 
 @router.get("", response_model=list[BacktestRunRead])
@@ -154,12 +304,12 @@ def list_backtests(db: Session = Depends(get_session)) -> list[BacktestRun]:
     statement = select(BacktestRun).order_by(
         BacktestRun.created_at.desc(), BacktestRun.id.desc()
     )
-    return list(db.scalars(statement).all())
+    return [_attach_async_progress(run) for run in db.scalars(statement).all()]
 
 
 @router.get("/{backtest_id}", response_model=BacktestRunRead)
 def get_backtest(backtest_id: int, db: Session = Depends(get_session)) -> BacktestRun:
-    return _require_run(db, backtest_id)
+    return _attach_async_progress(_require_run(db, backtest_id))
 
 
 @router.get("/{backtest_id}/trades", response_model=list[TradeRead])

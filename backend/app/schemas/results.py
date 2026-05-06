@@ -48,8 +48,15 @@ class BacktestRunRead(OrmModel):
     import_source: str | None
     source: str
     status: str
+    progress_pct: float | None = None
+    eta_seconds: int | None = None
     tags: list[str] | None = None
     created_at: datetime
+
+
+class AsyncBacktestRunQueued(BaseModel):
+    run_id: int
+    status: str = "queued"
 
 
 class TradeRead(OrmModel):
@@ -117,6 +124,7 @@ class BacktestRunRequest(BaseModel):
     qty: int = Field(default=1, ge=1)
     initial_equity: float = Field(default=25_000.0, gt=0)
     params: dict[str, Any] = Field(default_factory=dict)
+    idea_id: int | None = Field(default=None, gt=0)
 
     # Engine-level knobs (universal across strategies). When unset, the
     # engine falls back to RunConfig dataclass defaults: no session
