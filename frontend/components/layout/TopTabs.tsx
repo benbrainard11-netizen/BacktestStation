@@ -1,7 +1,6 @@
 "use client";
 
-import { Bell, Command, Minus, Settings as SettingsIcon, Square, X } from "lucide-react";
-import Link from "next/link";
+import { Minus, Square, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { components } from "@/lib/api/generated";
@@ -11,11 +10,11 @@ import { usePoll } from "@/lib/poll";
 type LiveStatus = components["schemas"]["LiveMonitorStatus"];
 
 /**
- * Top header strip — brand · live meta strip (status / symbol / P&L) · cmd /
- * bell / settings icon-buttons · Tauri window controls. Profile-tabs strip
- * removed in the 2026-05-05 simplification — primary nav lives in SubNav now.
- *
- * Whole row is the Tauri drag region; interactive children opt out via [data-no-drag].
+ * Top header strip — brand · live meta strip (bot status / symbol / P&L) ·
+ * Tauri window controls. Cleaned up 2026-05-05: dropped the macOS-style ⌘
+ * command-palette icon, the unwired Bell button, and the redundant Settings
+ * link (Settings is in the SubNav already). Whole row is the Tauri drag
+ * region; interactive children opt out via [data-no-drag].
  */
 export function TopTabs() {
   const live = usePoll<LiveStatus>("/api/monitor/live", 10_000);
@@ -56,7 +55,6 @@ export function TopTabs() {
       <div data-no-drag className="brand-mini">
         <div className="brand-mark">B</div>
         <div className="brand-name">BacktestStation</div>
-        <div className="brand-version">v0.3</div>
       </div>
 
       <div className="spacer" />
@@ -74,7 +72,7 @@ export function TopTabs() {
           />
           bot <strong>{status}</strong>
         </span>
-        <span>{symbol === "—" ? null : <>{symbol}</>}</span>
+        {symbol !== "—" && <span>{symbol}</span>}
         <span>
           P&L{" "}
           <strong
@@ -91,22 +89,6 @@ export function TopTabs() {
           </strong>
         </span>
       </div>
-
-      <button
-        data-no-drag
-        type="button"
-        className="icon-btn"
-        aria-label="Command palette"
-        onClick={() => window.dispatchEvent(new CustomEvent("open-cmd"))}
-      >
-        <Command size={16} />
-      </button>
-      <button data-no-drag type="button" className="icon-btn" aria-label="Notifications">
-        <Bell size={16} />
-      </button>
-      <Link data-no-drag href="/settings" className="icon-btn" aria-label="Settings">
-        <SettingsIcon size={16} />
-      </Link>
 
       {isTauri && (
         <div data-no-drag className="flex h-full items-center pl-2">

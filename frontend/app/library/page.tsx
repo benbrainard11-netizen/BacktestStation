@@ -25,7 +25,7 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 const STATUS_TONE: Record<string, "pos" | "neg" | "warn" | "accent" | undefined> = {
-  trusted: "pos",
+  trusted: "accent",
   needs_testing: "warn",
   draft: undefined,
   rejected: "neg",

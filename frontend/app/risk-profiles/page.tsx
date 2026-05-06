@@ -694,7 +694,7 @@ function NewProfileDialog({
       <button
         type="button"
         onClick={open}
-        className="rounded border border-pos/40 bg-pos/10 px-3 py-1.5 font-mono text-[11px] font-semibold text-pos hover:bg-pos/20"
+        className="rounded border border-accent-line bg-accent-soft px-3 py-1.5 font-mono text-[11px] font-semibold text-accent transition-colors hover:brightness-110"
       >
         + New profile
       </button>
@@ -868,7 +868,7 @@ function NewProfileDialog({
             <button
               type="submit"
               disabled={saving || !name.trim()}
-              className="rounded border border-pos/40 bg-pos/10 px-4 py-1.5 font-mono text-[11px] font-semibold text-pos disabled:opacity-40"
+              className="rounded border border-accent-line bg-accent-soft px-4 py-1.5 font-mono text-[11px] font-semibold text-accent disabled:opacity-40 hover:brightness-110"
             >
               {saving ? "creating…" : "Create profile"}
             </button>

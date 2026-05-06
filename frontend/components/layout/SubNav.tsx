@@ -42,8 +42,8 @@ export function SubNav({ pathname }: { pathname: string }) {
         onClick={() => window.dispatchEvent(new CustomEvent("open-cmd"))}
       >
         <Search size={13} />
-        <span>Search · jump · run</span>
-        <span className="kbd-mini">⌘K</span>
+        <span>Search</span>
+        <span className="kbd-mini">Ctrl K</span>
       </button>
     </nav>
   );
