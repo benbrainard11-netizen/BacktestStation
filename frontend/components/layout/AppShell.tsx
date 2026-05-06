@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app">
       <main className="app-main">
-        <TopTabs pathname={pathname} />
+        <TopTabs />
         <SubNav pathname={pathname} />
         <div className="app-content">{children}</div>
       </main>

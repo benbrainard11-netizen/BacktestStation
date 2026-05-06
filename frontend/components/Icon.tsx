@@ -1,40 +1,24 @@
 import {
-  Activity,
   BarChart3,
-  Beaker,
-  Clipboard,
-  Database,
-  Download,
-  FileText,
   Film,
-  FlaskConical,
-  GitCompare,
-  Home,
+  FileText,
+  Inbox,
   Layers,
+  Library,
   Search,
   Settings as Cog,
-  Shield,
   Zap,
 } from "lucide-react";
 
 import type { IconName } from "@/lib/navigation";
 
-const MAP: Record<IconName, typeof Home> = {
-  home: Home,
-  pulse: Activity,
-  clipboard: Clipboard,
-  database: Database,
-  cog: Cog,
-  download: Download,
-  flask: FlaskConical,
-  beaker: Beaker,
+const MAP: Record<IconName, typeof Inbox> = {
+  inbox: Inbox,
   bolt: Zap,
   film: Film,
-  shield: Shield,
   layers: Layers,
-  compare: GitCompare,
+  library: Library,
   settings: Cog,
-  search: Search,
 };
 
 export function Icon({
@@ -48,9 +32,9 @@ export function Icon({
   className?: string;
   strokeWidth?: number;
 }) {
-  const Cmp = MAP[name] ?? Home;
+  const Cmp = MAP[name] ?? Inbox;
   return <Cmp size={size} className={className} strokeWidth={strokeWidth} />;
 }
 
 // Re-export a few of the most-used icons for direct use without the indirection.
-export { BarChart3, FileText };
+export { BarChart3, FileText, Search };

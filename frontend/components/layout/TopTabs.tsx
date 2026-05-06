@@ -2,46 +2,28 @@
 
 import { Bell, Command, Minus, Settings as SettingsIcon, Square, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { components } from "@/lib/api/generated";
 import { fmtPnl, tone } from "@/lib/format";
-import { PROFILES, profileForPath } from "@/lib/navigation";
 import { usePoll } from "@/lib/poll";
 
 type LiveStatus = components["schemas"]["LiveMonitorStatus"];
 
 /**
- * Full design TopTabs row — brand + 3 profile tabs + spacer + live meta strip
- * + cmd/bell/settings icon-buttons + window controls (Tauri only).
+ * Top header strip — brand · live meta strip (status / symbol / P&L) · cmd /
+ * bell / settings icon-buttons · Tauri window controls. Profile-tabs strip
+ * removed in the 2026-05-05 simplification — primary nav lives in SubNav now.
  *
  * Whole row is the Tauri drag region; interactive children opt out via [data-no-drag].
  */
-export function TopTabs({ pathname }: { pathname: string }) {
-  const router = useRouter();
-  const active = profileForPath(pathname);
+export function TopTabs() {
   const live = usePoll<LiveStatus>("/api/monitor/live", 10_000);
   const [isTauri, setIsTauri] = useState(false);
 
   useEffect(() => {
     setIsTauri(typeof window !== "undefined" && "__TAURI_INTERNALS__" in window);
   }, []);
-
-  // ⌘1 / ⌘2 / ⌘3 jump between profiles
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (!(e.metaKey || e.ctrlKey)) return;
-      const target = PROFILES.find((p) => p.kbd === e.key);
-      if (!target) return;
-      const tag = (e.target as HTMLElement | null)?.tagName ?? "";
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-      e.preventDefault();
-      router.push(target.groups[0]?.items[0]?.href ?? "/");
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [router]);
 
   async function winAction(action: "minimize" | "maximize" | "close") {
     if (!isTauri) return;
@@ -74,25 +56,7 @@ export function TopTabs({ pathname }: { pathname: string }) {
       <div data-no-drag className="brand-mini">
         <div className="brand-mark">B</div>
         <div className="brand-name">BacktestStation</div>
-        <div className="brand-version">v0.2</div>
-      </div>
-
-      <div data-no-drag className="top-tabs-strip">
-        {PROFILES.map((p) => {
-          const firstHref = p.groups[0]?.items[0]?.href ?? "/";
-          const isActive = p.id === active;
-          return (
-            <Link
-              key={p.id}
-              href={firstHref}
-              aria-current={isActive ? "page" : undefined}
-              className="ttab"
-            >
-              <span>{p.label}</span>
-              <span className="ttab-kbd">⌘{p.kbd}</span>
-            </Link>
-          );
-        })}
+        <div className="brand-version">v0.3</div>
       </div>
 
       <div className="spacer" />
@@ -110,9 +74,7 @@ export function TopTabs({ pathname }: { pathname: string }) {
           />
           bot <strong>{status}</strong>
         </span>
-        <span>
-          {symbol === "—" ? null : <>{symbol}</>}
-        </span>
+        <span>{symbol === "—" ? null : <>{symbol}</>}</span>
         <span>
           P&L{" "}
           <strong
