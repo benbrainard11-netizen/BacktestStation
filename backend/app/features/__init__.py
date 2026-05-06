@@ -114,4 +114,5 @@ from app.features import (  # noqa: E402,F401
     swing_sweep,
     time_window,
     volatility_regime,
+    volume_profile,
 )
