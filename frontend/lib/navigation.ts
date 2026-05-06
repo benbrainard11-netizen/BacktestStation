@@ -35,7 +35,25 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "settings",  label: "Settings",  icon: "settings", href: "/settings" },
 ];
 
-/** Returns true if the given pathname is "inside" the nav item's route. */
-export function isActive(item: NavItem, pathname: string): boolean {
-  return pathname === item.href || pathname.startsWith(item.href + "/");
+/** Resolve the single active nav item for a pathname.
+ *
+ * Uses longest-prefix-match so that when multiple items would match
+ * (e.g. Catalog `/strategies` and Builder `/strategies/builder` both
+ * "match" `/strategies/builder`), only the most specific one wins. The
+ * earlier per-item `isActive` would light up both tabs at once.
+ *
+ * Returns the matching NavItem or null if no item is in the path.
+ */
+export function findActiveNavItem(pathname: string): NavItem | null {
+  let best: NavItem | null = null;
+  let bestLen = -1;
+  for (const item of NAV_ITEMS) {
+    const matches =
+      pathname === item.href || pathname.startsWith(item.href + "/");
+    if (matches && item.href.length > bestLen) {
+      best = item;
+      bestLen = item.href.length;
+    }
+  }
+  return best;
 }
