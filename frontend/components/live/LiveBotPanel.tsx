@@ -132,6 +132,14 @@ export function LiveBotPanel({
       : "pos";
   const statusLabel = isStale ? "offline" : halted ? "halted" : "running";
 
+  // Connection-quality chip — shown only when the panel has heartbeat
+  // history (i.e. on /monitor, not Overview). Worst-of: age-since-last
+  // and the largest gap between recent beats. Thresholds mirror
+  // HeartbeatCadenceStrip on /monitor: ≤75s ok, ≤180s delayed, else
+  // stalled. When the panel is already showing "offline" (>5min) we
+  // skip the chip — it would be redundant noise.
+  const cadenceChip = !isStale ? computeCadenceChip(ageSec, heartbeatHistory) : null;
+
   const profit = typeof p.profit === "number" ? p.profit : null;
   const pnlToday = typeof p.pnl_today === "number" ? p.pnl_today : null;
 
@@ -142,6 +150,9 @@ export function LiveBotPanel({
         <div className="flex items-center gap-2">
           <Chip tone={mode === "LIVE" ? "pos" : "default"}>{mode}</Chip>
           <Chip tone={statusTone}>{statusLabel}</Chip>
+          {cadenceChip && (
+            <Chip tone={cadenceChip.tone}>{cadenceChip.label}</Chip>
+          )}
           {!isStale && p.locked && <Chip tone="accent">locked</Chip>}
           {!isStale && halted && p.halt_reason && (
             <span className="font-mono text-[10.5px] text-neg">
@@ -533,6 +544,36 @@ function fmtPx(v: number | undefined | null): string {
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
   });
+}
+
+/**
+ * Cadence chip: derives a one-glance health label from the worst gap
+ * between recent heartbeats AND the time-since-most-recent. Returns
+ * null when there's no history to evaluate against (Overview embed).
+ *
+ * Thresholds match HeartbeatCadenceStrip on /monitor — runner cadence
+ * is 60s, so ≤75s = "ok" (small jitter), 75–180s = "delayed" (one
+ * dropped beat), >180s = "stalled" (two+ dropped, but <5min where the
+ * outer panel takes over with "offline").
+ */
+function computeCadenceChip(
+  ageSec: number,
+  history: LiveHeartbeat[] | undefined,
+): { tone: "pos" | "warn" | "neg"; label: string } | null {
+  if (!history || history.length < 2) return null;
+  // history is newest-first
+  const ordered = [...history].reverse();
+  let worstGap = 0;
+  for (let i = 1; i < ordered.length; i++) {
+    const prev = new Date(ordered[i - 1].ts).getTime();
+    const cur = new Date(ordered[i].ts).getTime();
+    const g = (cur - prev) / 1000;
+    if (g > worstGap) worstGap = g;
+  }
+  const worst = Math.max(worstGap, ageSec);
+  if (worst <= 75) return { tone: "pos", label: "lag ok" };
+  if (worst <= 180) return { tone: "warn", label: "lag delayed" };
+  return { tone: "neg", label: "lag stalled" };
 }
 
 function fmtAge(seconds: number): string {

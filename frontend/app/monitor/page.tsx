@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Card, CardHead, Chip, PageHeader, Stat, StatusDot } from "@/components/atoms";
 import { Heartbeat } from "@/components/Heartbeat";
+import { HaltHistory } from "@/components/live/HaltHistory";
 import {
   LiveBotPanel,
   type LoadState as LiveBotLoadState,
@@ -194,6 +195,11 @@ export default function MonitorPage() {
           signalLimit={6}
         />
         <HeartbeatCadenceStrip history={heartbeatHistory} />
+      </div>
+
+      {/* Halt history + reason summary, computed client-side from heartbeats */}
+      <div className="mt-6">
+        <HaltHistory history={heartbeatHistory} />
       </div>
 
       {/* Legacy file-based status (older runners; kept for ingester health) */}
