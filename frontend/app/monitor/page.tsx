@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Card, CardHead, Chip, PageHeader, Stat, StatusDot } from "@/components/atoms";
 import { Heartbeat } from "@/components/Heartbeat";
+import { EquityCurveChart } from "@/components/live/EquityCurveChart";
 import { HaltHistory } from "@/components/live/HaltHistory";
 import {
   LiveBotPanel,
@@ -194,11 +195,18 @@ export default function MonitorPage() {
           hideViewAll
           signalLimit={6}
         />
-        <HeartbeatCadenceStrip history={heartbeatHistory} />
       </div>
 
-      {/* Halt history + reason summary, computed client-side from heartbeats */}
-      <div className="mt-6">
+      {/* Equity curve over the heartbeat window */}
+      <div className="mt-4">
+        <EquityCurveChart history={heartbeatHistory} />
+      </div>
+
+      {/* Cadence + halt history side-by-side on wide screens */}
+      <div className="mt-4">
+        <HeartbeatCadenceStrip history={heartbeatHistory} />
+      </div>
+      <div className="mt-4">
         <HaltHistory history={heartbeatHistory} />
       </div>
 
