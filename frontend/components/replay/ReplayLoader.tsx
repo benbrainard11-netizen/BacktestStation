@@ -1,7 +1,7 @@
 "use client";
 
 import { Calendar, Play } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Card, CardHead } from "@/components/atoms";
 import type { components } from "@/lib/api/generated";
@@ -32,16 +32,15 @@ export default function ReplayLoader({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleLoad(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const fetchReplay = useCallback(async (sym: string, d: string, rid: number | null) => {
     setLoading(true);
     setError(null);
     setPayload(null);
     try {
       const params = new URLSearchParams();
-      if (runId !== null) params.set("backtest_run_id", String(runId));
+      if (rid !== null) params.set("backtest_run_id", String(rid));
       const url =
-        `/api/replay/${encodeURIComponent(symbol)}/${encodeURIComponent(date)}` +
+        `/api/replay/${encodeURIComponent(sym)}/${encodeURIComponent(d)}` +
         (params.toString() ? `?${params.toString()}` : "");
       const res = await fetch(url);
       if (!res.ok) {
@@ -56,7 +55,25 @@ export default function ReplayLoader({
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  async function handleLoad(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await fetchReplay(symbol, date, runId);
   }
+
+  // Auto-fire the load on mount when arriving via deep-link with all
+  // params set (i.e. clicked through from a strategy's day-detail panel).
+  // Without this, the user lands on a "Pick a session to scrub" form
+  // they then have to manually click Load on — friction we want to avoid.
+  useEffect(() => {
+    if (initialRunId !== null && initialSymbol && initialDate) {
+      void fetchReplay(initialSymbol, initialDate, initialRunId);
+    }
+    // Run once on mount only — subsequent edits to symbol/date/run go
+    // through the form Load button as before.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">

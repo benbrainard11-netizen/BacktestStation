@@ -2,6 +2,7 @@ import {
   BarChart3,
   Film,
   FileText,
+  Home,
   Inbox,
   Layers,
   Library,
@@ -14,6 +15,7 @@ import {
 import type { IconName } from "@/lib/navigation";
 
 const MAP: Record<IconName, typeof Inbox> = {
+  home: Home,
   inbox: Inbox,
   bolt: Zap,
   film: Film,

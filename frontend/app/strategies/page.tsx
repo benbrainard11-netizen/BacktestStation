@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 import { Card, CardHead, Chip, PageHeader, Stat, StatusDot } from "@/components/atoms";
 import type { components } from "@/lib/api/generated";
@@ -11,7 +11,66 @@ import { cn } from "@/lib/utils";
 
 type Strategy = components["schemas"]["StrategyRead"];
 type StrategyVersion = components["schemas"]["StrategyVersionRead"];
+type PromotionCheck = components["schemas"]["StrategyPromotionCheckRead"];
+type PromotionStatus = PromotionCheck["status"];
 type BackendErrorBody = { detail?: string };
+
+// Order of preference for "best of any check" — earlier wins.
+const STATUS_PRIORITY: PromotionStatus[] = [
+  "pass_paper", "research_only", "draft", "killed", "archived",
+];
+
+const STATUS_TONE: Record<
+  PromotionStatus,
+  "pos" | "neg" | "warn" | "accent" | "default"
+> = {
+  pass_paper: "pos",
+  research_only: "accent",
+  killed: "neg",
+  draft: "default",
+  archived: "default",
+};
+
+const STATUS_LABEL: Record<PromotionStatus, string> = {
+  pass_paper: "pass paper",
+  research_only: "research only",
+  killed: "killed",
+  draft: "draft",
+  archived: "archived",
+};
+
+interface MCMetrics {
+  phase1_clear_prob_pct?: number;
+  median_first_month_payout?: number;
+  audit_kind?: string;
+}
+
+function bestStatusForChecks(
+  checks: PromotionCheck[],
+): PromotionStatus | null {
+  if (checks.length === 0) return null;
+  for (const s of STATUS_PRIORITY) {
+    if (checks.some((c) => c.status === s)) return s;
+  }
+  return checks[0].status;
+}
+
+function bestPhase1ClearForChecks(checks: PromotionCheck[]): {
+  pct: number;
+  variantName: string;
+} | null {
+  let best = null as { pct: number; variantName: string } | null;
+  for (const c of checks) {
+    const m = c.metrics_json as MCMetrics | null | undefined;
+    if (!m || m.audit_kind !== "tpt_funded_monte_carlo") continue;
+    const pct = m.phase1_clear_prob_pct;
+    if (pct === undefined) continue;
+    if (best === null || pct > best.pct) {
+      best = { pct, variantName: c.candidate_name };
+    }
+  }
+  return best;
+}
 
 const POLL_INTERVAL = 30_000;
 
@@ -63,12 +122,25 @@ async function extractError(res: Response): Promise<string> {
 
 export default function StrategiesPage() {
   const poll = usePoll<Strategy[]>("/api/strategies", POLL_INTERVAL);
+  const checksPoll = usePoll<PromotionCheck[]>("/api/promotion-checks", POLL_INTERVAL);
   // Bump this to force a description re-render after mutations
   // (usePoll doesn't expose manual retrigger; the interval picks up the change)
   const [_tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((n) => n + 1), []);
 
   const strategies = poll.kind === "data" ? poll.data : [];
+  const allChecks = checksPoll.kind === "data" ? checksPoll.data : [];
+
+  const checksByStrategy = useMemo(() => {
+    const map = new Map<number, PromotionCheck[]>();
+    for (const c of allChecks) {
+      if (c.strategy_id == null) continue;
+      const arr = map.get(c.strategy_id) ?? [];
+      arr.push(c);
+      map.set(c.strategy_id, arr);
+    }
+    return map;
+  }, [allChecks]);
 
   const totalCount = strategies.length;
   const liveCount = strategies.filter((s) => s.status === "live").length;
@@ -156,10 +228,152 @@ export default function StrategiesPage() {
           </Card>
         )}
         {poll.kind === "data" && strategies.length > 0 && (
-          <StrategyTable strategies={strategies} onMutated={refresh} />
+          <>
+            {/* Collapsed strategy cards — one per strategy, with rollup metrics */}
+            <StrategyCardGrid
+              strategies={strategies}
+              checksByStrategy={checksByStrategy}
+            />
+            {/* Detailed table below for managing versions / status / etc. */}
+            <details className="mt-8 group">
+              <summary className="cursor-pointer font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3 hover:text-ink-1">
+                ▸ Show registry table (versions, edit, archive)
+              </summary>
+              <div className="mt-3">
+                <StrategyTable strategies={strategies} onMutated={refresh} />
+              </div>
+            </details>
+          </>
         )}
       </div>
     </div>
+  );
+}
+
+/* ============================================================
+   Collapsed strategy card grid — one card per strategy with
+   rollup metrics from its promotion_checks.
+   ============================================================ */
+
+function StrategyCardGrid({
+  strategies,
+  checksByStrategy,
+}: {
+  strategies: Strategy[];
+  checksByStrategy: Map<number, PromotionCheck[]>;
+}) {
+  // Sort strategies: the ones with pass_paper checks first, then
+  // research_only, then anything else.
+  const sorted = useMemo(() => {
+    return [...strategies].sort((a, b) => {
+      const aChecks = checksByStrategy.get(a.id) ?? [];
+      const bChecks = checksByStrategy.get(b.id) ?? [];
+      const aBest = bestStatusForChecks(aChecks);
+      const bBest = bestStatusForChecks(bChecks);
+      const aRank = aBest ? STATUS_PRIORITY.indexOf(aBest) : 99;
+      const bRank = bBest ? STATUS_PRIORITY.indexOf(bBest) : 99;
+      if (aRank !== bRank) return aRank - bRank;
+      // Then by check count (more = active)
+      if (aChecks.length !== bChecks.length) return bChecks.length - aChecks.length;
+      return a.name.localeCompare(b.name);
+    });
+  }, [strategies, checksByStrategy]);
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+      {sorted.map((s) => {
+        const checks = checksByStrategy.get(s.id) ?? [];
+        return (
+          <StrategySummaryCard
+            key={s.id}
+            strategy={s}
+            checks={checks}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function StrategySummaryCard({
+  strategy,
+  checks,
+}: {
+  strategy: Strategy;
+  checks: PromotionCheck[];
+}) {
+  const bestStatus = bestStatusForChecks(checks);
+  const bestPhase1 = bestPhase1ClearForChecks(checks);
+
+  // Count check statuses
+  const counts = useMemo(() => {
+    const c = { pass_paper: 0, research_only: 0, killed: 0, draft: 0, archived: 0 };
+    for (const ck of checks) c[ck.status] += 1;
+    return c;
+  }, [checks]);
+
+  return (
+    <Link href={`/strategies/${strategy.id}`} className="block">
+      <Card className="h-full transition-colors hover:border-line-3">
+        <div className="flex flex-col gap-2 px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-4">
+                {strategy.plugin ?? strategy.slug}
+              </div>
+              <div className="mt-0.5 truncate text-[14px] font-semibold text-ink-0">
+                {strategy.name}
+              </div>
+            </div>
+            {bestStatus ? (
+              <Chip tone={STATUS_TONE[bestStatus]}>{STATUS_LABEL[bestStatus]}</Chip>
+            ) : (
+              <Chip tone="default">{strategy.status.replace(/_/g, " ")}</Chip>
+            )}
+          </div>
+
+          {bestPhase1 ? (
+            <div className="flex items-baseline gap-2 border-t border-line pt-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-3">
+                best phase-1
+              </span>
+              <span className="text-[16px] font-semibold tabular-nums text-pos">
+                {bestPhase1.pct.toFixed(1)}%
+              </span>
+              <span className="truncate font-mono text-[10px] text-ink-4">
+                {bestPhase1.variantName.replace(/^[^|]+\|\s*/, "").replace(/\s*\(MC\)$/, "")}
+              </span>
+            </div>
+          ) : checks.length > 0 ? (
+            <div className="border-t border-line pt-2 text-[11.5px] text-ink-3">
+              {checks[0].final_verdict ?? "no monte-carlo metrics yet"}
+            </div>
+          ) : (
+            <div className="border-t border-line pt-2 text-[11.5px] text-ink-3">
+              No promotion checks yet — run an audit to populate.
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2 border-t border-line pt-2 font-mono text-[10px] text-ink-4">
+            <span>
+              {checks.length} {checks.length === 1 ? "test" : "tests"} ·{" "}
+              {strategy.versions.length}v
+            </span>
+            <span className="flex items-center gap-2">
+              {counts.pass_paper > 0 && (
+                <span className="text-pos">{counts.pass_paper} pass</span>
+              )}
+              {counts.research_only > 0 && (
+                <span className="text-accent">{counts.research_only} research</span>
+              )}
+              {counts.killed > 0 && (
+                <span className="text-neg">{counts.killed} killed</span>
+              )}
+            </span>
+          </div>
+        </div>
+      </Card>
+    </Link>
   );
 }
 
