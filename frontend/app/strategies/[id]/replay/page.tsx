@@ -178,10 +178,10 @@ export default function StrategyReplayPage({
           return {
             date: d,
             side: t.side,
-            realized_r: t.r_multiple,
-            pnl: t.pnl,
-            exit_reason: t.exit_reason,
-          };
+            realized_r: t.r_multiple ?? null,
+            pnl: t.pnl ?? null,
+            exit_reason: t.exit_reason ?? null,
+          } as CalendarTrade;
         })
         .filter((t): t is CalendarTrade => t !== null),
     [trades],

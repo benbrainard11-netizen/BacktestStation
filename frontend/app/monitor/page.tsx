@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 
 import { Card, CardHead, Chip, PageHeader, Stat, StatusDot } from "@/components/atoms";
 import { Heartbeat } from "@/components/Heartbeat";
+import {
+  LiveBotPanel,
+  type LoadState as LiveBotLoadState,
+} from "@/components/live/LiveBotPanel";
 import type { components } from "@/lib/api/generated";
 import { fmtClock, fmtInt, fmtPnl, fmtPrice, fmtR, tone } from "@/lib/format";
 import { ago, secondsSince, usePoll } from "@/lib/poll";
@@ -12,6 +17,7 @@ import { cn } from "@/lib/utils";
 type LiveStatus = components["schemas"]["LiveMonitorStatus"];
 type IngesterStatus = components["schemas"]["IngesterStatus"];
 type LiveSignal = components["schemas"]["LiveSignalRead"];
+type LiveHeartbeat = components["schemas"]["LiveHeartbeatRead"];
 type Pipeline = components["schemas"]["LiveTradesPipelineStatus"];
 type BacktestRun = components["schemas"]["BacktestRunRead"];
 type Note = components["schemas"]["NoteRead"];
@@ -19,6 +25,8 @@ type Note = components["schemas"]["NoteRead"];
 const POLL_LIVE = 5_000;
 const POLL_FAST = 10_000;
 const POLL_SLOW = 30_000;
+const POLL_HEARTBEAT = 5_000; // match LIVE — this is the primary feed
+const HEARTBEAT_HISTORY_LIMIT = 120; // ~2h of 60s-cadence beats
 
 export default function MonitorPage() {
   const live = usePoll<LiveStatus>("/api/monitor/live", POLL_LIVE);
@@ -27,6 +35,84 @@ export default function MonitorPage() {
   const pipeline = usePoll<Pipeline>("/api/monitor/live-trades", POLL_SLOW);
   const runs = usePoll<BacktestRun[]>("/api/backtests", POLL_SLOW);
   const notes = usePoll<Note[]>("/api/notes", POLL_SLOW);
+
+  // Heartbeat DB feed — the canonical source of bot truth (the file-based
+  // /api/monitor/live above is the older runner's status pattern; the new
+  // pre10_live_runner POSTs heartbeat rows we read here).
+  const [heartbeatState, setHeartbeatState] =
+    useState<LiveBotLoadState<LiveHeartbeat | null>>({ kind: "loading" });
+  const [historyState, setHistoryState] =
+    useState<LiveBotLoadState<LiveHeartbeat[]>>({ kind: "loading" });
+
+  const fetchHeartbeat = useCallback(async (signal: AbortSignal) => {
+    try {
+      const res = await fetch(
+        "/api/monitor/heartbeats/latest?source=pre10_live_runner",
+        { cache: "no-store", signal },
+      );
+      if (res.status === 404) {
+        setHeartbeatState({ kind: "data", data: null });
+        return;
+      }
+      if (!res.ok) {
+        setHeartbeatState({
+          kind: "error",
+          message: `${res.status} ${res.statusText}`,
+        });
+        return;
+      }
+      const data = (await res.json()) as LiveHeartbeat;
+      setHeartbeatState({ kind: "data", data });
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return;
+      setHeartbeatState({
+        kind: "error",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+    }
+  }, []);
+
+  const fetchHistory = useCallback(async (signal: AbortSignal) => {
+    try {
+      const res = await fetch(
+        `/api/monitor/heartbeats?source=pre10_live_runner&limit=${HEARTBEAT_HISTORY_LIMIT}`,
+        { cache: "no-store", signal },
+      );
+      if (!res.ok) {
+        setHistoryState({
+          kind: "error",
+          message: `${res.status} ${res.statusText}`,
+        });
+        return;
+      }
+      const data = (await res.json()) as LiveHeartbeat[];
+      setHistoryState({ kind: "data", data });
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return;
+      setHistoryState({
+        kind: "error",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    void fetchHeartbeat(ctrl.signal);
+    void fetchHistory(ctrl.signal);
+    const id = setInterval(() => {
+      void fetchHeartbeat(ctrl.signal);
+      void fetchHistory(ctrl.signal);
+    }, POLL_HEARTBEAT);
+    return () => {
+      ctrl.abort();
+      clearInterval(id);
+    };
+  }, [fetchHeartbeat, fetchHistory]);
+
+  const heartbeatHistory =
+    historyState.kind === "data" ? historyState.data : [];
+  const signalsList = signals.kind === "data" ? signals.data : [];
 
   return (
     <div className="mx-auto max-w-[1280px] px-6 py-8">
@@ -97,10 +183,28 @@ export default function MonitorPage() {
         </Card>
       </div>
 
-      {/* Hero — strategy + heartbeat trace */}
+      {/* Live bot — heartbeat-DB-backed status, P&L, position, sparkline */}
       <div className="mt-6">
-        <Hero live={live} />
+        <LiveBotPanel
+          heartbeatState={heartbeatState}
+          signals={signalsList}
+          signalsLoading={signals.kind === "loading"}
+          heartbeatHistory={heartbeatHistory}
+          hideViewAll
+          signalLimit={6}
+        />
+        <HeartbeatCadenceStrip history={heartbeatHistory} />
       </div>
+
+      {/* Legacy file-based status (older runners; kept for ingester health) */}
+      <details className="mt-4">
+        <summary className="cursor-pointer font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3 hover:text-ink-1">
+          ▸ Show legacy file-based status
+        </summary>
+        <div className="mt-3">
+          <Hero live={live} />
+        </div>
+      </details>
 
       {/* Last signal | Drift */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -198,6 +302,83 @@ export default function MonitorPage() {
 /* ============================================================
    Header pieces
    ============================================================ */
+
+/**
+ * Heartbeat cadence strip — visualizes whether the runner is sending
+ * heartbeats at the expected ~60s rhythm. Each cell is one heartbeat,
+ * colored by gap-since-previous: green=on-cadence, yellow=delayed,
+ * red=long gap. Reading left-to-right is oldest-to-newest.
+ *
+ * Surface-area is small but it's the highest-signal view of bot health:
+ * a steady green strip means everything's fine, a streak of red
+ * trailing in from the right means the bot just died.
+ */
+function HeartbeatCadenceStrip({ history }: { history: LiveHeartbeat[] }) {
+  if (history.length < 3) return null;
+  // History arrives newest-first; reverse for time-axis order
+  const ordered = [...history].reverse();
+  const gaps: number[] = [];
+  for (let i = 1; i < ordered.length; i++) {
+    const prev = new Date(ordered[i - 1].ts).getTime();
+    const cur = new Date(ordered[i].ts).getTime();
+    gaps.push((cur - prev) / 1000);
+  }
+
+  const cellTone = (g: number): string => {
+    if (g <= 75) return "bg-pos/70";
+    if (g <= 180) return "bg-warn/70";
+    return "bg-neg/70";
+  };
+
+  const totalSpanMin =
+    (new Date(ordered[ordered.length - 1].ts).getTime() -
+      new Date(ordered[0].ts).getTime()) /
+    1000 /
+    60;
+
+  const onCadence = gaps.filter((g) => g <= 75).length;
+  const delayed = gaps.filter((g) => g > 75 && g <= 180).length;
+  const lateGaps = gaps.filter((g) => g > 180).length;
+
+  return (
+    <Card className="mt-3">
+      <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+          Heartbeat cadence
+        </span>
+        <span className="font-mono text-[10px] text-ink-4">
+          {ordered.length} beats over{" "}
+          {totalSpanMin > 60
+            ? `${(totalSpanMin / 60).toFixed(1)}h`
+            : `${totalSpanMin.toFixed(0)}m`}{" "}
+          ·{" "}
+          <span className="text-pos">{onCadence} ok</span>
+          {delayed > 0 && (
+            <>
+              {" "}
+              · <span className="text-warn">{delayed} delayed</span>
+            </>
+          )}
+          {lateGaps > 0 && (
+            <>
+              {" "}
+              · <span className="text-neg">{lateGaps} gaps</span>
+            </>
+          )}
+        </span>
+      </div>
+      <div className="flex h-3 w-full overflow-hidden">
+        {gaps.map((g, i) => (
+          <div
+            key={i}
+            title={`+${g.toFixed(0)}s gap @ ${ordered[i + 1].ts}`}
+            className={cn("flex-1 border-r border-bg-1 last:border-r-0", cellTone(g))}
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
 
 function headerEyebrow(live: ReturnType<typeof usePoll<LiveStatus>>): string {
   if (live.kind === "loading") return "MONITOR · LOADING";

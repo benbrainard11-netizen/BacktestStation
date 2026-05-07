@@ -1,4 +1,5 @@
 import {
+  Activity,
   BarChart3,
   Film,
   FileText,
@@ -23,6 +24,7 @@ const MAP: Record<IconName, typeof Inbox> = {
   wand: Wand2,
   library: Library,
   settings: Cog,
+  activity: Activity,
 };
 
 export function Icon({

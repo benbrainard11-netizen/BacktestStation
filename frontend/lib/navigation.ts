@@ -17,7 +17,8 @@ export type IconName =
   | "wand"
   | "library"
   | "settings"
-  | "home";
+  | "home"
+  | "activity";
 
 export type NavItem = {
   id: string;
@@ -28,6 +29,7 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "overview",  label: "Overview",  icon: "home",     href: "/" },
+  { id: "monitor",   label: "Monitor",   icon: "activity", href: "/monitor" },
   { id: "catalog",   label: "Catalog",   icon: "layers",   href: "/strategies" },
   { id: "library",   label: "Library",   icon: "library",  href: "/library" },
   { id: "inbox",     label: "Inbox",     icon: "inbox",    href: "/inbox" },
