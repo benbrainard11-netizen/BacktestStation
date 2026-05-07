@@ -196,7 +196,7 @@ def test_r2_roundtrip_local_vs_r2_byte_equal(tmp_path: Path) -> None:
     `_test/` prefix is namespaced so it never collides with production
     `processed/` and `raw/` prefixes. Cleanup runs even if assertions fail.
     """
-    import boto3
+    boto3 = pytest.importorskip("boto3", reason="boto3 not installed")
 
     bucket = os.environ["BS_R2_BUCKET"]
     test_prefix = f"_test/{uuid.uuid4().hex}"

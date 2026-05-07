@@ -1,4 +1,6 @@
-# Project State — 2026-04-27
+# Project State — 2026-05-06
+
+> **Heads up — last refresh 2026-05-06 (was 2026-04-27).** Big shifts since then: Pre10 v04 live engine shipped end-to-end (Phase A verification 99.6% match, Stage 2 Rithmic code complete, runner POSTing telemetry to benpc canonical DB, ready to flip to live 1 MNQ). New Live Bot panel + halt history + equity curve on `/` and `/monitor`. Catalog gained autopsy/archive section. Strategy promotion checks system holds 36 rows across 7 active strategies. parquet_mirror schema-mismatch caveat (was the R2 ship blocker) is **resolved** as of commit `bfbe738`. Test count grew 507 → 846.
 
 > **What this doc is.** A single, scannable snapshot of "what's where, what's working, what's broken" across BacktestStation. Updated as a checkpoint, not on every commit. When in doubt, the code wins — but this saves you 30 minutes of re-discovery before you start.
 
@@ -17,7 +19,8 @@
   - Multi-instrument support via `Context.aux: dict[str, Bar | None]`.
 - **Strategies**
   - `MovingAverageCrossover` (example, lives in `app/strategies/examples/`).
-  - `FractalAMD` (`app/strategies/fractal_amd/`) — full port of the live bot's logic, ~490 lines. Detects HTF stage signals, builds LTF FVG-bearing setups, transitions WATCHING→TOUCHED→FILLED, emits BracketOrders. **Currently emits 0 trades — see "in progress" below.**
+  - `FractalAMD` (`app/strategies/fractal_amd/`) — full port of the live bot's logic, ~490 lines. Detects HTF stage signals, builds LTF FVG-bearing setups, transitions WATCHING→TOUCHED→FILLED, emits BracketOrders. **Strategy archived 2026-05-06** as the Lane-C trusted port was shelved (lookahead bias + non-replicating live edge); kept for autopsy.
+  - `Pre10VpContinuation` (FractalAMD- repo, `src/shared_engine/strategies/pre10_vp_continuation.py`) — pre-10am developing-RTH VP continuation, XGB router gate at 9:45 ET, sp40/t30/trail-50pct-after-1R exit. **Paper-pass; deployment target for Monday 2026-05-11 at 1 MNQ** per the overnight 2026-05-06 MC (92.3% Phase-1 clear with skip_2023 filter).
 - **Forward Drift Monitor v1 (backend, 2026-04-25)** (`app/services/drift_comparison.py`)
   - Win-rate drift + entry-time chi-square against a designated baseline run.
   - `GET /api/monitor/drift/{strategy_version_id}`
@@ -37,11 +40,19 @@
   - Client package `bsdata` (`client/bsdata/`) with R2-then-local-cache reader. Same loader signatures as `app.data.reader`. Setup docs: `docs/R2_SETUP.md` + `client/bsdata/README.md`.
   - `/api/monitor/r2-upload` surfaces refused/error counts (CLAUDE.md discipline rule 6: pipeline silent failures = active problem).
   - **Tier 1 only**: scoped read tokens distributed manually. Tier 2 (auth proxy + presigned URLs) deferred per CLAUDE.md "no auth, no billing yet."
-  - **Caveat at ship time:** the validation gate found that ALL existing parquet on benpc was being refused due to a `string vs dictionary` schema mismatch in `parquet_mirror`'s output. The uploader is correctly gating; the upstream `parquet_mirror` bug needs its own fix before R2 will hold any data. See `OVERNIGHT_2026-04-28-PM.md` and the dry-run output for context.
+  - ~~**Caveat at ship time:** the validation gate found that ALL existing parquet on benpc was being refused due to a `string vs dictionary` schema mismatch in `parquet_mirror`'s output.~~ **RESOLVED 2026-05-06 (commit `bfbe738`).** parquet_mirror now writes continuous-symbol partitions (NQ.c.0 etc.) that pass the validation gate. Benpc's R2 sync still depends on the ben-247 → benpc warehouse sync running, which itself depends on Ben enabling SMB on benpc (deferred — see runbook `docs/prompts/ben247_warehouse_sync.md`).
 - **Schema-first API** (`app/schemas/`, `shared/openapi.json`, `frontend/lib/api/generated.ts`)
   - Pydantic schemas are the source of truth; TS types regenerated via `bash scripts/generate-types.sh`.
 - **Schema migration discipline** (`app/db/session.py:_run_data_migrations`)
   - Idempotent ALTERs run on every app start. New columns added without losing local SQLite metadata.
+- **Live-bot telemetry endpoints (2026-05-06)** (`app/api/monitor.py`)
+  - `POST /api/monitor/heartbeats` and `POST /api/monitor/signals`. Local-network only — no auth (Tailnet ACLs are the trust boundary). The Pre10 v04 runner on ben-247 POSTs every 60s to benpc's canonical DB; sqlite fallback kicks in only if HTTP fails.
+  - `GET /api/monitor/heartbeats[?source=&limit=]` and `/heartbeats/latest` back the new Live Bot panel and `/monitor` page (halt history, equity curve, cadence strip all read from this).
+- **Strategy promotion checks (2026-05-05)** (`app/db/models.py::StrategyPromotionCheck`, `app/api/promotion_checks.py`)
+  - 36 rows of audit records: 12 Pre10 paper-pass MC variants, 9 1-MNQ MC additions from overnight 2026-05-06 fork, plus killed/research_only autopsies for Multi-Symbol BelowVAL+PSP, PO3 30m E3, Midday Continuation v06-v08, FractalAMD Portfolio v01, Fractal Regime v05 HTF Composite. Surfaced in the Catalog as rolled-up cards.
+- **Catalog archival + autopsy (2026-05-06)**
+  - `PATCH /api/strategies/{id}` with `status=archived` removes a strategy from the main grid but keeps its data. Reversible. Currently archived: Fractal AMD (Lane-C trusted), Pre10 VP Continuation + XGB Router (stale duplicate of v04), Fractal Regime v05 HTF Composite (killed). UI exposes a "Show archived (N)" toggle that surfaces them in an Autopsy section.
+- **Backend bound to Tailscale (2026-05-06)** — backend listens on `0.0.0.0:8000` so ben-247 can POST telemetry over Tailscale (`100.64.66.60:8000`). CORS allows the ben-247 frontend origin.
 
 ### Frontend
 
@@ -49,7 +60,8 @@
 - **Run a Backtest** UI shipped (`/backtests/run`), wired end-to-end to the engine via `POST /api/backtests/run`.
 - **Backtest dossier** (`/backtests/[id]`): trades, equity curve, metrics, config snapshot, autopsy, prop-firm sim launcher, retroactive Risk Profile violations panel.
 - **Imported runs**: import + visualize CSV/JSON result bundles.
-- **Live monitor page** (`/monitor`): ingester health, live-trades pipeline panel, **Forward Drift v1 panels (WR drift + entry-time drift, 2026-04-28)**, live status from the bot, and (added 2026-04-27 by Husky) per-strategy session journal + signals feed.
+- **Overview / Live Bot panel (2026-05-06)** (`/`, `frontend/components/live/LiveBotPanel.tsx`): mode/status header, balance + today's P&L tiles when fresh, open-position detail block (entry/stop/target/MFE/MAE/live R/fill_state), recent signals tail. >5min stale = "not currently running" with no misleading numbers.
+- **Live monitor page revamp (2026-05-06)** (`/monitor`): LiveBotPanel hero, heartbeat-cadence health strip, halt history + reason summary, full equity curve chart with window selector, plus the legacy file-based status as a collapsible details block. Existing ingester health, live-trades pipeline, **Forward Drift v1 panels (WR drift + entry-time drift, 2026-04-28)**, and per-strategy session journal preserved below the new sections.
 - **Trade replay** (`/trade-replay`): TBBO + 1m/5m/15m/30m bar replay anchored to a live trade, ET time axis.
 - **Per-day chart replay** (`/replay`): symbol/date picker, 1m candles, optional run-overlay entry markers. Backend now also returns `fvg_zones` (frontend overlay rendering deferred).
 - **Prop firm simulator UI** (`/prop-simulator`): runs, runs detail, scope view. Firm rules editor (`/prop-simulator/firms`, un-mocked 2026-04-27 by Husky) is DB-backed with seed-from-`PRESETS`, verification stamp, reset-to-seed flow.
@@ -58,7 +70,7 @@
 
 ### Tests + CI
 
-- **507 backend tests green** at the time of this writing (`pytest backend/`). Last refreshed 2026-04-28 PM; grew from 470 → 507 over today's overnight tasks (drift latest endpoint, ready-for-capital, gap-filler, FVG zones) plus data-health + settings backends. Two PR-pending branches add 5 more tests (drift baseline-FK cleanup, gate cutover flag) — see `OVERNIGHT_2026-04-28-PM.md`.
+- **846 backend tests green + 1 environment-skipped** as of 2026-05-06 PM (`pytest backend/`). Grew 507 → 846 over the late-April through early-May work: data-health, settings, prop-firm, R2 cloud distribution, monitor heartbeat/signal POST, ready-for-capital, drift cleanup, warehouse sync. The skipped test (`test_r2_roundtrip_local_vs_r2_byte_equal`) gates on `boto3` import — safe-skip when the lib isn't installed.
 - Lookahead harness, determinism check, and MBP-1 stop-vs-target race test (all inside `test_backtest_engine.py`) green.
 - Pre-commit hooks: ruff + black (Python), prettier (TS).
 
@@ -114,15 +126,19 @@ The remaining unmatched live trade (2026-04-24 13:31 short, entry 27196.83): por
 
 ### Live ingester health
 
-Running on ben-247 against `BS_DATA_ROOT=D:\data`. Heartbeat written to `data/heartbeat/live_ingester.json`; surfaced via `GET /api/monitor/ingester`. Status as of 2026-04-24: ticks flowing; reconnect_count growth has not been audited recently.
+Running on ben-247 against `BS_DATA_ROOT=D:\data`. Heartbeat written to `data/heartbeat/live_ingester.json`; surfaced via `GET /api/monitor/ingester`. Last audit 2026-04-24 (ticks flowing). The 14 days of TBBO data 2026-04-27 → 2026-05-05 confirmed via the overnight 2026-05-06 fork's orderflow validation pass — feature distributions inside training band, edge intact.
 
-### Live-trades Taildrop receive (open issue, 2026-04-27)
+### Live-trades Taildrop receive (largely superseded 2026-05-06)
 
-ben-247's `tailscale file cp ... benpc:` task fires daily at 16:45 ET with `LastTaskResult=0`, but the file does not always reach benpc's inbox. `tailscale file get --verbose` reports `moved 0/0`; the fresh trades.jsonl is not in `Downloads/`, the project inbox, or anywhere on benpc's filesystem. Tailscale on benpc runs as a user-mode app (no Windows service), which may be writing received files to a queue location the CLI doesn't drain. Open: capture daemon logs while ben-247 retries, or migrate to Tailscale service install + retest.
+ben-247's `tailscale file cp ... benpc:` task was the historical path for shipping live trade data. **Largely superseded** by the new HTTP telemetry pipeline (POST `/api/monitor/heartbeats` + `/signals`) which writes directly to benpc's canonical DB. Taildrop is still configured as a fallback for trade-tape JSONL files but is no longer load-bearing for live monitoring. The original "moved 0/0" issue is dormant — re-investigate only if a future workflow needs Taildrop again.
 
 ### Session journal v1 — phase 2 follow-up
 
-The `/monitor` session journal (Husky, 2026-04-27) currently shows fills + cumulative R from `/api/monitor/live`. Real-time *unrealized* P&L is deferred until a live quote source is wired (the `/api/monitor/signals` join doesn't carry mark-to-market). When a quote source lands, surface unrealized PnL in `LiveSessionJournal.tsx` and the dossier's `LivePerformanceCard`.
+The `/monitor` session journal (Husky, 2026-04-27) shows fills + cumulative R from `/api/monitor/live`. **Note 2026-05-06:** real-time unrealized P&L is now provided by the LiveBotPanel's open-position block (entry/stop/target/MFE/MAE/live R) — the journal panel doesn't yet surface this. Either keep both panels for cross-check, or fold the journal's unrealized fields into LiveBotPanel.
+
+### Pre10 v04 going live Monday 2026-05-11 — pending operator action
+
+All code shipped, dry-run untested with real Rithmic creds. Per runbook `docs/runbooks/PRE10_LIVE.md`: Sunday afternoon Ben sets `RITHMIC_USERNAME`/`PASSWORD`/`SERVER` env vars on ben-247, runs `--rithmic-dry-run` to validate auth, then edits the install script (`$RunnerMode='live'`, `$Contracts=1`) and restarts the service. Once green, Monday 9:45 ET will be the first live entry attempt.
 
 ---
 

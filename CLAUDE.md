@@ -71,6 +71,22 @@ For *direction* rules ("should we build X?"), see [`docs/ROADMAP.md`](docs/ROADM
 6. **Pipeline silent failures = active problem.** When a daily-fire scheduled task or live ingester logs `errors=0` but produces no output, that's a bug, not "expected idle." Add the silent-failure case to `/monitor` so it surfaces visually.
 7. **Raw data is append-only.** `D:\data\raw\` files are never modified after creation. New pulls write new files. The parquet mirror reads but never writes to `raw/`. See [`docs/LOCAL_INFRASTRUCTURE.md`](docs/LOCAL_INFRASTRUCTURE.md) for full data ownership rules.
 
+## Live-bot conventions
+
+The runner that ships live trades (currently `pre10_live_runner` from FractalAMD-) reports through these endpoints. New runners should reuse this pattern, not invent their own.
+
+- **Heartbeat:** `POST /api/monitor/heartbeats` accepts `{source, status, payload?, ts?}`. Server stamps `ts` when omitted. `payload` is freeform JSON — current Pre10 keys: `balance, peak_balance, trail_floor, locked, total_withdrawn, profit, buffer_to_trail, trades_today, wins_today, losses_today, consec_losses, pnl_today, halted, halt_reason, instrument, contracts, open_position, mode`. When a position is open the runner adds `position_side, entry_price, stop_price, target_price, position_pnl_dollars, position_r, position_mfe_r, position_mae_r, fill_state, entry_ts`. Loose payload typing is intentional — runners can evolve their schema without forcing a backend redeploy.
+- **Signals:** `POST /api/monitor/signals` accepts `{ts, side, price, reason?, executed, strategy_version_id?}`. One row per entry/exit/etc.
+- **Single canonical DB:** the runner writes to **benpc's** BS over Tailscale (`BS_API_URL=http://100.64.66.60:8000`). Local sqlite write is a fallback only — kicks in if HTTP fails so the bot never loses observability, but the canonical store is benpc's `meta.sqlite`. New runners should not add a second DB.
+- **Live-bot UI:** the reusable widget lives at `frontend/components/live/LiveBotPanel.tsx`. It accepts a `LoadState<LiveHeartbeat | null>`, a signals list, and an optional `heartbeatHistory[]` for the equity sparkline + cadence-based connection-quality chip. `BotPayload` is the shared loose type. Both `/` Overview and `/monitor` consume this component — don't duplicate it.
+- **Halt history / cadence / equity curve:** the `/monitor` page reads `/api/monitor/heartbeats?source=...&limit=N` once and computes everything client-side. No new aggregation endpoints — keep the API surface minimal.
+- **Operational runbook:** `docs/runbooks/PRE10_LIVE.md` is the source of truth for live deploy steps. Update it (don't fork it) when the runner gains new flags.
+
+## Catalog conventions
+
+- **Strategy archival is reversible.** `PATCH /api/strategies/{id}` with `{"status": "archived"}` hides the strategy from the main Catalog grid but keeps all data accessible. Reverse with `{"status": "idea"}` or another active stage.
+- **Autopsy section:** the Catalog grid filters out archived/retired strategies by default. They re-surface via the "Show archived (N)" toggle in a separate "Autopsy" section. Killed promotion checks stay attached to whichever strategy ID they reference.
+
 ## When in doubt
 
 Re-read [`docs/ROADMAP.md`](docs/ROADMAP.md) for direction or [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for system design. If those don't answer your question, ask the user before inventing a convention.
