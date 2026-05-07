@@ -86,6 +86,42 @@ _DBN_RE = re.compile(
 )
 
 
+# --- Continuous-symbol mapping ----------------------------------------
+
+# Bases of continuous-symbol indices we publish partitions under, in
+# addition to the resolved-contract partitions. The live ingester
+# subscribes via "{BASE}.c.0" with stype_in='continuous', but databento
+# delivers records keyed by the resolved contract symbol (e.g. NQM6) —
+# so we pattern-match the resolved name back to its base here.
+CONTINUOUS_BASES = ("NQ", "ES", "YM", "RTY")
+
+# Quarterly futures contract: {BASE}{MONTH_CODE}{YEAR_DIGITS}.
+# Quarter month codes: H=Mar, M=Jun, U=Sep, Z=Dec.
+_CONTRACT_RE = re.compile(r"^([A-Z]{2,3})([HMUZ])(\d{1,2})$")
+
+
+def _continuous_symbol(symbol: str) -> str | None:
+    """Map a resolved quarterly contract (e.g. ``NQM6``) to its
+    continuous symbol (``NQ.c.0``).
+
+    Returns None if the symbol is not a recognized quarterly contract or
+    if its base ticker isn't in `CONTINUOUS_BASES`.
+
+    TODO(approach-a): cleaner long-term fix is to subscribe upstream
+    with stype_out=continuous (or persist the symbology messages
+    databento emits) so records carry the continuous symbol natively.
+    That handles arbitrary roll dates correctly and isn't tied to a
+    fixed list of bases. See live.py for the subscription site.
+    """
+    m = _CONTRACT_RE.match(str(symbol))
+    if m is None:
+        return None
+    base = m.group(1)
+    if base not in CONTINUOUS_BASES:
+        return None
+    return f"{base}.c.0"
+
+
 @dataclass
 class MirrorResult:
     scanned: int = 0
@@ -238,9 +274,18 @@ def _process_one_dbn(
 ) -> int:
     """Convert one DBN to parquet partitions + bars + manifest.
 
-    Returns the number of (symbol, output_kind) partitions actually written
-    this call. Returns 0 if all targets exist + are newer than the DBN
-    (idempotent skip), unless rebuild=True.
+    Two passes per DBN:
+
+      1. **Resolved-contract partitions.** One per distinct symbol in the
+         DBN (e.g. ``NQM6``).
+      2. **Continuous-symbol partitions.** For each row whose resolved
+         symbol maps to a continuous base (see `_continuous_symbol`),
+         emit a second partition under the continuous name with the
+         symbol column rewritten to match. Lets downstream code read by
+         continuous symbol without a contract-resolution step.
+
+    Returns the total partitions written this call. Returns 0 if every
+    target already exists + is newer than the DBN, unless rebuild=True.
     """
     schema_name = matched.group("schema")
     date_str = matched.group("date")
@@ -249,137 +294,72 @@ def _process_one_dbn(
 
     schema = _safe_get_schema(schema_name)
     if schema is None:
-        logger.info(f"no parquet schema registered for DBN schema {schema_name!r}, skipping")
+        logger.info(
+            f"no parquet schema registered for DBN schema {schema_name!r}, skipping"
+        )
         return 0
 
     started_at = now_utc_iso()
 
-    # Load DBN once.
-    #
-    # The schema kwarg is required because live.py's DBN files contain a
-    # mix of record types: the TBBO records we care about, plus
-    # databento's internal symbology / system messages. Without an
-    # explicit schema, store.to_df() refuses with
+    # The schema kwarg is required because live.py's DBN files contain
+    # a mix of record types (TBBO + databento internal symbology /
+    # system messages); without it, store.to_df() refuses with
     #   ValueError: a schema must be specified for mixed DBN data
-    # We always know the intended schema from the filename ("tbbo",
-    # "mbp-1", etc.) so pass it through.
     store = db.DBNStore.from_file(str(dbn_path))
     df = store.to_df(schema=schema_name)
     if df.empty:
         logger.info(f"empty DBN, nothing to write: {dbn_path.name}")
         return 0
 
-    # Resolve symbol column.
     sym_col = "symbol" if "symbol" in df.columns else "raw_symbol"
     if sym_col not in df.columns:
         raise RuntimeError(
             f"DBN {dbn_path.name} has no symbol column (cols={list(df.columns)})"
         )
 
-    # Per-symbol processing.
     outputs: list[ManifestOutput] = []
     validation_warnings: list[str] = []
     duplicate_count = 0
     monotonic_overall = True
 
+    common = dict(
+        schema=schema,
+        schema_name=schema_name,
+        date_obj=date_obj,
+        data_root=data_root,
+        dbn_path=dbn_path,
+        dbn_mtime=dbn_mtime,
+        rebuild=rebuild,
+    )
+
+    # Pass 1: resolved-contract partitions.
     for symbol, group in df.groupby(sym_col):
-        # Each symbol gets two partitions: raw parquet + 1m bars.
-        raw_path = _raw_partition_path(data_root, schema_name, str(symbol), date_obj)
-        bars_path = _bars_partition_path(data_root, str(symbol), date_obj)
+        outs, warns, dups, mono = _emit_partitions_for_symbol(
+            symbol=str(symbol), group=group, **common
+        )
+        outputs.extend(outs)
+        validation_warnings.extend(warns)
+        duplicate_count += dups
+        monotonic_overall = monotonic_overall and mono
 
-        # Idempotent skip if not rebuilding and both targets are fresh.
-        if (
-            not rebuild
-            and raw_path.exists()
-            and bars_path.exists()
-            and raw_path.stat().st_mtime >= dbn_mtime
-            and bars_path.stat().st_mtime >= dbn_mtime
-        ):
-            continue
-
-        raw_df = _normalize_for_schema(group, schema)
-        # Ensure tz-aware UTC timestamps (databento returns UTC).
-        raw_df = _ensure_utc(raw_df, ["ts_event", "ts_recv"])
-        # Sort by ts_event for downstream sanity.
-        raw_df = raw_df.sort_values("ts_event").reset_index(drop=True)
-
-        # Validation
-        dups_here = int(raw_df["ts_event"].duplicated().sum())
-        duplicate_count += dups_here
-        monotonic_here = raw_df["ts_event"].is_monotonic_increasing
-        monotonic_overall = monotonic_overall and monotonic_here
-        if dups_here > 0:
-            validation_warnings.append(
-                f"{symbol}: {dups_here} duplicate ts_event"
+    # Pass 2: continuous-symbol partitions. Rows for the same base across
+    # multiple contracts (e.g. during a roll) get combined into one
+    # partition.
+    cont_df = df.assign(__continuous=df[sym_col].map(_continuous_symbol))
+    cont_df = cont_df[cont_df["__continuous"].notna()]
+    if not cont_df.empty:
+        for cont_sym, group in cont_df.groupby("__continuous"):
+            group = group.drop(columns=["__continuous"]).copy()
+            # Rewrite symbol column so row contents match the partition
+            # path they're being written under.
+            group[sym_col] = cont_sym
+            outs, warns, dups, mono = _emit_partitions_for_symbol(
+                symbol=str(cont_sym), group=group, **common
             )
-
-        ts_min = raw_df["ts_event"].min() if not raw_df.empty else None
-        ts_max = raw_df["ts_event"].max() if not raw_df.empty else None
-
-        # Write raw parquet with embedded metadata.
-        raw_path.parent.mkdir(parents=True, exist_ok=True)
-        raw_table = pa.Table.from_pandas(
-            raw_df, schema=schema.pa_schema, preserve_index=False
-        )
-        raw_table = _attach_metadata(
-            raw_table,
-            source_dbn=dbn_path,
-            schema_name=schema_name,
-            row_count=len(raw_df),
-            ts_min=ts_min,
-            ts_max=ts_max,
-        )
-        pq.write_table(raw_table, raw_path, compression="zstd")
-
-        outputs.append(
-            ManifestOutput(
-                kind="raw_parquet",
-                schema=schema_name,
-                symbol=str(symbol),
-                path=relative_to_root(raw_path, data_root),
-                rows=len(raw_df),
-                size_bytes=raw_path.stat().st_size,
-                ts_event_min=ts_min.isoformat() if ts_min is not None else None,
-                ts_event_max=ts_max.isoformat() if ts_max is not None else None,
-            )
-        )
-
-        # 1m bars: derived from trade prices for tbbo/mbp-1, or
-        # passed through directly for ohlcv-1m (DBN is already bars).
-        bars_df = None
-        if schema_name in {"tbbo", "mbp-1"}:
-            bars_df = _compute_1m_bars(raw_df, str(symbol))
-        elif schema_name == "ohlcv-1m":
-            bars_df = _ohlcv_dbn_to_bars(raw_df, str(symbol))
-        if bars_df is not None:
-            if not bars_df.empty:
-                bars_path.parent.mkdir(parents=True, exist_ok=True)
-                bars_table = pa.Table.from_pandas(
-                    bars_df,
-                    schema=BARS_1M_SCHEMA.pa_schema,
-                    preserve_index=False,
-                )
-                bars_table = _attach_metadata(
-                    bars_table,
-                    source_dbn=dbn_path,
-                    schema_name="ohlcv-1m",
-                    row_count=len(bars_df),
-                    ts_min=bars_df["ts_event"].min(),
-                    ts_max=bars_df["ts_event"].max(),
-                )
-                pq.write_table(bars_table, bars_path, compression="zstd")
-                outputs.append(
-                    ManifestOutput(
-                        kind="bars_1m",
-                        schema="ohlcv-1m",
-                        symbol=str(symbol),
-                        path=relative_to_root(bars_path, data_root),
-                        rows=len(bars_df),
-                        size_bytes=bars_path.stat().st_size,
-                        ts_event_min=bars_df["ts_event"].min().isoformat(),
-                        ts_event_max=bars_df["ts_event"].max().isoformat(),
-                    )
-                )
+            outputs.extend(outs)
+            validation_warnings.extend(warns)
+            duplicate_count += dups
+            monotonic_overall = monotonic_overall and mono
 
     # Write manifest only if we produced something.
     if outputs:
@@ -416,6 +396,112 @@ def _process_one_dbn(
         )
 
     return len(outputs)
+
+
+def _emit_partitions_for_symbol(
+    *,
+    symbol: str,
+    group: "pd.DataFrame",
+    schema: DataSchema,
+    schema_name: str,
+    date_obj: dt.date,
+    data_root: Path,
+    dbn_path: Path,
+    dbn_mtime: float,
+    rebuild: bool,
+) -> tuple[list[ManifestOutput], list[str], int, bool]:
+    """Write raw + bars partitions for a single symbol's rows.
+
+    Idempotent skip: if both raw and bars partition files already exist
+    with mtime >= dbn_mtime, returns ([], [], 0, True) without writing.
+
+    Returns (outputs, validation_warnings, dup_count, monotonic).
+    """
+    outputs: list[ManifestOutput] = []
+    raw_path = _raw_partition_path(data_root, schema_name, symbol, date_obj)
+    bars_path = _bars_partition_path(data_root, symbol, date_obj)
+
+    if (
+        not rebuild
+        and raw_path.exists()
+        and bars_path.exists()
+        and raw_path.stat().st_mtime >= dbn_mtime
+        and bars_path.stat().st_mtime >= dbn_mtime
+    ):
+        return outputs, [], 0, True
+
+    raw_df = _normalize_for_schema(group, schema)
+    raw_df = _ensure_utc(raw_df, ["ts_event", "ts_recv"])
+    raw_df = raw_df.sort_values("ts_event").reset_index(drop=True)
+
+    dups = int(raw_df["ts_event"].duplicated().sum())
+    monotonic = bool(raw_df["ts_event"].is_monotonic_increasing)
+    warnings = [f"{symbol}: {dups} duplicate ts_event"] if dups > 0 else []
+
+    ts_min = raw_df["ts_event"].min() if not raw_df.empty else None
+    ts_max = raw_df["ts_event"].max() if not raw_df.empty else None
+
+    raw_path.parent.mkdir(parents=True, exist_ok=True)
+    raw_table = pa.Table.from_pandas(
+        raw_df, schema=schema.pa_schema, preserve_index=False
+    )
+    raw_table = _attach_metadata(
+        raw_table,
+        source_dbn=dbn_path,
+        schema_name=schema_name,
+        row_count=len(raw_df),
+        ts_min=ts_min,
+        ts_max=ts_max,
+    )
+    pq.write_table(raw_table, raw_path, compression="zstd")
+    outputs.append(
+        ManifestOutput(
+            kind="raw_parquet",
+            schema=schema_name,
+            symbol=symbol,
+            path=relative_to_root(raw_path, data_root),
+            rows=len(raw_df),
+            size_bytes=raw_path.stat().st_size,
+            ts_event_min=ts_min.isoformat() if ts_min is not None else None,
+            ts_event_max=ts_max.isoformat() if ts_max is not None else None,
+        )
+    )
+
+    bars_df: "pd.DataFrame | None" = None
+    if schema_name in {"tbbo", "mbp-1"}:
+        bars_df = _compute_1m_bars(raw_df, symbol)
+    elif schema_name == "ohlcv-1m":
+        bars_df = _ohlcv_dbn_to_bars(raw_df, symbol)
+    if bars_df is not None and not bars_df.empty:
+        bars_path.parent.mkdir(parents=True, exist_ok=True)
+        bars_table = pa.Table.from_pandas(
+            bars_df,
+            schema=BARS_1M_SCHEMA.pa_schema,
+            preserve_index=False,
+        )
+        bars_table = _attach_metadata(
+            bars_table,
+            source_dbn=dbn_path,
+            schema_name="ohlcv-1m",
+            row_count=len(bars_df),
+            ts_min=bars_df["ts_event"].min(),
+            ts_max=bars_df["ts_event"].max(),
+        )
+        pq.write_table(bars_table, bars_path, compression="zstd")
+        outputs.append(
+            ManifestOutput(
+                kind="bars_1m",
+                schema="ohlcv-1m",
+                symbol=symbol,
+                path=relative_to_root(bars_path, data_root),
+                rows=len(bars_df),
+                size_bytes=bars_path.stat().st_size,
+                ts_event_min=bars_df["ts_event"].min().isoformat(),
+                ts_event_max=bars_df["ts_event"].max().isoformat(),
+            )
+        )
+
+    return outputs, warnings, dups, monotonic
 
 
 # --- Helpers ------------------------------------------------------------
