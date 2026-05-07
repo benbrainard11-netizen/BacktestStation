@@ -127,6 +127,7 @@ export default function StrategiesPage() {
   // (usePoll doesn't expose manual retrigger; the interval picks up the change)
   const [_tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((n) => n + 1), []);
+  const [showArchived, setShowArchived] = useState(false);
 
   const strategies = poll.kind === "data" ? poll.data : [];
   const allChecks = checksPoll.kind === "data" ? checksPoll.data : [];
@@ -142,12 +143,20 @@ export default function StrategiesPage() {
     return map;
   }, [allChecks]);
 
+  const isArchivedStatus = (s: string) => s === "archived" || s === "retired";
+  const activeStrategies = useMemo(
+    () => strategies.filter((s) => !isArchivedStatus(s.status)),
+    [strategies],
+  );
+  const archivedStrategies = useMemo(
+    () => strategies.filter((s) => isArchivedStatus(s.status)),
+    [strategies],
+  );
+
   const totalCount = strategies.length;
   const liveCount = strategies.filter((s) => s.status === "live").length;
   const forwardCount = strategies.filter((s) => s.status === "forward_test").length;
-  const archivedCount = strategies.filter(
-    (s) => s.status === "archived" || s.status === "retired",
-  ).length;
+  const archivedCount = archivedStrategies.length;
   const activeCount = strategies.filter((s) => ACTIVE_STAGES.has(s.status)).length;
 
   return (
@@ -229,11 +238,41 @@ export default function StrategiesPage() {
         )}
         {poll.kind === "data" && strategies.length > 0 && (
           <>
-            {/* Collapsed strategy cards — one per strategy, with rollup metrics */}
+            {/* Active strategies — main grid (excludes archived/retired) */}
             <StrategyCardGrid
-              strategies={strategies}
+              strategies={activeStrategies}
               checksByStrategy={checksByStrategy}
             />
+
+            {/* Archived / retired — collapsed by default, toggle to reveal */}
+            {archivedStrategies.length > 0 && (
+              <div className="mt-8 border-t border-line pt-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-3">
+                    Autopsy{" "}
+                    <span className="ml-1 text-ink-4">
+                      {archivedStrategies.length} archived / retired
+                    </span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowArchived((v) => !v)}
+                    className="rounded border border-line bg-bg-2 px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-2 transition-colors hover:border-line-3 hover:text-ink-0"
+                  >
+                    {showArchived ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {showArchived && (
+                  <div className="opacity-70">
+                    <StrategyCardGrid
+                      strategies={archivedStrategies}
+                      checksByStrategy={checksByStrategy}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Detailed table below for managing versions / status / etc. */}
             <details className="mt-8 group">
               <summary className="cursor-pointer font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3 hover:text-ink-1">

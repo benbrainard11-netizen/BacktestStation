@@ -67,6 +67,50 @@ class LiveSignalRead(BaseModel):
     executed: bool
 
 
+class LiveHeartbeatRead(BaseModel):
+    """One row from `live_heartbeats` — periodic state snapshot from a runner.
+
+    `payload` is whatever JSON the runner posted; for `pre10_live_runner`
+    the keys include balance, peak_balance, trail_floor, locked, profit,
+    buffer_to_trail, trades_today, wins_today, losses_today, consec_losses,
+    pnl_today, halted, halt_reason, instrument, contracts, open_position,
+    mode. The schema stays loose so the runner can evolve its payload
+    without forcing a backend redeploy.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    ts: datetime
+    source: str
+    status: str
+    payload: dict[str, Any] | None
+
+
+class LiveHeartbeatCreate(BaseModel):
+    """POST body for a runner reporting a heartbeat.
+
+    `ts` is optional — backend stamps server time if omitted, which is
+    useful when the runner doesn't have a synced clock.
+    """
+
+    source: str = Field(..., max_length=80)
+    status: str = Field(..., max_length=20)
+    payload: dict[str, Any] | None = None
+    ts: datetime | None = None
+
+
+class LiveSignalCreate(BaseModel):
+    """POST body for a runner reporting a live signal (entry/exit/etc)."""
+
+    strategy_version_id: int | None = None
+    ts: datetime
+    side: str = Field(..., max_length=20)
+    price: float
+    reason: str | None = None
+    executed: bool = False
+
+
 class R2UploadRunSummary(BaseModel):
     """One row from `{BS_DATA_ROOT}/logs/r2_upload_runs.json` (latest first)."""
 

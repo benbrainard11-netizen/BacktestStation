@@ -4090,6 +4090,94 @@
         "title": "KnowledgeHealthRead",
         "type": "object"
       },
+      "LiveHeartbeatCreate": {
+        "description": "POST body for a runner reporting a heartbeat.\n\n`ts` is optional \u2014 backend stamps server time if omitted, which is\nuseful when the runner doesn't have a synced clock.",
+        "properties": {
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "source": {
+            "maxLength": 80,
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ts"
+          }
+        },
+        "required": [
+          "source",
+          "status"
+        ],
+        "title": "LiveHeartbeatCreate",
+        "type": "object"
+      },
+      "LiveHeartbeatRead": {
+        "description": "One row from `live_heartbeats` \u2014 periodic state snapshot from a runner.\n\n`payload` is whatever JSON the runner posted; for `pre10_live_runner`\nthe keys include balance, peak_balance, trail_floor, locked, profit,\nbuffer_to_trail, trades_today, wins_today, losses_today, consec_losses,\npnl_today, halted, halt_reason, instrument, contracts, open_position,\nmode. The schema stays loose so the runner can evolve its payload\nwithout forcing a backend redeploy.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ts",
+          "source",
+          "status",
+          "payload"
+        ],
+        "title": "LiveHeartbeatRead",
+        "type": "object"
+      },
       "LiveMonitorStatus": {
         "properties": {
           "current_session": {
@@ -4225,6 +4313,59 @@
           "raw"
         ],
         "title": "LiveMonitorStatus",
+        "type": "object"
+      },
+      "LiveSignalCreate": {
+        "description": "POST body for a runner reporting a live signal (entry/exit/etc).",
+        "properties": {
+          "executed": {
+            "default": false,
+            "title": "Executed",
+            "type": "boolean"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "side": {
+            "maxLength": 20,
+            "title": "Side",
+            "type": "string"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ts",
+          "side",
+          "price"
+        ],
+        "title": "LiveSignalCreate",
         "type": "object"
       },
       "LiveSignalRead": {
@@ -11721,6 +11862,166 @@
         ]
       }
     },
+    "/api/monitor/heartbeats": {
+      "get": {
+        "description": "Recent heartbeats from any registered live runner, newest first.",
+        "operationId": "list_live_heartbeats_api_monitor_heartbeats_get",
+        "parameters": [
+          {
+            "description": "Filter to a single runner source, e.g. 'pre10_live_runner'",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to a single runner source, e.g. 'pre10_live_runner'",
+              "title": "Source"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LiveHeartbeatRead"
+                  },
+                  "title": "Response List Live Heartbeats Api Monitor Heartbeats Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Live Heartbeats",
+        "tags": [
+          "monitor"
+        ]
+      },
+      "post": {
+        "description": "Record a heartbeat from a live runner.\n\nLocal-network only \u2014 no auth. Tailnet ACLs are the trust boundary.\nUsed by `pre10_live_runner` on ben-247 to telemeter into benpc's\ncanonical DB so the Overview's Live Bot panel can render status.",
+        "operationId": "post_live_heartbeat_api_monitor_heartbeats_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveHeartbeatCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveHeartbeatRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Live Heartbeat",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
+    "/api/monitor/heartbeats/latest": {
+      "get": {
+        "description": "Most recent heartbeat from any (or one) live runner.\n\nUsed by the Overview page's live-bot panel so it doesn't have to\nfetch a full list when it only renders the latest snapshot.\nReturns 404 if the runner has never written a heartbeat.",
+        "operationId": "get_latest_live_heartbeat_api_monitor_heartbeats_latest_get",
+        "parameters": [
+          {
+            "description": "Filter to a single runner source, e.g. 'pre10_live_runner'",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to a single runner source, e.g. 'pre10_live_runner'",
+              "title": "Source"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveHeartbeatRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Latest Live Heartbeat",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
     "/api/monitor/ingester": {
       "get": {
         "description": "Return the live ingester's most recent heartbeat.\n\n404 if the file doesn't exist (ingester not running or never run).\n422 if the file exists but is malformed.",
@@ -11904,6 +12205,46 @@
           }
         },
         "summary": "List Live Signals",
+        "tags": [
+          "monitor"
+        ]
+      },
+      "post": {
+        "description": "Record a live signal (entry/exit) from a live runner.\n\nLocal-network only \u2014 no auth. Same trust model as POST /heartbeats.",
+        "operationId": "post_live_signal_api_monitor_signals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveSignalCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveSignalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Live Signal",
         "tags": [
           "monitor"
         ]

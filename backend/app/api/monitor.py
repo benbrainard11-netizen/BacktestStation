@@ -18,12 +18,15 @@ from app.core.paths import (
     ingester_heartbeat_path,
     warehouse_root,
 )
-from app.db.models import BacktestRun, LiveSignal, StrategyVersion, Trade
+from app.db.models import BacktestRun, LiveHeartbeat, LiveSignal, StrategyVersion, Trade
 from app.db.session import get_session
 from app.schemas import (
     DriftComparisonRead,
     IngesterStatus,
+    LiveHeartbeatCreate,
+    LiveHeartbeatRead,
     LiveMonitorStatus,
+    LiveSignalCreate,
     LiveSignalRead,
     LiveTradesPipelineStatus,
     R2UploadRunSummary,
@@ -246,6 +249,112 @@ def list_live_signals(
         limit
     )
     return list(db.scalars(statement).all())
+
+
+@router.get("/heartbeats", response_model=list[LiveHeartbeatRead])
+def list_live_heartbeats(
+    source: str | None = Query(
+        default=None,
+        description="Filter to a single runner source, e.g. 'pre10_live_runner'",
+    ),
+    limit: int = Query(default=50, ge=1, le=500),
+    db: Session = Depends(get_session),
+) -> list[LiveHeartbeat]:
+    """Recent heartbeats from any registered live runner, newest first."""
+    statement = select(LiveHeartbeat)
+    if source is not None:
+        statement = statement.where(LiveHeartbeat.source == source)
+    statement = statement.order_by(
+        LiveHeartbeat.ts.desc(), LiveHeartbeat.id.desc()
+    ).limit(limit)
+    return list(db.scalars(statement).all())
+
+
+@router.post(
+    "/heartbeats",
+    response_model=LiveHeartbeatRead,
+    status_code=201,
+)
+def post_live_heartbeat(
+    body: LiveHeartbeatCreate,
+    db: Session = Depends(get_session),
+) -> LiveHeartbeat:
+    """Record a heartbeat from a live runner.
+
+    Local-network only — no auth. Tailnet ACLs are the trust boundary.
+    Used by `pre10_live_runner` on ben-247 to telemeter into benpc's
+    canonical DB so the Overview's Live Bot panel can render status.
+    """
+    row = LiveHeartbeat(
+        ts=body.ts or datetime.utcnow(),
+        source=body.source,
+        status=body.status,
+        payload=body.payload,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.post(
+    "/signals",
+    response_model=LiveSignalRead,
+    status_code=201,
+)
+def post_live_signal(
+    body: LiveSignalCreate,
+    db: Session = Depends(get_session),
+) -> LiveSignal:
+    """Record a live signal (entry/exit) from a live runner.
+
+    Local-network only — no auth. Same trust model as POST /heartbeats.
+    """
+    row = LiveSignal(
+        strategy_version_id=body.strategy_version_id,
+        ts=body.ts,
+        side=body.side,
+        price=body.price,
+        reason=body.reason,
+        executed=body.executed,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.get("/heartbeats/latest", response_model=LiveHeartbeatRead)
+def get_latest_live_heartbeat(
+    source: str | None = Query(
+        default=None,
+        description="Filter to a single runner source, e.g. 'pre10_live_runner'",
+    ),
+    db: Session = Depends(get_session),
+) -> LiveHeartbeat:
+    """Most recent heartbeat from any (or one) live runner.
+
+    Used by the Overview page's live-bot panel so it doesn't have to
+    fetch a full list when it only renders the latest snapshot.
+    Returns 404 if the runner has never written a heartbeat.
+    """
+    statement = select(LiveHeartbeat)
+    if source is not None:
+        statement = statement.where(LiveHeartbeat.source == source)
+    statement = statement.order_by(
+        LiveHeartbeat.ts.desc(), LiveHeartbeat.id.desc()
+    ).limit(1)
+    row = db.scalars(statement).first()
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"no heartbeats yet for source={source!r}"
+                if source
+                else "no heartbeats recorded yet"
+            ),
+        )
+    return row
 
 
 @router.get("/r2-upload", response_model=R2UploadStatus)

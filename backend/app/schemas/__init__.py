@@ -45,7 +45,10 @@ from app.schemas.knowledge_health import (
 )
 from app.schemas.monitor import (
     IngesterStatus,
+    LiveHeartbeatCreate,
+    LiveHeartbeatRead,
     LiveMonitorStatus,
+    LiveSignalCreate,
     LiveSignalRead,
     LiveTradesPipelineStatus,
     R2UploadRunSummary,
@@ -183,7 +186,10 @@ __all__ = [
     "KnowledgeHealthCounts",
     "KnowledgeHealthIssue",
     "KnowledgeHealthRead",
+    "LiveHeartbeatCreate",
+    "LiveHeartbeatRead",
     "LiveMonitorStatus",
+    "LiveSignalCreate",
     "LiveSignalRead",
     "LiveTradesPipelineStatus",
     "NoteCreate",

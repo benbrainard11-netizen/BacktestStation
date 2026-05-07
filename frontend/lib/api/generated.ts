@@ -690,6 +690,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/monitor/heartbeats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Live Heartbeats
+         * @description Recent heartbeats from any registered live runner, newest first.
+         */
+        get: operations["list_live_heartbeats_api_monitor_heartbeats_get"];
+        put?: never;
+        /**
+         * Post Live Heartbeat
+         * @description Record a heartbeat from a live runner.
+         *
+         *     Local-network only — no auth. Tailnet ACLs are the trust boundary.
+         *     Used by `pre10_live_runner` on ben-247 to telemeter into benpc's
+         *     canonical DB so the Overview's Live Bot panel can render status.
+         */
+        post: operations["post_live_heartbeat_api_monitor_heartbeats_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/monitor/heartbeats/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Latest Live Heartbeat
+         * @description Most recent heartbeat from any (or one) live runner.
+         *
+         *     Used by the Overview page's live-bot panel so it doesn't have to
+         *     fetch a full list when it only renders the latest snapshot.
+         *     Returns 404 if the runner has never written a heartbeat.
+         */
+        get: operations["get_latest_live_heartbeat_api_monitor_heartbeats_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/monitor/ingester": {
         parameters: {
             query?: never;
@@ -798,7 +850,13 @@ export interface paths {
          */
         get: operations["list_live_signals_api_monitor_signals_get"];
         put?: never;
-        post?: never;
+        /**
+         * Post Live Signal
+         * @description Record a live signal (entry/exit) from a live runner.
+         *
+         *     Local-network only — no auth. Same trust model as POST /heartbeats.
+         */
+        post: operations["post_live_signal_api_monitor_signals_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3072,6 +3130,53 @@ export interface components {
             /** Issues */
             issues: components["schemas"]["KnowledgeHealthIssue"][];
         };
+        /**
+         * LiveHeartbeatCreate
+         * @description POST body for a runner reporting a heartbeat.
+         *
+         *     `ts` is optional — backend stamps server time if omitted, which is
+         *     useful when the runner doesn't have a synced clock.
+         */
+        LiveHeartbeatCreate: {
+            /** Payload */
+            payload?: {
+                [key: string]: unknown;
+            } | null;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Ts */
+            ts?: string | null;
+        };
+        /**
+         * LiveHeartbeatRead
+         * @description One row from `live_heartbeats` — periodic state snapshot from a runner.
+         *
+         *     `payload` is whatever JSON the runner posted; for `pre10_live_runner`
+         *     the keys include balance, peak_balance, trail_floor, locked, profit,
+         *     buffer_to_trail, trades_today, wins_today, losses_today, consec_losses,
+         *     pnl_today, halted, halt_reason, instrument, contracts, open_position,
+         *     mode. The schema stays loose so the runner can evolve its payload
+         *     without forcing a backend redeploy.
+         */
+        LiveHeartbeatRead: {
+            /** Id */
+            id: number;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            } | null;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+        };
         /** LiveMonitorStatus */
         LiveMonitorStatus: {
             /** Current Session */
@@ -3102,6 +3207,30 @@ export interface components {
             today_r: number | null;
             /** Trades Today */
             trades_today: number | null;
+        };
+        /**
+         * LiveSignalCreate
+         * @description POST body for a runner reporting a live signal (entry/exit/etc).
+         */
+        LiveSignalCreate: {
+            /**
+             * Executed
+             * @default false
+             */
+            executed: boolean;
+            /** Price */
+            price: number;
+            /** Reason */
+            reason?: string | null;
+            /** Side */
+            side: string;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
         };
         /**
          * LiveSignalRead
@@ -6166,6 +6295,104 @@ export interface operations {
             };
         };
     };
+    list_live_heartbeats_api_monitor_heartbeats_get: {
+        parameters: {
+            query?: {
+                /** @description Filter to a single runner source, e.g. 'pre10_live_runner' */
+                source?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveHeartbeatRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_live_heartbeat_api_monitor_heartbeats_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LiveHeartbeatCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveHeartbeatRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_latest_live_heartbeat_api_monitor_heartbeats_latest_get: {
+        parameters: {
+            query?: {
+                /** @description Filter to a single runner source, e.g. 'pre10_live_runner' */
+                source?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveHeartbeatRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_ingester_status_api_monitor_ingester_get: {
         parameters: {
             query?: never;
@@ -6268,6 +6495,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LiveSignalRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_live_signal_api_monitor_signals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LiveSignalCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveSignalRead"];
                 };
             };
             /** @description Validation Error */
