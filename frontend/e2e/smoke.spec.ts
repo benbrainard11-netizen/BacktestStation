@@ -100,6 +100,16 @@ test.describe("Primary route smoke pass", () => {
     const response = await page.goto("/settings");
     expect(response?.status()).toBeLessThan(500);
   });
+
+  test("/research/events — Research Events page renders", async ({ page }) => {
+    const response = await page.goto("/research/events");
+    expect(response?.status()).toBeLessThan(500);
+    await expect(
+      page.getByRole("heading", { name: "Research Events", exact: true }),
+    ).toBeVisible();
+    // Filters card should render even when API returns nothing
+    await expect(page.getByText("Filters", { exact: true })).toBeVisible();
+  });
 });
 
 test.describe("Strategy picker flow", () => {

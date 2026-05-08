@@ -2,6 +2,7 @@ import {
   BarChart3,
   Film,
   FileText,
+  FlaskConical,
   Inbox,
   Layers,
   Library,
@@ -20,6 +21,7 @@ const MAP: Record<IconName, typeof Inbox> = {
   layers: Layers,
   wand: Wand2,
   library: Library,
+  research: FlaskConical,
   settings: Cog,
 };
 
