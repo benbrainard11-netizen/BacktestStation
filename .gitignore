@@ -4,6 +4,14 @@
 /data/
 !/data/.gitkeep
 
+# Local-only staging area for one-time data jobs (e.g. archive
+# extraction before partition). Files here are big + source-of-truth
+# is elsewhere on disk; never commit.
+/staging/
+
+# Local server logs from dev runs.
+/logs/
+
 # Python
 __pycache__/
 *.py[cod]
