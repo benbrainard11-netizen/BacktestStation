@@ -237,11 +237,41 @@ Strategy:    Composable spec. SMT + PSP + CSD reversal — listed by
 
 **Do not add `obsidian_path` fields to any model until the export utility is built.** Premature column. If/when the exporter exists, it derives Obsidian filenames from the canonical row id, no extra column needed.
 
-## Smallest next patch
+## Smallest next patch — SHIPPED
 
-**One paragraph, ranked by reversibility (least reversible first):**
+The originally-recommended patch is in main as of commit `09e672e`:
+`research_events` table + `make_event_id` + `GET/POST /api/research/events`,
+19 tests covering id determinism, idempotence, and all filters.
 
-Build the `research_events` table + `make_event_id` helper + a single `GET /api/research/events` endpoint with `(feature_name, primary_symbol, bar_end_utc range)` filters. Add a migration via the same pattern in `app/db/session.py:_run_data_migrations`. Add `app/services/research_events.py` with `record_event(...)` for write-side use by future detector scan jobs (no detectors written in this patch). Add `tests/test_research_events.py` covering insert idempotence + filter query. Defer the frontend page, the `Experiment` schema extension, the optional `KnowledgeCard.linked_feature_names` column, and any new SMT detector logic to follow-up patches. **Estimated scope: ~150 LOC backend + ~80 LOC tests, no UI, no live trading impact.**
+The follow-up patch — **SMT HTF v1 detector + scan framework** — is in
+main as of the next commit. It adds:
+- Reusable foundation modules: `app/research/sessions.py` (Globex
+  week/day math), `app/research/reference_levels.py` (period
+  highs/lows), `app/research/detectors/__init__.py` (Detector
+  protocol + registry), `app/research/scan.py` (orchestrator).
+- First detector: `smt_htf_reference_divergence` v1 with two modes
+  (`weekly_smt` on 4H tracking, `previous_day_smt` on 1H tracking).
+- CLI: `python -m app.cli.scan_research_events`.
+- 38 tests covering session math, reference levels, the 9 detection
+  cases from the original SMT spec, full-rescan idempotence, and
+  detector registration.
+- `docs/RESEARCH_DETECTORS.md` — how to add the next detector.
+
+## Next deferred patches (priority order)
+
+1. **Frontend `/research/events/` table page** — list + filters +
+   click-through to replay.
+2. **PSP formation detector** — second detector validates the
+   framework. ~250 LOC under `app/research/detectors/psp_formation.py`
+   plus tests.
+3. **`Experiment` schema extension** — nullable `strategy_version_id`
+   + `target_type`/`target_id` to support concept/detector/event-level
+   studies.
+4. **Forward-outcome post-processor** — populate `ResearchEvent.outcomes`
+   for already-detected events. Lives in
+   `app/research/outcomes/<detector>.py`.
+5. **`KnowledgeCard.linked_feature_names`** column for explicit
+   concept→detector links (currently derived by naming).
 
 ## Acceptance check
 
