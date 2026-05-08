@@ -452,6 +452,52 @@ def _run_data_migrations(engine: Engine) -> None:
                     )
                 )
 
+        # 2026-05-08: ResearchEvent table — per-detector observation rows.
+        # See `docs/RESEARCH_KNOWLEDGE_LAYER.md`. Fresh DBs get the table
+        # via `Base.metadata.create_all()`; existing files need this
+        # guarded CREATE. event_id is the idempotency key — inserts skip
+        # on existing event_id.
+        if not inspector.has_table("research_events"):
+            connection.execute(
+                text(
+                    "CREATE TABLE research_events ("
+                    " id INTEGER PRIMARY KEY,"
+                    " event_id VARCHAR(80) NOT NULL UNIQUE,"
+                    " feature_name VARCHAR(80) NOT NULL,"
+                    " knowledge_card_id INTEGER REFERENCES knowledge_cards(id),"
+                    " event_type VARCHAR(60) NOT NULL,"
+                    " bar_end_utc DATETIME NOT NULL,"
+                    " primary_symbol VARCHAR(40) NOT NULL,"
+                    " symbols JSON NOT NULL,"
+                    " timeframe VARCHAR(20) NOT NULL,"
+                    " side VARCHAR(20),"
+                    " event_data JSON NOT NULL,"
+                    " context JSON,"
+                    " outcomes JSON,"
+                    " replay_pointer JSON,"
+                    " source_dataset TEXT,"
+                    " source_run_id INTEGER REFERENCES backtest_runs(id),"
+                    " detector_version VARCHAR(40),"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
+                    ")"
+                )
+            )
+            for index_name, column in [
+                ("ix_research_events_event_id", "event_id"),
+                ("ix_research_events_feature_name", "feature_name"),
+                ("ix_research_events_knowledge_card_id", "knowledge_card_id"),
+                ("ix_research_events_event_type", "event_type"),
+                ("ix_research_events_bar_end_utc", "bar_end_utc"),
+                ("ix_research_events_primary_symbol", "primary_symbol"),
+                ("ix_research_events_source_run_id", "source_run_id"),
+            ]:
+                connection.execute(
+                    text(
+                        f"CREATE INDEX IF NOT EXISTS {index_name} "
+                        f"ON research_events({column})"
+                    )
+                )
+
 
 def _seed_default_risk_profiles(connection) -> None:
     """Insert Conservative / Live-mirror / Aggressive defaults if missing.

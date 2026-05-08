@@ -93,6 +93,10 @@ from app.schemas.research import (
     ResearchEntryUpdate,
     ResearchExperimentCreate,
 )
+from app.schemas.research_events import (
+    ResearchEventCreate,
+    ResearchEventRead,
+)
 from app.schemas.results import (
     AsyncBacktestRunQueued,
     BacktestRunRead,
@@ -211,6 +215,8 @@ __all__ = [
     "ResearchEntryPromoteRequest",
     "ResearchEntryRead",
     "ResearchEntryUpdate",
+    "ResearchEventCreate",
+    "ResearchEventRead",
     "ResearchExperimentCreate",
     "RiskEvaluationRead",
     "RiskProfileCreate",

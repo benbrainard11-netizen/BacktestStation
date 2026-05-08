@@ -1,6 +1,6 @@
 # BacktestStation — Roadmap
 
-> Source of truth for *direction*. For "what's running right now," see [`PROJECT_STATE.md`](PROJECT_STATE.md). For *engineering* discipline ("how do we build it?"), see [`../CLAUDE.md`](../CLAUDE.md). For machine roles + data ownership, see [`LOCAL_INFRASTRUCTURE.md`](LOCAL_INFRASTRUCTURE.md).
+> Source of truth for *direction*. For "what's running right now," see [`PROJECT_STATE.md`](PROJECT_STATE.md). For *engineering* discipline ("how do we build it?"), see [`../CLAUDE.md`](../CLAUDE.md). For machine roles + data ownership, see [`LOCAL_INFRASTRUCTURE.md`](LOCAL_INFRASTRUCTURE.md). For the **research-knowledge taxonomy** (Concept → Detector → Research Event → Study → Decision → Strategy) and the one genuine schema gap (Research Event Store), see [`RESEARCH_KNOWLEDGE_LAYER.md`](RESEARCH_KNOWLEDGE_LAYER.md).
 
 ---
 

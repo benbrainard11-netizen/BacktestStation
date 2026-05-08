@@ -1153,6 +1153,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/research/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Events
+         * @description List research events with optional filters.
+         *
+         *     Default ordering: most recent `bar_end_utc` first. Frontend / scan
+         *     jobs that need ascending order can paginate and reverse on the
+         *     client.
+         */
+        get: operations["list_events_api_research_events_get"];
+        put?: never;
+        /**
+         * Create Event
+         * @description Write one research event. Idempotent on the derived `event_id`.
+         *
+         *     If the event already exists (same feature_name + primary_symbol +
+         *     bar_end_utc + event_type), the existing row is returned and the
+         *     response status is 200 instead of 201.
+         */
+        post: operations["create_event_api_research_events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/risk-profiles": {
         parameters: {
             query?: never;
@@ -3744,6 +3776,111 @@ export interface components {
             tags?: string[] | null;
             /** Title */
             title?: string | null;
+        };
+        /**
+         * ResearchEventCreate
+         * @description Body for `POST /api/research/events` (write-side; primarily used
+         *     by detector scan jobs via `services.research_events.record_event`,
+         *     not exposed to the frontend in v1).
+         */
+        ResearchEventCreate: {
+            /**
+             * Bar End Utc
+             * Format: date-time
+             */
+            bar_end_utc: string;
+            /** Context */
+            context?: {
+                [key: string]: unknown;
+            } | null;
+            /** Detector Version */
+            detector_version?: string | null;
+            /** Event Data */
+            event_data: {
+                [key: string]: unknown;
+            };
+            /** Event Type */
+            event_type: string;
+            /** Feature Name */
+            feature_name: string;
+            /** Knowledge Card Id */
+            knowledge_card_id?: number | null;
+            /** Outcomes */
+            outcomes?: {
+                [key: string]: unknown;
+            } | null;
+            /** Primary Symbol */
+            primary_symbol: string;
+            /** Replay Pointer */
+            replay_pointer?: {
+                [key: string]: unknown;
+            } | null;
+            /** Side */
+            side?: string | null;
+            /** Source Dataset */
+            source_dataset?: string | null;
+            /** Source Run Id */
+            source_run_id?: number | null;
+            /** Symbols */
+            symbols: string[];
+            /** Timeframe */
+            timeframe: string;
+        };
+        /**
+         * ResearchEventRead
+         * @description `GET /api/research/events` row shape.
+         */
+        ResearchEventRead: {
+            /**
+             * Bar End Utc
+             * Format: date-time
+             */
+            bar_end_utc: string;
+            /** Context */
+            context: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Detector Version */
+            detector_version: string | null;
+            /** Event Data */
+            event_data: {
+                [key: string]: unknown;
+            };
+            /** Event Id */
+            event_id: string;
+            /** Event Type */
+            event_type: string;
+            /** Feature Name */
+            feature_name: string;
+            /** Id */
+            id: number;
+            /** Knowledge Card Id */
+            knowledge_card_id: number | null;
+            /** Outcomes */
+            outcomes: {
+                [key: string]: unknown;
+            } | null;
+            /** Primary Symbol */
+            primary_symbol: string;
+            /** Replay Pointer */
+            replay_pointer: {
+                [key: string]: unknown;
+            } | null;
+            /** Side */
+            side: string | null;
+            /** Source Dataset */
+            source_dataset: string | null;
+            /** Source Run Id */
+            source_run_id: number | null;
+            /** Symbols */
+            symbols: string[];
+            /** Timeframe */
+            timeframe: string;
         };
         /**
          * ResearchExperimentCreate
@@ -7017,6 +7154,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReplayPayload"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_research_events_get: {
+        parameters: {
+            query?: {
+                feature_name?: string | null;
+                primary_symbol?: string | null;
+                event_type?: string | null;
+                knowledge_card_id?: number | null;
+                source_run_id?: number | null;
+                /** @description Lower bound (inclusive) on bar_end_utc. */
+                bar_end_from?: string | null;
+                /** @description Upper bound (exclusive) on bar_end_utc. */
+                bar_end_to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchEventRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_event_api_research_events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchEventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchEventRead"];
                 };
             };
             /** @description Validation Error */

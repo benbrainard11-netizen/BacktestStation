@@ -652,6 +652,75 @@ class KnowledgeCard(Base):
     updated_at: Mapped[datetime | None] = mapped_column(DateTime)
 
 
+class ResearchEvent(Base):
+    """One per-detector observation in market data.
+
+    Distinct from `Trade` (filled trades), `LiveSignal` (trade-decision-
+    shaped, side+price+executed), and the JSONL `LiveSignalLog` stream
+    (trade-signal-shaped, ref_price/stop/target/contracts). A research
+    event captures "this detector fired on this bar with this context"
+    — most events never become trades. See
+    `docs/RESEARCH_KNOWLEDGE_LAYER.md` for the surrounding taxonomy.
+
+    Identity: `event_id` is a stable hash of
+    (feature_name, primary_symbol, bar_end_utc, event_type), produced
+    by `app.services.research_events.make_event_id`. Insert is
+    idempotent on `event_id` so re-running a detector scan over the
+    same bars is a no-op.
+    """
+
+    __tablename__ = "research_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Stable, collision-resistant hash; unique across the table.
+    event_id: Mapped[str] = mapped_column(
+        String(80), unique=True, index=True
+    )
+    # String reference to the FEATURES registry
+    # (`backend/app/features/__init__.py`). Not an FK — features are
+    # code modules, not DB rows.
+    feature_name: Mapped[str] = mapped_column(String(80), index=True)
+    # Optional FK to the concept (KnowledgeCard with kind=market_concept).
+    knowledge_card_id: Mapped[int | None] = mapped_column(
+        ForeignKey("knowledge_cards.id"), index=True, default=None
+    )
+    # Detector-defined sub-type, e.g. "smt_high", "fvg_creation",
+    # "sweep_pdh". Free-form string by design — detectors own their
+    # own vocabulary.
+    event_type: Mapped[str] = mapped_column(String(60), index=True)
+    bar_end_utc: Mapped[datetime] = mapped_column(DateTime, index=True)
+    primary_symbol: Mapped[str] = mapped_column(String(40), index=True)
+    # All symbols involved (for cross-asset events like SMT). Includes
+    # primary_symbol redundantly for query simplicity.
+    symbols: Mapped[list[str]] = mapped_column(JSON)
+    timeframe: Mapped[str] = mapped_column(String(20))
+    # "bullish" | "bearish" | "high" | "low" | None — detector-defined.
+    side: Mapped[str | None] = mapped_column(String(20), default=None)
+    # Detector-specific decision context at event time. Schema owned
+    # by the detector; consumers read it as a free-form dict.
+    event_data: Mapped[dict[str, Any]] = mapped_column(JSON)
+    # Universal context: session, regime, vol bucket, news proximity.
+    context: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
+    # Forward-window observations recorded after the event (5m/15m/
+    # 30m/60m MFE/MAE etc.). Detector or post-processor populates.
+    outcomes: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
+    # Replay pointer: {run_id, dataset, ts_range} or similar — enough
+    # to open this moment in the trade-replay UI.
+    replay_pointer: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, default=None
+    )
+    source_dataset: Mapped[str | None] = mapped_column(Text, default=None)
+    source_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True, default=None
+    )
+    # Detector code version — e.g. git SHA or semver. Lets us segment
+    # results by detector revision.
+    detector_version: Mapped[str | None] = mapped_column(String(40), default=None)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+
 class StrategyPromotionCheck(Base):
     """Per-candidate promotion verdict — paper-ready / research-only / killed.
 

@@ -6072,6 +6072,322 @@
         "title": "ResearchEntryUpdate",
         "type": "object"
       },
+      "ResearchEventCreate": {
+        "additionalProperties": false,
+        "description": "Body for `POST /api/research/events` (write-side; primarily used\nby detector scan jobs via `services.research_events.record_event`,\nnot exposed to the frontend in v1).",
+        "properties": {
+          "bar_end_utc": {
+            "format": "date-time",
+            "title": "Bar End Utc",
+            "type": "string"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "detector_version": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detector Version"
+          },
+          "event_data": {
+            "additionalProperties": true,
+            "title": "Event Data",
+            "type": "object"
+          },
+          "event_type": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Event Type",
+            "type": "string"
+          },
+          "feature_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Feature Name",
+            "type": "string"
+          },
+          "knowledge_card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Knowledge Card Id"
+          },
+          "outcomes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcomes"
+          },
+          "primary_symbol": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Primary Symbol",
+            "type": "string"
+          },
+          "replay_pointer": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Pointer"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "source_dataset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Dataset"
+          },
+          "source_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Run Id"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Symbols",
+            "type": "array"
+          },
+          "timeframe": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Timeframe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "feature_name",
+          "event_type",
+          "bar_end_utc",
+          "primary_symbol",
+          "symbols",
+          "timeframe",
+          "event_data"
+        ],
+        "title": "ResearchEventCreate",
+        "type": "object"
+      },
+      "ResearchEventRead": {
+        "description": "`GET /api/research/events` row shape.",
+        "properties": {
+          "bar_end_utc": {
+            "format": "date-time",
+            "title": "Bar End Utc",
+            "type": "string"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "detector_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detector Version"
+          },
+          "event_data": {
+            "additionalProperties": true,
+            "title": "Event Data",
+            "type": "object"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "feature_name": {
+            "title": "Feature Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "knowledge_card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Knowledge Card Id"
+          },
+          "outcomes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcomes"
+          },
+          "primary_symbol": {
+            "title": "Primary Symbol",
+            "type": "string"
+          },
+          "replay_pointer": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Pointer"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "source_dataset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Dataset"
+          },
+          "source_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Run Id"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "timeframe": {
+            "title": "Timeframe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "event_id",
+          "feature_name",
+          "knowledge_card_id",
+          "event_type",
+          "bar_end_utc",
+          "primary_symbol",
+          "symbols",
+          "timeframe",
+          "side",
+          "event_data",
+          "context",
+          "outcomes",
+          "replay_pointer",
+          "source_dataset",
+          "source_run_id",
+          "detector_version",
+          "created_at"
+        ],
+        "title": "ResearchEventRead",
+        "type": "object"
+      },
       "ResearchExperimentCreate": {
         "additionalProperties": false,
         "description": "POST body for turning a hypothesis into an Experiment.",
@@ -13047,6 +13363,228 @@
         "summary": "Get Replay",
         "tags": [
           "replay"
+        ]
+      }
+    },
+    "/api/research/events": {
+      "get": {
+        "description": "List research events with optional filters.\n\nDefault ordering: most recent `bar_end_utc` first. Frontend / scan\njobs that need ascending order can paginate and reverse on the\nclient.",
+        "operationId": "list_events_api_research_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "feature_name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Feature Name"
+            }
+          },
+          {
+            "in": "query",
+            "name": "primary_symbol",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Primary Symbol"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 60,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "knowledge_card_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Knowledge Card Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_run_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Run Id"
+            }
+          },
+          {
+            "description": "Lower bound (inclusive) on bar_end_utc.",
+            "in": "query",
+            "name": "bar_end_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Lower bound (inclusive) on bar_end_utc.",
+              "title": "Bar End From"
+            }
+          },
+          {
+            "description": "Upper bound (exclusive) on bar_end_utc.",
+            "in": "query",
+            "name": "bar_end_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Upper bound (exclusive) on bar_end_utc.",
+              "title": "Bar End To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 2000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResearchEventRead"
+                  },
+                  "title": "Response List Events Api Research Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Events",
+        "tags": [
+          "research_events"
+        ]
+      },
+      "post": {
+        "description": "Write one research event. Idempotent on the derived `event_id`.\n\nIf the event already exists (same feature_name + primary_symbol +\nbar_end_utc + event_type), the existing row is returned and the\nresponse status is 200 instead of 201.",
+        "operationId": "create_event_api_research_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchEventCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEventRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Event",
+        "tags": [
+          "research_events"
         ]
       }
     },

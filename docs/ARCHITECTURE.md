@@ -5,7 +5,7 @@
 > - **Sections 0-3** describe the architecture as it actually exists and is shipping today (Strategy Workstation, imported + engine-generated runs, replay, monitor, prop-firm sim, drift monitor v1, live ingester).
 > - **Sections 4-12** describe a *future* end-state of the engine, Databento ingestion, event ordering, and lookahead enforcement. They are reference material, not the current sprint, and were written assuming an engine-first ordering that's been superseded.
 >
-> For *current direction* (what we're building, what we're explicitly not), see [`ROADMAP.md`](ROADMAP.md). For *what's running today*, see [`PROJECT_STATE.md`](PROJECT_STATE.md). For *engineering rules*, see [`../CLAUDE.md`](../CLAUDE.md).
+> For *current direction* (what we're building, what we're explicitly not), see [`ROADMAP.md`](ROADMAP.md). For *what's running today*, see [`PROJECT_STATE.md`](PROJECT_STATE.md). For *engineering rules*, see [`../CLAUDE.md`](../CLAUDE.md). For the **research-knowledge taxonomy** (Concept → Detector → Research Event → Study → Decision → Strategy) and how it maps onto existing models, see [`RESEARCH_KNOWLEDGE_LAYER.md`](RESEARCH_KNOWLEDGE_LAYER.md).
 
 ---
 
