@@ -103,5 +103,6 @@ def list_names() -> list[str]:
 # ---------- side-effect imports ----------
 
 from app.research.outcomes import (  # noqa: E402,F401
+    psp_reactions,
     smt_htf_reactions,
 )
