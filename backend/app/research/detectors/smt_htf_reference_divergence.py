@@ -166,6 +166,12 @@ class SmtHtfReferenceDivergenceDetector:
                     current_period.start_utc.isoformat(),
                 )
                 return None
+            # `read_bars` returns a `ts_event` column rather than a
+            # DatetimeIndex. Normalize before computing levels — the
+            # alternative is to pass `ts_col="ts_event"` everywhere,
+            # but a single normalization keeps the helper signature
+            # clean.
+            ref_bars = _ensure_utc_index(ref_bars)
             ref_high = compute_reference_level(
                 ref_bars,
                 side="high",
