@@ -41,7 +41,10 @@ DOC_PATH = Path(r"C:\Users\benbr\BacktestStation\docs\COMPOSITE_FINDINGS.md")
 LOOKFORWARD_WINDOWS_HOURS = [1, 4, 12, 24, 48]
 PSP_EVENT_TYPES = ["1h_psp", "4h_psp", "daily_psp"]
 SMT_EVENT_TYPES = ["previous_day_smt", "weekly_smt"]
-EXTREME_TOLERANCE_PTS = 1.0  # within 1 pt = "marked"
+EXTREME_TOLERANCE_PTS = 1.0  # within 1 pt = "marked" (v1, retained)
+# v2 windows around the extreme bar timestamp
+MARKS_V2_GAP_WINDOWS_MIN = [60, 240, 720, 1440]  # 1h, 4h, 12h, 24h
+MARKS_V2_PRICE_TOL_PCT = [0.1, 0.25, 0.5, 1.0]
 
 
 def _row(cur, *args) -> list[dict]:
@@ -184,6 +187,210 @@ FROM smt
     return out
 
 
+# ---------- 3a-v2. Time-gap from extreme bar (looser definition) ----------
+
+
+def analyze_marks_extreme_v2_time(con: sqlite3.Connection) -> list[dict[str, Any]]:
+    """For each SMT (v2 outcomes), find the minimum time-gap between
+    any PSP fired in (SMT_break_ts, period_close] and the SMT primary
+    symbol's actual extreme bar timestamp.
+
+    Pandas implementation: load both event sets once, compute gaps
+    in numpy. The naive nested-SQL version blew up on 2.9K SMT × 15K
+    PSP × JSON_EXTRACT subqueries (45M+ comparisons).
+    """
+    import pandas as pd
+
+    smt_sql = """
+        SELECT id AS smt_id, event_type, side, bar_end_utc AS smt_bar_end,
+               CASE WHEN side='high'
+                    THEN json_extract(outcomes, '$.period_close.primary_period_high_ts')
+                    ELSE json_extract(outcomes, '$.period_close.primary_period_low_ts')
+               END AS extreme_ts,
+               json_extract(outcomes, '$.period_close.ts_utc') AS period_close_ts,
+               json_extract(outcomes, '$.next_period.thesis_confirmed_strict') AS conf_n1,
+               json_extract(outcomes, '$.n_plus_2.thesis_confirmed_strict') AS conf_n2
+        FROM research_events
+        WHERE feature_name='smt_htf_reference_divergence'
+          AND outcomes IS NOT NULL
+          AND json_extract(outcomes, '$.outcome_version')='v2'
+    """
+    smt = pd.read_sql_query(smt_sql, con)
+    smt["smt_bar_end"] = pd.to_datetime(smt["smt_bar_end"], utc=True)
+    smt["extreme_ts"] = pd.to_datetime(smt["extreme_ts"], utc=True, errors="coerce")
+    smt["period_close_ts"] = pd.to_datetime(smt["period_close_ts"], utc=True)
+
+    psp_sql = """
+        SELECT bar_end_utc FROM research_events
+        WHERE feature_name='psp_candle_divergence'
+    """
+    psp = pd.read_sql_query(psp_sql, con)
+    psp["bar_end_utc"] = pd.to_datetime(psp["bar_end_utc"], utc=True)
+    psp_ts = psp["bar_end_utc"].sort_values().reset_index(drop=True).to_numpy()
+
+    # For each SMT, find PSPs in (smt_bar_end, period_close_ts] and
+    # compute minimum |gap_to_extreme| in minutes.
+    import numpy as np
+    smt_bar_end_ns = smt["smt_bar_end"].astype("int64").to_numpy()
+    period_close_ns = smt["period_close_ts"].astype("int64").to_numpy()
+    extreme_ns = smt["extreme_ts"].astype("int64").to_numpy()
+    psp_ns = psp_ts.astype("datetime64[ns]").astype("int64")
+
+    min_gap_min = np.full(len(smt), np.nan)
+    for i in range(len(smt)):
+        if np.isnan(extreme_ns[i]) if False else extreme_ns[i] == np.iinfo("int64").min:
+            continue
+        lo = smt_bar_end_ns[i]
+        hi = period_close_ns[i]
+        # PSPs in window via searchsorted
+        left = np.searchsorted(psp_ns, lo, side="right")
+        right = np.searchsorted(psp_ns, hi, side="right")
+        if right <= left:
+            continue
+        gaps_ns = np.abs(psp_ns[left:right] - extreme_ns[i])
+        min_gap_min[i] = float(gaps_ns.min()) / 1e9 / 60.0
+    smt["min_gap_min"] = min_gap_min
+
+    out: list[dict[str, Any]] = []
+    for smt_type in SMT_EVENT_TYPES:
+        for smt_side in ("high", "low"):
+            sub = smt[(smt["event_type"] == smt_type) & (smt["side"] == smt_side)]
+            for window in MARKS_V2_GAP_WINDOWS_MIN:
+                marked_mask = sub["min_gap_min"].notna() & (
+                    sub["min_gap_min"] <= window
+                )
+                marked = sub[marked_mask]
+                unmarked = sub[~marked_mask]
+                cm = marked[marked["conf_n1"].notna()]
+                cu = unmarked[unmarked["conf_n1"].notna()]
+                rate_marked = (
+                    cm["conf_n1"].sum() / len(cm) * 100.0 if len(cm) else None
+                )
+                rate_unmarked = (
+                    cu["conf_n1"].sum() / len(cu) * 100.0 if len(cu) else None
+                )
+                out.append({
+                    "smt_type": smt_type,
+                    "smt_side": smt_side,
+                    "gap_window_min": window,
+                    "n_total": int(len(sub)),
+                    "n_marked": int(len(marked)),
+                    "pct_marked": (
+                        round(100.0 * len(marked) / len(sub), 1) if len(sub) else None
+                    ),
+                    "n_conf_marked": int(len(cm)),
+                    "rate_marked": (
+                        round(rate_marked, 1) if rate_marked is not None else None
+                    ),
+                    "n_conf_unmarked": int(len(cu)),
+                    "rate_unmarked": (
+                        round(rate_unmarked, 1) if rate_unmarked is not None else None
+                    ),
+                    "lift_pts": (
+                        round(rate_marked - rate_unmarked, 1)
+                        if rate_marked is not None and rate_unmarked is not None
+                        else None
+                    ),
+                })
+    return out
+
+
+def analyze_marks_extreme_v2_price(con: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Looser price tolerance: PSP "marks" the extreme if its primary
+    symbol's PSP-candle high (high-side SMT) or low (low-side) is within
+    X% of the period's actual extreme price.
+
+    The PSP's primary-symbol high/low comes from event_data
+    .per_symbol_states.{smt_primary}.{high|low}; this means we're asking
+    "did any in-period PSP candle bring the SMT primary symbol's price
+    close to the period extreme."
+    """
+    cur = con.cursor()
+    out: list[dict[str, Any]] = []
+
+    for smt_type in SMT_EVENT_TYPES:
+        for smt_side in ("high", "low"):
+            extreme_field = (
+                "primary_period_high" if smt_side == "high" else "primary_period_low"
+            )
+            psp_field_path_template = (
+                "$.per_symbol_states.{primary}." + ("high" if smt_side == "high" else "low")
+            )
+            for tol_pct in MARKS_V2_PRICE_TOL_PCT:
+                sql = f"""
+WITH smt AS (
+    SELECT id, primary_symbol, bar_end_utc,
+           json_extract(outcomes, '$.period_close.{extreme_field}') AS period_extreme,
+           json_extract(outcomes, '$.period_close.ts_utc') AS period_close_ts,
+           json_extract(outcomes, '$.next_period.thesis_confirmed_strict') AS conf_n1
+    FROM research_events
+    WHERE feature_name='smt_htf_reference_divergence'
+      AND event_type=?
+      AND side=?
+      AND outcomes IS NOT NULL
+)
+SELECT smt.id, smt.conf_n1,
+       (
+         SELECT MAX(
+           CASE WHEN ABS(
+               CAST(json_extract(psp.event_data,
+                   CASE WHEN ?='high'
+                        THEN '$.per_symbol_states.' || smt.primary_symbol || '.high'
+                        ELSE '$.per_symbol_states.' || smt.primary_symbol || '.low'
+                   END
+               ) AS REAL) - smt.period_extreme
+           ) <= smt.period_extreme * ? / 100.0 THEN 1 ELSE 0 END
+         )
+         FROM research_events psp
+         WHERE psp.feature_name='psp_candle_divergence'
+           AND psp.bar_end_utc > smt.bar_end_utc
+           AND psp.bar_end_utc <= smt.period_close_ts
+       ) AS marked
+FROM smt
+"""
+                cur.execute(sql, (smt_type, smt_side, smt_side, tol_pct))
+                # Row shape: (smt.id, smt.conf_n1, marked) where
+                # marked is 0/1 from a SUM(CASE …) and conf_n1 is
+                # 0/1/None.
+                rows = cur.fetchall()
+                marked_rows = [r for r in rows if r[2] == 1]
+                unmarked_rows = [r for r in rows if r[2] != 1]
+                marked_w = [r for r in marked_rows if r[1] is not None]
+                unmarked_w = [r for r in unmarked_rows if r[1] is not None]
+                rate_marked = (
+                    100.0 * sum(r[1] for r in marked_w) / len(marked_w)
+                    if marked_w else None
+                )
+                rate_unmarked = (
+                    100.0 * sum(r[1] for r in unmarked_w) / len(unmarked_w)
+                    if unmarked_w else None
+                )
+                out.append({
+                    "smt_type": smt_type,
+                    "smt_side": smt_side,
+                    "tol_pct": tol_pct,
+                    "n_total": len(rows),
+                    "n_marked": len(marked_rows),
+                    "pct_marked": (
+                        round(100.0 * len(marked_rows) / len(rows), 1) if rows else None
+                    ),
+                    "n_conf_marked": len(marked_w),
+                    "rate_marked": (
+                        round(rate_marked, 1) if rate_marked is not None else None
+                    ),
+                    "n_conf_unmarked": len(unmarked_w),
+                    "rate_unmarked": (
+                        round(rate_unmarked, 1) if rate_unmarked is not None else None
+                    ),
+                    "lift_pts": (
+                        round(rate_marked - rate_unmarked, 1)
+                        if rate_marked is not None and rate_unmarked is not None
+                        else None
+                    ),
+                })
+    return out
+
+
 # ---------- 3b. Lookforward window confirmation lift ----------
 
 
@@ -318,9 +525,12 @@ def main() -> int:
     con = sqlite3.connect(args.db)
     sections: list[tuple[str, str]] = []  # (heading, body_md)
 
-    # ---- 3a ----
-    print("\n>>> 3a — PSP marks the period extreme")
-    a = analyze_marks_extreme(con)
+    # ---- 3a (v1) — DISABLED ----
+    # The strict 1pt absolute tolerance got 0% across all four buckets
+    # in the original run (see commit de1f580 doc); v2 time-based covers
+    # the spirit. Skipping the slow JSON_EXTRACT sweep at runtime; the
+    # function `analyze_marks_extreme` is retained for ad-hoc rerun.
+    a = {"by_type_side": []}
     rows_3a: list[list[str]] = []
     for r in a["by_type_side"]:
         rows_3a.append([
@@ -348,6 +558,52 @@ def main() -> int:
             + _md_table(headers_3a, rows_3a)
         ),
     ))
+
+    # ---- 3a-v2 (time-based) ----
+    print("\n>>> 3a-v2 — PSP time-gap to actual extreme bar")
+    a2t = analyze_marks_extreme_v2_time(con)
+    headers_3a2t = [
+        "smt_type", "side", "gap_le_min", "n_total", "n_marked", "% marked",
+        "rate_n1 marked", "rate_n1 unmarked", "lift",
+    ]
+    rows_3a2t: list[list[str]] = []
+    for r in a2t:
+        rows_3a2t.append([
+            r["smt_type"], r["smt_side"], str(r["gap_window_min"]),
+            str(r["n_total"]), str(r["n_marked"]),
+            f"{r['pct_marked']}%" if r['pct_marked'] is not None else "—",
+            (
+                f"{r['rate_marked']}% (n={r['n_conf_marked']})"
+                if r['rate_marked'] is not None else "—"
+            ),
+            (
+                f"{r['rate_unmarked']}% (n={r['n_conf_unmarked']})"
+                if r['rate_unmarked'] is not None else "—"
+            ),
+            f"{r['lift_pts']:+}" if r['lift_pts'] is not None else "—",
+        ])
+    _print_table(
+        "PSP time-gap to extreme bar — by SMT type x side x window",
+        headers_3a2t, rows_3a2t,
+    )
+    sections.append((
+        "## 3a-v2 — PSP time-gap to actual extreme bar (looser, time-based)",
+        (
+            "v1 was binary on price (within 1pt) and got 0% across the "
+            "board. v2 uses TIME proximity: requires SMT outcomes v2 (which "
+            "stores `primary_period_high_ts` / `primary_period_low_ts`). "
+            "For each SMT, find the minimum time-gap between any in-period "
+            "PSP and the actual extreme bar timestamp.\n\n"
+            + _md_table(headers_3a2t, rows_3a2t)
+        ),
+    ))
+
+    # ---- 3a-v2 (price-based) — DISABLED ----
+    # The naive per-tolerance SQL with JSON_EXTRACT against 15K+ PSPs
+    # is O(n_smt × n_psp × n_tols × json_extracts) — runs hundreds of
+    # millions of comparisons. Pandas/numpy implementation needed.
+    # Function `analyze_marks_extreme_v2_price` retained for that
+    # rewrite. v2 time-based is the more meaningful test anyway.
 
     # ---- 3b ----
     print("\n>>> 3b — Lookforward window aligned-PSP confirmation lift")
