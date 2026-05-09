@@ -118,6 +118,7 @@ def list_names() -> list[str]:
 # detector means a new line here.
 
 from app.research.detectors import (  # noqa: E402,F401
+    fvg_formation,
     psp_candle_divergence,
     smt_htf_reference_divergence,
 )
