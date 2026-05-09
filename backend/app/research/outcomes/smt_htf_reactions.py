@@ -89,7 +89,11 @@ class _PeriodBounds:
 
 class SmtHtfReactionsComputer:
     feature_name: str = "smt_htf_reference_divergence"
-    outcome_version: str = "v1"
+    # v2 (2026-05-09): added primary_period_high_ts + primary_period_low_ts
+    # to period_close block so the marks-the-extreme v2 analysis can
+    # compute time-gap from PSPs to the exact extreme bar without
+    # re-loading 1m data per query.
+    outcome_version: str = "v2"
 
     def compute(
         self,
@@ -132,6 +136,20 @@ class SmtHtfReactionsComputer:
         n_close_price = float(primary_n["close"].iloc[-1])
         n_high = float(primary_n["high"].max())
         n_low = float(primary_n["low"].min())
+        # Extreme-bar timestamps — added v2 so marks-the-extreme analysis
+        # can ask "how far in time was the PSP from the actual extreme?"
+        # without re-loading 1m bars per query. ties broken by first-seen
+        # (idxmax/idxmin).
+        n_high_ts = primary_n["high"].idxmax()
+        n_low_ts = primary_n["low"].idxmin()
+        if isinstance(n_high_ts, pd.Timestamp):
+            n_high_ts_iso = n_high_ts.isoformat()
+        else:
+            n_high_ts_iso = str(n_high_ts)
+        if isinstance(n_low_ts, pd.Timestamp):
+            n_low_ts_iso = n_low_ts.isoformat()
+        else:
+            n_low_ts_iso = str(n_low_ts)
 
         # Reference price for intra-period MFE/MAE: primary's close at
         # bucket close (i.e. when SMT became knowable). If the event
@@ -182,6 +200,8 @@ class SmtHtfReactionsComputer:
             "primary_close_price": n_close_price,
             "primary_period_high": n_high,
             "primary_period_low": n_low,
+            "primary_period_high_ts": n_high_ts_iso,
+            "primary_period_low_ts": n_low_ts_iso,
             "primary_close_vs_reference_pts": primary_close_vs_ref,
             "primary_still_swept_at_close": bool(primary_still_swept),
             "lagging_swept_at_close": lagging_swept,

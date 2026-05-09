@@ -250,10 +250,13 @@ def test_high_side_smt_outcome_shape(fake_reader: FakeBarReader):
     outcome = computer.compute(event, fake_reader)
     assert outcome is not None
 
-    assert outcome["outcome_version"] == "v1"
+    assert outcome["outcome_version"] == "v2"
     assert outcome["thesis_direction"] == "down"
     pc = outcome["period_close"]
     assert pc["primary_close_price"] == pytest.approx(21030.0)
+    # v2: extreme timestamps present
+    assert pc["primary_period_high_ts"] is not None
+    assert pc["primary_period_low_ts"] is not None
     # ES is unswept (broke_high=False), YM is swept (broke_high=True)
     assert pc["lagging_unswept_at_close"] == [ES]
     assert pc["lagging_swept_at_close"] == [YM]
@@ -483,4 +486,4 @@ def test_computer_is_registered():
     from app.research.outcomes import OUTCOMES, get_by_feature
     assert "smt_htf_reactions_v1" in OUTCOMES
     c = get_by_feature("smt_htf_reference_divergence")
-    assert c.outcome_version == "v1"
+    assert c.outcome_version == "v2"
