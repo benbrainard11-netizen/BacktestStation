@@ -38,8 +38,14 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        # BTS' own frontend
         "http://localhost:3000",
         "http://100.108.159.4:3000",
+        # InsyncApp - Vite dev + Tauri shell
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "tauri://localhost",
+        "http://tauri.localhost",
     ],
     allow_credentials=True,
     allow_methods=["*"],
