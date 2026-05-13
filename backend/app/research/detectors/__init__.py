@@ -118,7 +118,18 @@ def list_names() -> list[str]:
 # detector means a new line here.
 
 from app.research.detectors import (  # noqa: E402,F401
+    displacement_candle,
+    equal_levels,
+    first_third_range,
+    forming_volume_profile,
     fvg_formation,
+    liquidity_sweep,
+    opening_gap_levels,
+    opening_range_breakout,
+    order_block,
     psp_candle_divergence,
     smt_htf_reference_divergence,
+    swing_pivot,
+    time_profile,
+    volume_profile,
 )

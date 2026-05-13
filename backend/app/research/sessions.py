@@ -276,3 +276,90 @@ def _period_from_start_et(start_et: datetime, label: str) -> GlobexPeriod:
         end_utc=end_et.astimezone(UTC),
         label=label,
     )
+
+
+# ---------- Intraday session boundaries (Asia / London / NY) ----------
+#
+# Convention chosen 2026-05-09: three non-overlapping sessions covering
+# the Globex day. Within a Globex day (18:00 ET → 17:00 ET next):
+#   asia:    18:00 ET (start of Globex day) → 02:00 ET (next morning)
+#   london:  02:00 ET → 09:30 ET
+#   ny:      09:30 ET → 17:00 ET (Globex day close)
+#
+# These are simple, non-killzone boundaries — wider than ICT killzones
+# but much easier to reason about. Each session belongs to a SPECIFIC
+# Globex day. All boundaries are tz-aware UTC.
+
+ASIA_END_HOUR_ET: int = 2          # 02:00 ET = end of asia / start of london
+LONDON_END_HOUR_ET: int = 9        # 09:00 ET → adjusted with minute=30 below
+LONDON_END_MIN_ET: int = 30        # 09:30 ET = end of london / start of NY
+# NY end = GLOBEX_DAY_END_HOUR_ET = 17:00 ET
+
+
+def session_for(ref: datetime, session_name: str) -> GlobexPeriod:
+    """Return the (asia | london | ny) session period that CONTAINS `ref`.
+
+    The returned period is tied to the Globex day that contains `ref`.
+    Within Globex day 18:00 ET → 17:00 ET next:
+      - asia:    18:00 ET → 02:00 ET (8 hours, crosses midnight)
+      - london:  02:00 ET → 09:30 ET
+      - ny:      09:30 ET → 17:00 ET
+
+    If `ref` falls between sessions (e.g. exactly at a boundary), it
+    rolls forward to the start of the next session.
+    """
+    if session_name not in ("asia", "london", "ny"):
+        raise ValueError(f"unknown session: {session_name!r}")
+    day = globex_day_for(ref)
+    day_start_et = day.start_utc.astimezone(ET)  # 18:00 ET (or Sun 18:00)
+    asia_end_et = datetime.combine(
+        day_start_et.date() + timedelta(days=1),
+        time(ASIA_END_HOUR_ET),
+        tzinfo=ET,
+    )
+    london_end_et = datetime.combine(
+        day_start_et.date() + timedelta(days=1),
+        time(LONDON_END_HOUR_ET, LONDON_END_MIN_ET),
+        tzinfo=ET,
+    )
+    ny_end_et = datetime.combine(
+        day_start_et.date() + timedelta(days=1),
+        time(GLOBEX_DAY_END_HOUR_ET),
+        tzinfo=ET,
+    )
+    if session_name == "asia":
+        start_et, end_et = day_start_et, asia_end_et
+    elif session_name == "london":
+        start_et, end_et = asia_end_et, london_end_et
+    else:
+        start_et, end_et = london_end_et, ny_end_et
+    return GlobexPeriod(
+        start_utc=start_et.astimezone(UTC),
+        end_utc=end_et.astimezone(UTC),
+        label=f"session_{session_name}",
+    )
+
+
+def previous_session(ref: datetime, session_name: str) -> GlobexPeriod:
+    """Return the most recent COMPLETED session of the given name
+    before `ref`.
+
+    Iterates backward by Globex day. Within the same Globex day:
+    - For ny ref, prev_ny is from the PREVIOUS Globex day (today's NY
+      hasn't closed yet at the time of this call necessarily).
+    - For asia ref, the previous asia is the previous Globex day's asia.
+    Etc.
+
+    Implementation: get the session for THIS Globex day; if its end
+    is before `ref`, return it. Otherwise return the same session of
+    the previous Globex day.
+    """
+    if ref.tzinfo is None:
+        ref = ref.replace(tzinfo=UTC)
+    this_day_session = session_for(ref, session_name)
+    if this_day_session.end_utc <= ref:
+        return this_day_session
+    # Else look at previous Globex day's session.
+    prev_day = previous_globex_day(ref)
+    # Build the same-named session for that prior day's day_start.
+    return session_for(prev_day.start_utc + timedelta(hours=1), session_name)

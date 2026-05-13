@@ -271,7 +271,7 @@ def _load_forward_bars(
             symbol=symbol,
             timeframe=timeframe,
             start=start_utc,
-            end=end_utc,
+            end=end_utc + timedelta(days=1),  # pad for date-partitioned reader
         )
     except (FileNotFoundError, ValueError) as exc:
         log.info("psp_reactions: bar_reader missing %s %s: %s",

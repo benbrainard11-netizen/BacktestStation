@@ -103,6 +103,18 @@ def list_names() -> list[str]:
 # ---------- side-effect imports ----------
 
 from app.research.outcomes import (  # noqa: E402,F401
+    displacement_reactions,
+    equal_levels_reactions,
+    first_third_reactions,
+    forming_volume_profile_reactions,
+    fvg_reactions,
+    liquidity_sweep_reactions,
+    opening_gap_reactions,
+    orb_reactions,
+    order_block_reactions,
     psp_reactions,
     smt_htf_reactions,
+    swing_pivot_reactions,
+    time_profile_reactions,
+    volume_profile_reactions,
 )

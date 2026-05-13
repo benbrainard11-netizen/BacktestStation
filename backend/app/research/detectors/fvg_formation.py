@@ -54,6 +54,7 @@ _MODE_TIMEFRAME: dict[str, str] = {
     "daily_fvg": "1d",
     "4h_fvg": "4h",
     "1h_fvg": "1h",
+    "15m_fvg": "15m",
 }
 
 
