@@ -14,7 +14,7 @@ That is safe for completed-period research. It is not a live forming VP feed. A 
 
 ## What Changed
 
-`volume_profile_reactions_v1` now emits stricter reaction labels for each VP/VWAP level while preserving the old broad labels.
+`volume_profile_reactions_v2` emits stricter reaction labels for each VP/VWAP level while preserving the old broad labels.
 
 Old broad labels answered:
 
@@ -61,16 +61,24 @@ After outcome backfill and feature-matrix rebuild, these flatten into labels lik
 - `label.val_touch.support_rejection_3bar`
 - `label.poc_touch.first_touch_from_above`
 
-## Not Yet Done
+## Current Artifact Status
 
-The code now supports the stricter labels, and tests pass. Existing VP parquet artifacts have not been backfilled yet. To make these labels available to ML:
+The stricter labels have been backfilled into the research database and rebuilt into the ML artifacts:
 
-1. Recompute `volume_profile_reactions_v1` outcomes.
-2. Rebuild `data/ml/features/vp.parquet`.
-3. Rebuild VP anchor snapshots.
-4. Rebuild VP cross-concept context.
-5. Audit the matrix.
-6. Run VP v2 leaderboards and walk-forward validation.
+- Outcome backfill: `34,356` updated VP events, `1,739` skipped for missing forward data, `0` errors.
+- Feature matrix: `data/ml/features/vp.parquet`, `36,095` rows.
+- Snapshot matrix: `data/ml/anchors/vp_snapshots_xctx.parquet`, `36,095` rows x `808` columns.
+- Audit: `docs/ML_SNAPSHOT_AUDIT_VP_V2_XCTX.md`, `0` issues and `0` warnings.
+- Leaderboard: `docs/ML_SNAPSHOT_LEADERBOARD_VP_V2_XCTX.md`.
+- Walk-forward: `docs/ML_SNAPSHOT_WALK_FORWARD_VP_V2_XCTX.md`.
+
+Best current walk-forward result among the targeted strict labels:
+
+- `at_fire / buying / label.vah_touch.resistance_break_acceptance_3bar`
+- mean AUC: `0.911`
+- minimum yearly AUC: `0.886`
+- mean top-10% hit rate: `23.3%`
+- test years: `2020` through `2025`
 
 ## Forming VP Follow-Up
 

@@ -1,10 +1,12 @@
 {
-  "current_package": "strategy_lab_core_2026_05_12",
-  "zip_name": "strategy_lab_core_2026_05_12.zip",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_12.zip",
-  "size_bytes": 144462731,
-  "sha256": "9cd26243ba2152c1d3ee3f29e373c16273872ee2e7afffcfb4390efb5bfebd81",
-  "generated_local_date": "2026-05-12",
+  "current_package": "strategy_lab_core_2026_05_13",
+  "zip_name": "strategy_lab_core_2026_05_13.zip",
+  "release_tag": "strategy-lab-core-2026-05-13",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_13.zip",
+  "size_bytes": 155543818,
+  "sha256": "eb390422a40fc121931699ddd53307dc7b713207e46d790d4a3b4dbbff5d9a73",
+  "generated_utc": "2026-05-13T03:09:14.727175+00:00",
+  "generated_local_date": "2026-05-13",
   "datasets": [
     {
       "name": "fvg_xctx_fvggeom",
@@ -37,6 +39,14 @@
       "rows": 4676,
       "feature_column_count": 1324,
       "label_column_count": 18
+    },
+    {
+      "name": "vp_v2_xctx",
+      "matrix": "data/ml/anchors/vp_snapshots_xctx.parquet",
+      "schema": "data/ml/anchors/vp_snapshots_xctx.schema.json",
+      "rows": 36095,
+      "feature_column_count": 657,
+      "label_column_count": 139
     }
   ],
   "rules": [

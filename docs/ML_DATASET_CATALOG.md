@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-13T01:23:59.406625+00:00`._
+_Generated `2026-05-13T03:08:30.800762+00:00`._
 
 ## Summary
 
@@ -31,7 +31,7 @@ _Generated `2026-05-13T01:23:59.406625+00:00`._
 | sweep | liquidity_sweep | 52,946 | 83 | 20 | 37 | 4 | 11 | 100.0% | 2015-01-04 | 2026-05-08 |
 | ob | order_block | 46,331 | 294 | 38 | 230 | 14 | 11 | 100.0% | 2015-01-05 | 2026-05-08 |
 | disp | displacement_candle | 38,747 | 88 | 20 | 45 | 6 | 11 | 100.0% | 2015-01-02 | 2026-05-07 |
-| vp | volume_profile | 36,095 | 121 | 42 | 56 | 46 | 11 | 100.0% | 2014-12-28 | 2026-05-08 |
+| vp | volume_profile | 36,095 | 209 | 42 | 144 | 126 | 11 | 100.0% | 2014-12-28 | 2026-05-08 |
 | orb | opening_range_breakout | 34,040 | 96 | 21 | 53 | 16 | 11 | 100.0% | 2015-01-02 | 2026-05-08 |
 | tp | time_profile | 19,414 | 81 | 26 | 32 | 7 | 11 | 100.0% | 2014-12-28 | 2026-05-07 |
 | psp | psp_candle_divergence | 15,827 | 85 | 26 | 36 | 2 | 11 | 100.0% | 2015-01-02 | 2026-05-07 |
@@ -182,12 +182,18 @@ _Generated `2026-05-13T01:23:59.406625+00:00`._
 | tp_walk_forward_summary_xctx.parquet | parquet | 8 | 18 | - | - |
 | vp_snapshot_leaderboard.csv | csv | 180 | 30 | - | {"ok": 166, "skip_train_imbalance": 12, "skip_test_imbalance": 2} |
 | vp_snapshot_leaderboard.parquet | parquet | 180 | 30 | - | {"ok": 166, "skip_train_imbalance": 12, "skip_test_imbalance": 2} |
+| vp_snapshot_leaderboard_v2_xctx.csv | csv | 48 | 30 | - | {"ok": 47, "skip_test_imbalance": 1} |
+| vp_snapshot_leaderboard_v2_xctx.parquet | parquet | 48 | 30 | - | {"ok": 47, "skip_test_imbalance": 1} |
 | vp_snapshot_leaderboard_xctx.csv | csv | 180 | 30 | - | {"ok": 166, "skip_train_imbalance": 12, "skip_test_imbalance": 2} |
 | vp_snapshot_leaderboard_xctx.parquet | parquet | 180 | 30 | - | {"ok": 166, "skip_train_imbalance": 12, "skip_test_imbalance": 2} |
-| vp_snapshots.parquet | parquet | 36,095 | 128 | at_fire | - |
+| vp_snapshots.parquet | parquet | 36,095 | 216 | at_fire | - |
 | vp_snapshots.schema.json | json | 36,095 | - | at_fire | - |
-| vp_snapshots_xctx.parquet | parquet | 36,095 | 708 | at_fire | - |
+| vp_snapshots_xctx.parquet | parquet | 36,095 | 808 | at_fire | - |
 | vp_snapshots_xctx.schema.json | json | 36,095 | - | at_fire | - |
+| vp_walk_forward_v2_xctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
+| vp_walk_forward_v2_xctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| vp_walk_forward_v2_xctx_summary.csv | csv | 12 | 18 | - | - |
+| vp_walk_forward_v2_xctx_summary.parquet | parquet | 12 | 18 | - | - |
 
 ## Gaps To Fill
 

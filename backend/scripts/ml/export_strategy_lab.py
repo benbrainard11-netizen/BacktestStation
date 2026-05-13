@@ -109,6 +109,23 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
             "data/ml/anchors/smt_previous_day_walk_forward_fvggeom_folds.parquet",
         ),
     ),
+    ExportDataset(
+        name="vp_v2_xctx",
+        description="Volume-profile anchor rows with v2 post-touch reaction labels and cross-concept context.",
+        matrix="data/ml/anchors/vp_snapshots_xctx.parquet",
+        schema="data/ml/anchors/vp_snapshots_xctx.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_VP_V2_XCTX.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_VP_V2_XCTX.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_VP_V2_XCTX.md",
+        result_files=(
+            "data/ml/anchors/vp_snapshot_leaderboard_v2_xctx.csv",
+            "data/ml/anchors/vp_snapshot_leaderboard_v2_xctx.parquet",
+            "data/ml/anchors/vp_walk_forward_v2_xctx_summary.csv",
+            "data/ml/anchors/vp_walk_forward_v2_xctx_summary.parquet",
+            "data/ml/anchors/vp_walk_forward_v2_xctx_folds.csv",
+            "data/ml/anchors/vp_walk_forward_v2_xctx_folds.parquet",
+        ),
+    ),
 )
 
 CORE_DOCS: tuple[str, ...] = (
