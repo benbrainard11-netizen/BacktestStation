@@ -204,6 +204,7 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
 )
 
 CORE_DOCS: tuple[str, ...] = (
+    "docs/ASSET_UNIVERSE_MANIFEST.md",
     "docs/ML_DATA_LOCATION_GUIDE.md",
     "docs/ML_DATASET_CATALOG.md",
     "docs/ML_FVG_GEOMETRY_CONTEXT.md",
@@ -218,6 +219,7 @@ CORE_DOCS: tuple[str, ...] = (
 
 CATALOG_FILES: tuple[str, ...] = (
     "data/ml/catalog/ml_dataset_catalog.json",
+    "data/ml/catalog/asset_universe_manifest.json",
 )
 
 

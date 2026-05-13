@@ -101,6 +101,7 @@ def _build_export(name: str, *, force: bool) -> tuple[Path, Path]:
 
 def _index_from_export(export_root: Path, zip_path: Path) -> dict[str, Any]:
     manifest = _load_json(export_root / "MANIFEST.json")
+    asset_universe = _asset_universe_summary(export_root)
     zip_hash = _sha256(zip_path)
     package = export_root.name
     datasets = []
@@ -127,6 +128,7 @@ def _index_from_export(export_root: Path, zip_path: Path) -> dict[str, Any]:
         "sha256": zip_hash,
         "generated_utc": generated,
         "generated_local_date": generated_date,
+        "asset_universe": asset_universe,
         "datasets": datasets,
         "rules": [
             "Use each schema JSON's feature_columns as model inputs.",
@@ -134,6 +136,32 @@ def _index_from_export(export_root: Path, zip_path: Path) -> dict[str, Any]:
             "Prefer walk-forward summaries over one-split leaderboards.",
             "Completed VP artifacts are completed-period profiles, not live forming VP.",
         ],
+    }
+
+
+def _asset_universe_summary(export_root: Path) -> dict[str, Any] | None:
+    path = export_root / "data/ml/catalog/asset_universe_manifest.json"
+    if not path.exists():
+        return None
+    data = _load_json(path)
+    active = data.get("active_universe") or {}
+    research = data.get("research_events") or {}
+    catalog = data.get("ml_catalog") or {}
+    warehouse = data.get("warehouse") or {}
+    return {
+        "universe_id": data.get("universe_id"),
+        "dataset_fingerprint": data.get("dataset_fingerprint"),
+        "generated_utc": data.get("generated_utc"),
+        "active_symbols": active.get("symbols") or [],
+        "active_symbol_count": active.get("symbol_count"),
+        "active_ohlcv_1m_earliest_date": active.get("active_ohlcv_1m_earliest_date"),
+        "active_ohlcv_1m_latest_date": active.get("active_ohlcv_1m_latest_date"),
+        "warehouse_symbols": warehouse.get("symbols") or [],
+        "data_only_symbols": active.get("data_only_symbols") or [],
+        "research_events": research.get("total_events"),
+        "feature_matrix_count": catalog.get("feature_matrix_count"),
+        "anchor_artifact_count": catalog.get("anchor_artifact_count"),
+        "warnings": data.get("warnings") or [],
     }
 
 

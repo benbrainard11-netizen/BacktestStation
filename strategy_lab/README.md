@@ -13,19 +13,19 @@ The large parquet files are not committed to Git because `/data` and `/exports` 
 
 Package:
 
-`strategy_lab_core_2026_05_13_itr.zip`
+`strategy_lab_core_2026_05_13_universe.zip`
 
 Local path on the source machine:
 
-`C:\Users\benbr\BacktestStation\exports\strategy_lab_core_2026_05_13_itr.zip`
+`C:\Users\benbr\BacktestStation\exports\strategy_lab_core_2026_05_13_universe.zip`
 
 SHA256:
 
-`cad17d119bc1654e9d06b83fa2e00e1b6d8e1c2350d6535a91b61f8dce3de7e5`
+`cd7bc69cb10605ffe1d3abefb4be53a761050213eb34fcb8acc9cefed5bd47ef`
 
 Size:
 
-`217,367,652` bytes
+`217,374,946` bytes
 
 ## How Another PC Uses It
 
@@ -33,7 +33,7 @@ Size:
 2. Download the current export package.
 3. Unzip it anywhere, for example:
 
-`D:\BacktestStationData\strategy_lab_core_2026_05_13_itr\`
+`D:\BacktestStationData\strategy_lab_core_2026_05_13_universe\`
 
 You can download through GitHub Releases after the release asset has been published:
 
@@ -52,10 +52,18 @@ pip install pandas pyarrow numpy scikit-learn lightgbm
 5. Run the loader:
 
 ```powershell
-python strategy_lab\load_anchor_matrix.py --export-root D:\BacktestStationData\strategy_lab_core_2026_05_13_itr --dataset fvg_xctx_fvggeom
+python strategy_lab\load_anchor_matrix.py --export-root D:\BacktestStationData\strategy_lab_core_2026_05_13_universe --dataset fvg_xctx_fvggeom
 ```
 
 ## Included Datasets
+
+Current asset universe:
+
+- Universe id: `futures_core_v1`
+- Dataset fingerprint: `eedc1042d13d99124e1643236731ab497952b2a126159bf37d8866948a8cc900`
+- Active ML/research symbols: `ES.c.0`, `NQ.c.0`, `YM.c.0`
+- Active 1m bar coverage: `2015-01-01` -> `2026-05-12`
+- Note: warehouse also contains `ESM6`, `NQM6`, `RTY.c.0`, `RTYM6`, `YMM6`, but those are not in the current ML matrices yet.
 
 | dataset | rows | features | labels |
 |---|---:|---:|---:|
@@ -82,6 +90,7 @@ Inside the unzipped export:
 - `README.md`
 - `DATA_DICTIONARY.md`
 - `MANIFEST.json`
+- `docs/ASSET_UNIVERSE_MANIFEST.md`
 - `docs/ML_DATA_LOCATION_GUIDE.md`
 - `docs/ML_FVG_GEOMETRY_CONTEXT.md`
 - `docs/ML_VP_V2_LABELS.md`
@@ -90,6 +99,7 @@ Inside the unzipped export:
 In this repo:
 
 - `docs/ML_DATA_LOCATION_GUIDE.md`
+- `docs/ASSET_UNIVERSE_MANIFEST.md`
 - `docs/ML_FVG_GEOMETRY_CONTEXT.md`
 - `docs/ML_VP_V2_LABELS.md`
 - `backend/app/research/features/itr/stats.md`

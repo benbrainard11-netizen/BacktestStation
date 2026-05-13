@@ -1,12 +1,49 @@
 {
-  "current_package": "strategy_lab_core_2026_05_13_itr",
-  "zip_name": "strategy_lab_core_2026_05_13_itr.zip",
-  "release_tag": "strategy-lab-core-2026-05-13-itr",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_13_itr.zip",
-  "size_bytes": 217367652,
-  "sha256": "cad17d119bc1654e9d06b83fa2e00e1b6d8e1c2350d6535a91b61f8dce3de7e5",
-  "generated_utc": "2026-05-13T18:02:11.504213+00:00",
+  "current_package": "strategy_lab_core_2026_05_13_universe",
+  "zip_name": "strategy_lab_core_2026_05_13_universe.zip",
+  "release_tag": "strategy-lab-core-2026-05-13-universe",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_13_universe.zip",
+  "size_bytes": 217374946,
+  "sha256": "cd7bc69cb10605ffe1d3abefb4be53a761050213eb34fcb8acc9cefed5bd47ef",
+  "generated_utc": "2026-05-13T18:25:17.940454+00:00",
   "generated_local_date": "2026-05-13",
+  "asset_universe": {
+    "universe_id": "futures_core_v1",
+    "dataset_fingerprint": "eedc1042d13d99124e1643236731ab497952b2a126159bf37d8866948a8cc900",
+    "generated_utc": "2026-05-13T18:24:12+00:00",
+    "active_symbols": [
+      "ES.c.0",
+      "NQ.c.0",
+      "YM.c.0"
+    ],
+    "active_symbol_count": 3,
+    "active_ohlcv_1m_earliest_date": "2015-01-01",
+    "active_ohlcv_1m_latest_date": "2026-05-12",
+    "warehouse_symbols": [
+      "ES.c.0",
+      "ESM6",
+      "NQ.c.0",
+      "NQM6",
+      "RTY.c.0",
+      "RTYM6",
+      "YM.c.0",
+      "YMM6"
+    ],
+    "data_only_symbols": [
+      "ESM6",
+      "NQM6",
+      "RTY.c.0",
+      "RTYM6",
+      "YMM6"
+    ],
+    "research_events": 691810,
+    "feature_matrix_count": 15,
+    "anchor_artifact_count": 195,
+    "warnings": [
+      "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
+      "DB datasets registry is empty; manifest used direct warehouse path scan."
+    ]
+  },
   "datasets": [
     {
       "name": "fvg_xctx_fvggeom",
