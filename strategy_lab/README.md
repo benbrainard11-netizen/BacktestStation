@@ -13,19 +13,19 @@ The large parquet files are not committed to Git because `/data` and `/exports` 
 
 Package:
 
-`strategy_lab_core_2026_05_13_universe.zip`
+`strategy_lab_core_2026_05_13_itrctx.zip`
 
 Local path on the source machine:
 
-`C:\Users\benbr\BacktestStation\exports\strategy_lab_core_2026_05_13_universe.zip`
+`C:\Users\benbr\BacktestStation\exports\strategy_lab_core_2026_05_13_itrctx.zip`
 
 SHA256:
 
-`b6d6587cab30cb4fa769c120c6ff7b940f6f8bf2bc43bbc7a735273a75d55508`
+`1dad87221feb5da69e6387638ee3ee9e256ee7d2d1759c12b853d40190ee4591`
 
 Size:
 
-`217,374,949` bytes
+`223,963,848` bytes
 
 ## How Another PC Uses It
 
@@ -33,7 +33,7 @@ Size:
 2. Download the current export package.
 3. Unzip it anywhere, for example:
 
-`D:\BacktestStationData\strategy_lab_core_2026_05_13_universe\`
+`D:\BacktestStationData\strategy_lab_core_2026_05_13_itrctx\`
 
 You can download through GitHub Releases after the release asset has been published:
 
@@ -52,7 +52,7 @@ pip install pandas pyarrow numpy scikit-learn lightgbm
 5. Run the loader:
 
 ```powershell
-python strategy_lab\load_anchor_matrix.py --export-root D:\BacktestStationData\strategy_lab_core_2026_05_13_universe --dataset fvg_xctx_fvggeom
+python strategy_lab\load_anchor_matrix.py --export-root D:\BacktestStationData\strategy_lab_core_2026_05_13_itrctx --dataset fvg_xctx_fvggeom
 ```
 
 ## Included Datasets

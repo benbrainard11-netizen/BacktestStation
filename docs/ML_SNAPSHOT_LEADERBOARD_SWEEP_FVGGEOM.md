@@ -1,6 +1,6 @@
 # ML snapshot leaderboard
 
-_Generated `2026-05-12T21:42:34.772640+00:00`._
+_Generated `2026-05-13T21:34:17.412269+00:00`._
 
 ## Setup
 
@@ -26,7 +26,7 @@ _Generated `2026-05-12T21:42:34.772640+00:00`._
 | item | value |
 |---|---|
 | schema_rows | 52946 |
-| schema_feature_columns | 1085 |
+| schema_feature_columns | 1253 |
 | schema_label_columns | 31 |
 | grid_attempts | 9 |
 | trained_ok | 9 |
@@ -36,29 +36,29 @@ _Generated `2026-05-12T21:42:34.772640+00:00`._
 
 | snapshot | side | label | test_n | base_rate | test_auc | test_acc | majority_acc | top_n | top_rate | top_lift |
 |---|---|---|---|---|---|---|---|---|---|---|
-| at_fire | low | label.ob_confirmation.did_confirm | 4646 | 96.7% | 0.899 | 0.967 | 0.967 | 465 | 100.0% | 3.3% |
-| at_fire | all | label.ob_confirmation.did_confirm | 10146 | 95.8% | 0.869 | 0.959 | 0.958 | 1015 | 99.6% | 3.8% |
-| at_fire | high | label.ob_confirmation.did_confirm | 5500 | 95.1% | 0.840 | 0.952 | 0.951 | 550 | 100.0% | 4.9% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 10146 | 70.5% | 0.803 | 0.770 | 0.705 | 1015 | 95.1% | 24.6% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 4646 | 76.5% | 0.799 | 0.803 | 0.765 | 465 | 97.0% | 20.5% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 5500 | 65.3% | 0.796 | 0.743 | 0.653 | 550 | 92.9% | 27.6% |
-| at_fire | high | label.forward_continuation.continued | 5500 | 93.9% | 0.732 | 0.939 | 0.939 | 550 | 99.1% | 5.2% |
-| at_fire | all | label.forward_continuation.continued | 10146 | 91.1% | 0.696 | 0.911 | 0.911 | 1015 | 98.2% | 7.1% |
-| at_fire | low | label.forward_continuation.continued | 4646 | 87.9% | 0.621 | 0.879 | 0.879 | 465 | 91.0% | 3.1% |
+| at_fire | low | label.ob_confirmation.did_confirm | 4646 | 96.7% | 0.891 | 0.967 | 0.967 | 465 | 100.0% | 3.3% |
+| at_fire | all | label.ob_confirmation.did_confirm | 10146 | 95.8% | 0.872 | 0.958 | 0.958 | 1015 | 99.7% | 3.9% |
+| at_fire | high | label.ob_confirmation.did_confirm | 5500 | 95.1% | 0.842 | 0.951 | 0.951 | 550 | 99.8% | 4.7% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 10146 | 70.5% | 0.803 | 0.769 | 0.705 | 1015 | 95.5% | 25.0% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 4646 | 76.5% | 0.801 | 0.804 | 0.765 | 465 | 96.3% | 19.8% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 5500 | 65.3% | 0.796 | 0.739 | 0.653 | 550 | 92.9% | 27.6% |
+| at_fire | high | label.forward_continuation.continued | 5500 | 93.9% | 0.715 | 0.939 | 0.939 | 550 | 98.7% | 4.8% |
+| at_fire | all | label.forward_continuation.continued | 10146 | 91.1% | 0.698 | 0.911 | 0.911 | 1015 | 97.4% | 6.3% |
+| at_fire | low | label.forward_continuation.continued | 4646 | 87.9% | 0.644 | 0.879 | 0.879 | 465 | 92.5% | 4.6% |
 
 ## Top Features For Best Models
 
 | snapshot | side | label | top_features |
 |---|---|---|---|
-| at_fire | low | label.ob_confirmation.did_confirm | sweep.ctx.day_of_week_et=5655; sweep.day_of_week=4707; sweep.ed.tracking_timeframe_1h=1728; sweep.event_type_pdl_4h=1117; xctx.minutes_since_last_disp_side_bullish_7d=482; xctx.minutes_since_last_smt_side_high_7d=459; xctx.n_fvg_7d=441; xctx.n_fvg_side_bearish_24h=423; ts.month=423; xctx.minutes_since_last_psp_side_bullish_24h=400 |
-| at_fire | all | label.ob_confirmation.did_confirm | sweep.ctx.day_of_week_et=13320; sweep.day_of_week=6928; sweep.ed.tracking_timeframe_1h=4465; sweep.event_type_pwh_4h=3396; sweep.event_type_pdh_1h=3335; ts.day_of_week=2450; xctx.minutes_since_last_ft_24h=1955; xctx.minutes_since_last_tp_24h=1369; sweep.ctx.tracking_timeframe_1h=1350; xctx.n_swing_side_low_7d=1227 |
-| at_fire | high | label.ob_confirmation.did_confirm | sweep.ctx.day_of_week_et=7492; sweep.event_type_pdh_4h=4759; ts.day_of_week=3477; sweep.day_of_week=2742; sweep.event_type_pwh_4h=2180; xctx.minutes_since_last_tp_24h=1623; sweep.ed.tracking_timeframe_1h=1324; sweep.event_type_pdh_1h=1235; xctx.minutes_since_last_ft_24h=1120; sweep.event_type_pwh_daily=640 |
-| at_fire | all | label.swept_level_recovery.level_recovered | sweep.ed.sweep_depth_pts=68328; sweep.ed.swept_reference.level_price=9561; sweep.ed.tracking_timeframe_1h=8632; sweep.ed.manipulation_candle.high=6465; ts.day_of_week=5153; xctx.minutes_since_last_vp_24h=4705; xctx.n_eql_same_primary_7d=3415; xctx.n_fvg_side_bearish_24h=2929; sweep.ctx.tracking_timeframe_1h=2419; xctx.minutes_since_last_smt_side_low_7d=2318 |
-| at_fire | low | label.swept_level_recovery.level_recovered | sweep.ed.sweep_depth_pts=30241; sweep.ed.tracking_timeframe_1h=6745; ts.day_of_week=2612; sweep.ed.manipulation_candle.high=2518; xctx.n_fvg_side_bearish_24h=2057; xctx.n_eql_same_primary_7d=1809; xctx.n_ob_side_bullish_7d=1795; fvggeom.age_min_same_primary_bearish_untouched_above=1645; sweep.ed.manipulation_candle.open=1621; xctx.n_ob_side_bearish_24h=1583 |
-| at_fire | high | label.swept_level_recovery.level_recovered | sweep.ed.sweep_depth_pts=37161; sweep.ed.tracking_timeframe_1h=4512; sweep.ed.swept_reference.level_price=3450; fvggeom.distance_pts_same_primary_any_side_untouched_above=2493; sweep.ed.manipulation_candle.open=2421; ts.day_of_week=2188; xctx.n_fvg_side_bearish_24h=2170; xctx.minutes_since_last_vp_24h=2140; sweep.ed.manipulation_candle.high=2113; ts.year=1680 |
-| at_fire | high | label.forward_continuation.continued | xctx.n_eql_side_low_7d=1488; sweep.event_type_ny_high_1h=1267; fvggeom.distance_pts_any_symbol_any_side_untouched_above=1086; xctx.n_disp_side_bullish_7d=933; xctx.minutes_since_last_tp_24h=910; fvggeom.age_min_any_symbol_bearish_untouched_above=884; fvggeom.width_pts_same_primary_bullish_untouched_inside=824; fvggeom.width_pts_same_primary_bullish_untouched_above=804; fvggeom.age_min_same_primary_bullish_fully_filled_above=802; xctx.n_eql_7d=787 |
-| at_fire | all | label.forward_continuation.continued | xctx.minutes_since_last_tp_24h=2957; xctx.minutes_since_last_orb_24h=1885; sweep.side_high=1703; fvggeom.age_min_same_primary_any_side_untouched_below=1400; sweep.ed.swept_reference.prior_period_label_session_ny=1319; xctx.minutes_since_last_orb_side_doji_7d=1019; fvggeom.age_min_same_primary_bearish_untouched_above=1018; xd.has_swing_in_24h=993; xctx.minutes_since_last_tp_side_bearish_7d=964; xctx.n_ob_side_bullish_7d=948 |
-| at_fire | low | label.forward_continuation.continued | xctx.minutes_since_last_orb_24h=2009; xctx.n_ob_side_bullish_7d=1373; fvggeom.age_min_same_primary_any_side_untouched_below=1330; xctx.n_disp_side_bullish_7d=1325; fvggeom.age_min_same_primary_bullish_untouched_below=1323; xctx.minutes_since_last_orb_side_doji_7d=1290; xctx.minutes_since_last_tp_side_bearish_7d=1290; fvggeom.age_min_same_primary_bearish_fully_filled_below=1270; xctx.minutes_since_last_tp_side_bearish_24h=1235; ts.year=1198 |
+| at_fire | low | label.ob_confirmation.did_confirm | sweep.day_of_week=5662; sweep.ctx.day_of_week_et=4711; sweep.ed.tracking_timeframe_1h=1938; sweep.event_type_pdl_4h=1021; xctx.minutes_since_last_disp_side_bullish_7d=569; xctx.minutes_since_last_ogap_side_gap_down_7d=467; xctx.n_disp_side_bearish_7d=433; xctx.n_ob_side_bullish_7d=433; xctx.minutes_since_last_smt_side_high_7d=425; sweep.ed.ref_type_pdl=405 |
+| at_fire | all | label.ob_confirmation.did_confirm | sweep.ctx.day_of_week_et=11656; sweep.day_of_week=9052; sweep.ed.tracking_timeframe_1h=5520; sweep.event_type_pdh_1h=3032; sweep.event_type_pwh_4h=2975; xctx.minutes_since_last_ogap_24h=2669; ts.day_of_week=2185; xctx.minutes_since_last_ft_24h=1002; xctx.n_swing_side_low_7d=970; sweep.event_type_pdh_4h=943 |
+| at_fire | high | label.ob_confirmation.did_confirm | sweep.ctx.day_of_week_et=7000; ts.day_of_week=4646; sweep.event_type_pdh_4h=3882; sweep.event_type_pwh_4h=2205; sweep.day_of_week=1587; sweep.event_type_pdh_1h=1580; xctx.minutes_since_last_ogap_24h=1536; xctx.minutes_since_last_tp_24h=1061; sweep.ed.tracking_timeframe_1h=884; sweep.event_type_pwh_daily=637 |
+| at_fire | all | label.swept_level_recovery.level_recovered | sweep.ed.sweep_depth_pts=68473; sweep.ed.tracking_timeframe_1h=10187; sweep.ed.swept_reference.level_price=9595; ts.day_of_week=5121; sweep.ed.manipulation_candle.high=5120; xctx.minutes_since_last_itr_24h=4853; sweep.ed.manipulation_candle.open=3459; xctx.n_eql_same_primary_7d=3364; xctx.n_fvg_side_bearish_24h=2281; xctx.minutes_since_last_smt_side_low_7d=2035 |
+| at_fire | low | label.swept_level_recovery.level_recovered | sweep.ed.sweep_depth_pts=31021; sweep.ed.tracking_timeframe_1h=7131; sweep.ed.manipulation_candle.high=3172; ts.day_of_week=2678; xctx.n_eql_same_primary_7d=1864; xctx.n_ob_side_bullish_7d=1783; xctx.n_ob_side_bearish_24h=1505; xctx.n_itr_side_bearish_4h=1451; sweep.ed.manipulation_candle.open=1339; fvggeom.distance_pts_same_primary_bullish_untouched_below=1256 |
+| at_fire | high | label.swept_level_recovery.level_recovered | sweep.ed.sweep_depth_pts=36737; sweep.ed.tracking_timeframe_1h=4261; sweep.ed.swept_reference.level_price=3293; sweep.ed.manipulation_candle.high=2770; sweep.ed.manipulation_candle.open=2465; ts.year=2090; fvggeom.distance_pts_same_primary_any_side_untouched_above=2070; fvggeom.distance_pts_any_symbol_any_side_untouched_above=2044; ts.day_of_week=1933; xctx.n_fvg_side_bearish_24h=1518 |
+| at_fire | high | label.forward_continuation.continued | sweep.event_type_ny_high_1h=1379; xctx.n_eql_side_low_7d=1286; fvggeom.distance_pts_any_symbol_any_side_untouched_above=1242; xctx.n_disp_side_bullish_7d=1035; xctx.minutes_since_last_tp_24h=827; fvggeom.width_pts_same_primary_bullish_untouched_inside=818; xctx.n_fvg_side_bullish_7d=777; fvggeom.age_min_any_symbol_bearish_untouched_above=751; fvggeom.width_pts_same_primary_bullish_untouched_above=705; sweep.ed.tracking_timeframe_1h=688 |
+| at_fire | all | label.forward_continuation.continued | xctx.minutes_since_last_tp_24h=2562; xctx.minutes_since_last_orb_24h=2153; sweep.side_high=1851; fvggeom.age_min_same_primary_any_side_untouched_below=1368; sweep.ed.swept_reference.prior_period_label_session_ny=1330; fvggeom.age_min_same_primary_any_side_untouched_inside=1320; xctx.minutes_since_last_orb_side_doji_7d=1150; fvggeom.age_min_same_primary_any_side_untouched_above=1079; xd.has_swing_in_24h=1048; xctx.n_ob_side_bearish_7d=1031 |
+| at_fire | low | label.forward_continuation.continued | xctx.minutes_since_last_orb_24h=1993; xctx.minutes_since_last_orb_side_doji_7d=1344; fvggeom.age_min_same_primary_any_side_untouched_below=1325; xctx.n_ob_side_bullish_7d=1242; xctx.minutes_since_last_smt_side_low_7d=1162; xctx.minutes_since_last_tp_side_bearish_7d=1132; ts.year=1084; xctx.n_disp_side_bullish_7d=1042; xctx.minutes_since_last_ogap_side_gap_down_24h=984; xctx.n_fvg_7d=981 |
 
 ## Skipped Summary
 
