@@ -3,14 +3,14 @@
   "zip_name": "strategy_lab_core_2026_05_13_universe.zip",
   "release_tag": "strategy-lab-core-2026-05-13-universe",
   "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_13_universe.zip",
-  "size_bytes": 217374946,
-  "sha256": "cd7bc69cb10605ffe1d3abefb4be53a761050213eb34fcb8acc9cefed5bd47ef",
-  "generated_utc": "2026-05-13T18:25:17.940454+00:00",
+  "size_bytes": 217374949,
+  "sha256": "b6d6587cab30cb4fa769c120c6ff7b940f6f8bf2bc43bbc7a735273a75d55508",
+  "generated_utc": "2026-05-13T18:28:41.841176+00:00",
   "generated_local_date": "2026-05-13",
   "asset_universe": {
     "universe_id": "futures_core_v1",
     "dataset_fingerprint": "eedc1042d13d99124e1643236731ab497952b2a126159bf37d8866948a8cc900",
-    "generated_utc": "2026-05-13T18:24:12+00:00",
+    "generated_utc": "2026-05-13T18:28:29+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
