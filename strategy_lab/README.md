@@ -111,3 +111,25 @@ python strategy_lab\publish_export_release.py
 This verifies the zip checksum from `EXPORT_INDEX.json`, then creates or updates a GitHub Release asset.
 
 Do this only for data you are allowed to redistribute. Market data subscriptions can have redistribution restrictions.
+
+## One-Command Sync For Future Updates
+
+After the database/anchor matrices are rebuilt, run this from the source machine:
+
+```powershell
+python strategy_lab\sync_export_to_github.py --all --name strategy_lab_core_YYYY_MM_DD --force
+```
+
+That command:
+
+1. Creates a fresh export folder and zip.
+2. Updates `strategy_lab/EXPORT_INDEX.json`.
+3. Commits the index update.
+4. Pushes `main`.
+5. Publishes the zip as a GitHub Release asset.
+
+To verify the current package is synced:
+
+```powershell
+python strategy_lab\sync_export_to_github.py --verify-current
+```
