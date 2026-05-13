@@ -1,23 +1,23 @@
 # ML dataset catalog
 
-_Generated `2026-05-13T03:08:30.800762+00:00`._
+_Generated `2026-05-13T04:34:41.275469+00:00`._
 
 ## Summary
 
 | item | value |
 |---|---|
-| research_events rows | 603,127 |
-| registered detectors | 12 |
-| registered outcome computers | 12 |
-| feature matrices | 12 |
-| snapshot-builder anchor coverage | displacement_candle, equal_levels, first_third_range, fvg_formation, liquidity_sweep, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile |
+| research_events rows | 646,277 |
+| registered detectors | 13 |
+| registered outcome computers | 13 |
+| feature matrices | 13 |
+| snapshot-builder anchor coverage | displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, liquidity_sweep, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile |
 | catalog json | C:\Users\benbr\BacktestStation\data\ml\catalog\ml_dataset_catalog.json |
 
 ## What Already Exists
 
 - The repo already has 12 concept detectors and 12 matching outcome modules.
 - `data/ml/features` already contains per-detector feature matrices for all 12 concepts.
-- Snapshot/as-of coverage currently exists for displacement_candle, equal_levels, first_third_range, fvg_formation, liquidity_sweep, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile.
+- Snapshot/as-of coverage currently exists for displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, liquidity_sweep, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile.
 - SMT has richer `at_fire` plus `at_period_close` matrices; generic non-SMT coverage currently starts with conservative `at_fire` snapshots.
 - The model leaderboard and walk-forward reports currently run on SMT snapshot matrices.
 
@@ -25,18 +25,19 @@ _Generated `2026-05-13T03:08:30.800762+00:00`._
 
 | short | feature_name | rows | cols | ed | oc | binary_oc | xd | db_outcomes | min | max |
 |---|---|---|---|---|---|---|---|---|---|---|
-| fvg | fvg_formation | 209,339 | 121 | 23 | 75 | 5 | 11 | 100.0% | 2015-01-01 | 2026-05-08 |
-| swing | swing_pivot | 76,786 | 70 | 14 | 33 | 3 | 11 | 100.0% | 2015-01-02 | 2026-05-07 |
-| eql | equal_levels | 60,338 | 78 | 13 | 41 | 4 | 11 | 100.0% | 2015-01-02 | 2026-05-07 |
-| sweep | liquidity_sweep | 52,946 | 83 | 20 | 37 | 4 | 11 | 100.0% | 2015-01-04 | 2026-05-08 |
-| ob | order_block | 46,331 | 294 | 38 | 230 | 14 | 11 | 100.0% | 2015-01-05 | 2026-05-08 |
-| disp | displacement_candle | 38,747 | 88 | 20 | 45 | 6 | 11 | 100.0% | 2015-01-02 | 2026-05-07 |
-| vp | volume_profile | 36,095 | 209 | 42 | 144 | 126 | 11 | 100.0% | 2014-12-28 | 2026-05-08 |
-| orb | opening_range_breakout | 34,040 | 96 | 21 | 53 | 16 | 11 | 100.0% | 2015-01-02 | 2026-05-08 |
-| tp | time_profile | 19,414 | 81 | 26 | 32 | 7 | 11 | 100.0% | 2014-12-28 | 2026-05-07 |
-| psp | psp_candle_divergence | 15,827 | 85 | 26 | 36 | 2 | 11 | 100.0% | 2015-01-02 | 2026-05-07 |
-| ft | first_third_range | 10,373 | 94 | 20 | 52 | 15 | 11 | 100.0% | 2015-01-02 | 2026-05-08 |
-| smt | smt_htf_reference_divergence | 2,891 | 118 | 44 | 49 | 11 | 11 | 100.0% | 2015-01-08 | 2026-05-05 |
+| fvg | fvg_formation | 209,339 | 122 | 23 | 75 | 5 | 12 | 100.0% | 2015-01-01 | 2026-05-08 |
+| swing | swing_pivot | 76,786 | 71 | 14 | 33 | 3 | 12 | 100.0% | 2015-01-02 | 2026-05-07 |
+| eql | equal_levels | 60,338 | 79 | 13 | 41 | 4 | 12 | 100.0% | 2015-01-02 | 2026-05-07 |
+| sweep | liquidity_sweep | 52,946 | 84 | 20 | 37 | 4 | 12 | 100.0% | 2015-01-04 | 2026-05-08 |
+| ob | order_block | 46,331 | 295 | 38 | 230 | 14 | 12 | 100.0% | 2015-01-05 | 2026-05-08 |
+| fvp | fvp | 43,150 | 493 | 47 | 422 | 367 | 12 | - | 2015-01-02 | 2026-05-08 |
+| disp | displacement_candle | 38,747 | 89 | 20 | 45 | 6 | 12 | 100.0% | 2015-01-02 | 2026-05-07 |
+| vp | volume_profile | 36,095 | 210 | 42 | 144 | 126 | 12 | 100.0% | 2014-12-28 | 2026-05-08 |
+| orb | opening_range_breakout | 34,040 | 97 | 21 | 53 | 16 | 12 | 100.0% | 2015-01-02 | 2026-05-08 |
+| tp | time_profile | 19,414 | 82 | 26 | 32 | 7 | 12 | 100.0% | 2014-12-28 | 2026-05-07 |
+| psp | psp_candle_divergence | 15,827 | 86 | 26 | 36 | 2 | 12 | 100.0% | 2015-01-02 | 2026-05-07 |
+| ft | first_third_range | 10,373 | 95 | 20 | 52 | 15 | 12 | 100.0% | 2015-01-02 | 2026-05-08 |
+| smt | smt_htf_reference_divergence | 2,891 | 119 | 44 | 49 | 11 | 12 | 100.0% | 2015-01-08 | 2026-05-05 |
 
 ## Anchor / Model Artifacts
 
@@ -50,6 +51,16 @@ _Generated `2026-05-13T03:08:30.800762+00:00`._
 | eql_snapshot_leaderboard.parquet | parquet | 9 | 30 | - | {"ok": 9} |
 | eql_snapshots.parquet | parquet | 60,338 | 89 | at_fire | - |
 | eql_snapshots.schema.json | json | 60,338 | - | at_fire | - |
+| forming_vp_snapshot_leaderboard_xctx.csv | csv | 72 | 30 | - | {"ok": 72} |
+| forming_vp_snapshot_leaderboard_xctx.parquet | parquet | 72 | 30 | - | {"ok": 72} |
+| forming_vp_snapshots.parquet | parquet | 43,150 | 493 | at_fire | - |
+| forming_vp_snapshots.schema.json | json | 43,150 | - | at_fire | - |
+| forming_vp_snapshots_xctx.parquet | parquet | 43,150 | 1,133 | at_fire | - |
+| forming_vp_snapshots_xctx.schema.json | json | 43,150 | - | at_fire | - |
+| forming_vp_walk_forward_xctx_folds.csv | csv | 72 | 33 | - | {"ok": 70, "skip_test_imbalance": 2} |
+| forming_vp_walk_forward_xctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 70, "skip_test_imbalance": 2} |
+| forming_vp_walk_forward_xctx_summary.csv | csv | 12 | 18 | - | - |
+| forming_vp_walk_forward_xctx_summary.parquet | parquet | 12 | 18 | - | - |
 | ft_snapshot_leaderboard.csv | csv | 42 | 30 | - | {"ok": 42} |
 | ft_snapshot_leaderboard.parquet | parquet | 42 | 30 | - | {"ok": 42} |
 | ft_snapshots.parquet | parquet | 10,373 | 89 | at_fire | - |
@@ -199,10 +210,10 @@ _Generated `2026-05-13T03:08:30.800762+00:00`._
 
 | gap | items |
 |---|---|
-| missing feature matrix | none |
+| missing feature matrix | forming_volume_profile |
 | missing outcome computer | none |
 | missing SMT snapshot event type | none |
-| missing snapshot builder | none |
+| missing snapshot builder | fvp |
 
 ## Recommended Next Build
 

@@ -126,6 +126,23 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
             "data/ml/anchors/vp_walk_forward_v2_xctx_folds.parquet",
         ),
     ),
+    ExportDataset(
+        name="forming_vp_xctx",
+        description="Live-style daily forming volume-profile as-of rows with forward reaction labels and cross-concept context.",
+        matrix="data/ml/anchors/forming_vp_snapshots_xctx.parquet",
+        schema="data/ml/anchors/forming_vp_snapshots_xctx.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_FORMING_VP_XCTX.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_FORMING_VP_XCTX.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_FORMING_VP_XCTX.md",
+        result_files=(
+            "data/ml/anchors/forming_vp_snapshot_leaderboard_xctx.csv",
+            "data/ml/anchors/forming_vp_snapshot_leaderboard_xctx.parquet",
+            "data/ml/anchors/forming_vp_walk_forward_xctx_summary.csv",
+            "data/ml/anchors/forming_vp_walk_forward_xctx_summary.parquet",
+            "data/ml/anchors/forming_vp_walk_forward_xctx_folds.csv",
+            "data/ml/anchors/forming_vp_walk_forward_xctx_folds.parquet",
+        ),
+    ),
 )
 
 CORE_DOCS: tuple[str, ...] = (
@@ -133,6 +150,7 @@ CORE_DOCS: tuple[str, ...] = (
     "docs/ML_DATASET_CATALOG.md",
     "docs/ML_FVG_GEOMETRY_CONTEXT.md",
     "docs/ML_VP_V2_LABELS.md",
+    "docs/ML_FORMING_VP_ASOF.md",
     "docs/ML_CROSS_CONCEPT_CONTEXT_OVERNIGHT.md",
     "docs/ML_CROSS_CONCEPT_CONTEXT_SMT.md",
     "docs/ML_BASELINE_LEAKAGE_AUDIT.md",
