@@ -1,11 +1,11 @@
 {
-  "current_package": "strategy_lab_core_2026_05_13",
-  "zip_name": "strategy_lab_core_2026_05_13.zip",
-  "release_tag": "strategy-lab-core-2026-05-13",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_13.zip",
-  "size_bytes": 171060475,
-  "sha256": "3fe4d98706f485465a01f7695ee359a238b25131cd75de3cfe8a4a4b6f7217c5",
-  "generated_utc": "2026-05-13T04:36:17.987632+00:00",
+  "current_package": "strategy_lab_core_2026_05_13_gapctx",
+  "zip_name": "strategy_lab_core_2026_05_13_gapctx.zip",
+  "release_tag": "strategy-lab-core-2026-05-13-gapctx",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_13_gapctx.zip",
+  "size_bytes": 194362786,
+  "sha256": "6c797adebbd5100efc4acb38040fc1115640147a34b677429fcd1c3c7e2a40da",
+  "generated_utc": "2026-05-13T14:08:48.254536+00:00",
   "generated_local_date": "2026-05-13",
   "datasets": [
     {
@@ -54,6 +54,22 @@
       "schema": "data/ml/anchors/forming_vp_snapshots_xctx.schema.json",
       "rows": 43150,
       "feature_column_count": 710,
+      "label_column_count": 411
+    },
+    {
+      "name": "opening_gap_xctx_gapctx",
+      "matrix": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx.parquet",
+      "schema": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx.schema.json",
+      "rows": 9438,
+      "feature_column_count": 937,
+      "label_column_count": 122
+    },
+    {
+      "name": "forming_vp_xctx_gapctx",
+      "matrix": "data/ml/anchors/forming_vp_snapshots_xctx_gapctx.parquet",
+      "schema": "data/ml/anchors/forming_vp_snapshots_xctx_gapctx.schema.json",
+      "rows": 43150,
+      "feature_column_count": 908,
       "label_column_count": 411
     }
   ],
