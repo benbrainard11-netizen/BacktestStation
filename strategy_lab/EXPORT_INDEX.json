@@ -1,0 +1,48 @@
+{
+  "current_package": "strategy_lab_core_2026_05_12",
+  "zip_name": "strategy_lab_core_2026_05_12.zip",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_12.zip",
+  "size_bytes": 144462731,
+  "sha256": "9cd26243ba2152c1d3ee3f29e373c16273872ee2e7afffcfb4390efb5bfebd81",
+  "generated_local_date": "2026-05-12",
+  "datasets": [
+    {
+      "name": "fvg_xctx_fvggeom",
+      "matrix": "data/ml/anchors/fvg_snapshots_xctx_fvggeom.parquet",
+      "schema": "data/ml/anchors/fvg_snapshots_xctx_fvggeom.schema.json",
+      "rows": 209339,
+      "feature_column_count": 1088,
+      "label_column_count": 67
+    },
+    {
+      "name": "sweep_xctx_fvggeom",
+      "matrix": "data/ml/anchors/sweep_snapshots_xctx_fvggeom.parquet",
+      "schema": "data/ml/anchors/sweep_snapshots_xctx_fvggeom.schema.json",
+      "rows": 52946,
+      "feature_column_count": 1085,
+      "label_column_count": 31
+    },
+    {
+      "name": "tp_xctx_fvggeom",
+      "matrix": "data/ml/anchors/tp_snapshots_xctx_fvggeom.parquet",
+      "schema": "data/ml/anchors/tp_snapshots_xctx_fvggeom.schema.json",
+      "rows": 19414,
+      "feature_column_count": 1077,
+      "label_column_count": 24
+    },
+    {
+      "name": "smt_previous_day_xctx_fvggeom",
+      "matrix": "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom.parquet",
+      "schema": "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom.schema.json",
+      "rows": 4676,
+      "feature_column_count": 1324,
+      "label_column_count": 18
+    }
+  ],
+  "rules": [
+    "Use each schema JSON's feature_columns as model inputs.",
+    "Never use label.* columns as model inputs.",
+    "Prefer walk-forward summaries over one-split leaderboards.",
+    "Completed VP artifacts are completed-period profiles, not live forming VP."
+  ]
+}

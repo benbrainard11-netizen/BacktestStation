@@ -12,6 +12,10 @@
 # Local server logs from dev runs.
 /logs/
 
+# Generated share packages. These can contain large parquet datasets and
+# should be shared intentionally, not committed.
+/exports/
+
 # Python
 __pycache__/
 *.py[cod]
