@@ -68,3 +68,6 @@ Thumbs.db
 # reference, plus the unpacked Claude Design source bundle. Never commit.
 /_frontend_archive_2026_05_01/
 /design_extract/
+
+# Local machine-specific launcher.
+/start_server.ps1
