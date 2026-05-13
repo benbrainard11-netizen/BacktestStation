@@ -30,12 +30,20 @@ Size:
 ## How Another PC Uses It
 
 1. Pull this repo.
-2. Copy or download `strategy_lab_core_2026_05_12.zip` to that PC.
+2. Download the current export package.
 3. Unzip it anywhere, for example:
 
 `D:\BacktestStationData\strategy_lab_core_2026_05_12\`
 
-4. Install the minimal reader packages:
+You can download through GitHub Releases after the release asset has been published:
+
+```powershell
+python strategy_lab\download_export_release.py --output-dir D:\BacktestStationData --extract
+```
+
+Or, if you already have the zip, place it under `D:\BacktestStationData\` and extract it there.
+
+4. Install the minimal reader packages if needed:
 
 ```powershell
 pip install pandas pyarrow numpy scikit-learn lightgbm
@@ -91,3 +99,15 @@ python scripts\ml\export_strategy_lab.py --name strategy_lab_core_YYYY_MM_DD --f
 The generated export goes under:
 
 `C:\Users\benbr\BacktestStation\exports\`
+
+## Publish Export To GitHub Release
+
+On the source machine, after creating the zip:
+
+```powershell
+python strategy_lab\publish_export_release.py
+```
+
+This verifies the zip checksum from `EXPORT_INDEX.json`, then creates or updates a GitHub Release asset.
+
+Do this only for data you are allowed to redistribute. Market data subscriptions can have redistribution restrictions.
