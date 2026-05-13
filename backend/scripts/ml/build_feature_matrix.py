@@ -51,6 +51,7 @@ DETECTORS: list[str] = [
     "volume_profile",
     "forming_volume_profile",
     "opening_gap_levels",
+    "interval_true_range",
 ]
 
 CROSS_DETECTOR_WINDOW_HOURS: int = 24
@@ -200,6 +201,7 @@ def _short_name(detector: str) -> str:
         "volume_profile": "vp",
         "forming_volume_profile": "fvp",
         "opening_gap_levels": "ogap",
+        "interval_true_range": "itr",
     }.get(detector, detector[:8])
 
 

@@ -13,19 +13,19 @@ The large parquet files are not committed to Git because `/data` and `/exports` 
 
 Package:
 
-`strategy_lab_core_2026_05_13_gapctx.zip`
+`strategy_lab_core_2026_05_13_itr.zip`
 
 Local path on the source machine:
 
-`C:\Users\benbr\BacktestStation\exports\strategy_lab_core_2026_05_13_gapctx.zip`
+`C:\Users\benbr\BacktestStation\exports\strategy_lab_core_2026_05_13_itr.zip`
 
 SHA256:
 
-`6c797adebbd5100efc4acb38040fc1115640147a34b677429fcd1c3c7e2a40da`
+`cad17d119bc1654e9d06b83fa2e00e1b6d8e1c2350d6535a91b61f8dce3de7e5`
 
 Size:
 
-`194,362,786` bytes
+`217,367,652` bytes
 
 ## How Another PC Uses It
 
@@ -33,7 +33,7 @@ Size:
 2. Download the current export package.
 3. Unzip it anywhere, for example:
 
-`D:\BacktestStationData\strategy_lab_core_2026_05_13_gapctx\`
+`D:\BacktestStationData\strategy_lab_core_2026_05_13_itr\`
 
 You can download through GitHub Releases after the release asset has been published:
 
@@ -52,7 +52,7 @@ pip install pandas pyarrow numpy scikit-learn lightgbm
 5. Run the loader:
 
 ```powershell
-python strategy_lab\load_anchor_matrix.py --export-root D:\BacktestStationData\strategy_lab_core_2026_05_13_gapctx --dataset fvg_xctx_fvggeom
+python strategy_lab\load_anchor_matrix.py --export-root D:\BacktestStationData\strategy_lab_core_2026_05_13_itr --dataset fvg_xctx_fvggeom
 ```
 
 ## Included Datasets
@@ -66,6 +66,7 @@ python strategy_lab\load_anchor_matrix.py --export-root D:\BacktestStationData\s
 | `vp_v2_xctx` | 36,095 | 657 | 139 |
 | `forming_vp_xctx` | 43,150 | 710 | 411 |
 | `opening_gap_xctx_gapctx` | 9,438 | 937 | 122 |
+| `itr_xctx` | 36,095 | 850 | 35 |
 | `forming_vp_xctx_gapctx` | 43,150 | 908 | 411 |
 
 ## Safety Rule
@@ -84,12 +85,14 @@ Inside the unzipped export:
 - `docs/ML_DATA_LOCATION_GUIDE.md`
 - `docs/ML_FVG_GEOMETRY_CONTEXT.md`
 - `docs/ML_VP_V2_LABELS.md`
+- `backend/app/research/features/itr/stats.md`
 
 In this repo:
 
 - `docs/ML_DATA_LOCATION_GUIDE.md`
 - `docs/ML_FVG_GEOMETRY_CONTEXT.md`
 - `docs/ML_VP_V2_LABELS.md`
+- `backend/app/research/features/itr/stats.md`
 
 ## Regenerate Export
 

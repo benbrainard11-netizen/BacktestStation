@@ -172,6 +172,12 @@ FEATURE_RULES: tuple[FeatureRule, ...] = (
         description="Filtered NDOG/NWOG level fields knowable at the new day/week open.",
     ),
     FeatureRule(
+        prefix="itr.",
+        family="interval_true_range_event_time",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="Completed daily/weekly/session interval range fields known after the interval closes.",
+    ),
+    FeatureRule(
         prefix="xd.",
         family="prior_cross_detector",
         valid_snapshots=("at_fire", "at_period_close"),

@@ -1,23 +1,23 @@
 # ML dataset catalog
 
-_Generated `2026-05-13T14:08:43.962750+00:00`._
+_Generated `2026-05-13T17:59:06.736518+00:00`._
 
 ## Summary
 
 | item | value |
 |---|---|
-| research_events rows | 655,715 |
-| registered detectors | 14 |
-| registered outcome computers | 14 |
-| feature matrices | 14 |
-| snapshot-builder anchor coverage | displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, liquidity_sweep, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile |
+| research_events rows | 691,810 |
+| registered detectors | 15 |
+| registered outcome computers | 15 |
+| feature matrices | 15 |
+| snapshot-builder anchor coverage | displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, interval_true_range, liquidity_sweep, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile |
 | catalog json | C:\Users\benbr\BacktestStation\data\ml\catalog\ml_dataset_catalog.json |
 
 ## What Already Exists
 
 - The repo already has registered concept detectors and matching outcome modules.
 - `data/ml/features` contains per-detector feature matrices for the registered concepts.
-- Snapshot/as-of coverage currently exists for displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, liquidity_sweep, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile.
+- Snapshot/as-of coverage currently exists for displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, interval_true_range, liquidity_sweep, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile.
 - SMT has richer `at_fire` plus `at_period_close` matrices; generic non-SMT coverage currently starts with conservative `at_fire` snapshots.
 - The model leaderboard and walk-forward reports now cover multiple anchor concepts, including opening gaps and live-style forming volume profile.
 
@@ -25,20 +25,21 @@ _Generated `2026-05-13T14:08:43.962750+00:00`._
 
 | short | feature_name | rows | cols | ed | oc | binary_oc | xd | db_outcomes | min | max |
 |---|---|---|---|---|---|---|---|---|---|---|
-| fvg | fvg_formation | 209,339 | 123 | 23 | 75 | 5 | 13 | 100.0% | 2015-01-01 | 2026-05-08 |
-| swing | swing_pivot | 76,786 | 72 | 14 | 33 | 3 | 13 | 100.0% | 2015-01-02 | 2026-05-07 |
-| eql | equal_levels | 60,338 | 80 | 13 | 41 | 4 | 13 | 100.0% | 2015-01-02 | 2026-05-07 |
-| sweep | liquidity_sweep | 52,946 | 85 | 20 | 37 | 4 | 13 | 100.0% | 2015-01-04 | 2026-05-08 |
-| ob | order_block | 46,331 | 296 | 38 | 230 | 14 | 13 | 100.0% | 2015-01-05 | 2026-05-08 |
-| fvp | forming_volume_profile | 43,150 | 494 | 47 | 422 | 367 | 13 | 100.0% | 2015-01-02 | 2026-05-08 |
-| disp | displacement_candle | 38,747 | 90 | 20 | 45 | 6 | 13 | 100.0% | 2015-01-02 | 2026-05-07 |
-| vp | volume_profile | 36,095 | 211 | 42 | 144 | 126 | 13 | 100.0% | 2014-12-28 | 2026-05-08 |
-| orb | opening_range_breakout | 34,040 | 98 | 21 | 53 | 16 | 13 | 100.0% | 2015-01-02 | 2026-05-08 |
-| tp | time_profile | 19,414 | 83 | 26 | 32 | 7 | 13 | 100.0% | 2014-12-28 | 2026-05-07 |
-| psp | psp_candle_divergence | 15,827 | 87 | 26 | 36 | 2 | 13 | 100.0% | 2015-01-02 | 2026-05-07 |
-| ft | first_third_range | 10,373 | 96 | 20 | 52 | 15 | 13 | 100.0% | 2015-01-02 | 2026-05-08 |
-| ogap | opening_gap_levels | 9,438 | 209 | 18 | 166 | 73 | 13 | 100.0% | 2015-01-04 | 2026-05-07 |
-| smt | smt_htf_reference_divergence | 2,891 | 120 | 44 | 49 | 11 | 13 | 100.0% | 2015-01-08 | 2026-05-05 |
+| fvg | fvg_formation | 209,339 | 124 | 23 | 75 | 5 | 14 | 100.0% | 2015-01-01 | 2026-05-08 |
+| swing | swing_pivot | 76,786 | 73 | 14 | 33 | 3 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
+| eql | equal_levels | 60,338 | 81 | 13 | 41 | 4 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
+| sweep | liquidity_sweep | 52,946 | 86 | 20 | 37 | 4 | 14 | 100.0% | 2015-01-04 | 2026-05-08 |
+| ob | order_block | 46,331 | 297 | 38 | 230 | 14 | 14 | 100.0% | 2015-01-05 | 2026-05-08 |
+| fvp | forming_volume_profile | 43,150 | 495 | 47 | 422 | 367 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
+| disp | displacement_candle | 38,747 | 91 | 20 | 45 | 6 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
+| itr | interval_true_range | 36,095 | 143 | 78 | 38 | 14 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
+| vp | volume_profile | 36,095 | 212 | 42 | 144 | 126 | 14 | 100.0% | 2014-12-28 | 2026-05-08 |
+| orb | opening_range_breakout | 34,040 | 99 | 21 | 53 | 16 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
+| tp | time_profile | 19,414 | 84 | 26 | 32 | 7 | 14 | 100.0% | 2014-12-28 | 2026-05-07 |
+| psp | psp_candle_divergence | 15,827 | 88 | 26 | 36 | 2 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
+| ft | first_third_range | 10,373 | 97 | 20 | 52 | 15 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
+| ogap | opening_gap_levels | 9,438 | 210 | 18 | 166 | 73 | 14 | 100.0% | 2015-01-04 | 2026-05-07 |
+| smt | smt_htf_reference_divergence | 2,891 | 121 | 44 | 49 | 11 | 14 | 100.0% | 2015-01-08 | 2026-05-05 |
 
 ## Anchor / Model Artifacts
 
@@ -98,6 +99,18 @@ _Generated `2026-05-13T14:08:43.962750+00:00`._
 | fvg_walk_forward_xctx_top5_folds.parquet | parquet | 25 | 33 | - | {"ok": 25} |
 | fvg_walk_forward_xctx_top5_summary.csv | csv | 5 | 18 | - | - |
 | fvg_walk_forward_xctx_top5_summary.parquet | parquet | 5 | 18 | - | - |
+| itr_mode_label_leaderboard.csv | csv | 65 | 7 | - | - |
+| itr_mode_leaderboard_summary.csv | csv | 5 | 8 | - | - |
+| itr_snapshot_leaderboard_xctx.csv | csv | 78 | 30 | - | {"ok": 39, "skip_non_binary": 39} |
+| itr_snapshot_leaderboard_xctx.parquet | parquet | 78 | 30 | - | {"ok": 39, "skip_non_binary": 39} |
+| itr_snapshot_walk_forward_folds_xctx.csv | csv | 48 | 33 | - | {"ok": 48} |
+| itr_snapshot_walk_forward_folds_xctx.parquet | parquet | 48 | 33 | - | {"ok": 48} |
+| itr_snapshot_walk_forward_summary_xctx.csv | csv | 8 | 18 | - | - |
+| itr_snapshot_walk_forward_summary_xctx.parquet | parquet | 8 | 18 | - | - |
+| itr_snapshots.parquet | parquet | 36,095 | 149 | at_fire | - |
+| itr_snapshots.schema.json | json | 36,095 | - | at_fire | - |
+| itr_snapshots_xctx.parquet | parquet | 36,095 | 897 | at_fire | - |
+| itr_snapshots_xctx.schema.json | json | 36,095 | - | at_fire | - |
 | ob_snapshot_leaderboard.csv | csv | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard.parquet | parquet | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard_xctx.csv | csv | 39 | 30 | - | {"ok": 39} |

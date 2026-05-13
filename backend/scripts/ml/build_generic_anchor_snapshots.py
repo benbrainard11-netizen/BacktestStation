@@ -157,6 +157,14 @@ ANCHORS: dict[str, AnchorConfig] = {
         knowable_col="ed.gap_open_ts_utc",
         label_horizon_minutes=20 * 24 * 60,
     ),
+    "itr": AnchorConfig(
+        short_name="itr",
+        feature_name="interval_true_range",
+        feature_path=FEATURES_DIR / "itr.parquet",
+        output_stem="itr_snapshots",
+        knowable_col="ed.interval_end_utc",
+        label_horizon_minutes=60 * 24 * 45,
+    ),
 }
 
 OUTCOME_NON_TARGET_COLUMNS = {

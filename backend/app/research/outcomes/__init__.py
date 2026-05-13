@@ -108,6 +108,7 @@ from app.research.outcomes import (  # noqa: E402,F401
     first_third_reactions,
     forming_volume_profile_reactions,
     fvg_reactions,
+    interval_true_range_reactions,
     liquidity_sweep_reactions,
     opening_gap_reactions,
     orb_reactions,

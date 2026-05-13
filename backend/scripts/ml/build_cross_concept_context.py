@@ -74,6 +74,7 @@ DETECTOR_TO_SHORT = {
     "volume_profile": "vp",
     "forming_volume_profile": "fvp",
     "opening_gap_levels": "ogap",
+    "interval_true_range": "itr",
 }
 SHORT_TO_DETECTOR = {v: k for k, v in DETECTOR_TO_SHORT.items()}
 
@@ -122,7 +123,8 @@ def _read_research_events(db_path: Path) -> pd.DataFrame:
                 json_extract(event_data, '$.range_end_utc') AS ed_range_end_utc,
                 json_extract(event_data, '$.parent_period_end_utc') AS ed_parent_period_end_utc,
                 json_extract(event_data, '$.asof_ts_utc') AS ed_asof_ts_utc,
-                json_extract(event_data, '$.gap_open_ts_utc') AS ed_gap_open_ts_utc
+                json_extract(event_data, '$.gap_open_ts_utc') AS ed_gap_open_ts_utc,
+                json_extract(event_data, '$.interval_end_utc') AS ed_interval_end_utc
             FROM research_events
             """,
             con,
@@ -179,6 +181,11 @@ def _compute_knowable_ts(events: pd.DataFrame) -> pd.Series:
     if ogap.any():
         ts = pd.to_datetime(events.loc[ogap, "ed_gap_open_ts_utc"], utc=True, errors="coerce")
         out.loc[ogap] = ts.fillna(events.loc[ogap, "bar_end_utc"])
+
+    itr = events["short_name"].eq("itr")
+    if itr.any():
+        ts = pd.to_datetime(events.loc[itr, "ed_interval_end_utc"], utc=True, errors="coerce")
+        out.loc[itr] = ts.fillna(events.loc[itr, "bar_end_utc"])
 
     missing = events[out.isna()]
     if not missing.empty:

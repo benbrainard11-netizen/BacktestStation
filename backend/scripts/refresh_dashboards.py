@@ -183,6 +183,21 @@ FEATURES: dict[str, FeatureDashboard] = {
         ),
         leaderboard_files=("vp_snapshot_leaderboard.parquet",),
     ),
+    "itr": FeatureDashboard(
+        short_name="itr",
+        feature_name="interval_true_range",
+        title="ITR - Interval True Range",
+        description="Completed daily, weekly, and session range memory for next-interval behavior.",
+        primary_labels=(
+            "oc.next_interval.compressed_range_0_75x",
+            "oc.next_interval.expanded_range_1_25x",
+            "oc.next_interval.touched_interval_mid",
+            "oc.next_interval.took_interval_high",
+            "oc.next_interval.took_interval_low",
+            "oc.next_interval.swept_both_sides",
+        ),
+        leaderboard_files=("itr_snapshot_leaderboard_xctx.parquet",),
+    ),
 }
 
 BASELINE_WARNINGS = {

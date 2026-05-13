@@ -123,6 +123,7 @@ from app.research.detectors import (  # noqa: E402,F401
     first_third_range,
     forming_volume_profile,
     fvg_formation,
+    interval_true_range,
     liquidity_sweep,
     opening_gap_levels,
     opening_range_breakout,
