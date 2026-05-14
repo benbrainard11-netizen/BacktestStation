@@ -1,16 +1,16 @@
 {
-  "current_package": "strategy_lab_core_2026_05_14_reaction_v3",
-  "zip_name": "strategy_lab_core_2026_05_14_reaction_v3.zip",
-  "release_tag": "strategy-lab-core-2026-05-14-reaction-v3",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_reaction_v3.zip",
-  "size_bytes": 281807943,
-  "sha256": "b636451341200eda10a2b6356c4e1a8e1a3e9ca3738b810dd6c12c3b2c11ff56",
-  "generated_utc": "2026-05-14T13:43:37.281769+00:00",
+  "current_package": "strategy_lab_core_2026_05_14_obgeom",
+  "zip_name": "strategy_lab_core_2026_05_14_obgeom.zip",
+  "release_tag": "strategy-lab-core-2026-05-14-obgeom",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_obgeom.zip",
+  "size_bytes": 572025274,
+  "sha256": "07e479f601974cc8d3a093abe7913532dc4d72a1887b4e38ba84dd44c8addf4f",
+  "generated_utc": "2026-05-14T20:38:28.360124+00:00",
   "generated_local_date": "2026-05-14",
   "asset_universe": {
     "universe_id": "futures_core_v1",
-    "dataset_fingerprint": "3e394b9c51ae1c45fec1f87305a27dc822ea097fbac6f233d33c8f3d80099a43",
-    "generated_utc": "2026-05-14T13:33:12+00:00",
+    "dataset_fingerprint": "eca4a35c1cb01f41a469d6d42a6437918c810e96fa4ade2eef3ba436f17f6ed9",
+    "generated_utc": "2026-05-14T20:37:33+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -38,7 +38,7 @@
     ],
     "research_events": 710224,
     "feature_matrix_count": 16,
-    "anchor_artifact_count": 213,
+    "anchor_artifact_count": 223,
     "warnings": [
       "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
       "DB datasets registry is empty; manifest used direct warehouse path scan."
@@ -54,11 +54,27 @@
       "label_column_count": 109
     },
     {
+      "name": "fvg_xctx_fvggeom_obgeom",
+      "matrix": "data/ml/anchors/fvg_snapshots_xctx_fvggeom_obgeom.parquet",
+      "schema": "data/ml/anchors/fvg_snapshots_xctx_fvggeom_obgeom.schema.json",
+      "rows": 209339,
+      "feature_column_count": 1969,
+      "label_column_count": 109
+    },
+    {
       "name": "sweep_xctx_fvggeom",
       "matrix": "data/ml/anchors/sweep_snapshots_xctx_fvggeom.parquet",
       "schema": "data/ml/anchors/sweep_snapshots_xctx_fvggeom.schema.json",
       "rows": 52946,
       "feature_column_count": 1305,
+      "label_column_count": 95
+    },
+    {
+      "name": "sweep_xctx_fvggeom_obgeom",
+      "matrix": "data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom.parquet",
+      "schema": "data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom.schema.json",
+      "rows": 52946,
+      "feature_column_count": 1966,
       "label_column_count": 95
     },
     {
