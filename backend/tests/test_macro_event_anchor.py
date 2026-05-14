@@ -155,7 +155,11 @@ def test_macro_outcome_labels_post_release_reaction(
     assert result.n_updated == 1
     assert row is not None
     assert row.outcomes["next_5m"]["direction"] == "up"
+    assert row.outcomes["next_5m"]["first_bar_direction"] == "up"
     assert row.outcomes["next_5m"]["took_pre_15m_high"] is True
+    assert row.outcomes["next_5m"]["one_sided_took_pre_15m_high"] is True
+    assert row.outcomes["next_5m"]["took_pre_15m_high_held_above"] is True
+    assert row.outcomes["next_5m"]["closed_inside_pre_15m_range"] is False
     assert row.outcomes["next_5m"]["range_expanded_2x_pre_15m"] is True
 
 

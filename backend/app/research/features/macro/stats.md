@@ -1,6 +1,6 @@
 # Scheduled Macro Events - Current Stats
 
-_Generated `2026-05-14T01:13:46+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T02:02:56+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -54,22 +54,25 @@ Scheduled economic-calendar release anchors and post-release reaction labels.
 | Metric | Value |
 |---|---|
 | Rows | 18,414 |
-| Columns | 276 |
+| Columns | 468 |
 | ed.* event_data | 50 |
-| oc.* outcome labels | 197 |
+| oc.* outcome labels | 389 |
 | ctx.* context | 5 |
 | xd.* cross-detector | 15 |
-| numeric | 234 |
-| object/category | 41 |
+| numeric | 420 |
+| object/category | 47 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
 | `oc.next_5m.range_expanded_2x_pre_15m` | 998 / 18,160 | 5.5% |
-| `oc.next_15m.took_pre_60m_high` | 5,727 / 18,180 | 31.5% |
-| `oc.next_15m.took_pre_60m_low` | 5,154 / 18,180 | 28.3% |
-| `oc.next_60m.swept_both_pre_60m_sides` | 2,393 / 18,264 | 13.1% |
+| `oc.next_15m.range_expanded_2x_pre_60m` | 541 / 18,180 | 3.0% |
+| `oc.next_15m.one_sided_took_pre_60m_high` | 5,225 / 18,180 | 28.7% |
+| `oc.next_15m.one_sided_took_pre_60m_low` | 4,652 / 18,180 | 25.6% |
+| `oc.next_15m.took_pre_60m_high_rejected_inside` | 2,734 / 18,180 | 15.0% |
+| `oc.next_15m.took_pre_60m_low_rejected_inside` | 2,389 / 18,180 | 13.1% |
+| `oc.next_60m.closed_inside_pre_60m_range` | 9,477 / 18,264 | 51.9% |
 
 ### Breakdown - `oc.next_5m.range_expanded_2x_pre_15m` by event type
 
@@ -200,18 +203,18 @@ Scheduled economic-calendar release anchors and post-release reaction labels.
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
+| `oc.next_240m.first_bar_up_then_final_down` | 3,479 / 18,330 | 19.0% |
+| `oc.next_240m.first_bar_down_then_final_up` | 4,060 / 18,330 | 22.1% |
+| `oc.next_240m.direction_reversed_from_first_bar` | 7,539 / 18,330 | 41.1% |
 | `oc.next_240m.close_above_release_ref` | 9,786 / 18,330 | 53.4% |
 | `oc.next_240m.close_below_release_ref` | 8,368 / 18,330 | 45.7% |
+| `oc.next_240m.wicked_above_ref_closed_below_ref` | 7,770 / 18,330 | 42.4% |
+| `oc.next_240m.wicked_below_ref_closed_above_ref` | 9,209 / 18,330 | 50.2% |
 | `oc.next_240m.range_expanded_1x_pre_15m` | 17,039 / 18,330 | 93.0% |
 | `oc.next_240m.range_expanded_2x_pre_15m` | 13,657 / 18,330 | 74.5% |
 | `oc.next_240m.took_pre_15m_high` | 13,968 / 18,330 | 76.2% |
 | `oc.next_240m.took_pre_15m_low` | 13,429 / 18,330 | 73.3% |
 | `oc.next_240m.swept_both_pre_15m_sides` | 10,093 / 18,330 | 55.1% |
-| `oc.next_240m.closed_above_pre_15m_high` | 7,478 / 18,330 | 40.8% |
-| `oc.next_240m.closed_below_pre_15m_low` | 6,081 / 18,330 | 33.2% |
-| `oc.next_240m.range_expanded_1x_pre_60m` | 13,719 / 18,330 | 74.8% |
-| `oc.next_240m.range_expanded_2x_pre_60m` | 6,803 / 18,330 | 37.1% |
-| `oc.next_240m.took_pre_60m_high` | 11,776 / 18,330 | 64.2% |
 
 ## Per-Detector Baseline
 
@@ -229,12 +232,12 @@ Zero-look-ahead snapshot models. These are safer for ML research than raw detect
 | macro | all | `label.next_15m.range_expanded_2x_pre_60m` | 2,373 | 3.5% | 0.914 | 27.7% | imbalanced base rate |
 | macro | high | `label.next_5m.range_expanded_2x_pre_15m` | 1,400 | 7.5% | 0.872 | 46.4% | imbalanced base rate |
 | macro | all | `label.next_5m.range_expanded_2x_pre_15m` | 2,371 | 5.4% | 0.849 | 35.7% | imbalanced base rate |
+| macro | medium | `label.next_15m.one_sided_took_pre_60m_high` | 972 | 27.9% | 0.832 | 78.6% |  |
+| macro | medium | `label.next_15m.one_sided_took_pre_60m_low` | 972 | 24.8% | 0.824 | 62.2% |  |
 | macro | medium | `label.next_15m.took_pre_60m_high` | 972 | 29.7% | 0.819 | 73.5% |  |
 | macro | medium | `label.next_15m.took_pre_60m_low` | 972 | 26.6% | 0.818 | 65.3% |  |
+| macro | all | `label.next_15m.one_sided_took_pre_60m_high` | 2,373 | 28.4% | 0.814 | 71.4% |  |
 | macro | high | `label.next_15m.swept_both_pre_60m_sides` | 1,401 | 4.6% | 0.812 | 13.5% | imbalanced base rate |
-| macro | medium | `label.next_60m.range_expanded_1x_pre_60m` | 978 | 57.5% | 0.805 | 93.9% |  |
-| macro | all | `label.next_60m.range_expanded_1x_pre_60m` | 2,382 | 60.0% | 0.805 | 95.4% |  |
-| macro | all | `label.next_15m.took_pre_60m_high` | 2,373 | 31.9% | 0.804 | 73.9% |  |
 
 ## Reading
 

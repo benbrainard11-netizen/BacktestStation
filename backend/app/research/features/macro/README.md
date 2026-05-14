@@ -48,6 +48,7 @@ python backend\scripts\import_macro_events.py --input C:\path\to\clean_macro_eve
 | Outcomes | `backend/app/research/outcomes/macro_event_reactions.py` |
 | Importer | `backend/scripts/import_macro_events.py` |
 | ForexFactory archive importer | `backend/scripts/import_forex_factory_archive.py` |
+| Event-type breakdown | `backend/scripts/ml/macro_event_type_breakdown.py` |
 | Feature matrix | `data/ml/features/macro.parquet` |
 | Snapshot matrix | `data/ml/anchors/macro_event_snapshots.parquet` |
 | Tests | `backend/tests/test_macro_event_anchor.py` |
@@ -70,6 +71,7 @@ Post-release labels include:
 - 1m, 5m, 15m, 60m, 240m, and 1d post-release range/body/MFE/MAE.
 - Range expansion versus the pre-15m and pre-60m windows.
 - Took pre-release high, took pre-release low, swept both sides, or closed outside the pre-release range.
+- Stricter v2 labels for first-bar reversal, one-sided high/low takes, held breaks, rejected breaks, and closes back inside the pre-release range.
 
 ## Leakage Notes
 

@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-14T01:12:18.788769+00:00`._
+_Generated `2026-05-14T02:06:29.931338+00:00`._
 
 ## Summary
 
@@ -36,7 +36,7 @@ _Generated `2026-05-14T01:12:18.788769+00:00`._
 | vp | volume_profile | 36,095 | 212 | 42 | 144 | 126 | 14 | 100.0% | 2014-12-28 | 2026-05-08 |
 | orb | opening_range_breakout | 34,040 | 99 | 21 | 53 | 16 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
 | tp | time_profile | 19,414 | 84 | 26 | 32 | 7 | 14 | 100.0% | 2014-12-28 | 2026-05-07 |
-| macro | macro_event_anchor | 18,414 | 276 | 50 | 197 | 98 | 15 | 100.0% | 2015-01-02 | 2026-05-12 |
+| macro | macro_event_anchor | 18,414 | 468 | 50 | 389 | 260 | 15 | 100.0% | 2015-01-02 | 2026-05-12 |
 | psp | psp_candle_divergence | 15,827 | 88 | 26 | 36 | 2 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
 | ft | first_third_range | 10,373 | 97 | 20 | 52 | 15 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
 | ogap | opening_gap_levels | 9,438 | 210 | 18 | 166 | 73 | 14 | 100.0% | 2015-01-04 | 2026-05-07 |
@@ -112,16 +112,24 @@ _Generated `2026-05-14T01:12:18.788769+00:00`._
 | itr_snapshots.schema.json | json | 36,095 | - | at_fire | - |
 | itr_snapshots_xctx.parquet | parquet | 36,095 | 897 | at_fire | - |
 | itr_snapshots_xctx.schema.json | json | 36,095 | - | at_fire | - |
-| macro_event_snapshots.parquet | parquet | 18,414 | 262 | at_fire | - |
+| macro_event_snapshots.parquet | parquet | 18,414 | 454 | at_fire | - |
 | macro_event_snapshots.schema.json | json | 18,414 | - | at_fire | - |
-| macro_event_snapshots_xctx.parquet | parquet | 18,414 | 1,070 | at_fire | - |
+| macro_event_snapshots_xctx.parquet | parquet | 18,414 | 1,262 | at_fire | - |
 | macro_event_snapshots_xctx.schema.json | json | 18,414 | - | at_fire | - |
-| macro_snapshot_leaderboard_xctx.csv | csv | 33 | 30 | - | {"ok": 31, "skip_test_imbalance": 2} |
-| macro_snapshot_leaderboard_xctx.parquet | parquet | 33 | 30 | - | {"ok": 31, "skip_test_imbalance": 2} |
-| macro_snapshot_walk_forward_folds_xctx.csv | csv | 48 | 33 | - | {"ok": 48} |
-| macro_snapshot_walk_forward_folds_xctx.parquet | parquet | 48 | 33 | - | {"ok": 48} |
-| macro_snapshot_walk_forward_summary_xctx.csv | csv | 8 | 18 | - | - |
-| macro_snapshot_walk_forward_summary_xctx.parquet | parquet | 8 | 18 | - | - |
+| macro_event_type_breakdown.csv | csv | 70 | 56 | - | - |
+| macro_event_type_breakdown.parquet | parquet | 70 | 56 | - | - |
+| macro_event_type_model_leaderboard.csv | csv | 432 | 34 | - | {"ok": 194, "skip_small_split": 192, "skip_train_imbalance": 26, "skip_test_imbalance": 20} |
+| macro_event_type_model_leaderboard.parquet | parquet | 432 | 34 | - | {"ok": 194, "skip_small_split": 192, "skip_train_imbalance": 26, "skip_test_imbalance": 20} |
+| macro_event_type_walk_forward_folds.csv | csv | 72 | 35 | - | {"skip_small_split": 30, "ok": 23, "skip_test_imbalance": 13, "skip_train_imbalance": 6} |
+| macro_event_type_walk_forward_folds.parquet | parquet | 72 | 35 | - | {"skip_small_split": 30, "ok": 23, "skip_test_imbalance": 13, "skip_train_imbalance": 6} |
+| macro_event_type_walk_forward_summary.csv | csv | 12 | 19 | - | - |
+| macro_event_type_walk_forward_summary.parquet | parquet | 12 | 19 | - | - |
+| macro_snapshot_leaderboard_xctx.csv | csv | 48 | 30 | - | {"ok": 46, "skip_test_imbalance": 2} |
+| macro_snapshot_leaderboard_xctx.parquet | parquet | 48 | 30 | - | {"ok": 46, "skip_test_imbalance": 2} |
+| macro_snapshot_walk_forward_folds_xctx.csv | csv | 60 | 33 | - | {"ok": 60} |
+| macro_snapshot_walk_forward_folds_xctx.parquet | parquet | 60 | 33 | - | {"ok": 60} |
+| macro_snapshot_walk_forward_summary_xctx.csv | csv | 10 | 18 | - | - |
+| macro_snapshot_walk_forward_summary_xctx.parquet | parquet | 10 | 18 | - | - |
 | ob_snapshot_leaderboard.csv | csv | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard.parquet | parquet | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard_xctx.csv | csv | 39 | 30 | - | {"ok": 39} |
