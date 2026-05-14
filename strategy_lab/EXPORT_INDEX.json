@@ -3,14 +3,14 @@
   "zip_name": "strategy_lab_core_2026_05_14_macro.zip",
   "release_tag": "strategy-lab-core-2026-05-14-macro",
   "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_macro.zip",
-  "size_bytes": 245685649,
-  "sha256": "b0c81c0c4b450f42c1bfe655161e6ae2a5dbbfa15fc8e0d16ec94d29de0ff946",
-  "generated_utc": "2026-05-14T01:14:37.425310+00:00",
+  "size_bytes": 245685811,
+  "sha256": "8bab83bff62b1544aa7e0d3a75c2428de4726f405b27233a30f3b60e9832a6e0",
+  "generated_utc": "2026-05-14T01:19:43.478905+00:00",
   "generated_local_date": "2026-05-14",
   "asset_universe": {
     "universe_id": "futures_core_v1",
-    "dataset_fingerprint": "eedc1042d13d99124e1643236731ab497952b2a126159bf37d8866948a8cc900",
-    "generated_utc": "2026-05-13T23:10:48+00:00",
+    "dataset_fingerprint": "a537b632b77fc69a26f827391e8255285a64d23363681483abc44b63eb23999f",
+    "generated_utc": "2026-05-14T01:19:27+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -36,9 +36,9 @@
       "RTYM6",
       "YMM6"
     ],
-    "research_events": 691810,
-    "feature_matrix_count": 15,
-    "anchor_artifact_count": 195,
+    "research_events": 710224,
+    "feature_matrix_count": 16,
+    "anchor_artifact_count": 205,
     "warnings": [
       "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
       "DB datasets registry is empty; manifest used direct warehouse path scan."
