@@ -1,16 +1,16 @@
 {
-  "current_package": "strategy_lab_core_2026_05_14_macro",
-  "zip_name": "strategy_lab_core_2026_05_14_macro.zip",
-  "release_tag": "strategy-lab-core-2026-05-14-macro",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_macro.zip",
-  "size_bytes": 245685811,
-  "sha256": "8bab83bff62b1544aa7e0d3a75c2428de4726f405b27233a30f3b60e9832a6e0",
-  "generated_utc": "2026-05-14T01:19:43.478905+00:00",
+  "current_package": "strategy_lab_core_2026_05_14_macro_v2",
+  "zip_name": "strategy_lab_core_2026_05_14_macro_v2.zip",
+  "release_tag": "strategy-lab-core-2026-05-14-macro-v2",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_macro_v2.zip",
+  "size_bytes": 250469357,
+  "sha256": "915f4cf2130eee20fe924a57b90f94c46f4e8fcb5c4d0caef27f883fc70e3a3e",
+  "generated_utc": "2026-05-14T02:13:05.128008+00:00",
   "generated_local_date": "2026-05-14",
   "asset_universe": {
     "universe_id": "futures_core_v1",
-    "dataset_fingerprint": "a537b632b77fc69a26f827391e8255285a64d23363681483abc44b63eb23999f",
-    "generated_utc": "2026-05-14T01:19:27+00:00",
+    "dataset_fingerprint": "a0ea3d8b427fbf3ce317a6faeb8b1886dbed2755ea0b460ce6603a6dadc4c6a3",
+    "generated_utc": "2026-05-14T02:12:44+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -38,7 +38,7 @@
     ],
     "research_events": 710224,
     "feature_matrix_count": 16,
-    "anchor_artifact_count": 205,
+    "anchor_artifact_count": 213,
     "warnings": [
       "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
       "DB datasets registry is empty; manifest used direct warehouse path scan."
@@ -123,7 +123,7 @@
       "schema": "data/ml/anchors/macro_event_snapshots_xctx.schema.json",
       "rows": 18414,
       "feature_column_count": 878,
-      "label_column_count": 180
+      "label_column_count": 372
     }
   ],
   "rules": [
