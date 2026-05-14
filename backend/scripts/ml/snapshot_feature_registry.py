@@ -202,6 +202,12 @@ FEATURE_RULES: tuple[FeatureRule, ...] = (
         description="State-aware nearest FVG zone geometry known by the snapshot cutoff.",
     ),
     FeatureRule(
+        prefix="obgeom.",
+        family="order_block_geometry_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="State-aware nearest order-block zone geometry known by the snapshot cutoff.",
+    ),
+    FeatureRule(
         prefix="gapctx.",
         family="opening_gap_memory_context",
         valid_snapshots=("at_fire", "at_period_close"),

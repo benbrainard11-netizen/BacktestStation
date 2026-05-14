@@ -1,6 +1,6 @@
 # Asset Universe Manifest
 
-_Generated `2026-05-14T13:33:12+00:00`._
+_Generated `2026-05-14T20:37:33+00:00`._
 
 This pins the data identity behind the current ML/research build.
 
@@ -9,14 +9,14 @@ This pins the data identity behind the current ML/research build.
 | Field | Value |
 |---|---|
 | Universe id | `futures_core_v1` |
-| Dataset fingerprint | `3e394b9c51ae1c45fec1f87305a27dc822ea097fbac6f233d33c8f3d80099a43` |
-| Git commit | `1b00c5ee7b6e69c67625493c7dcfee3b78e66941` |
+| Dataset fingerprint | `eca4a35c1cb01f41a469d6d42a6437918c810e96fa4ade2eef3ba436f17f6ed9` |
+| Git commit | `53acc5ab1f15f9b8bc62a9240123a8b478fefc76` |
 | Git dirty when generated | `True` |
 | Warehouse root | `D:\data` |
 | Active symbols | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | Research events | 710,224 |
 | Feature matrices | 16 |
-| Anchor/model artifacts | 213 |
+| Anchor/model artifacts | 223 |
 | Active 1m bar coverage | 2015-01-01 -> 2026-05-12 |
 
 ## Active Research Universe
@@ -67,8 +67,8 @@ These exist on disk but are not yet part of the current research/ML matrices.
 | `disp` | `displacement_candle` | 38,747 | 91 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `eql` | `equal_levels` | 60,338 | 81 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `ft` | `first_third_range` | 10,373 | 97 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `fvg` | `fvg_formation` | 209,339 | 124 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `fvp` | `forming_volume_profile` | 43,150 | 495 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
+| `fvg` | `fvg_formation` | 209,339 | 169 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
+| `fvp` | `forming_volume_profile` | 43,150 | 592 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `itr` | `interval_true_range` | 36,095 | 172 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `macro` | `macro_event_anchor` | 18,414 | 468 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `ob` | `order_block` | 46,331 | 297 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
@@ -76,7 +76,7 @@ These exist on disk but are not yet part of the current research/ML matrices.
 | `orb` | `opening_range_breakout` | 34,040 | 99 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `psp` | `psp_candle_divergence` | 15,827 | 88 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `smt` | `smt_htf_reference_divergence` | 2,891 | 121 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `sweep` | `liquidity_sweep` | 52,946 | 86 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
+| `sweep` | `liquidity_sweep` | 52,946 | 155 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `swing` | `swing_pivot` | 76,786 | 73 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `tp` | `time_profile` | 19,414 | 84 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `vp` | `volume_profile` | 36,095 | 212 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
