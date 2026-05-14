@@ -238,13 +238,21 @@ def _safe_load(
     end: datetime,
 ) -> pd.DataFrame | None:
     try:
-        df = bar_reader(symbol=symbol, timeframe=timeframe, start=start, end=end)
+        # The warehouse reader is date-partition oriented. Read full dates,
+        # then trim to the true intraday window here.
+        df = bar_reader(
+            symbol=symbol,
+            timeframe=timeframe,
+            start=start.date(),
+            end=end.date() + timedelta(days=1),
+        )
     except (FileNotFoundError, ValueError) as exc:
         log.info("macro_event_anchor: bar_reader missing %s %s: %s", symbol, timeframe, exc)
         return None
     if df is None or len(df) == 0:
         return None
-    return df
+    df = _ensure_utc_index(df).sort_index()
+    return df[(df.index >= start) & (df.index < end)].copy()
 
 
 def _ensure_utc_index(df: pd.DataFrame) -> pd.DataFrame:

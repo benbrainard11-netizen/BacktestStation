@@ -63,7 +63,8 @@ def _parse_params(value: str | None) -> dict[str, Any]:
     if not value:
         return {}
     out: dict[str, Any] = {}
-    for part in value.split(","):
+    separator = ";" if ";" in value else ","
+    for part in value.split(separator):
         item = part.strip()
         if not item:
             continue

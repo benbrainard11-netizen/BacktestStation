@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import argparse
 from datetime import timezone
 from pathlib import Path
 from typing import Any
@@ -94,6 +95,10 @@ def _safe_json(s: str | None) -> dict:
         return parsed if isinstance(parsed, dict) else {}
     except (ValueError, TypeError):
         return {}
+
+
+def _parse_csv_arg(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
 
 
 # ---------- main builder ----------
@@ -236,12 +241,24 @@ def load_all_event_times(con: sqlite3.Connection) -> dict[str, dict[str, np.ndar
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--detectors",
+        type=_parse_csv_arg,
+        default=DETECTORS,
+        help="Comma-separated feature_name values to build. Default: all.",
+    )
+    args = parser.parse_args()
+    unknown = sorted(set(args.detectors) - set(DETECTORS))
+    if unknown:
+        raise KeyError(f"unknown detectors: {unknown}; choices={DETECTORS}")
+
     con = sqlite3.connect(DB_PATH)
     print(">>> pre-loading cross-detector timestamps...")
     all_event_times = load_all_event_times(con)
 
     summary: list[dict] = []
-    for det in DETECTORS:
+    for det in args.detectors:
         print(f"\n>>> building feature matrix for {det}...")
         out = build_for_detector(con, det, all_event_times)
         if out is None or out.empty:
