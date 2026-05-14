@@ -1,6 +1,6 @@
 # Asset Universe Manifest
 
-_Generated `2026-05-13T23:10:48+00:00`._
+_Generated `2026-05-14T01:19:27+00:00`._
 
 This pins the data identity behind the current ML/research build.
 
@@ -9,23 +9,23 @@ This pins the data identity behind the current ML/research build.
 | Field | Value |
 |---|---|
 | Universe id | `futures_core_v1` |
-| Dataset fingerprint | `eedc1042d13d99124e1643236731ab497952b2a126159bf37d8866948a8cc900` |
-| Git commit | `6cd92e9dd0677ffa61772aeb12a5f9e8348b67d2` |
-| Git dirty when generated | `True` |
+| Dataset fingerprint | `a537b632b77fc69a26f827391e8255285a64d23363681483abc44b63eb23999f` |
+| Git commit | `0f191b9641633588f365d18ada51712cf5178ed6` |
+| Git dirty when generated | `False` |
 | Warehouse root | `D:\data` |
 | Active symbols | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| Research events | 691,810 |
-| Feature matrices | 15 |
-| Anchor/model artifacts | 195 |
+| Research events | 710,224 |
+| Feature matrices | 16 |
+| Anchor/model artifacts | 205 |
 | Active 1m bar coverage | 2015-01-01 -> 2026-05-12 |
 
 ## Active Research Universe
 
 | Symbol | Name | Kind | Bars start | Bars end | 1m partitions | 1m rows | Research events |
 |---|---|---|---|---|---|---|---|
-| `ES.c.0` | E-mini S&P 500 | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,466 | 3,878,198 | 231,181 |
-| `NQ.c.0` | E-mini Nasdaq-100 | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,466 | 3,821,312 | 234,454 |
-| `YM.c.0` | E-mini Dow | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,465 | 3,776,622 | 226,175 |
+| `ES.c.0` | E-mini S&P 500 | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,466 | 3,878,198 | 237,320 |
+| `NQ.c.0` | E-mini Nasdaq-100 | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,466 | 3,821,312 | 240,593 |
+| `YM.c.0` | E-mini Dow | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,465 | 3,776,622 | 232,311 |
 
 ## Warehouse-Only Symbols
 
@@ -54,6 +54,7 @@ These exist on disk but are not yet part of the current research/ML matrices.
 | `volume_profile` | 36,095 | 3 | 5 | 2014-12-28 23:00:00.000000 | 2026-05-08 13:30:00.000000 | 95.2% |
 | `opening_range_breakout` | 34,040 | 3 | 4 | 2015-01-02 00:00:00.000000 | 2026-05-08 14:00:00.000000 | 99.9% |
 | `time_profile` | 19,414 | 3 | 4 | 2014-12-28 23:00:00.000000 | 2026-05-07 22:00:00.000000 | 99.8% |
+| `macro_event_anchor` | 18,414 | 3 | 113 | 2015-01-02 14:59:00.000000 | 2026-05-12 12:29:00.000000 | 99.5% |
 | `psp_candle_divergence` | 15,827 | 3 | 3 | 2015-01-02 00:00:00.000000 | 2026-05-07 20:00:00.000000 | 99.2% |
 | `first_third_range` | 10,373 | 3 | 2 | 2015-01-02 06:38:00.000000 | 2026-05-08 05:39:00.000000 | 99.9% |
 | `opening_gap_levels` | 9,438 | 3 | 2 | 2015-01-04 23:00:00.000000 | 2026-05-07 22:00:00.000000 | 100.0% |
@@ -69,6 +70,7 @@ These exist on disk but are not yet part of the current research/ML matrices.
 | `fvg` | `fvg_formation` | 209,339 | 124 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `fvp` | `forming_volume_profile` | 43,150 | 495 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `itr` | `interval_true_range` | 36,095 | 143 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
+| `macro` | `macro_event_anchor` | 18,414 | 276 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `ob` | `order_block` | 46,331 | 297 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `ogap` | `opening_gap_levels` | 9,438 | 210 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `orb` | `opening_range_breakout` | 34,040 | 99 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
