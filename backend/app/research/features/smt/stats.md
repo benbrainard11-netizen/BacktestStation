@@ -1,6 +1,6 @@
 # SMT - HTF Reference Divergence - Current Stats
 
-_Generated `2026-05-12T02:13:04+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:31:38+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -24,6 +24,12 @@ One index takes a higher-timeframe reference high/low while peers do not.
 | `previous_day_smt` | 2,360 | 81.6% |
 | `weekly_smt` | 531 | 18.4% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v2` | 2,891 | 100.0% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -44,12 +50,12 @@ One index takes a higher-timeframe reference high/low while peers do not.
 | Metric | Value |
 |---|---|
 | Rows | 2,891 |
-| Columns | 118 |
+| Columns | 121 |
 | ed.* event_data | 44 |
 | oc.* outcome labels | 49 |
 | ctx.* context | 5 |
-| xd.* cross-detector | 11 |
-| numeric | 82 |
+| xd.* cross-detector | 14 |
+| numeric | 85 |
 | object/category | 35 |
 
 ## Primary Labels

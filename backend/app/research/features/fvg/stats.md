@@ -1,6 +1,6 @@
 # FVG Formation - Current Stats
 
-_Generated `2026-05-12T02:13:35+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:31:53+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -26,6 +26,13 @@ Fair-value-gap formation and later mitigation behavior.
 | `4h_fvg` | 11,883 | 5.7% |
 | `daily_fvg` | 2,788 | 1.3% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v2` | 209,098 | 99.9% |
+| `(missing)` | 241 | 0.1% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -46,12 +53,12 @@ Fair-value-gap formation and later mitigation behavior.
 | Metric | Value |
 |---|---|
 | Rows | 209,339 |
-| Columns | 121 |
+| Columns | 124 |
 | ed.* event_data | 23 |
 | oc.* outcome labels | 75 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 11 |
-| numeric | 106 |
+| xd.* cross-detector | 14 |
+| numeric | 109 |
 | object/category | 14 |
 
 ## Primary Labels

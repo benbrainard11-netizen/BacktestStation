@@ -10,10 +10,17 @@ import pandas as pd
 
 from app.db.models import ResearchEvent
 from app.research.outcomes import BarReader, register
+from app.research.outcomes.reaction_labels import (
+    add_first_bar_reaction,
+    add_range_reaction,
+    add_reference_price_reaction,
+    bar_window_summary,
+)
 from app.research.outcomes.volume_profile_reactions import HOLD_BARS
 
 UTC = timezone.utc
 log = logging.getLogger(__name__)
+OUTCOME_VERSION = "v2"
 
 WINDOWS_MIN: dict[str, int] = {
     "next_60m": 60,
@@ -27,7 +34,7 @@ MAX_HORIZON_MIN = max(WINDOWS_MIN.values())
 
 class OpeningGapReactionsComputer:
     feature_name: str = "opening_gap_levels"
-    outcome_version: str = "v1"
+    outcome_version: str = OUTCOME_VERSION
 
     def compute(
         self,
@@ -70,6 +77,7 @@ class OpeningGapReactionsComputer:
             gap_mid=gap_mid,
             reference_price=current_open,
             direction=direction,
+            outcome_version=self.outcome_version,
         )
 
 
@@ -82,10 +90,11 @@ def build_gap_outcome(
     gap_mid: float,
     reference_price: float,
     direction: str,
+    outcome_version: str = OUTCOME_VERSION,
 ) -> dict[str, Any]:
     outcomes: dict[str, Any] = {
         "schema_version": 1,
-        "outcome_version": "v1",
+        "outcome_version": outcome_version,
         "reference_price": reference_price,
         "max_horizon_minutes": MAX_HORIZON_MIN,
     }
@@ -130,9 +139,16 @@ def gap_window_reaction(
     if bars.empty:
         return None
 
+    summary = bar_window_summary(bars, window_start=window_start, window_end=window_end)
+    if summary is None:
+        return None
+
     highs = bars["high"].astype(float)
     lows = bars["low"].astype(float)
     closes = bars["close"].astype(float)
+    high = float(highs.max())
+    low = float(lows.min())
+    close = float(closes.iloc[-1])
     overlap = (highs >= gap_low) & (lows <= gap_high)
     midpoint = (highs >= gap_mid) & (lows <= gap_mid)
     full_fill = lows <= gap_low if direction == "gap_up" else highs >= gap_high
@@ -172,16 +188,19 @@ def gap_window_reaction(
     accepted_above = _has_consecutive_closes(closes, gap_high, side="above", n=HOLD_BARS)
     accepted_below = _has_consecutive_closes(closes, gap_low, side="below", n=HOLD_BARS)
 
-    return {
-        "window_start_utc": window_start.isoformat(),
-        "window_end_utc": window_end.isoformat(),
-        "n_bars": int(len(bars)),
-        "forward_high": float(highs.max()),
-        "forward_low": float(lows.min()),
-        "forward_close": float(closes.iloc[-1]),
+    out: dict[str, Any] = {
+        **summary,
+        "forward_high": high,
+        "forward_low": low,
+        "forward_close": close,
+        "gap_high": float(gap_high),
+        "gap_low": float(gap_low),
+        "gap_mid": float(gap_mid),
+        "gap_range_pts": float(gap_high - gap_low),
         "touched_gap": bool(overlap.any()),
         "touched_midpoint": bool(midpoint.any()),
         "fully_filled": bool(full_fill.any()),
+        "unfilled_at_window_end": not bool(full_fill.any()),
         "closed_inside": bool(closed_inside.any()),
         "closed_through": bool(closed_through.any()),
         "accepted_above_3bar": accepted_above,
@@ -201,6 +220,30 @@ def gap_window_reaction(
         "first_close_inside_ts_utc": _ts_at(bars, first_inside_pos),
         "first_close_through_ts_utc": _ts_at(bars, first_through_pos),
     }
+    add_reference_price_reaction(
+        out,
+        high=high,
+        low=low,
+        close=close,
+        reference_price=reference_price,
+    )
+    add_first_bar_reaction(
+        out,
+        first_close=float(closes.iloc[0]),
+        final_close=close,
+        reference_price=reference_price,
+    )
+    add_range_reaction(
+        out,
+        high=high,
+        low=low,
+        close=close,
+        range_pts=float(high - low),
+        anchor_high=gap_high,
+        anchor_low=gap_low,
+        prefix="gap",
+    )
+    return out
 
 
 def _first_pos(mask: pd.Series) -> int | None:
@@ -268,4 +311,4 @@ def _to_utc(value: datetime) -> datetime:
     return value.astimezone(UTC)
 
 
-register("opening_gap_reactions_v1", OpeningGapReactionsComputer())
+register("opening_gap_reactions_v2", OpeningGapReactionsComputer())

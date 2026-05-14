@@ -1,6 +1,6 @@
 # Time Profile - Current Stats
 
-_Generated `2026-05-12T02:14:23+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:32:19+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -26,6 +26,13 @@ Parent-period shape and next-period high/low/thesis outcomes.
 | `weekly` | 1,749 | 9.0% |
 | `monthly` | 405 | 2.1% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 19,381 | 99.8% |
+| `(missing)` | 33 | 0.2% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -47,12 +54,12 @@ Parent-period shape and next-period high/low/thesis outcomes.
 | Metric | Value |
 |---|---|
 | Rows | 19,414 |
-| Columns | 81 |
+| Columns | 84 |
 | ed.* event_data | 26 |
 | oc.* outcome labels | 32 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 11 |
-| numeric | 58 |
+| xd.* cross-detector | 14 |
+| numeric | 61 |
 | object/category | 22 |
 
 ## Primary Labels

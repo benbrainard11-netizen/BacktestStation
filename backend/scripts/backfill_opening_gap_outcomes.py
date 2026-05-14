@@ -24,12 +24,12 @@ from app.db.models import ResearchEvent  # noqa: E402
 from app.db.session import create_all, make_engine, make_session_factory  # noqa: E402
 from app.research.outcomes.opening_gap_reactions import (  # noqa: E402
     MAX_HORIZON_MIN,
+    OUTCOME_VERSION,
     build_gap_outcome,
 )
 
 UTC = timezone.utc
 FEATURE_NAME = "opening_gap_levels"
-OUTCOME_VERSION = "v1"
 log = logging.getLogger("backfill_opening_gap_outcomes")
 
 
@@ -110,6 +110,7 @@ def _build_for_event(event: ResearchEvent, bars: pd.DataFrame) -> dict[str, Any]
         gap_mid=gap_mid,
         reference_price=current_open,
         direction=direction,
+        outcome_version=OUTCOME_VERSION,
     )
 
 

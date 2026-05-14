@@ -1,6 +1,6 @@
 # Displacement Candle - Current Stats
 
-_Generated `2026-05-12T02:13:47+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:31:58+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -25,6 +25,12 @@ Large directional candles and later retracement/invalidation behavior.
 | `4h_disp` | 7,471 | 19.3% |
 | `daily_disp` | 1,612 | 4.2% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 38,747 | 100.0% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -45,12 +51,12 @@ Large directional candles and later retracement/invalidation behavior.
 | Metric | Value |
 |---|---|
 | Rows | 38,747 |
-| Columns | 88 |
+| Columns | 91 |
 | ed.* event_data | 20 |
 | oc.* outcome labels | 45 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 11 |
-| numeric | 77 |
+| xd.* cross-detector | 14 |
+| numeric | 80 |
 | object/category | 10 |
 
 ## Primary Labels

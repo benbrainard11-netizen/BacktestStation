@@ -1,6 +1,6 @@
 # Scheduled Macro Events - Current Stats
 
-_Generated `2026-05-14T02:02:56+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:32:38+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -33,6 +33,13 @@ Scheduled economic-calendar release anchors and post-release reaction labels.
 | `pre_non_farm_employment_change` | 363 | 2.0% |
 | `pre_core_cpi_m_m` | 363 | 2.0% |
 | `pre_average_hourly_earnings_m_m` | 363 | 2.0% |
+
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v2` | 18,330 | 99.5% |
+| `(missing)` | 84 | 0.5% |
 
 ### By Symbol
 

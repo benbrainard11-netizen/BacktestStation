@@ -1,6 +1,6 @@
 # Opening Gap Age Decay
 
-_Generated `2026-05-13T05:36:33.742541+00:00`._
+_Generated `2026-05-14T04:23:13.767778+00:00`._
 
 - Source: `C:\Users\benbr\BacktestStation\data\ml\features\ogap.parquet`
 - Gap types: `ndog`, `nwog`

@@ -1,6 +1,6 @@
 # First-Third Range - Current Stats
 
-_Generated `2026-05-12T02:14:19+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:32:16+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -24,6 +24,13 @@ First-third parent-period range and later break/extension behavior.
 | `first_third_daily` | 8,630 | 83.2% |
 | `first_third_weekly` | 1,743 | 16.8% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 10,364 | 99.9% |
+| `(missing)` | 9 | 0.1% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -45,12 +52,12 @@ First-third parent-period range and later break/extension behavior.
 | Metric | Value |
 |---|---|
 | Rows | 10,373 |
-| Columns | 94 |
+| Columns | 97 |
 | ed.* event_data | 20 |
 | oc.* outcome labels | 52 |
 | ctx.* context | 2 |
-| xd.* cross-detector | 11 |
-| numeric | 66 |
+| xd.* cross-detector | 14 |
+| numeric | 69 |
 | object/category | 27 |
 
 ## Primary Labels

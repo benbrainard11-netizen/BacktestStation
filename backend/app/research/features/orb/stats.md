@@ -1,6 +1,6 @@
 # Opening Range Breakout - Current Stats
 
-_Generated `2026-05-12T02:14:22+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:32:18+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -26,6 +26,13 @@ Session opening ranges and later one-sided/two-sided breaks.
 | `ny_30m` | 8,474 | 24.9% |
 | `ny_15m` | 8,474 | 24.9% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 34,021 | 99.9% |
+| `(missing)` | 19 | 0.1% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -47,12 +54,12 @@ Session opening ranges and later one-sided/two-sided breaks.
 | Metric | Value |
 |---|---|
 | Rows | 34,040 |
-| Columns | 96 |
+| Columns | 99 |
 | ed.* event_data | 21 |
 | oc.* outcome labels | 53 |
 | ctx.* context | 2 |
-| xd.* cross-detector | 11 |
-| numeric | 69 |
+| xd.* cross-detector | 14 |
+| numeric | 72 |
 | object/category | 26 |
 
 ## Primary Labels

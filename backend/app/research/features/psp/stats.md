@@ -1,6 +1,6 @@
 # PSP Candle Divergence - Current Stats
 
-_Generated `2026-05-12T02:14:04+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:32:08+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -25,6 +25,13 @@ Paired-symbol candle divergence and majority reaction behavior.
 | `4h_psp` | 3,373 | 21.3% |
 | `daily_psp` | 813 | 5.1% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 15,694 | 99.2% |
+| `(missing)` | 133 | 0.8% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -45,12 +52,12 @@ Paired-symbol candle divergence and majority reaction behavior.
 | Metric | Value |
 |---|---|
 | Rows | 15,827 |
-| Columns | 85 |
+| Columns | 88 |
 | ed.* event_data | 26 |
 | oc.* outcome labels | 36 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 11 |
-| numeric | 63 |
+| xd.* cross-detector | 14 |
+| numeric | 66 |
 | object/category | 21 |
 
 ## Primary Labels

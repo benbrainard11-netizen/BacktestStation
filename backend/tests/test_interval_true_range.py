@@ -121,7 +121,7 @@ def test_itr_outcome_labels_next_interval(session_factory: sessionmaker[Session]
             mode="daily_itr",
         )
         result = run_outcomes(
-            computer=get_outcome("interval_true_range_reactions_v1"),
+            computer=get_outcome("interval_true_range_reactions_v2"),
             bar_reader=reader,
             db=db,
             force=True,
@@ -134,9 +134,14 @@ def test_itr_outcome_labels_next_interval(session_factory: sessionmaker[Session]
     assert result.n_errors == 0, result.error_messages
     assert result.n_updated >= 1
     assert row is not None
+    assert row.outcomes["outcome_version"] == "v2"
     assert row.outcomes["next_interval"]["took_interval_high"] is True
     assert row.outcomes["next_interval"]["took_interval_low"] is True
     assert row.outcomes["next_interval"]["swept_both_sides"] is True
+    assert row.outcomes["next_interval"]["swept_both_interval_sides"] is True
+    assert row.outcomes["next_interval"]["closed_above_interval_high"] is True
+    assert row.outcomes["next_interval"]["swept_both_interval_closed_above"] is True
+    assert row.outcomes["next_interval"]["range_expanded_1x_interval"] is True
 
 
 def test_session_itr_detector_and_registration(session_factory: sessionmaker[Session]):

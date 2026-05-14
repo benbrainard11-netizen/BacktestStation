@@ -117,7 +117,7 @@ def test_opening_gap_outcome_finds_fill(session_factory: sessionmaker[Session]):
             mode="ndog",
         )
         result = run_outcomes(
-            computer=get_outcome("opening_gap_reactions_v1"),
+            computer=get_outcome("opening_gap_reactions_v2"),
             bar_reader=reader,
             db=db,
             force=True,
@@ -128,9 +128,15 @@ def test_opening_gap_outcome_finds_fill(session_factory: sessionmaker[Session]):
     assert result.n_errors == 0, result.error_messages
     assert result.n_updated == 1
     assert row is not None
+    assert row.outcomes["outcome_version"] == "v2"
     assert row.outcomes["next_240m"]["touched_gap"] is True
     assert row.outcomes["next_240m"]["touched_midpoint"] is True
     assert row.outcomes["next_240m"]["fully_filled"] is True
+    assert row.outcomes["next_240m"]["took_gap_high"] is True
+    assert row.outcomes["next_240m"]["took_gap_low"] is True
+    assert row.outcomes["next_240m"]["swept_both_gap_sides"] is True
+    assert row.outcomes["next_240m"]["closed_below_gap_low"] is True
+    assert row.outcomes["next_240m"]["range_expanded_1x_gap"] is True
 
 
 def test_opening_gap_detector_is_registered():

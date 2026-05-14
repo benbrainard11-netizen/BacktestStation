@@ -48,6 +48,7 @@ The `next_interval` labels include:
 - Closed above, below, or inside the anchor range.
 - Outside continuation up/down.
 - Swept both sides.
+- Universal v2 reactions: one-sided takes, held-above/held-below, rejected-back-inside, swept-both-and-closed-location, first-bar impulse, and first-move reversal.
 - First-touch timing for high, low, and midpoint.
 - Same-direction or opposite-direction close.
 
@@ -63,9 +64,9 @@ Typical sequence:
 
 ```powershell
 python -m app.cli.scan_research_events --detector interval_true_range --mode daily_itr --symbols NQ.c.0 ES.c.0 YM.c.0 --start 2015-01-01 --end 2026-05-08
-python scripts/backfill_interval_true_range_outcomes.py
-python scripts/ml/build_feature_matrix.py
-python scripts/ml/build_generic_anchor_snapshots.py --anchors itr
-python scripts/ml/build_cross_concept_context.py --matrix C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots.parquet --schema C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots.schema.json --output C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.parquet --schema-output C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.schema.json --context-output C:\Users\benbr\BacktestStation\data\ml\context\itr_cross_concept_context.parquet --exclude-anchor-short itr
-python scripts/ml/audit_snapshot_matrix.py --matrix C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.parquet --schema C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.schema.json --doc C:\Users\benbr\BacktestStation\docs\ML_SNAPSHOT_AUDIT_ITR_XCTX.md
+python backend/scripts/backfill_interval_true_range_outcomes.py --force
+python backend/scripts/ml/build_feature_matrix.py --detectors interval_true_range
+python backend/scripts/ml/build_generic_anchor_snapshots.py --anchors itr
+python backend/scripts/ml/build_cross_concept_context.py --matrix C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots.parquet --schema C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots.schema.json --output C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.parquet --schema-output C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.schema.json --context-output C:\Users\benbr\BacktestStation\data\ml\context\itr_cross_concept_context.parquet --exclude-anchor-short itr
+python backend/scripts/ml/audit_snapshot_matrix.py --matrix C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.parquet --schema C:\Users\benbr\BacktestStation\data\ml\anchors\itr_snapshots_xctx.schema.json --doc C:\Users\benbr\BacktestStation\docs\ML_SNAPSHOT_AUDIT_ITR_XCTX.md
 ```

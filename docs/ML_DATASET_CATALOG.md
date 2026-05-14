@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-14T02:06:29.931338+00:00`._
+_Generated `2026-05-14T04:30:36.076086+00:00`._
 
 ## Summary
 
@@ -32,14 +32,14 @@ _Generated `2026-05-14T02:06:29.931338+00:00`._
 | ob | order_block | 46,331 | 297 | 38 | 230 | 14 | 14 | 100.0% | 2015-01-05 | 2026-05-08 |
 | fvp | forming_volume_profile | 43,150 | 495 | 47 | 422 | 367 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
 | disp | displacement_candle | 38,747 | 91 | 20 | 45 | 6 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
-| itr | interval_true_range | 36,095 | 143 | 78 | 38 | 14 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
+| itr | interval_true_range | 36,095 | 172 | 78 | 66 | 35 | 15 | 100.0% | 2015-01-02 | 2026-05-08 |
 | vp | volume_profile | 36,095 | 212 | 42 | 144 | 126 | 14 | 100.0% | 2014-12-28 | 2026-05-08 |
 | orb | opening_range_breakout | 34,040 | 99 | 21 | 53 | 16 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
 | tp | time_profile | 19,414 | 84 | 26 | 32 | 7 | 14 | 100.0% | 2014-12-28 | 2026-05-07 |
 | macro | macro_event_anchor | 18,414 | 468 | 50 | 389 | 260 | 15 | 100.0% | 2015-01-02 | 2026-05-12 |
 | psp | psp_candle_divergence | 15,827 | 88 | 26 | 36 | 2 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
 | ft | first_third_range | 10,373 | 97 | 20 | 52 | 15 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
-| ogap | opening_gap_levels | 9,438 | 210 | 18 | 166 | 73 | 14 | 100.0% | 2015-01-04 | 2026-05-07 |
+| ogap | opening_gap_levels | 9,438 | 487 | 18 | 442 | 229 | 15 | 100.0% | 2015-01-04 | 2026-05-07 |
 | smt | smt_htf_reference_divergence | 2,891 | 121 | 44 | 49 | 11 | 14 | 100.0% | 2015-01-08 | 2026-05-05 |
 
 ## Anchor / Model Artifacts
@@ -102,15 +102,15 @@ _Generated `2026-05-14T02:06:29.931338+00:00`._
 | fvg_walk_forward_xctx_top5_summary.parquet | parquet | 5 | 18 | - | - |
 | itr_mode_label_leaderboard.csv | csv | 65 | 7 | - | - |
 | itr_mode_leaderboard_summary.csv | csv | 5 | 8 | - | - |
-| itr_snapshot_leaderboard_xctx.csv | csv | 78 | 30 | - | {"ok": 39, "skip_non_binary": 39} |
-| itr_snapshot_leaderboard_xctx.parquet | parquet | 78 | 30 | - | {"ok": 39, "skip_non_binary": 39} |
-| itr_snapshot_walk_forward_folds_xctx.csv | csv | 48 | 33 | - | {"ok": 48} |
-| itr_snapshot_walk_forward_folds_xctx.parquet | parquet | 48 | 33 | - | {"ok": 48} |
-| itr_snapshot_walk_forward_summary_xctx.csv | csv | 8 | 18 | - | - |
-| itr_snapshot_walk_forward_summary_xctx.parquet | parquet | 8 | 18 | - | - |
-| itr_snapshots.parquet | parquet | 36,095 | 149 | at_fire | - |
+| itr_snapshot_leaderboard_xctx.csv | csv | 42 | 30 | - | {"ok": 42} |
+| itr_snapshot_leaderboard_xctx.parquet | parquet | 42 | 30 | - | {"ok": 42} |
+| itr_snapshot_walk_forward_folds_xctx.csv | csv | 72 | 33 | - | {"ok": 72} |
+| itr_snapshot_walk_forward_folds_xctx.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| itr_snapshot_walk_forward_summary_xctx.csv | csv | 12 | 18 | - | - |
+| itr_snapshot_walk_forward_summary_xctx.parquet | parquet | 12 | 18 | - | - |
+| itr_snapshots.parquet | parquet | 36,095 | 174 | at_fire | - |
 | itr_snapshots.schema.json | json | 36,095 | - | at_fire | - |
-| itr_snapshots_xctx.parquet | parquet | 36,095 | 897 | at_fire | - |
+| itr_snapshots_xctx.parquet | parquet | 36,095 | 970 | at_fire | - |
 | itr_snapshots_xctx.schema.json | json | 36,095 | - | at_fire | - |
 | macro_event_snapshots.parquet | parquet | 18,414 | 454 | at_fire | - |
 | macro_event_snapshots.schema.json | json | 18,414 | - | at_fire | - |
@@ -139,13 +139,13 @@ _Generated `2026-05-14T02:06:29.931338+00:00`._
 | ob_snapshots_xctx.parquet | parquet | 46,331 | 888 | at_fire | - |
 | ob_snapshots_xctx.schema.json | json | 46,331 | - | at_fire | - |
 | opening_gap_age_decay.csv | csv | 21 | 33 | - | - |
-| opening_gap_snapshot_leaderboard_xctx_gapctx.csv | csv | 60 | 30 | - | {"ok": 52, "skip_train_imbalance": 8} |
-| opening_gap_snapshot_leaderboard_xctx_gapctx.parquet | parquet | 60 | 30 | - | {"ok": 52, "skip_train_imbalance": 8} |
-| opening_gap_snapshots.parquet | parquet | 9,438 | 173 | at_fire | - |
+| opening_gap_snapshot_leaderboard_xctx_gapctx.csv | csv | 45 | 30 | - | {"ok": 45} |
+| opening_gap_snapshot_leaderboard_xctx_gapctx.parquet | parquet | 45 | 30 | - | {"ok": 45} |
+| opening_gap_snapshots.parquet | parquet | 9,438 | 449 | at_fire | - |
 | opening_gap_snapshots.schema.json | json | 9,438 | - | at_fire | - |
-| opening_gap_snapshots_xctx.parquet | parquet | 9,438 | 873 | at_fire | - |
+| opening_gap_snapshots_xctx.parquet | parquet | 9,438 | 1,257 | at_fire | - |
 | opening_gap_snapshots_xctx.schema.json | json | 9,438 | - | at_fire | - |
-| opening_gap_snapshots_xctx_gapctx.parquet | parquet | 9,438 | 1,071 | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx.parquet | parquet | 9,438 | 1,455 | at_fire | - |
 | opening_gap_snapshots_xctx_gapctx.schema.json | json | 9,438 | - | at_fire | - |
 | opening_gap_walk_forward_xctx_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |

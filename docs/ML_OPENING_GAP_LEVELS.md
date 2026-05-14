@@ -62,14 +62,16 @@ Interpretation: daily gaps fill quickly much more often than weekly gaps. Weekly
 
 ## Best Current Signals
 
-The strongest opening-gap models are not basic fill labels. They are reaction labels around the gap as support/resistance.
+Outcome `v2` adds universal gap-zone reaction labels. The strongest stable result is still fill/unfilled prediction, especially within 4 hours.
 
-- Best fixed split: all-gap `next_60m.resistance_rejection_3bar`, AUC 0.933, top-decile rate 87.6%.
-- Best walk-forward: same label, mean AUC 0.947, min yearly AUC 0.926, mean top-decile rate 91.0%.
-- Fill labels are useful but less interesting because many gaps fill at high base rates.
+- Best fixed split: gap-up `next_240m.unfilled_at_window_end`, AUC 0.850, top-decile unfilled rate 90.4%.
+- Best walk-forward: all-gap `next_240m.fully_filled`, mean AUC 0.834, min yearly AUC 0.805, mean top-decile fill rate 97.1%.
+- Support/resistance rejection labels are useful but weaker: 60m high/low rejected-inside labels screen around AUC 0.64-0.68.
+- Gap size is the dominant feature. Larger gaps are much easier for the model to separate from quick-fill gaps.
 
 ## Caveats
 
 - `touched_gap` is not a useful label because the event starts at the gap boundary and touch coverage is 100%.
-- The best rejection labels are very strong and should keep getting audited as new context/features are added.
+- Fill/unfilled labels have high base rates, so judge them by walk-forward AUC and top-decile lift, not accuracy alone.
+- Rejection labels have lower base rates and need more context before they should be treated as strong standalone targets.
 - This is research data, not entry/exit logic.

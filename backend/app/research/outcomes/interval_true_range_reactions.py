@@ -10,9 +10,14 @@ import pandas as pd
 
 from app.db.models import ResearchEvent
 from app.research.outcomes import BarReader, register
+from app.research.outcomes.reaction_labels import (
+    add_first_bar_reaction,
+    add_range_reaction,
+    add_reference_price_reaction,
+)
 
 UTC = timezone.utc
-OUTCOME_VERSION = "v1"
+OUTCOME_VERSION = "v2"
 log = logging.getLogger(__name__)
 
 
@@ -83,6 +88,7 @@ def build_interval_true_range_outcome(
     next_high = float(window["high"].max())
     next_low = float(window["low"].min())
     next_close = float(window["close"].iloc[-1])
+    first_close = float(window["close"].iloc[0])
     next_range = next_high - next_low
     next_body = abs(next_close - next_open)
     next_direction = (
@@ -161,6 +167,30 @@ def build_interval_true_range_outcome(
             and interval_direction in ("bullish", "bearish")
         ),
     }
+    add_reference_price_reaction(
+        next_interval,
+        high=next_high,
+        low=next_low,
+        close=next_close,
+        reference_price=interval_close,
+        direction_key="close_direction_from_reference",
+    )
+    add_first_bar_reaction(
+        next_interval,
+        first_close=first_close,
+        final_close=next_close,
+        reference_price=interval_close,
+    )
+    add_range_reaction(
+        next_interval,
+        high=next_high,
+        low=next_low,
+        close=next_close,
+        range_pts=float(next_range),
+        anchor_high=interval_high,
+        anchor_low=interval_low,
+        prefix="interval",
+    )
     return {
         "schema_version": 1,
         "outcome_version": outcome_version,
@@ -240,4 +270,4 @@ def _safe_ratio(num: float, den: float | None) -> float | None:
     return float(num / den)
 
 
-register("interval_true_range_reactions_v1", IntervalTrueRangeReactionsComputer())
+register("interval_true_range_reactions_v2", IntervalTrueRangeReactionsComputer())

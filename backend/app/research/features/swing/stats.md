@@ -1,6 +1,6 @@
 # Swing Pivot - Current Stats
 
-_Generated `2026-05-12T02:14:14+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:32:12+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -27,6 +27,13 @@ Confirmed swing highs/lows used as liquidity-map levels.
 | `pivot_5_4h` | 6,585 | 8.6% |
 | `pivot_5_daily` | 1,166 | 1.5% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 76,779 | 100.0% |
+| `(missing)` | 7 | 0.0% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -47,12 +54,12 @@ Confirmed swing highs/lows used as liquidity-map levels.
 | Metric | Value |
 |---|---|
 | Rows | 76,786 |
-| Columns | 70 |
+| Columns | 73 |
 | ed.* event_data | 14 |
 | oc.* outcome labels | 33 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 11 |
-| numeric | 58 |
+| xd.* cross-detector | 14 |
+| numeric | 61 |
 | object/category | 11 |
 
 ## Primary Labels

@@ -184,6 +184,24 @@ FEATURES: dict[str, FeatureDashboard] = {
         ),
         leaderboard_files=("vp_snapshot_leaderboard.parquet",),
     ),
+    "ogap": FeatureDashboard(
+        short_name="ogap",
+        feature_name="opening_gap_levels",
+        title="Opening Gap Levels",
+        description="NDOG/NWOG gap zones, fill state, and support/resistance reaction behavior.",
+        primary_labels=(
+            "oc.next_60m.fully_filled",
+            "oc.next_240m.fully_filled",
+            "oc.next_1d.fully_filled",
+            "oc.next_60m.unfilled_at_window_end",
+            "oc.next_240m.unfilled_at_window_end",
+            "oc.next_240m.closed_inside_gap_range",
+            "oc.next_60m.took_gap_high_rejected_inside",
+            "oc.next_60m.took_gap_low_rejected_inside",
+        ),
+        leaderboard_files=("opening_gap_snapshot_leaderboard_xctx_gapctx.parquet",),
+        model_summary_doc="docs/ML_SNAPSHOT_LEADERBOARD_OPENING_GAP_XCTX_GAPCTX.md",
+    ),
     "itr": FeatureDashboard(
         short_name="itr",
         feature_name="interval_true_range",
@@ -192,10 +210,15 @@ FEATURES: dict[str, FeatureDashboard] = {
         primary_labels=(
             "oc.next_interval.compressed_range_0_75x",
             "oc.next_interval.expanded_range_1_25x",
+            "oc.next_interval.range_expanded_1x_interval",
+            "oc.next_interval.range_expanded_2x_interval",
             "oc.next_interval.touched_interval_mid",
             "oc.next_interval.took_interval_high",
             "oc.next_interval.took_interval_low",
             "oc.next_interval.swept_both_sides",
+            "oc.next_interval.took_interval_high_rejected_inside",
+            "oc.next_interval.took_interval_low_rejected_inside",
+            "oc.next_interval.closed_inside_interval_range",
         ),
         leaderboard_files=("itr_snapshot_leaderboard_xctx.parquet",),
         model_summary_doc="docs/ML_SNAPSHOT_LEADERBOARD_ITR_XCTX.md",
@@ -230,6 +253,7 @@ NON_TARGET_OUTCOME_COLUMNS = {
     "oc.outcome_version",
     "oc.thesis_direction",
     "oc.reference_close",
+    "oc.reference_price",
     "oc.manipulation_close",
     "oc.ref_price",
     "oc.ref_side",
@@ -237,6 +261,10 @@ NON_TARGET_OUTCOME_COLUMNS = {
     "oc.fvg_low",
     "oc.fvg_mid",
     "oc.fvg_width_pts",
+    "oc.interval_high",
+    "oc.interval_low",
+    "oc.interval_mid",
+    "oc.interval_range_pts",
 }
 NON_TARGET_OUTCOME_PREFIXES = (
     "oc.displacement_levels.",
@@ -325,6 +353,7 @@ def _sqlite_feature_stats(feature_name: str) -> dict[str, pd.DataFrame | int | N
         return {
             "summary": None,
             "by_event_type": pd.DataFrame(),
+            "by_outcome_version": pd.DataFrame(),
             "by_symbol": pd.DataFrame(),
             "by_side": pd.DataFrame(),
         }
@@ -349,6 +378,19 @@ def _sqlite_feature_stats(feature_name: str) -> dict[str, pd.DataFrame | int | N
             FROM research_events
             WHERE feature_name = ?
             GROUP BY event_type
+            ORDER BY rows DESC
+            """,
+            con,
+            params=(feature_name,),
+        )
+        by_outcome_version = pd.read_sql_query(
+            """
+            SELECT
+                COALESCE(json_extract(outcomes, '$.outcome_version'), '(missing)') AS outcome_version,
+                COUNT(*) AS rows
+            FROM research_events
+            WHERE feature_name = ?
+            GROUP BY COALESCE(json_extract(outcomes, '$.outcome_version'), '(missing)')
             ORDER BY rows DESC
             """,
             con,
@@ -379,6 +421,7 @@ def _sqlite_feature_stats(feature_name: str) -> dict[str, pd.DataFrame | int | N
     return {
         "summary": summary,
         "by_event_type": by_event_type,
+        "by_outcome_version": by_outcome_version,
         "by_symbol": by_symbol,
         "by_side": by_side,
     }
@@ -524,6 +567,9 @@ def _leaderboard_rows(config: FeatureDashboard) -> list[dict[str, Any]]:
         for suffix in (
             "_snapshot_leaderboard.parquet",
             "_snapshot_leaderboard_xctx.parquet",
+            "_snapshot_leaderboard_xctx_gapctx.parquet",
+            "_snapshot_leaderboard_v2_xctx.parquet",
+            "_snapshot_leaderboard_gapctx.parquet",
         ):
             source = source.replace(suffix, "")
         ok["_source"] = source
@@ -595,6 +641,7 @@ def _render_feature_stats(config: FeatureDashboard, df: pd.DataFrame) -> tuple[s
     coverage = outcomes / event_rows if event_rows else None
 
     by_event_type = db["by_event_type"]
+    by_outcome_version = db["by_outcome_version"]
     by_symbol = db["by_symbol"]
     by_side = db["by_side"]
     counts = _column_counts(df)
@@ -644,6 +691,10 @@ def _render_feature_stats(config: FeatureDashboard, df: pd.DataFrame) -> tuple[s
         "### By Event Type",
         "",
         _count_table(by_event_type, "event_type", "Event type"),
+        "",
+        "### By Outcome Version",
+        "",
+        _count_table(by_outcome_version, "outcome_version", "Outcome version"),
         "",
         "### By Symbol",
         "",

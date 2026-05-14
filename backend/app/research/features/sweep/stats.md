@@ -1,6 +1,6 @@
 # Liquidity Sweep - Current Stats
 
-_Generated `2026-05-12T02:13:43+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:31:57+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -34,6 +34,13 @@ Reference high/low sweeps and later recovery/confirmation behavior.
 | `pwh_daily` | 1,112 | 2.1% |
 | `pwh_4h` | 1,112 | 2.1% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 52,940 | 100.0% |
+| `(missing)` | 6 | 0.0% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -54,12 +61,12 @@ Reference high/low sweeps and later recovery/confirmation behavior.
 | Metric | Value |
 |---|---|
 | Rows | 52,946 |
-| Columns | 83 |
+| Columns | 86 |
 | ed.* event_data | 20 |
 | oc.* outcome labels | 37 |
 | ctx.* context | 6 |
-| xd.* cross-detector | 11 |
-| numeric | 56 |
+| xd.* cross-detector | 14 |
+| numeric | 59 |
 | object/category | 26 |
 
 ## Primary Labels
@@ -120,14 +127,14 @@ Zero-look-ahead snapshot models. These are safer for ML research than raw detect
 
 | Artifact | Side | Label | test n | base | AUC | top bucket | note |
 |---|---|---|---|---|---|---|---|
-| sweep | low | `label.ob_confirmation.did_confirm` | 4,646 | 96.7% | 0.888 | 100.0% | high base rate |
-| sweep | all | `label.ob_confirmation.did_confirm` | 10,146 | 95.8% | 0.864 | 99.5% | high base rate |
-| sweep | high | `label.ob_confirmation.did_confirm` | 5,500 | 95.1% | 0.839 | 100.0% | high base rate |
+| sweep | low | `label.ob_confirmation.did_confirm` | 4,646 | 96.7% | 0.888 | 100.0% | imbalanced base rate |
+| sweep | all | `label.ob_confirmation.did_confirm` | 10,146 | 95.8% | 0.864 | 99.5% | imbalanced base rate |
+| sweep | high | `label.ob_confirmation.did_confirm` | 5,500 | 95.1% | 0.839 | 100.0% | imbalanced base rate |
 | sweep | low | `label.swept_level_recovery.level_recovered` | 4,646 | 76.5% | 0.797 | 96.8% |  |
 | sweep | high | `label.swept_level_recovery.level_recovered` | 5,500 | 65.3% | 0.794 | 93.5% |  |
 | sweep | all | `label.swept_level_recovery.level_recovered` | 10,146 | 70.5% | 0.790 | 94.4% |  |
-| sweep | high | `label.forward_continuation.continued` | 5,500 | 93.9% | 0.673 | 98.7% | high base rate |
-| sweep | all | `label.forward_continuation.continued` | 10,146 | 91.1% | 0.628 | 96.2% | high base rate |
+| sweep | high | `label.forward_continuation.continued` | 5,500 | 93.9% | 0.673 | 98.7% | imbalanced base rate |
+| sweep | all | `label.forward_continuation.continued` | 10,146 | 91.1% | 0.628 | 96.2% | imbalanced base rate |
 | sweep | low | `label.forward_continuation.continued` | 4,646 | 87.9% | 0.598 | 89.0% |  |
 
 ## Reading

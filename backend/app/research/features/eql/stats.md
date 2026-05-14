@@ -1,6 +1,6 @@
 # Equal Levels - Current Stats
 
-_Generated `2026-05-12T02:14:18+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T04:32:15+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -29,6 +29,12 @@ Clustered equal highs/lows and later take/reversal behavior.
 | `eq_pivot_5_4h_15pts` | 2,504 | 4.1% |
 | `eq_pivot_5_daily_30pts` | 375 | 0.6% |
 
+### By Outcome Version
+
+| Outcome version | Events | Share |
+|---|---|---|
+| `v1` | 60,338 | 100.0% |
+
 ### By Symbol
 
 | Symbol | Events | Share |
@@ -49,12 +55,12 @@ Clustered equal highs/lows and later take/reversal behavior.
 | Metric | Value |
 |---|---|
 | Rows | 60,338 |
-| Columns | 78 |
+| Columns | 81 |
 | ed.* event_data | 13 |
 | oc.* outcome labels | 41 |
 | ctx.* context | 4 |
-| xd.* cross-detector | 11 |
-| numeric | 67 |
+| xd.* cross-detector | 14 |
+| numeric | 70 |
 | object/category | 10 |
 
 ## Primary Labels
