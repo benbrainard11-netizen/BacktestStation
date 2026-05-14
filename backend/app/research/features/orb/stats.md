@@ -1,6 +1,6 @@
 # Opening Range Breakout - Current Stats
 
-_Generated `2026-05-14T04:32:18+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T13:41:20+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 

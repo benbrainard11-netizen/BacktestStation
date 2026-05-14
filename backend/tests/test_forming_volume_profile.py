@@ -127,7 +127,7 @@ def test_forming_vp_outcomes_use_future_from_asof(
             db=db,
             mode="daily_vp_asof_4h",
         )
-        computer = get_outcome("forming_volume_profile_reactions_v1")
+        computer = get_outcome("forming_volume_profile_reactions_v2")
         result = run_outcomes(computer=computer, bar_reader=reader, db=db, force=True)
         db.commit()
         first = db.scalar(
@@ -139,9 +139,12 @@ def test_forming_vp_outcomes_use_future_from_asof(
     assert result.n_errors == 0, result.error_messages
     assert result.n_updated == 5
     assert first is not None
+    assert first.outcomes["outcome_version"] == "v2"
     assert first.outcomes["next_60m"]["forward_high"] == 140.0
     assert first.outcomes["rest_of_day"]["forward_high"] == 1000.0
     assert first.outcomes["next_60m"]["forward_high"] < first.outcomes["rest_of_day"]["forward_high"]
+    assert first.outcomes["next_60m"]["took_profile_so_far_high"] is True
+    assert first.outcomes["next_60m"]["range_expanded_1x_profile_so_far"] is True
 
 
 def test_forming_vp_detector_is_registered():

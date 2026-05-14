@@ -14,6 +14,11 @@ import pandas as pd
 
 from app.db.models import ResearchEvent
 from app.research.outcomes import BarReader, register
+from app.research.outcomes.reaction_labels import (
+    add_first_bar_reaction,
+    add_range_reaction,
+    add_reference_price_reaction,
+)
 from app.research.outcomes.volume_profile_reactions import level_reaction
 
 UTC = timezone.utc
@@ -24,11 +29,12 @@ WINDOWS_MIN: dict[str, int | None] = {
     "next_240m": 240,
     "rest_of_day": None,
 }
+OUTCOME_VERSION = "v2"
 
 
 class FormingVolumeProfileReactionsComputer:
     feature_name: str = "forming_volume_profile"
-    outcome_version: str = "v1"
+    outcome_version: str = OUTCOME_VERSION
 
     def compute(
         self,
@@ -134,6 +140,29 @@ def _window_outcome(
         "took_profile_high_so_far": fwd_high > profile_high,
         "took_profile_low_so_far": fwd_low < profile_low,
     }
+    add_reference_price_reaction(
+        out,
+        high=fwd_high,
+        low=fwd_low,
+        close=fwd_close,
+        reference_price=reference_close,
+    )
+    add_first_bar_reaction(
+        out,
+        first_close=float(bars["close"].astype(float).iloc[0]),
+        final_close=fwd_close,
+        reference_price=reference_close,
+    )
+    add_range_reaction(
+        out,
+        high=fwd_high,
+        low=fwd_low,
+        close=fwd_close,
+        range_pts=float(fwd_high - fwd_low),
+        anchor_high=profile_high,
+        anchor_low=profile_low,
+        prefix="profile_so_far",
+    )
     for key, level in levels.items():
         out[key] = level_reaction(bars, level, reference_close=reference_close)
     return out
@@ -172,4 +201,4 @@ def _to_utc(value: datetime) -> datetime:
     return value.astimezone(UTC)
 
 
-register("forming_volume_profile_reactions_v1", FormingVolumeProfileReactionsComputer())
+register("forming_volume_profile_reactions_v2", FormingVolumeProfileReactionsComputer())

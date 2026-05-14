@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-14T04:30:36.076086+00:00`._
+_Generated `2026-05-14T13:33:58.858204+00:00`._
 
 ## Summary
 
@@ -25,12 +25,12 @@ _Generated `2026-05-14T04:30:36.076086+00:00`._
 
 | short | feature_name | rows | cols | ed | oc | binary_oc | xd | db_outcomes | min | max |
 |---|---|---|---|---|---|---|---|---|---|---|
-| fvg | fvg_formation | 209,339 | 124 | 23 | 75 | 5 | 14 | 100.0% | 2015-01-01 | 2026-05-08 |
+| fvg | fvg_formation | 209,339 | 169 | 23 | 119 | 30 | 15 | 100.0% | 2015-01-01 | 2026-05-08 |
 | swing | swing_pivot | 76,786 | 73 | 14 | 33 | 3 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
 | eql | equal_levels | 60,338 | 81 | 13 | 41 | 4 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
-| sweep | liquidity_sweep | 52,946 | 86 | 20 | 37 | 4 | 14 | 100.0% | 2015-01-04 | 2026-05-08 |
+| sweep | liquidity_sweep | 52,946 | 155 | 20 | 105 | 36 | 15 | 100.0% | 2015-01-04 | 2026-05-08 |
 | ob | order_block | 46,331 | 297 | 38 | 230 | 14 | 14 | 100.0% | 2015-01-05 | 2026-05-08 |
-| fvp | forming_volume_profile | 43,150 | 495 | 47 | 422 | 367 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
+| fvp | forming_volume_profile | 43,150 | 592 | 47 | 518 | 442 | 15 | 100.0% | 2015-01-02 | 2026-05-08 |
 | disp | displacement_candle | 38,747 | 91 | 20 | 45 | 6 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
 | itr | interval_true_range | 36,095 | 172 | 78 | 66 | 35 | 15 | 100.0% | 2015-01-02 | 2026-05-08 |
 | vp | volume_profile | 36,095 | 212 | 42 | 144 | 126 | 14 | 100.0% | 2014-12-28 | 2026-05-08 |
@@ -54,22 +54,22 @@ _Generated `2026-05-14T04:30:36.076086+00:00`._
 | eql_snapshot_leaderboard.parquet | parquet | 9 | 30 | - | {"ok": 9} |
 | eql_snapshots.parquet | parquet | 60,338 | 89 | at_fire | - |
 | eql_snapshots.schema.json | json | 60,338 | - | at_fire | - |
-| forming_vp_snapshot_leaderboard_gapctx.csv | csv | 72 | 30 | - | {"ok": 72} |
-| forming_vp_snapshot_leaderboard_gapctx.parquet | parquet | 72 | 30 | - | {"ok": 72} |
-| forming_vp_snapshot_leaderboard_xctx.csv | csv | 72 | 30 | - | {"ok": 72} |
-| forming_vp_snapshot_leaderboard_xctx.parquet | parquet | 72 | 30 | - | {"ok": 72} |
-| forming_vp_snapshots.parquet | parquet | 43,150 | 493 | at_fire | - |
+| forming_vp_snapshot_leaderboard_gapctx.csv | csv | 56 | 30 | - | {"ok": 54, "skip_train_imbalance": 2} |
+| forming_vp_snapshot_leaderboard_gapctx.parquet | parquet | 56 | 30 | - | {"ok": 54, "skip_train_imbalance": 2} |
+| forming_vp_snapshot_leaderboard_xctx.csv | csv | 56 | 30 | - | {"ok": 54, "skip_train_imbalance": 2} |
+| forming_vp_snapshot_leaderboard_xctx.parquet | parquet | 56 | 30 | - | {"ok": 54, "skip_train_imbalance": 2} |
+| forming_vp_snapshots.parquet | parquet | 43,150 | 592 | at_fire | - |
 | forming_vp_snapshots.schema.json | json | 43,150 | - | at_fire | - |
-| forming_vp_snapshots_xctx.parquet | parquet | 43,150 | 1,133 | at_fire | - |
+| forming_vp_snapshots_xctx.parquet | parquet | 43,150 | 1,388 | at_fire | - |
 | forming_vp_snapshots_xctx.schema.json | json | 43,150 | - | at_fire | - |
-| forming_vp_snapshots_xctx_gapctx.parquet | parquet | 43,150 | 1,331 | at_fire | - |
+| forming_vp_snapshots_xctx_gapctx.parquet | parquet | 43,150 | 1,586 | at_fire | - |
 | forming_vp_snapshots_xctx_gapctx.schema.json | json | 43,150 | - | at_fire | - |
-| forming_vp_walk_forward_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 70, "skip_test_imbalance": 2} |
-| forming_vp_walk_forward_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 70, "skip_test_imbalance": 2} |
+| forming_vp_walk_forward_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
+| forming_vp_walk_forward_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | forming_vp_walk_forward_gapctx_summary.csv | csv | 12 | 18 | - | - |
 | forming_vp_walk_forward_gapctx_summary.parquet | parquet | 12 | 18 | - | - |
-| forming_vp_walk_forward_xctx_folds.csv | csv | 72 | 33 | - | {"ok": 70, "skip_test_imbalance": 2} |
-| forming_vp_walk_forward_xctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 70, "skip_test_imbalance": 2} |
+| forming_vp_walk_forward_xctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
+| forming_vp_walk_forward_xctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | forming_vp_walk_forward_xctx_summary.csv | csv | 12 | 18 | - | - |
 | forming_vp_walk_forward_xctx_summary.parquet | parquet | 12 | 18 | - | - |
 | ft_snapshot_leaderboard.csv | csv | 42 | 30 | - | {"ok": 42} |
@@ -80,18 +80,18 @@ _Generated `2026-05-14T04:30:36.076086+00:00`._
 | fvg_snapshot_leaderboard.parquet | parquet | 15 | 30 | - | {"ok": 15} |
 | fvg_snapshot_leaderboard_xctx.csv | csv | 15 | 30 | - | {"ok": 15} |
 | fvg_snapshot_leaderboard_xctx.parquet | parquet | 15 | 30 | - | {"ok": 15} |
-| fvg_snapshot_leaderboard_xctx_fvggeom.csv | csv | 15 | 30 | - | {"ok": 15} |
-| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | parquet | 15 | 30 | - | {"ok": 15} |
-| fvg_snapshots.parquet | parquet | 209,339 | 124 | at_fire | - |
+| fvg_snapshot_leaderboard_xctx_fvggeom.csv | csv | 42 | 30 | - | {"ok": 41, "skip_test_imbalance": 1} |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | parquet | 42 | 30 | - | {"ok": 41, "skip_test_imbalance": 1} |
+| fvg_snapshots.parquet | parquet | 209,339 | 170 | at_fire | - |
 | fvg_snapshots.schema.json | json | 209,339 | - | at_fire | - |
-| fvg_snapshots_xctx.parquet | parquet | 209,339 | 884 | at_fire | - |
+| fvg_snapshots_xctx.parquet | parquet | 209,339 | 978 | at_fire | - |
 | fvg_snapshots_xctx.schema.json | json | 209,339 | - | at_fire | - |
-| fvg_snapshots_xctx_fvggeom.parquet | parquet | 209,339 | 1,335 | at_fire | - |
+| fvg_snapshots_xctx_fvggeom.parquet | parquet | 209,339 | 1,429 | at_fire | - |
 | fvg_snapshots_xctx_fvggeom.schema.json | json | 209,339 | - | at_fire | - |
-| fvg_walk_forward_fvggeom_folds.csv | csv | 48 | 33 | - | {"ok": 48} |
-| fvg_walk_forward_fvggeom_folds.parquet | parquet | 48 | 33 | - | {"ok": 48} |
-| fvg_walk_forward_fvggeom_summary.csv | csv | 8 | 18 | - | - |
-| fvg_walk_forward_fvggeom_summary.parquet | parquet | 8 | 18 | - | - |
+| fvg_walk_forward_fvggeom_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
+| fvg_walk_forward_fvggeom_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| fvg_walk_forward_fvggeom_summary.csv | csv | 12 | 18 | - | - |
+| fvg_walk_forward_fvggeom_summary.parquet | parquet | 12 | 18 | - | - |
 | fvg_walk_forward_fvggeom_top5_folds.csv | csv | 25 | 33 | - | {"ok": 25} |
 | fvg_walk_forward_fvggeom_top5_folds.parquet | parquet | 25 | 33 | - | {"ok": 25} |
 | fvg_walk_forward_fvggeom_top5_summary.csv | csv | 5 | 18 | - | - |
@@ -193,22 +193,22 @@ _Generated `2026-05-14T04:30:36.076086+00:00`._
 | sweep_snapshot_leaderboard.parquet | parquet | 9 | 30 | - | {"ok": 9} |
 | sweep_snapshot_leaderboard_xctx.csv | csv | 9 | 30 | - | {"ok": 9} |
 | sweep_snapshot_leaderboard_xctx.parquet | parquet | 9 | 30 | - | {"ok": 9} |
-| sweep_snapshot_leaderboard_xctx_fvggeom.csv | csv | 9 | 30 | - | {"ok": 9} |
-| sweep_snapshot_leaderboard_xctx_fvggeom.parquet | parquet | 9 | 30 | - | {"ok": 9} |
-| sweep_snapshots.parquet | parquet | 52,946 | 85 | at_fire | - |
+| sweep_snapshot_leaderboard_xctx_fvggeom.csv | csv | 45 | 30 | - | {"ok": 45} |
+| sweep_snapshot_leaderboard_xctx_fvggeom.parquet | parquet | 45 | 30 | - | {"ok": 45} |
+| sweep_snapshots.parquet | parquet | 52,946 | 153 | at_fire | - |
 | sweep_snapshots.schema.json | json | 52,946 | - | at_fire | - |
-| sweep_snapshots_xctx.parquet | parquet | 52,946 | 845 | at_fire | - |
+| sweep_snapshots_xctx.parquet | parquet | 52,946 | 961 | at_fire | - |
 | sweep_snapshots_xctx.schema.json | json | 52,946 | - | at_fire | - |
-| sweep_snapshots_xctx_fvggeom.parquet | parquet | 52,946 | 1,296 | at_fire | - |
+| sweep_snapshots_xctx_fvggeom.parquet | parquet | 52,946 | 1,412 | at_fire | - |
 | sweep_snapshots_xctx_fvggeom.schema.json | json | 52,946 | - | at_fire | - |
 | sweep_walk_forward_folds_base.csv | csv | 36 | 33 | - | {"ok": 36} |
 | sweep_walk_forward_folds_base.parquet | parquet | 36 | 33 | - | {"ok": 36} |
 | sweep_walk_forward_folds_xctx.csv | csv | 36 | 33 | - | {"ok": 36} |
 | sweep_walk_forward_folds_xctx.parquet | parquet | 36 | 33 | - | {"ok": 36} |
-| sweep_walk_forward_fvggeom_folds.csv | csv | 54 | 33 | - | {"ok": 54} |
-| sweep_walk_forward_fvggeom_folds.parquet | parquet | 54 | 33 | - | {"ok": 54} |
-| sweep_walk_forward_fvggeom_summary.csv | csv | 9 | 18 | - | - |
-| sweep_walk_forward_fvggeom_summary.parquet | parquet | 9 | 18 | - | - |
+| sweep_walk_forward_fvggeom_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
+| sweep_walk_forward_fvggeom_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| sweep_walk_forward_fvggeom_summary.csv | csv | 12 | 18 | - | - |
+| sweep_walk_forward_fvggeom_summary.parquet | parquet | 12 | 18 | - | - |
 | sweep_walk_forward_summary_base.csv | csv | 6 | 18 | - | - |
 | sweep_walk_forward_summary_base.parquet | parquet | 6 | 18 | - | - |
 | sweep_walk_forward_summary_xctx.csv | csv | 6 | 18 | - | - |

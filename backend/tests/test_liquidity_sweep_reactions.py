@@ -145,6 +145,7 @@ def test_recovery_and_continuation_bullish(fake_reader: FakeBarReader):
     )
     out = LiquiditySweepReactionsComputer().compute(event, fake_reader)
     assert out is not None
+    assert out["outcome_version"] == "v2"
     rec = out["swept_level_recovery"]
     assert rec["level_recovered"] is True
     assert rec["bars_to_recovery"] == 1
@@ -152,6 +153,8 @@ def test_recovery_and_continuation_bullish(fake_reader: FakeBarReader):
     # bar 1 low = 21042 — that IS lower than manip_low=21040? No, 21042 > 21040.
     # bar 1 low 21042 > manip_low 21040 → no continuation.
     assert cont["continued"] is False
+    assert out["swept_reference_reaction"]["close_above_reference"] is True
+    assert out["manipulation_range_reaction"]["closed_above_manipulation_high"] is True
 
 
 def test_continuation_no_recovery_bullish(fake_reader: FakeBarReader):
@@ -273,6 +276,6 @@ def test_returns_none_for_unknown_mode(fake_reader: FakeBarReader):
 
 def test_computer_is_registered():
     from app.research.outcomes import OUTCOMES, get_by_feature
-    assert "liquidity_sweep_reactions_v1" in OUTCOMES
+    assert "liquidity_sweep_reactions_v2" in OUTCOMES
     c = get_by_feature("liquidity_sweep")
-    assert c.outcome_version == "v1"
+    assert c.outcome_version == "v2"

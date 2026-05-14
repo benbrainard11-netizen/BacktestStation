@@ -15,7 +15,10 @@ The shared helper lives at `backend/app/research/outcomes/reaction_labels.py`.
 | Scheduled macro events | Already has equivalent v2 labels | `v2` |
 | Opening gaps / NDOG/NWOG | Uses shared helper | `v2` |
 | Interval true range | Uses shared helper | `v2` |
-| FVG, sweeps, VP/forming VP | Next expansion target | Existing versions |
+| FVG formation | Uses shared helper for zone reaction labels | `v3` |
+| Liquidity sweeps | Uses shared helper for swept-reference and manipulation-range reactions | `v2` |
+| Forming volume profile | Uses shared helper for live profile-so-far reactions | `v2` |
+| Completed volume profile | Has strict v2 post-touch level labels; not changed in this pass | `v2` |
 
 ## Standard Label Families
 
@@ -40,6 +43,9 @@ Use the anchor prefix in the label name:
 | Opening gap zone | `gap` | `label.next_240m.closed_inside_gap_range` |
 | ITR anchor range | `interval` | `label.next_interval.range_expanded_2x_interval` |
 | Macro pre-release range | `pre_15m`, `pre_60m` | `label.next_15m.took_pre_60m_high_rejected_inside` |
+| FVG zone | `fvg` | `label.zone_reaction.took_fvg_high_rejected_inside` |
+| Sweep manipulation range | `manipulation` | `label.manipulation_range_reaction.closed_inside_manipulation_range` |
+| Forming VP profile-so-far range | `profile_so_far` | `label.next_60m.range_expanded_1x_profile_so_far` |
 
 ## Safety Rule
 

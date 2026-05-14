@@ -52,6 +52,12 @@ import pandas as pd
 
 from app.db.models import ResearchEvent
 from app.research.outcomes import BarReader, register
+from app.research.outcomes.reaction_labels import (
+    add_first_bar_reaction,
+    add_range_reaction,
+    add_reference_price_reaction,
+    bar_window_summary,
+)
 
 UTC = timezone.utc
 log = logging.getLogger(__name__)
@@ -71,7 +77,7 @@ _QUARTILE_THRESHOLDS: tuple[int, ...] = (25, 50, 75, 100)
 
 class FvgReactionsComputer:
     feature_name: str = "fvg_formation"
-    outcome_version: str = "v2"
+    outcome_version: str = "v3"
 
     def compute(
         self,
@@ -137,6 +143,14 @@ class FvgReactionsComputer:
             "fvg_mid": fvg_mid,
             "fvg_width_pts": fvg_width,
             "mitigation": mitigation_block,
+            "zone_reaction": _zone_reaction(
+                forward,
+                window_start=forward_start,
+                window_end=forward_start + timedelta(minutes=minutes_per_candle * len(forward)),
+                reference_close=ref_close,
+                fvg_high=fvg_high,
+                fvg_low=fvg_low,
+            ),
         }
         for n in _FORWARD_WINDOWS:
             out[f"forward_{n}_candles"] = _excursion(
@@ -279,6 +293,48 @@ def _compute_mitigation(
     }
 
 
+def _zone_reaction(
+    forward: pd.DataFrame,
+    *,
+    window_start: datetime,
+    window_end: datetime,
+    reference_close: float,
+    fvg_high: float,
+    fvg_low: float,
+) -> dict[str, Any] | None:
+    """Universal reaction labels against the FVG zone."""
+    out = bar_window_summary(forward, window_start=window_start, window_end=window_end)
+    if out is None:
+        return None
+    high = float(out["high"])
+    low = float(out["low"])
+    close = float(out["close"])
+    add_reference_price_reaction(
+        out,
+        high=high,
+        low=low,
+        close=close,
+        reference_price=reference_close,
+    )
+    add_first_bar_reaction(
+        out,
+        first_close=float(forward["close"].astype(float).iloc[0]),
+        final_close=close,
+        reference_price=reference_close,
+    )
+    add_range_reaction(
+        out,
+        high=high,
+        low=low,
+        close=close,
+        range_pts=float(out["range_pts"]),
+        anchor_high=fvg_high,
+        anchor_low=fvg_low,
+        prefix="fvg",
+    )
+    return out
+
+
 def _excursion(
     bars: pd.DataFrame,
     *,
@@ -364,4 +420,4 @@ def _ensure_utc(ts: datetime) -> datetime:
 
 # ---------- registration ----------
 
-register("fvg_reactions_v1", FvgReactionsComputer())
+register("fvg_reactions_v3", FvgReactionsComputer())

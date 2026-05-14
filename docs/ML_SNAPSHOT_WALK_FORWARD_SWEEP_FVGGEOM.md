@@ -1,14 +1,14 @@
 # ML snapshot walk-forward validation
 
-_Generated `2026-05-13T21:49:14.063028+00:00`._
+_Generated `2026-05-14T09:47:57.580064+00:00`._
 
 ## Setup
 
-- Matrix: `C:\Users\benbr\BacktestStation\data\ml\anchors\sweep_snapshots_xctx_fvggeom.parquet`
-- Schema: `C:\Users\benbr\BacktestStation\data\ml\anchors\sweep_snapshots_xctx_fvggeom.schema.json`
-- Leaderboard source: `C:\Users\benbr\BacktestStation\data\ml\anchors\sweep_snapshot_leaderboard_xctx_fvggeom.parquet`
+- Matrix: `data\ml\anchors\sweep_snapshots_xctx_fvggeom.parquet`
+- Schema: `data\ml\anchors\sweep_snapshots_xctx_fvggeom.schema.json`
+- Leaderboard source: `data\ml\anchors\sweep_snapshot_leaderboard_xctx_fvggeom.parquet`
 - Event type: `all`
-- Candidates: `9`
+- Candidates: `12`
 - Test years attempted: `2020, 2021, 2022, 2023, 2024, 2025`
 - Fold rule: train through `test_year - 2`, validate on `test_year - 1`, test on `test_year`.
 - Top bucket: `10%` of each fold's test rows
@@ -19,94 +19,115 @@ _Generated `2026-05-13T21:49:14.063028+00:00`._
 
 | file | purpose |
 |---|---|
-| C:\Users\benbr\AppData\Local\Temp\sweep_walk_forward_fvggeom_summary_itr.csv | candidate summary CSV |
-| C:\Users\benbr\AppData\Local\Temp\sweep_walk_forward_fvggeom_summary_itr.parquet | candidate summary parquet |
-| C:\Users\benbr\AppData\Local\Temp\sweep_walk_forward_fvggeom_folds_itr.csv | per-fold CSV |
-| C:\Users\benbr\AppData\Local\Temp\sweep_walk_forward_fvggeom_folds_itr.parquet | per-fold parquet |
+| data\ml\anchors\sweep_walk_forward_fvggeom_summary.csv | candidate summary CSV |
+| data\ml\anchors\sweep_walk_forward_fvggeom_summary.parquet | candidate summary parquet |
+| data\ml\anchors\sweep_walk_forward_fvggeom_folds.csv | per-fold CSV |
+| data\ml\anchors\sweep_walk_forward_fvggeom_folds.parquet | per-fold parquet |
 
 ## Coverage
 
 | item | value |
 |---|---|
 | schema_rows | 52946 |
-| schema_feature_columns | 1253 |
-| schema_label_columns | 31 |
-| folds_attempted | 54 |
-| folds_ok | 54 |
+| schema_feature_columns | 1305 |
+| schema_label_columns | 95 |
+| folds_attempted | 72 |
+| folds_ok | 72 |
 | folds_skipped | 0 |
 
 ## Candidate Summary
 
 | snapshot | side | label | ok_folds | test_rows | mean_auc | median_auc | min_auc | std_auc | mean_top_rate | min_top_rate | mean_top_lift |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| at_fire | all | label.ob_confirmation.did_confirm | 6 | 28718 | 0.893 | 0.896 | 0.862 | 0.018 | 100.0% | 100.0% | 3.6% |
-| at_fire | high | label.ob_confirmation.did_confirm | 6 | 15564 | 0.888 | 0.892 | 0.852 | 0.026 | 100.0% | 100.0% | 4.3% |
-| at_fire | low | label.ob_confirmation.did_confirm | 6 | 13154 | 0.868 | 0.862 | 0.809 | 0.039 | 99.9% | 99.5% | 2.6% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 6 | 13154 | 0.798 | 0.800 | 0.779 | 0.009 | 96.1% | 92.8% | 20.1% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 6 | 28718 | 0.794 | 0.804 | 0.758 | 0.019 | 95.3% | 93.4% | 24.8% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 6 | 15564 | 0.776 | 0.788 | 0.722 | 0.026 | 93.0% | 91.0% | 26.6% |
-| at_fire | all | label.forward_continuation.continued | 6 | 28718 | 0.666 | 0.667 | 0.621 | 0.030 | 96.4% | 95.3% | 5.2% |
-| at_fire | high | label.forward_continuation.continued | 6 | 15564 | 0.665 | 0.661 | 0.596 | 0.047 | 97.9% | 95.8% | 4.9% |
-| at_fire | low | label.forward_continuation.continued | 6 | 13154 | 0.655 | 0.662 | 0.608 | 0.024 | 94.8% | 91.0% | 5.8% |
+| at_fire | high | label.ob_confirmation.did_confirm | 6 | 15564 | 0.899 | 0.886 | 0.873 | 0.026 | 99.9% | 99.6% | 2.7% |
+| at_fire | all | label.ob_confirmation.did_confirm | 6 | 28718 | 0.896 | 0.899 | 0.869 | 0.015 | 100.0% | 100.0% | 2.7% |
+| at_fire | low | label.ob_confirmation.did_confirm | 6 | 13154 | 0.864 | 0.872 | 0.802 | 0.039 | 99.8% | 99.1% | 2.6% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 6 | 13154 | 0.797 | 0.797 | 0.785 | 0.008 | 96.5% | 93.6% | 19.0% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 6 | 28718 | 0.793 | 0.795 | 0.765 | 0.015 | 95.3% | 94.0% | 23.3% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 6 | 15564 | 0.772 | 0.779 | 0.724 | 0.024 | 93.4% | 91.9% | 25.7% |
+| at_fire | high | label.manipulation_range_reaction.one_sided_took_manipulation_high | 6 | 15564 | 0.723 | 0.733 | 0.653 | 0.032 | 34.3% | 25.5% | 21.4% |
+| at_fire | high | label.manipulation_range_reaction.took_manipulation_low | 6 | 15564 | 0.721 | 0.733 | 0.650 | 0.034 | 95.1% | 93.5% | 8.1% |
+| at_fire | low | label.manipulation_range_reaction.took_manipulation_high | 6 | 13154 | 0.718 | 0.729 | 0.611 | 0.056 | 96.3% | 90.0% | 6.3% |
+| at_fire | low | label.manipulation_range_reaction.one_sided_took_manipulation_low | 6 | 13154 | 0.714 | 0.726 | 0.616 | 0.052 | 30.8% | 22.4% | 20.9% |
+| at_fire | all | label.manipulation_range_reaction.took_manipulation_high | 6 | 28718 | 0.704 | 0.706 | 0.647 | 0.036 | 96.9% | 94.0% | 4.9% |
+| at_fire | all | label.manipulation_range_reaction.one_sided_took_manipulation_low | 6 | 28718 | 0.703 | 0.711 | 0.634 | 0.040 | 24.0% | 17.9% | 16.0% |
 
 ## Fold Detail
 
 | snapshot | side | label | test_year | test_n | base_rate | auc | acc | majority_acc | top_n | top_rate |
 |---|---|---|---|---|---|---|---|---|---|---|
-| at_fire | all | label.forward_continuation.continued | 2020 | 4634 | 88.5% | 0.636 | 0.885 | 0.885 | 464 | 95.9% |
-| at_fire | all | label.forward_continuation.continued | 2021 | 4867 | 91.0% | 0.668 | 0.910 | 0.910 | 487 | 95.3% |
-| at_fire | all | label.forward_continuation.continued | 2022 | 4842 | 92.5% | 0.621 | 0.925 | 0.925 | 485 | 95.5% |
-| at_fire | all | label.forward_continuation.continued | 2023 | 4812 | 92.7% | 0.667 | 0.927 | 0.927 | 482 | 95.9% |
-| at_fire | all | label.forward_continuation.continued | 2024 | 4806 | 92.2% | 0.702 | 0.922 | 0.922 | 481 | 97.7% |
-| at_fire | all | label.forward_continuation.continued | 2025 | 4757 | 90.3% | 0.702 | 0.903 | 0.903 | 476 | 97.9% |
-| at_fire | all | label.ob_confirmation.did_confirm | 2020 | 4634 | 96.7% | 0.862 | 0.967 | 0.967 | 464 | 100.0% |
-| at_fire | all | label.ob_confirmation.did_confirm | 2021 | 4867 | 96.5% | 0.903 | 0.967 | 0.965 | 487 | 100.0% |
-| at_fire | all | label.ob_confirmation.did_confirm | 2022 | 4842 | 97.0% | 0.890 | 0.971 | 0.970 | 485 | 100.0% |
-| at_fire | all | label.ob_confirmation.did_confirm | 2023 | 4812 | 96.1% | 0.910 | 0.962 | 0.961 | 482 | 100.0% |
-| at_fire | all | label.ob_confirmation.did_confirm | 2024 | 4806 | 96.0% | 0.882 | 0.959 | 0.960 | 481 | 100.0% |
-| at_fire | all | label.ob_confirmation.did_confirm | 2025 | 4757 | 96.1% | 0.912 | 0.962 | 0.961 | 476 | 100.0% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 2020 | 4634 | 70.7% | 0.758 | 0.730 | 0.707 | 464 | 95.5% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 2021 | 4867 | 71.2% | 0.804 | 0.769 | 0.712 | 487 | 95.9% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 2022 | 4842 | 71.6% | 0.777 | 0.773 | 0.716 | 485 | 93.4% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 2023 | 4812 | 69.1% | 0.804 | 0.769 | 0.691 | 482 | 94.8% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 2024 | 4806 | 69.9% | 0.813 | 0.771 | 0.699 | 481 | 96.3% |
-| at_fire | all | label.swept_level_recovery.level_recovered | 2025 | 4757 | 70.9% | 0.806 | 0.771 | 0.709 | 476 | 96.2% |
-| at_fire | high | label.forward_continuation.continued | 2020 | 2624 | 92.4% | 0.596 | 0.924 | 0.924 | 263 | 95.8% |
-| at_fire | high | label.forward_continuation.continued | 2021 | 2755 | 92.7% | 0.626 | 0.927 | 0.927 | 276 | 98.6% |
-| at_fire | high | label.forward_continuation.continued | 2022 | 2337 | 91.6% | 0.667 | 0.917 | 0.916 | 234 | 97.4% |
-| at_fire | high | label.forward_continuation.continued | 2023 | 2624 | 92.8% | 0.654 | 0.928 | 0.928 | 263 | 97.3% |
-| at_fire | high | label.forward_continuation.continued | 2024 | 2635 | 95.1% | 0.708 | 0.951 | 0.951 | 264 | 98.9% |
-| at_fire | high | label.forward_continuation.continued | 2025 | 2589 | 93.0% | 0.737 | 0.933 | 0.930 | 259 | 99.2% |
-| at_fire | high | label.ob_confirmation.did_confirm | 2020 | 2624 | 96.6% | 0.852 | 0.966 | 0.966 | 263 | 100.0% |
-| at_fire | high | label.ob_confirmation.did_confirm | 2021 | 2755 | 95.6% | 0.881 | 0.958 | 0.956 | 276 | 100.0% |
-| at_fire | high | label.ob_confirmation.did_confirm | 2022 | 2337 | 96.7% | 0.926 | 0.967 | 0.967 | 234 | 100.0% |
-| at_fire | high | label.ob_confirmation.did_confirm | 2023 | 2624 | 94.5% | 0.904 | 0.946 | 0.945 | 263 | 100.0% |
-| at_fire | high | label.ob_confirmation.did_confirm | 2024 | 2635 | 95.4% | 0.862 | 0.953 | 0.954 | 264 | 100.0% |
-| at_fire | high | label.ob_confirmation.did_confirm | 2025 | 2589 | 95.4% | 0.902 | 0.956 | 0.954 | 259 | 100.0% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 2020 | 2624 | 66.6% | 0.722 | 0.704 | 0.666 | 263 | 93.2% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 2021 | 2755 | 63.8% | 0.787 | 0.732 | 0.638 | 276 | 94.6% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 2022 | 2337 | 75.1% | 0.768 | 0.781 | 0.751 | 234 | 91.0% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 2023 | 2624 | 62.5% | 0.789 | 0.732 | 0.625 | 263 | 92.0% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 2024 | 2635 | 64.4% | 0.802 | 0.734 | 0.644 | 264 | 92.0% |
-| at_fire | high | label.swept_level_recovery.level_recovered | 2025 | 2589 | 65.9% | 0.788 | 0.742 | 0.659 | 259 | 95.0% |
-| at_fire | low | label.forward_continuation.continued | 2020 | 2010 | 83.3% | 0.608 | 0.833 | 0.833 | 201 | 91.0% |
-| at_fire | low | label.forward_continuation.continued | 2021 | 2112 | 88.6% | 0.666 | 0.886 | 0.886 | 212 | 97.2% |
-| at_fire | low | label.forward_continuation.continued | 2022 | 2505 | 93.3% | 0.659 | 0.931 | 0.933 | 251 | 96.0% |
-| at_fire | low | label.forward_continuation.continued | 2023 | 2188 | 92.7% | 0.684 | 0.927 | 0.927 | 219 | 96.8% |
-| at_fire | low | label.forward_continuation.continued | 2024 | 2171 | 88.7% | 0.648 | 0.887 | 0.887 | 218 | 94.5% |
-| at_fire | low | label.forward_continuation.continued | 2025 | 2168 | 87.1% | 0.665 | 0.871 | 0.871 | 217 | 93.1% |
-| at_fire | low | label.ob_confirmation.did_confirm | 2020 | 2010 | 96.7% | 0.844 | 0.967 | 0.967 | 201 | 100.0% |
-| at_fire | low | label.ob_confirmation.did_confirm | 2021 | 2112 | 97.7% | 0.849 | 0.977 | 0.977 | 212 | 99.5% |
-| at_fire | low | label.ob_confirmation.did_confirm | 2022 | 2505 | 97.3% | 0.809 | 0.973 | 0.973 | 251 | 100.0% |
-| at_fire | low | label.ob_confirmation.did_confirm | 2023 | 2188 | 98.1% | 0.908 | 0.981 | 0.981 | 219 | 100.0% |
-| at_fire | low | label.ob_confirmation.did_confirm | 2024 | 2171 | 96.9% | 0.874 | 0.969 | 0.969 | 218 | 100.0% |
-| at_fire | low | label.ob_confirmation.did_confirm | 2025 | 2168 | 97.0% | 0.925 | 0.970 | 0.970 | 217 | 100.0% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 2020 | 2010 | 76.1% | 0.798 | 0.782 | 0.761 | 201 | 98.0% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 2021 | 2112 | 80.7% | 0.803 | 0.818 | 0.807 | 212 | 95.8% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 2022 | 2505 | 68.4% | 0.779 | 0.749 | 0.684 | 251 | 92.8% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 2023 | 2188 | 77.0% | 0.796 | 0.806 | 0.770 | 219 | 95.4% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 2024 | 2171 | 76.5% | 0.807 | 0.813 | 0.765 | 218 | 96.8% |
-| at_fire | low | label.swept_level_recovery.level_recovered | 2025 | 2168 | 77.0% | 0.804 | 0.808 | 0.770 | 217 | 97.7% |
+| at_fire | all | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2020 | 4634 | 8.4% | 0.634 | 0.915 | 0.916 | 464 | 17.9% |
+| at_fire | all | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2021 | 4867 | 6.9% | 0.713 | 0.931 | 0.931 | 487 | 23.6% |
+| at_fire | all | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2022 | 4842 | 10.9% | 0.709 | 0.892 | 0.891 | 485 | 32.4% |
+| at_fire | all | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2023 | 4812 | 7.4% | 0.672 | 0.926 | 0.926 | 482 | 20.1% |
+| at_fire | all | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2024 | 4806 | 6.9% | 0.740 | 0.932 | 0.931 | 481 | 22.9% |
+| at_fire | all | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2025 | 4757 | 7.5% | 0.750 | 0.925 | 0.925 | 476 | 27.1% |
+| at_fire | all | label.manipulation_range_reaction.took_manipulation_high | 2020 | 4634 | 91.5% | 0.647 | 0.914 | 0.915 | 464 | 96.6% |
+| at_fire | all | label.manipulation_range_reaction.took_manipulation_high | 2021 | 4867 | 93.0% | 0.719 | 0.930 | 0.930 | 487 | 97.3% |
+| at_fire | all | label.manipulation_range_reaction.took_manipulation_high | 2022 | 4842 | 89.1% | 0.694 | 0.891 | 0.891 | 485 | 94.0% |
+| at_fire | all | label.manipulation_range_reaction.took_manipulation_high | 2023 | 4812 | 92.6% | 0.673 | 0.926 | 0.926 | 482 | 97.3% |
+| at_fire | all | label.manipulation_range_reaction.took_manipulation_high | 2024 | 4806 | 93.1% | 0.743 | 0.931 | 0.931 | 481 | 97.7% |
+| at_fire | all | label.manipulation_range_reaction.took_manipulation_high | 2025 | 4757 | 92.5% | 0.747 | 0.925 | 0.925 | 476 | 98.5% |
+| at_fire | all | label.ob_confirmation.did_confirm | 2020 | 4634 | 97.5% | 0.869 | 0.975 | 0.975 | 464 | 100.0% |
+| at_fire | all | label.ob_confirmation.did_confirm | 2021 | 4867 | 97.3% | 0.905 | 0.973 | 0.973 | 487 | 100.0% |
+| at_fire | all | label.ob_confirmation.did_confirm | 2022 | 4842 | 97.5% | 0.890 | 0.975 | 0.975 | 485 | 100.0% |
+| at_fire | all | label.ob_confirmation.did_confirm | 2023 | 4812 | 97.1% | 0.914 | 0.971 | 0.971 | 482 | 100.0% |
+| at_fire | all | label.ob_confirmation.did_confirm | 2024 | 4806 | 97.1% | 0.895 | 0.970 | 0.971 | 481 | 100.0% |
+| at_fire | all | label.ob_confirmation.did_confirm | 2025 | 4757 | 97.1% | 0.904 | 0.971 | 0.971 | 476 | 100.0% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 2020 | 4634 | 72.2% | 0.765 | 0.740 | 0.722 | 464 | 95.5% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 2021 | 4867 | 72.7% | 0.798 | 0.767 | 0.727 | 487 | 95.7% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 2022 | 4842 | 72.4% | 0.783 | 0.772 | 0.724 | 485 | 94.0% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 2023 | 4812 | 70.6% | 0.805 | 0.774 | 0.706 | 482 | 95.2% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 2024 | 4806 | 71.2% | 0.812 | 0.779 | 0.712 | 481 | 94.8% |
+| at_fire | all | label.swept_level_recovery.level_recovered | 2025 | 4757 | 72.5% | 0.791 | 0.774 | 0.725 | 476 | 96.4% |
+| at_fire | high | label.manipulation_range_reaction.one_sided_took_manipulation_high | 2020 | 2624 | 14.1% | 0.653 | 0.859 | 0.859 | 263 | 25.5% |
+| at_fire | high | label.manipulation_range_reaction.one_sided_took_manipulation_high | 2021 | 2755 | 14.3% | 0.734 | 0.857 | 0.857 | 276 | 38.8% |
+| at_fire | high | label.manipulation_range_reaction.one_sided_took_manipulation_high | 2022 | 2337 | 10.2% | 0.728 | 0.897 | 0.898 | 234 | 27.8% |
+| at_fire | high | label.manipulation_range_reaction.one_sided_took_manipulation_high | 2023 | 2624 | 13.3% | 0.747 | 0.866 | 0.867 | 263 | 37.6% |
+| at_fire | high | label.manipulation_range_reaction.one_sided_took_manipulation_high | 2024 | 2635 | 12.9% | 0.745 | 0.873 | 0.871 | 264 | 40.5% |
+| at_fire | high | label.manipulation_range_reaction.one_sided_took_manipulation_high | 2025 | 2589 | 12.9% | 0.732 | 0.871 | 0.871 | 259 | 35.5% |
+| at_fire | high | label.manipulation_range_reaction.took_manipulation_low | 2020 | 2624 | 85.8% | 0.650 | 0.858 | 0.858 | 263 | 93.5% |
+| at_fire | high | label.manipulation_range_reaction.took_manipulation_low | 2021 | 2755 | 85.7% | 0.734 | 0.857 | 0.857 | 276 | 94.2% |
+| at_fire | high | label.manipulation_range_reaction.took_manipulation_low | 2022 | 2337 | 89.8% | 0.732 | 0.897 | 0.898 | 234 | 94.0% |
+| at_fire | high | label.manipulation_range_reaction.took_manipulation_low | 2023 | 2624 | 86.7% | 0.756 | 0.869 | 0.867 | 263 | 98.1% |
+| at_fire | high | label.manipulation_range_reaction.took_manipulation_low | 2024 | 2635 | 87.1% | 0.736 | 0.871 | 0.871 | 264 | 94.3% |
+| at_fire | high | label.manipulation_range_reaction.took_manipulation_low | 2025 | 2589 | 87.1% | 0.717 | 0.871 | 0.871 | 259 | 96.5% |
+| at_fire | high | label.ob_confirmation.did_confirm | 2020 | 2624 | 98.2% | 0.873 | 0.982 | 0.982 | 263 | 99.6% |
+| at_fire | high | label.ob_confirmation.did_confirm | 2021 | 2755 | 97.0% | 0.879 | 0.970 | 0.970 | 276 | 100.0% |
+| at_fire | high | label.ob_confirmation.did_confirm | 2022 | 2337 | 97.6% | 0.938 | 0.976 | 0.976 | 234 | 100.0% |
+| at_fire | high | label.ob_confirmation.did_confirm | 2023 | 2624 | 96.3% | 0.931 | 0.962 | 0.963 | 263 | 100.0% |
+| at_fire | high | label.ob_confirmation.did_confirm | 2024 | 2635 | 97.2% | 0.892 | 0.971 | 0.972 | 264 | 100.0% |
+| at_fire | high | label.ob_confirmation.did_confirm | 2025 | 2589 | 97.1% | 0.880 | 0.971 | 0.971 | 259 | 100.0% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 2020 | 2624 | 67.9% | 0.724 | 0.698 | 0.679 | 263 | 94.3% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 2021 | 2755 | 65.5% | 0.780 | 0.724 | 0.655 | 276 | 94.6% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 2022 | 2337 | 75.8% | 0.763 | 0.780 | 0.758 | 234 | 91.9% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 2023 | 2624 | 63.7% | 0.786 | 0.732 | 0.637 | 263 | 92.4% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 2024 | 2635 | 65.6% | 0.800 | 0.744 | 0.656 | 264 | 92.4% |
+| at_fire | high | label.swept_level_recovery.level_recovered | 2025 | 2589 | 67.4% | 0.778 | 0.739 | 0.674 | 259 | 94.6% |
+| at_fire | low | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2020 | 2010 | 10.7% | 0.616 | 0.892 | 0.893 | 201 | 22.4% |
+| at_fire | low | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2021 | 2112 | 7.4% | 0.788 | 0.926 | 0.926 | 212 | 29.7% |
+| at_fire | low | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2022 | 2505 | 13.6% | 0.719 | 0.867 | 0.864 | 251 | 40.6% |
+| at_fire | low | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2023 | 2188 | 8.5% | 0.695 | 0.915 | 0.915 | 219 | 26.9% |
+| at_fire | low | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2024 | 2171 | 9.9% | 0.735 | 0.901 | 0.901 | 218 | 33.9% |
+| at_fire | low | label.manipulation_range_reaction.one_sided_took_manipulation_low | 2025 | 2168 | 9.5% | 0.733 | 0.905 | 0.905 | 217 | 31.3% |
+| at_fire | low | label.manipulation_range_reaction.took_manipulation_high | 2020 | 2010 | 89.2% | 0.611 | 0.893 | 0.892 | 201 | 90.0% |
+| at_fire | low | label.manipulation_range_reaction.took_manipulation_high | 2021 | 2112 | 92.5% | 0.792 | 0.925 | 0.925 | 212 | 98.6% |
+| at_fire | low | label.manipulation_range_reaction.took_manipulation_high | 2022 | 2505 | 86.3% | 0.717 | 0.869 | 0.863 | 251 | 94.8% |
+| at_fire | low | label.manipulation_range_reaction.took_manipulation_high | 2023 | 2188 | 91.5% | 0.700 | 0.915 | 0.915 | 219 | 95.9% |
+| at_fire | low | label.manipulation_range_reaction.took_manipulation_high | 2024 | 2171 | 90.1% | 0.740 | 0.901 | 0.901 | 218 | 98.6% |
+| at_fire | low | label.manipulation_range_reaction.took_manipulation_high | 2025 | 2168 | 90.5% | 0.748 | 0.905 | 0.905 | 217 | 99.5% |
+| at_fire | low | label.ob_confirmation.did_confirm | 2020 | 2010 | 96.7% | 0.832 | 0.967 | 0.967 | 201 | 100.0% |
+| at_fire | low | label.ob_confirmation.did_confirm | 2021 | 2112 | 97.7% | 0.867 | 0.977 | 0.977 | 212 | 100.0% |
+| at_fire | low | label.ob_confirmation.did_confirm | 2022 | 2505 | 97.3% | 0.802 | 0.973 | 0.973 | 251 | 100.0% |
+| at_fire | low | label.ob_confirmation.did_confirm | 2023 | 2188 | 98.1% | 0.878 | 0.981 | 0.981 | 219 | 99.1% |
+| at_fire | low | label.ob_confirmation.did_confirm | 2024 | 2171 | 96.9% | 0.878 | 0.968 | 0.969 | 218 | 100.0% |
+| at_fire | low | label.ob_confirmation.did_confirm | 2025 | 2168 | 97.0% | 0.926 | 0.970 | 0.970 | 217 | 100.0% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 2020 | 2010 | 77.9% | 0.791 | 0.786 | 0.779 | 201 | 98.5% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 2021 | 2112 | 82.1% | 0.796 | 0.834 | 0.821 | 212 | 95.3% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 2022 | 2505 | 69.3% | 0.785 | 0.749 | 0.693 | 251 | 93.6% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 2023 | 2188 | 78.8% | 0.797 | 0.822 | 0.788 | 219 | 96.8% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 2024 | 2171 | 78.0% | 0.808 | 0.824 | 0.780 | 218 | 96.8% |
+| at_fire | low | label.swept_level_recovery.level_recovered | 2025 | 2168 | 78.6% | 0.804 | 0.823 | 0.786 | 217 | 97.7% |
 
 ## Skipped Folds
 

@@ -1,6 +1,6 @@
 # FVG Formation - Current Stats
 
-_Generated `2026-05-14T04:31:53+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-14T13:40:50+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -30,8 +30,8 @@ Fair-value-gap formation and later mitigation behavior.
 
 | Outcome version | Events | Share |
 |---|---|---|
-| `v2` | 209,098 | 99.9% |
-| `(missing)` | 241 | 0.1% |
+| `v3` | 209,103 | 99.9% |
+| `(missing)` | 236 | 0.1% |
 
 ### By Symbol
 
@@ -53,47 +53,60 @@ Fair-value-gap formation and later mitigation behavior.
 | Metric | Value |
 |---|---|
 | Rows | 209,339 |
-| Columns | 124 |
+| Columns | 169 |
 | ed.* event_data | 23 |
-| oc.* outcome labels | 75 |
+| oc.* outcome labels | 119 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 14 |
-| numeric | 109 |
-| object/category | 14 |
+| xd.* cross-detector | 15 |
+| numeric | 150 |
+| object/category | 18 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.mitigation.fully_filled` | 162,331 / 209,098 | 77.6% |
-| `oc.mitigation.closed_through` | 142,864 / 209,098 | 68.3% |
-| `oc.mitigation.tapped` | 181,157 / 209,098 | 86.6% |
+| `oc.mitigation.fully_filled` | 171,251 / 209,103 | 81.9% |
+| `oc.mitigation.closed_through` | 153,911 / 209,103 | 73.6% |
+| `oc.mitigation.tapped` | 186,840 / 209,103 | 89.4% |
+| `oc.zone_reaction.took_fvg_high` | 192,590 / 209,103 | 92.1% |
+| `oc.zone_reaction.took_fvg_low` | 186,196 / 209,103 | 89.0% |
+| `oc.zone_reaction.closed_inside_fvg_range` | 8,432 / 209,103 | 4.0% |
+| `oc.zone_reaction.closed_outside_fvg_range` | 200,671 / 209,103 | 96.0% |
+| `oc.zone_reaction.took_fvg_high_rejected_inside` | 7,811 / 209,103 | 3.7% |
+| `oc.zone_reaction.took_fvg_low_rejected_inside` | 7,968 / 209,103 | 3.8% |
 
 ### Breakdown - `oc.mitigation.fully_filled` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `15m_fvg` | 118,013 / 154,228 | 76.5% |
-| `1h_fvg` | 32,202 / 40,206 | 80.1% |
-| `4h_fvg` | 9,798 / 11,879 | 82.5% |
-| `daily_fvg` | 2,318 / 2,785 | 83.2% |
+| `15m_fvg` | 126,130 / 154,228 | 81.8% |
+| `1h_fvg` | 32,981 / 40,207 | 82.0% |
+| `4h_fvg` | 9,820 / 11,880 | 82.7% |
+| `daily_fvg` | 2,320 / 2,788 | 83.2% |
 
 ### Breakdown - `oc.mitigation.fully_filled` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 75,730 / 95,917 | 79.0% |
-| `bullish` | 86,601 / 113,181 | 76.5% |
+| `bearish` | 80,022 / 95,917 | 83.4% |
+| `bullish` | 91,229 / 113,186 | 80.6% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.mitigation.tapped` | 181,157 / 209,098 | 86.6% |
-| `oc.mitigation.mid_filled` | 170,454 / 209,098 | 81.5% |
-| `oc.mitigation.fully_filled` | 162,331 / 209,098 | 77.6% |
-| `oc.mitigation.closed_inside` | 122,612 / 209,098 | 58.6% |
-| `oc.mitigation.closed_through` | 142,864 / 209,098 | 68.3% |
+| `oc.mitigation.tapped` | 186,840 / 209,103 | 89.4% |
+| `oc.mitigation.mid_filled` | 178,409 / 209,103 | 85.3% |
+| `oc.mitigation.fully_filled` | 171,251 / 209,103 | 81.9% |
+| `oc.mitigation.closed_inside` | 132,639 / 209,103 | 63.4% |
+| `oc.mitigation.closed_through` | 153,911 / 209,103 | 73.6% |
+| `oc.zone_reaction.close_above_reference` | 115,331 / 209,103 | 55.2% |
+| `oc.zone_reaction.close_below_reference` | 92,973 / 209,103 | 44.5% |
+| `oc.zone_reaction.wicked_above_ref_closed_below_ref` | 91,727 / 209,103 | 43.9% |
+| `oc.zone_reaction.wicked_below_ref_closed_above_ref` | 113,619 / 209,103 | 54.3% |
+| `oc.zone_reaction.first_bar_up_then_final_down` | 41,317 / 209,103 | 19.8% |
+| `oc.zone_reaction.first_bar_down_then_final_up` | 49,443 / 209,103 | 23.6% |
+| `oc.zone_reaction.direction_reversed_from_first_bar` | 90,760 / 209,103 | 43.4% |
 
 ## Per-Detector Baseline
 
@@ -112,25 +125,25 @@ Zero-look-ahead snapshot models. These are safer for ML research than raw detect
 
 | Artifact | Side | Label | test n | base | AUC | top bucket | note |
 |---|---|---|---|---|---|---|---|
-| fvg | all | `label.mitigation.fully_filled` | 41,532 | 77.7% | 0.773 | 93.8% |  |
-| fvg | bullish | `label.mitigation.fully_filled` | 22,786 | 77.0% | 0.770 | 93.4% |  |
-| fvg | bearish | `label.mitigation.fully_filled` | 18,746 | 78.6% | 0.768 | 93.8% |  |
-| fvg | all | `label.mitigation.mid_filled` | 41,532 | 81.4% | 0.755 | 94.6% |  |
-| fvg | bullish | `label.mitigation.mid_filled` | 22,786 | 80.7% | 0.751 | 94.2% |  |
-| fvg | all | `label.mitigation.closed_through` | 41,532 | 68.8% | 0.749 | 89.4% |  |
-| fvg | bearish | `label.mitigation.closed_through` | 18,746 | 70.8% | 0.746 | 88.7% |  |
-| fvg | bearish | `label.mitigation.mid_filled` | 18,746 | 82.3% | 0.746 | 94.2% |  |
-| fvg | bullish | `label.mitigation.closed_through` | 22,786 | 67.1% | 0.742 | 87.7% |  |
-| fvg | bullish | `label.mitigation.tapped` | 22,786 | 86.2% | 0.734 | 96.7% |  |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | all | `label.zone_reaction.took_fvg_high` | 41,537 | 91.9% | 0.891 | 99.9% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | all | `label.zone_reaction.took_fvg_low` | 41,537 | 89.3% | 0.866 | 99.9% |  |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | all | `label.zone_reaction.closed_inside_fvg_range` | 41,537 | 3.8% | 0.757 | 13.8% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | all | `label.zone_reaction.closed_outside_fvg_range` | 41,537 | 96.2% | 0.757 | 99.6% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | bullish | `label.zone_reaction.took_fvg_high_rejected_inside` | 22,791 | 3.6% | 0.751 | 12.2% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | bullish | `label.zone_reaction.closed_inside_fvg_range` | 22,791 | 3.6% | 0.751 | 12.3% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | bullish | `label.zone_reaction.closed_outside_fvg_range` | 22,791 | 96.4% | 0.751 | 99.4% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | bearish | `label.zone_reaction.took_fvg_low_rejected_inside` | 18,746 | 4.1% | 0.750 | 13.8% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | bearish | `label.zone_reaction.closed_inside_fvg_range` | 18,746 | 4.1% | 0.749 | 13.3% | imbalanced base rate |
+| fvg_snapshot_leaderboard_xctx_fvggeom.parquet | bearish | `label.zone_reaction.closed_outside_fvg_range` | 18,746 | 95.9% | 0.749 | 99.4% | imbalanced base rate |
 
 ## Reading
 
-Good standalone signal.
+Strong ranking signal, but the best label is very imbalanced. Keep it, but design harder labels.
 
 ## Source Artifacts
 
 | Artifact | Path |
 |---|---|
 | Feature matrix | `data/ml/features/fvg.parquet` |
-| Model summary | `docs/ML_SNAPSHOT_LEADERBOARD_FVG.md` |
+| Model summary | `docs/ML_SNAPSHOT_LEADERBOARD_FVG_FVGGEOM.md` |
 | Dataset catalog | `docs/ML_DATASET_CATALOG.md` |

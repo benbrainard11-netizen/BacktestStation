@@ -1,6 +1,6 @@
 # Asset Universe Manifest
 
-_Generated `2026-05-14T04:30:13+00:00`._
+_Generated `2026-05-14T13:33:12+00:00`._
 
 This pins the data identity behind the current ML/research build.
 
@@ -9,8 +9,8 @@ This pins the data identity behind the current ML/research build.
 | Field | Value |
 |---|---|
 | Universe id | `futures_core_v1` |
-| Dataset fingerprint | `a0ea3d8b427fbf3ce317a6faeb8b1886dbed2755ea0b460ce6603a6dadc4c6a3` |
-| Git commit | `aea8a18a86c1ac4396b0b611ee8cba31afbfcec4` |
+| Dataset fingerprint | `3e394b9c51ae1c45fec1f87305a27dc822ea097fbac6f233d33c8f3d80099a43` |
+| Git commit | `1b00c5ee7b6e69c67625493c7dcfee3b78e66941` |
 | Git dirty when generated | `True` |
 | Warehouse root | `D:\data` |
 | Active symbols | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
@@ -69,10 +69,10 @@ These exist on disk but are not yet part of the current research/ML matrices.
 | `ft` | `first_third_range` | 10,373 | 97 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `fvg` | `fvg_formation` | 209,339 | 124 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `fvp` | `forming_volume_profile` | 43,150 | 495 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `itr` | `interval_true_range` | 36,095 | 143 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
+| `itr` | `interval_true_range` | 36,095 | 172 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `macro` | `macro_event_anchor` | 18,414 | 468 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `ob` | `order_block` | 46,331 | 297 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `ogap` | `opening_gap_levels` | 9,438 | 210 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
+| `ogap` | `opening_gap_levels` | 9,438 | 487 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `orb` | `opening_range_breakout` | 34,040 | 99 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `psp` | `psp_candle_divergence` | 15,827 | 88 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | `smt` | `smt_htf_reference_divergence` | 2,891 | 121 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |

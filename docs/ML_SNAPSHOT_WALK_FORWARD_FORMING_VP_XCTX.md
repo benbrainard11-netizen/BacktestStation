@@ -1,12 +1,12 @@
 # ML snapshot walk-forward validation
 
-_Generated `2026-05-13T04:31:04.918655+00:00`._
+_Generated `2026-05-14T09:52:56.320057+00:00`._
 
 ## Setup
 
-- Matrix: `C:\Users\benbr\BacktestStation\data\ml\anchors\forming_vp_snapshots_xctx.parquet`
-- Schema: `C:\Users\benbr\BacktestStation\data\ml\anchors\forming_vp_snapshots_xctx.schema.json`
-- Leaderboard source: `C:\Users\benbr\BacktestStation\data\ml\anchors\forming_vp_snapshot_leaderboard_xctx.parquet`
+- Matrix: `data\ml\anchors\forming_vp_snapshots_xctx.parquet`
+- Schema: `data\ml\anchors\forming_vp_snapshots_xctx.schema.json`
+- Leaderboard source: `data\ml\anchors\forming_vp_snapshot_leaderboard_xctx.parquet`
 - Event type: `all`
 - Candidates: `12`
 - Test years attempted: `2020, 2021, 2022, 2023, 2024, 2025`
@@ -19,119 +19,119 @@ _Generated `2026-05-13T04:31:04.918655+00:00`._
 
 | file | purpose |
 |---|---|
-| C:\Users\benbr\BacktestStation\data\ml\anchors\forming_vp_walk_forward_xctx_summary.csv | candidate summary CSV |
-| C:\Users\benbr\BacktestStation\data\ml\anchors\forming_vp_walk_forward_xctx_summary.parquet | candidate summary parquet |
-| C:\Users\benbr\BacktestStation\data\ml\anchors\forming_vp_walk_forward_xctx_folds.csv | per-fold CSV |
-| C:\Users\benbr\BacktestStation\data\ml\anchors\forming_vp_walk_forward_xctx_folds.parquet | per-fold parquet |
+| data\ml\anchors\forming_vp_walk_forward_xctx_summary.csv | candidate summary CSV |
+| data\ml\anchors\forming_vp_walk_forward_xctx_summary.parquet | candidate summary parquet |
+| data\ml\anchors\forming_vp_walk_forward_xctx_folds.csv | per-fold CSV |
+| data\ml\anchors\forming_vp_walk_forward_xctx_folds.parquet | per-fold parquet |
 
 ## Coverage
 
 | item | value |
 |---|---|
 | schema_rows | 43150 |
-| schema_feature_columns | 710 |
-| schema_label_columns | 411 |
+| schema_feature_columns | 869 |
+| schema_label_columns | 507 |
 | folds_attempted | 72 |
-| folds_ok | 70 |
-| folds_skipped | 2 |
+| folds_ok | 72 |
+| folds_skipped | 0 |
 
 ## Candidate Summary
 
 | snapshot | side | label | ok_folds | test_rows | mean_auc | median_auc | min_auc | std_auc | mean_top_rate | min_top_rate | mean_top_lift |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| at_fire | selling | label.next_240m.vah_touch.resistance_break_acceptance_3bar | 6 | 4192 | 0.919 | 0.925 | 0.881 | 0.019 | 13.7% | 10.6% | 11.4% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_rejection_3bar | 6 | 4192 | 0.918 | 0.916 | 0.905 | 0.013 | 14.3% | 10.8% | 12.0% |
-| at_fire | selling | label.next_60m.took_profile_high_so_far | 6 | 4192 | 0.912 | 0.916 | 0.894 | 0.012 | 65.2% | 54.5% | 50.0% |
-| at_fire | all | label.next_240m.vah_touch.resistance_rejection_3bar | 6 | 22916 | 0.904 | 0.903 | 0.893 | 0.007 | 21.5% | 19.0% | 16.9% |
-| at_fire | buying | label.next_60m.vwap_touch.resistance_break_acceptance_3bar | 6 | 5811 | 0.901 | 0.903 | 0.880 | 0.014 | 21.3% | 18.2% | 17.2% |
-| at_fire | all | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 6 | 22912 | 0.899 | 0.899 | 0.889 | 0.008 | 16.4% | 14.1% | 13.2% |
-| at_fire | buying | label.next_60m.took_profile_low_so_far | 6 | 5811 | 0.898 | 0.898 | 0.873 | 0.021 | 66.0% | 58.9% | 52.8% |
-| at_fire | buying | label.next_240m.vah_touch.resistance_rejection_3bar | 6 | 5812 | 0.897 | 0.899 | 0.888 | 0.006 | 21.8% | 17.0% | 16.7% |
-| at_fire | buying | label.next_60m.vah_touch.resistance_rejection_3bar | 6 | 5811 | 0.896 | 0.893 | 0.884 | 0.012 | 17.0% | 13.5% | 13.5% |
-| at_fire | all | label.next_60m.vah_touch.resistance_rejection_3bar | 6 | 22912 | 0.895 | 0.893 | 0.886 | 0.007 | 15.4% | 14.1% | 12.0% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_rejection_3bar | 5 | 3549 | 0.927 | 0.935 | 0.902 | 0.018 | 13.9% | 10.8% | 11.8% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 5 | 3549 | 0.916 | 0.914 | 0.888 | 0.020 | 12.8% | 9.1% | 10.7% |
+| at_fire | balanced | label.rest_of_day.range_expanded_1x_profile_so_far | 6 | 12916 | 0.952 | 0.952 | 0.928 | 0.014 | 100.0% | 100.0% | 27.2% |
+| at_fire | all | label.rest_of_day.range_expanded_1x_profile_so_far | 6 | 22922 | 0.949 | 0.951 | 0.916 | 0.016 | 99.9% | 99.2% | 29.5% |
+| at_fire | buying | label.rest_of_day.range_expanded_1x_profile_so_far | 6 | 5814 | 0.943 | 0.946 | 0.908 | 0.017 | 99.9% | 99.1% | 33.2% |
+| at_fire | selling | label.rest_of_day.range_expanded_1x_profile_so_far | 6 | 4192 | 0.943 | 0.947 | 0.909 | 0.019 | 99.5% | 98.5% | 31.2% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high | 6 | 4192 | 0.915 | 0.921 | 0.898 | 0.012 | 65.1% | 54.5% | 49.9% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low | 6 | 5811 | 0.899 | 0.897 | 0.875 | 0.020 | 65.8% | 58.9% | 52.7% |
+| at_fire | all | label.next_60m.took_profile_so_far_high | 6 | 22912 | 0.887 | 0.886 | 0.880 | 0.006 | 78.4% | 75.2% | 54.4% |
+| at_fire | balanced | label.next_60m.took_profile_so_far_high | 6 | 12909 | 0.883 | 0.880 | 0.872 | 0.008 | 78.6% | 71.6% | 55.5% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low_rejected_inside | 6 | 5811 | 0.878 | 0.870 | 0.854 | 0.022 | 33.0% | 26.1% | 26.3% |
+| at_fire | all | label.next_60m.took_profile_so_far_low | 6 | 22912 | 0.876 | 0.871 | 0.870 | 0.009 | 73.2% | 66.9% | 53.8% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high_rejected_inside | 6 | 4192 | 0.863 | 0.865 | 0.826 | 0.026 | 26.0% | 21.7% | 18.5% |
+| at_fire | buying | label.next_60m.took_profile_so_far_high | 6 | 5811 | 0.861 | 0.856 | 0.843 | 0.013 | 83.7% | 77.3% | 51.4% |
 
 ## Fold Detail
 
 | snapshot | side | label | test_year | test_n | base_rate | auc | acc | majority_acc | top_n | top_rate |
 |---|---|---|---|---|---|---|---|---|---|---|
-| at_fire | all | label.next_240m.vah_touch.resistance_rejection_3bar | 2020 | 3827 | 4.2% | 0.916 | 0.957 | 0.958 | 383 | 23.8% |
-| at_fire | all | label.next_240m.vah_touch.resistance_rejection_3bar | 2021 | 3834 | 4.3% | 0.900 | 0.956 | 0.957 | 384 | 19.0% |
-| at_fire | all | label.next_240m.vah_touch.resistance_rejection_3bar | 2022 | 3822 | 5.1% | 0.893 | 0.949 | 0.949 | 383 | 19.8% |
-| at_fire | all | label.next_240m.vah_touch.resistance_rejection_3bar | 2023 | 3813 | 4.8% | 0.908 | 0.952 | 0.952 | 382 | 23.3% |
-| at_fire | all | label.next_240m.vah_touch.resistance_rejection_3bar | 2024 | 3831 | 4.9% | 0.905 | 0.951 | 0.951 | 384 | 22.7% |
-| at_fire | all | label.next_240m.vah_touch.resistance_rejection_3bar | 2025 | 3789 | 4.2% | 0.898 | 0.958 | 0.958 | 379 | 20.6% |
-| at_fire | all | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2020 | 3826 | 2.9% | 0.914 | 0.971 | 0.971 | 383 | 16.7% |
-| at_fire | all | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2021 | 3834 | 3.2% | 0.902 | 0.967 | 0.968 | 384 | 18.5% |
-| at_fire | all | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2022 | 3822 | 3.8% | 0.896 | 0.962 | 0.962 | 383 | 19.6% |
-| at_fire | all | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2023 | 3813 | 2.9% | 0.891 | 0.971 | 0.971 | 382 | 14.1% |
-| at_fire | all | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2024 | 3831 | 2.9% | 0.901 | 0.971 | 0.971 | 384 | 14.8% |
-| at_fire | all | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2025 | 3786 | 3.2% | 0.889 | 0.968 | 0.968 | 379 | 14.5% |
-| at_fire | all | label.next_60m.vah_touch.resistance_rejection_3bar | 2020 | 3826 | 3.1% | 0.905 | 0.969 | 0.969 | 383 | 15.1% |
-| at_fire | all | label.next_60m.vah_touch.resistance_rejection_3bar | 2021 | 3834 | 3.3% | 0.886 | 0.967 | 0.967 | 384 | 14.1% |
-| at_fire | all | label.next_60m.vah_touch.resistance_rejection_3bar | 2022 | 3822 | 4.1% | 0.889 | 0.959 | 0.959 | 383 | 17.5% |
-| at_fire | all | label.next_60m.vah_touch.resistance_rejection_3bar | 2023 | 3813 | 3.3% | 0.893 | 0.967 | 0.967 | 382 | 14.1% |
-| at_fire | all | label.next_60m.vah_touch.resistance_rejection_3bar | 2024 | 3831 | 3.2% | 0.893 | 0.968 | 0.968 | 384 | 15.6% |
-| at_fire | all | label.next_60m.vah_touch.resistance_rejection_3bar | 2025 | 3786 | 3.2% | 0.903 | 0.968 | 0.968 | 379 | 15.8% |
-| at_fire | buying | label.next_240m.vah_touch.resistance_rejection_3bar | 2020 | 1111 | 4.4% | 0.900 | 0.956 | 0.956 | 112 | 17.0% |
-| at_fire | buying | label.next_240m.vah_touch.resistance_rejection_3bar | 2021 | 1033 | 4.0% | 0.902 | 0.959 | 0.960 | 104 | 21.2% |
-| at_fire | buying | label.next_240m.vah_touch.resistance_rejection_3bar | 2022 | 879 | 6.3% | 0.890 | 0.937 | 0.937 | 88 | 22.7% |
-| at_fire | buying | label.next_240m.vah_touch.resistance_rejection_3bar | 2023 | 889 | 6.3% | 0.888 | 0.937 | 0.937 | 89 | 27.0% |
-| at_fire | buying | label.next_240m.vah_touch.resistance_rejection_3bar | 2024 | 928 | 6.4% | 0.899 | 0.935 | 0.936 | 93 | 25.8% |
-| at_fire | buying | label.next_240m.vah_touch.resistance_rejection_3bar | 2025 | 972 | 3.6% | 0.906 | 0.964 | 0.964 | 98 | 17.3% |
-| at_fire | buying | label.next_60m.took_profile_low_so_far | 2020 | 1111 | 9.5% | 0.927 | 0.922 | 0.905 | 112 | 58.9% |
-| at_fire | buying | label.next_60m.took_profile_low_so_far | 2021 | 1033 | 11.9% | 0.911 | 0.919 | 0.881 | 104 | 66.3% |
-| at_fire | buying | label.next_60m.took_profile_low_so_far | 2022 | 879 | 14.8% | 0.873 | 0.883 | 0.852 | 88 | 64.8% |
-| at_fire | buying | label.next_60m.took_profile_low_so_far | 2023 | 889 | 14.5% | 0.874 | 0.884 | 0.855 | 89 | 65.2% |
-| at_fire | buying | label.next_60m.took_profile_low_so_far | 2024 | 928 | 14.1% | 0.917 | 0.909 | 0.859 | 93 | 77.4% |
-| at_fire | buying | label.next_60m.took_profile_low_so_far | 2025 | 971 | 14.1% | 0.885 | 0.885 | 0.859 | 98 | 63.3% |
-| at_fire | buying | label.next_60m.vah_touch.resistance_rejection_3bar | 2020 | 1111 | 3.1% | 0.906 | 0.968 | 0.969 | 112 | 16.1% |
-| at_fire | buying | label.next_60m.vah_touch.resistance_rejection_3bar | 2021 | 1033 | 3.1% | 0.891 | 0.969 | 0.969 | 104 | 13.5% |
-| at_fire | buying | label.next_60m.vah_touch.resistance_rejection_3bar | 2022 | 879 | 4.4% | 0.884 | 0.956 | 0.956 | 88 | 18.2% |
-| at_fire | buying | label.next_60m.vah_touch.resistance_rejection_3bar | 2023 | 889 | 3.7% | 0.884 | 0.963 | 0.963 | 89 | 16.9% |
-| at_fire | buying | label.next_60m.vah_touch.resistance_rejection_3bar | 2024 | 928 | 4.0% | 0.894 | 0.959 | 0.960 | 93 | 19.4% |
-| at_fire | buying | label.next_60m.vah_touch.resistance_rejection_3bar | 2025 | 971 | 2.8% | 0.918 | 0.972 | 0.972 | 98 | 18.4% |
-| at_fire | buying | label.next_60m.vwap_touch.resistance_break_acceptance_3bar | 2020 | 1111 | 3.2% | 0.921 | 0.968 | 0.968 | 112 | 19.6% |
-| at_fire | buying | label.next_60m.vwap_touch.resistance_break_acceptance_3bar | 2021 | 1033 | 4.6% | 0.880 | 0.954 | 0.954 | 104 | 22.1% |
-| at_fire | buying | label.next_60m.vwap_touch.resistance_break_acceptance_3bar | 2022 | 879 | 3.4% | 0.901 | 0.965 | 0.966 | 88 | 18.2% |
-| at_fire | buying | label.next_60m.vwap_touch.resistance_break_acceptance_3bar | 2023 | 889 | 4.4% | 0.887 | 0.955 | 0.956 | 89 | 23.6% |
-| at_fire | buying | label.next_60m.vwap_touch.resistance_break_acceptance_3bar | 2024 | 928 | 4.8% | 0.905 | 0.950 | 0.952 | 93 | 23.7% |
-| at_fire | buying | label.next_60m.vwap_touch.resistance_break_acceptance_3bar | 2025 | 971 | 3.7% | 0.910 | 0.961 | 0.963 | 98 | 20.4% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_break_acceptance_3bar | 2020 | 643 | 1.7% | 0.920 | 0.981 | 0.983 | 65 | 10.8% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_break_acceptance_3bar | 2021 | 659 | 1.5% | 0.934 | 0.985 | 0.985 | 66 | 10.6% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_break_acceptance_3bar | 2022 | 824 | 3.4% | 0.881 | 0.964 | 0.966 | 83 | 15.7% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_break_acceptance_3bar | 2023 | 737 | 2.4% | 0.913 | 0.976 | 0.976 | 74 | 12.2% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_break_acceptance_3bar | 2024 | 672 | 1.9% | 0.929 | 0.981 | 0.981 | 68 | 13.2% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_break_acceptance_3bar | 2025 | 657 | 2.6% | 0.939 | 0.974 | 0.974 | 66 | 19.7% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_rejection_3bar | 2020 | 643 | 1.6% | 0.922 | 0.984 | 0.984 | 65 | 10.8% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_rejection_3bar | 2021 | 659 | 2.6% | 0.907 | 0.974 | 0.974 | 66 | 15.2% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_rejection_3bar | 2022 | 824 | 2.4% | 0.910 | 0.976 | 0.976 | 83 | 10.8% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_rejection_3bar | 2023 | 737 | 2.3% | 0.905 | 0.977 | 0.977 | 74 | 16.2% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_rejection_3bar | 2024 | 672 | 1.9% | 0.943 | 0.981 | 0.981 | 68 | 14.7% |
-| at_fire | selling | label.next_240m.vah_touch.resistance_rejection_3bar | 2025 | 657 | 3.0% | 0.921 | 0.968 | 0.970 | 66 | 18.2% |
-| at_fire | selling | label.next_60m.took_profile_high_so_far | 2020 | 643 | 13.2% | 0.925 | 0.890 | 0.868 | 65 | 60.0% |
-| at_fire | selling | label.next_60m.took_profile_high_so_far | 2021 | 659 | 13.8% | 0.899 | 0.885 | 0.862 | 66 | 54.5% |
-| at_fire | selling | label.next_60m.took_profile_high_so_far | 2022 | 824 | 15.5% | 0.918 | 0.874 | 0.845 | 83 | 60.2% |
-| at_fire | selling | label.next_60m.took_profile_high_so_far | 2023 | 737 | 16.7% | 0.913 | 0.883 | 0.833 | 74 | 73.0% |
-| at_fire | selling | label.next_60m.took_profile_high_so_far | 2024 | 672 | 17.1% | 0.894 | 0.881 | 0.829 | 68 | 66.2% |
-| at_fire | selling | label.next_60m.took_profile_high_so_far | 2025 | 657 | 14.6% | 0.924 | 0.896 | 0.854 | 66 | 77.3% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2021 | 659 | 1.5% | 0.913 | 0.985 | 0.985 | 66 | 9.1% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2022 | 824 | 2.8% | 0.888 | 0.972 | 0.972 | 83 | 16.9% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2023 | 737 | 2.3% | 0.914 | 0.977 | 0.977 | 74 | 9.5% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2024 | 672 | 1.6% | 0.950 | 0.984 | 0.984 | 68 | 14.7% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_break_acceptance_3bar | 2025 | 657 | 2.1% | 0.916 | 0.979 | 0.979 | 66 | 13.6% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_rejection_3bar | 2021 | 659 | 2.3% | 0.902 | 0.977 | 0.977 | 66 | 13.6% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_rejection_3bar | 2022 | 824 | 2.2% | 0.910 | 0.978 | 0.978 | 83 | 10.8% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_rejection_3bar | 2023 | 737 | 1.5% | 0.952 | 0.985 | 0.985 | 74 | 13.5% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_rejection_3bar | 2024 | 672 | 1.8% | 0.935 | 0.982 | 0.982 | 68 | 13.2% |
-| at_fire | selling | label.next_60m.vah_touch.resistance_rejection_3bar | 2025 | 657 | 2.6% | 0.936 | 0.974 | 0.974 | 66 | 18.2% |
+| at_fire | all | label.next_60m.took_profile_so_far_high | 2020 | 3826 | 23.8% | 0.884 | 0.829 | 0.762 | 383 | 75.2% |
+| at_fire | all | label.next_60m.took_profile_so_far_high | 2021 | 3834 | 22.9% | 0.880 | 0.836 | 0.771 | 384 | 76.6% |
+| at_fire | all | label.next_60m.took_profile_so_far_high | 2022 | 3822 | 23.1% | 0.888 | 0.840 | 0.769 | 383 | 77.0% |
+| at_fire | all | label.next_60m.took_profile_so_far_high | 2023 | 3813 | 23.7% | 0.893 | 0.849 | 0.763 | 382 | 79.8% |
+| at_fire | all | label.next_60m.took_profile_so_far_high | 2024 | 3831 | 25.8% | 0.883 | 0.829 | 0.742 | 384 | 79.4% |
+| at_fire | all | label.next_60m.took_profile_so_far_high | 2025 | 3786 | 24.7% | 0.896 | 0.840 | 0.753 | 379 | 82.6% |
+| at_fire | all | label.next_60m.took_profile_so_far_low | 2020 | 3826 | 16.6% | 0.893 | 0.877 | 0.834 | 383 | 71.5% |
+| at_fire | all | label.next_60m.took_profile_so_far_low | 2021 | 3834 | 18.4% | 0.870 | 0.856 | 0.816 | 384 | 66.9% |
+| at_fire | all | label.next_60m.took_profile_so_far_low | 2022 | 3822 | 21.6% | 0.870 | 0.848 | 0.784 | 383 | 78.1% |
+| at_fire | all | label.next_60m.took_profile_so_far_low | 2023 | 3813 | 21.2% | 0.871 | 0.848 | 0.788 | 382 | 77.2% |
+| at_fire | all | label.next_60m.took_profile_so_far_low | 2024 | 3831 | 19.3% | 0.882 | 0.863 | 0.807 | 384 | 76.8% |
+| at_fire | all | label.next_60m.took_profile_so_far_low | 2025 | 3786 | 19.4% | 0.872 | 0.848 | 0.806 | 379 | 68.9% |
+| at_fire | all | label.rest_of_day.range_expanded_1x_profile_so_far | 2020 | 3827 | 63.6% | 0.916 | 0.826 | 0.636 | 383 | 99.2% |
+| at_fire | all | label.rest_of_day.range_expanded_1x_profile_so_far | 2021 | 3834 | 68.5% | 0.948 | 0.879 | 0.685 | 384 | 100.0% |
+| at_fire | all | label.rest_of_day.range_expanded_1x_profile_so_far | 2022 | 3822 | 72.3% | 0.948 | 0.879 | 0.723 | 383 | 100.0% |
+| at_fire | all | label.rest_of_day.range_expanded_1x_profile_so_far | 2023 | 3813 | 73.7% | 0.966 | 0.903 | 0.737 | 382 | 100.0% |
+| at_fire | all | label.rest_of_day.range_expanded_1x_profile_so_far | 2024 | 3831 | 73.7% | 0.964 | 0.913 | 0.737 | 384 | 100.0% |
+| at_fire | all | label.rest_of_day.range_expanded_1x_profile_so_far | 2025 | 3795 | 70.4% | 0.953 | 0.901 | 0.704 | 380 | 100.0% |
+| at_fire | balanced | label.next_60m.took_profile_so_far_high | 2020 | 2072 | 21.8% | 0.878 | 0.837 | 0.782 | 208 | 71.6% |
+| at_fire | balanced | label.next_60m.took_profile_so_far_high | 2021 | 2142 | 21.1% | 0.886 | 0.845 | 0.789 | 215 | 76.3% |
+| at_fire | balanced | label.next_60m.took_profile_so_far_high | 2022 | 2119 | 23.2% | 0.879 | 0.846 | 0.768 | 212 | 78.8% |
+| at_fire | balanced | label.next_60m.took_profile_so_far_high | 2023 | 2187 | 23.1% | 0.882 | 0.845 | 0.769 | 219 | 78.5% |
+| at_fire | balanced | label.next_60m.took_profile_so_far_high | 2024 | 2231 | 25.1% | 0.872 | 0.825 | 0.749 | 224 | 80.4% |
+| at_fire | balanced | label.next_60m.took_profile_so_far_high | 2025 | 2158 | 24.4% | 0.899 | 0.851 | 0.756 | 216 | 86.1% |
+| at_fire | balanced | label.rest_of_day.range_expanded_1x_profile_so_far | 2020 | 2073 | 66.3% | 0.928 | 0.839 | 0.663 | 208 | 100.0% |
+| at_fire | balanced | label.rest_of_day.range_expanded_1x_profile_so_far | 2021 | 2142 | 71.7% | 0.947 | 0.887 | 0.717 | 215 | 100.0% |
+| at_fire | balanced | label.rest_of_day.range_expanded_1x_profile_so_far | 2022 | 2119 | 75.0% | 0.945 | 0.893 | 0.750 | 212 | 100.0% |
+| at_fire | balanced | label.rest_of_day.range_expanded_1x_profile_so_far | 2023 | 2187 | 75.3% | 0.970 | 0.918 | 0.753 | 219 | 100.0% |
+| at_fire | balanced | label.rest_of_day.range_expanded_1x_profile_so_far | 2024 | 2231 | 75.9% | 0.962 | 0.914 | 0.759 | 224 | 100.0% |
+| at_fire | balanced | label.rest_of_day.range_expanded_1x_profile_so_far | 2025 | 2164 | 72.6% | 0.957 | 0.910 | 0.726 | 217 | 100.0% |
+| at_fire | buying | label.next_60m.took_profile_so_far_high | 2020 | 1111 | 33.7% | 0.852 | 0.767 | 0.663 | 112 | 83.0% |
+| at_fire | buying | label.next_60m.took_profile_so_far_high | 2021 | 1033 | 32.6% | 0.843 | 0.784 | 0.674 | 104 | 83.7% |
+| at_fire | buying | label.next_60m.took_profile_so_far_high | 2022 | 879 | 29.9% | 0.854 | 0.793 | 0.701 | 88 | 77.3% |
+| at_fire | buying | label.next_60m.took_profile_so_far_high | 2023 | 889 | 31.2% | 0.881 | 0.811 | 0.688 | 89 | 82.0% |
+| at_fire | buying | label.next_60m.took_profile_so_far_high | 2024 | 928 | 33.8% | 0.875 | 0.790 | 0.662 | 93 | 90.3% |
+| at_fire | buying | label.next_60m.took_profile_so_far_high | 2025 | 971 | 32.1% | 0.858 | 0.782 | 0.679 | 98 | 85.7% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low | 2020 | 1111 | 9.5% | 0.925 | 0.927 | 0.905 | 112 | 58.9% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low | 2021 | 1033 | 11.9% | 0.910 | 0.917 | 0.881 | 104 | 66.3% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low | 2022 | 879 | 14.8% | 0.884 | 0.882 | 0.852 | 88 | 64.8% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low | 2023 | 889 | 14.5% | 0.875 | 0.884 | 0.855 | 89 | 64.0% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low | 2024 | 928 | 14.1% | 0.919 | 0.915 | 0.859 | 93 | 79.6% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low | 2025 | 971 | 14.1% | 0.881 | 0.884 | 0.859 | 98 | 61.2% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low_rejected_inside | 2020 | 1111 | 5.2% | 0.905 | 0.950 | 0.948 | 112 | 33.9% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low_rejected_inside | 2021 | 1033 | 7.1% | 0.910 | 0.928 | 0.929 | 104 | 40.4% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low_rejected_inside | 2022 | 879 | 5.8% | 0.854 | 0.937 | 0.942 | 88 | 26.1% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low_rejected_inside | 2023 | 889 | 6.6% | 0.865 | 0.930 | 0.934 | 89 | 28.1% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low_rejected_inside | 2024 | 928 | 8.1% | 0.875 | 0.917 | 0.919 | 93 | 36.6% |
+| at_fire | buying | label.next_60m.took_profile_so_far_low_rejected_inside | 2025 | 971 | 7.1% | 0.859 | 0.920 | 0.929 | 98 | 32.7% |
+| at_fire | buying | label.rest_of_day.range_expanded_1x_profile_so_far | 2020 | 1111 | 57.5% | 0.908 | 0.817 | 0.575 | 112 | 99.1% |
+| at_fire | buying | label.rest_of_day.range_expanded_1x_profile_so_far | 2021 | 1033 | 62.1% | 0.942 | 0.866 | 0.621 | 104 | 100.0% |
+| at_fire | buying | label.rest_of_day.range_expanded_1x_profile_so_far | 2022 | 879 | 68.8% | 0.951 | 0.862 | 0.688 | 88 | 100.0% |
+| at_fire | buying | label.rest_of_day.range_expanded_1x_profile_so_far | 2023 | 889 | 74.4% | 0.963 | 0.892 | 0.744 | 89 | 100.0% |
+| at_fire | buying | label.rest_of_day.range_expanded_1x_profile_so_far | 2024 | 928 | 70.6% | 0.955 | 0.895 | 0.706 | 93 | 100.0% |
+| at_fire | buying | label.rest_of_day.range_expanded_1x_profile_so_far | 2025 | 974 | 66.7% | 0.942 | 0.889 | 0.667 | 98 | 100.0% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high | 2020 | 643 | 13.2% | 0.929 | 0.888 | 0.868 | 65 | 60.0% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high | 2021 | 659 | 13.8% | 0.898 | 0.877 | 0.862 | 66 | 54.5% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high | 2022 | 824 | 15.5% | 0.921 | 0.881 | 0.845 | 83 | 61.4% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high | 2023 | 737 | 16.7% | 0.921 | 0.897 | 0.833 | 74 | 75.7% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high | 2024 | 672 | 17.1% | 0.898 | 0.878 | 0.829 | 68 | 70.6% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high | 2025 | 657 | 14.6% | 0.921 | 0.904 | 0.854 | 66 | 68.2% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high_rejected_inside | 2020 | 643 | 7.8% | 0.889 | 0.916 | 0.922 | 65 | 27.7% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high_rejected_inside | 2021 | 659 | 7.6% | 0.871 | 0.923 | 0.924 | 66 | 24.2% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high_rejected_inside | 2022 | 824 | 6.6% | 0.858 | 0.932 | 0.934 | 83 | 21.7% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high_rejected_inside | 2023 | 737 | 7.9% | 0.826 | 0.920 | 0.921 | 74 | 25.7% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high_rejected_inside | 2024 | 672 | 7.7% | 0.837 | 0.924 | 0.923 | 68 | 22.1% |
+| at_fire | selling | label.next_60m.took_profile_so_far_high_rejected_inside | 2025 | 657 | 7.5% | 0.900 | 0.922 | 0.925 | 66 | 34.8% |
+| at_fire | selling | label.rest_of_day.range_expanded_1x_profile_so_far | 2020 | 643 | 65.6% | 0.909 | 0.835 | 0.656 | 65 | 98.5% |
+| at_fire | selling | label.rest_of_day.range_expanded_1x_profile_so_far | 2021 | 659 | 68.0% | 0.947 | 0.888 | 0.680 | 66 | 100.0% |
+| at_fire | selling | label.rest_of_day.range_expanded_1x_profile_so_far | 2022 | 824 | 68.9% | 0.932 | 0.873 | 0.689 | 83 | 98.8% |
+| at_fire | selling | label.rest_of_day.range_expanded_1x_profile_so_far | 2023 | 737 | 68.5% | 0.950 | 0.875 | 0.685 | 74 | 100.0% |
+| at_fire | selling | label.rest_of_day.range_expanded_1x_profile_so_far | 2024 | 672 | 70.4% | 0.973 | 0.923 | 0.704 | 68 | 100.0% |
+| at_fire | selling | label.rest_of_day.range_expanded_1x_profile_so_far | 2025 | 657 | 68.5% | 0.948 | 0.886 | 0.685 | 66 | 100.0% |
 
 ## Skipped Folds
 
-| status | count |
-|---|---|
-| skip_test_imbalance | 2 |
+None.
 
 ## Interpretation
 

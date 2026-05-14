@@ -155,6 +155,10 @@ def test_bullish_fvg_unmitigated(fake_reader: FakeBarReader):
     assert mit["closed_through"] is False
     assert mit["tap_bar_classification"] is None
     assert out["post_tap_reaction"] is None
+    assert out["outcome_version"] == "v3"
+    assert out["zone_reaction"]["took_fvg_high"] is True
+    assert out["zone_reaction"]["took_fvg_low"] is False
+    assert out["zone_reaction"]["closed_above_fvg_high"] is True
 
 
 def test_bullish_fvg_full_fill(fake_reader: FakeBarReader):
@@ -326,9 +330,9 @@ def test_runner_idempotent(
 
 def test_computer_is_registered():
     from app.research.outcomes import OUTCOMES, get_by_feature
-    assert "fvg_reactions_v1" in OUTCOMES
+    assert "fvg_reactions_v3" in OUTCOMES
     c = get_by_feature("fvg_formation")
-    assert c.outcome_version == "v2"
+    assert c.outcome_version == "v3"
 
 
 # ---------- v2-specific tests ----------

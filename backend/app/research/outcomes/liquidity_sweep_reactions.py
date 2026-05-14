@@ -40,6 +40,12 @@ from sqlalchemy import select
 
 from app.db.models import ResearchEvent
 from app.research.outcomes import BarReader, register
+from app.research.outcomes.reaction_labels import (
+    add_first_bar_reaction,
+    add_range_reaction,
+    add_reference_price_reaction,
+    bar_window_summary,
+)
 
 UTC = timezone.utc
 log = logging.getLogger(__name__)
@@ -97,7 +103,7 @@ _OB_LAG: dict[str, int] = {
 
 class LiquiditySweepReactionsComputer:
     feature_name: str = "liquidity_sweep"
-    outcome_version: str = "v1"
+    outcome_version: str = "v2"
 
     # OB events pre-loaded into a pandas DataFrame on first call,
     # massively faster than per-event SQL join. Cache survives across
@@ -190,6 +196,20 @@ class LiquiditySweepReactionsComputer:
             "swept_level_recovery": recovery,
             "forward_continuation": continuation,
             "ob_confirmation": ob_confirmation,
+            "swept_reference_reaction": _swept_reference_reaction(
+                forward,
+                window_start=forward_start,
+                window_end=forward_start + timedelta(minutes=minutes_per_candle * len(forward)),
+                reference_price=ref_price,
+            ),
+            "manipulation_range_reaction": _manipulation_range_reaction(
+                forward,
+                window_start=forward_start,
+                window_end=forward_start + timedelta(minutes=minutes_per_candle * len(forward)),
+                manipulation_close=manip_close,
+                manipulation_high=manip_high,
+                manipulation_low=manip_low,
+            ),
             **forward_blocks,
         }
 
@@ -318,6 +338,76 @@ def _compute_recovery(
     }
 
 
+def _swept_reference_reaction(
+    forward: pd.DataFrame,
+    *,
+    window_start: datetime,
+    window_end: datetime,
+    reference_price: float,
+) -> dict[str, Any] | None:
+    out = bar_window_summary(forward, window_start=window_start, window_end=window_end)
+    if out is None:
+        return None
+    high = float(out["high"])
+    low = float(out["low"])
+    close = float(out["close"])
+    add_reference_price_reaction(
+        out,
+        high=high,
+        low=low,
+        close=close,
+        reference_price=reference_price,
+    )
+    add_first_bar_reaction(
+        out,
+        first_close=float(forward["close"].astype(float).iloc[0]),
+        final_close=close,
+        reference_price=reference_price,
+    )
+    return out
+
+
+def _manipulation_range_reaction(
+    forward: pd.DataFrame,
+    *,
+    window_start: datetime,
+    window_end: datetime,
+    manipulation_close: float,
+    manipulation_high: float,
+    manipulation_low: float,
+) -> dict[str, Any] | None:
+    out = bar_window_summary(forward, window_start=window_start, window_end=window_end)
+    if out is None:
+        return None
+    high = float(out["high"])
+    low = float(out["low"])
+    close = float(out["close"])
+    add_reference_price_reaction(
+        out,
+        high=high,
+        low=low,
+        close=close,
+        reference_price=manipulation_close,
+    )
+    add_first_bar_reaction(
+        out,
+        first_close=float(forward["close"].astype(float).iloc[0]),
+        final_close=close,
+        reference_price=manipulation_close,
+    )
+    add_range_reaction(
+        out,
+        high=high,
+        low=low,
+        close=close,
+        range_pts=float(out["range_pts"]),
+        anchor_high=manipulation_high,
+        anchor_low=manipulation_low,
+        prefix="manipulation",
+    )
+    return out
+
+
 def _compute_continuation(
     forward: pd.DataFrame,
     *,
@@ -427,4 +517,4 @@ def _ensure_utc(ts: datetime) -> datetime:
 
 # ---------- registration ----------
 
-register("liquidity_sweep_reactions_v1", LiquiditySweepReactionsComputer())
+register("liquidity_sweep_reactions_v2", LiquiditySweepReactionsComputer())

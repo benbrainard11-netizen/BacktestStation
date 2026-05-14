@@ -28,13 +28,13 @@ from app.data.reader import read_bars
 from app.db.models import ResearchEvent
 from app.db.session import create_all, make_engine, make_session_factory
 from app.research.outcomes.forming_volume_profile_reactions import (
+    OUTCOME_VERSION,
     WINDOWS_MIN,
     _ensure_utc_index,
     _window_outcome,
 )
 
 UTC = timezone.utc
-OUTCOME_VERSION = "v1"
 FEATURE_NAME = "forming_volume_profile"
 
 log = logging.getLogger("backfill_forming_volume_profile_outcomes")
