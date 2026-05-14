@@ -201,6 +201,30 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
             "data/ml/anchors/forming_vp_walk_forward_gapctx_folds.parquet",
         ),
     ),
+    ExportDataset(
+        name="macro_xctx",
+        description="Scheduled USD high/medium macro-release anchors with pre-release context, forward reaction labels, and cross-concept context.",
+        matrix="data/ml/anchors/macro_event_snapshots_xctx.parquet",
+        schema="data/ml/anchors/macro_event_snapshots_xctx.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_MACRO_XCTX.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_MACRO_XCTX.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_MACRO_XCTX.md",
+        result_files=(
+            "backend/app/research/features/macro/README.md",
+            "backend/app/research/features/macro/stats.md",
+            "data/research/macro_events/macro_events.csv",
+            "data/ml/features/macro.parquet",
+            "data/ml/anchors/macro_event_snapshots.parquet",
+            "data/ml/anchors/macro_event_snapshots.schema.json",
+            "data/ml/context/macro_cross_concept_context.parquet",
+            "data/ml/anchors/macro_snapshot_leaderboard_xctx.csv",
+            "data/ml/anchors/macro_snapshot_leaderboard_xctx.parquet",
+            "data/ml/anchors/macro_snapshot_walk_forward_summary_xctx.csv",
+            "data/ml/anchors/macro_snapshot_walk_forward_summary_xctx.parquet",
+            "data/ml/anchors/macro_snapshot_walk_forward_folds_xctx.csv",
+            "data/ml/anchors/macro_snapshot_walk_forward_folds_xctx.parquet",
+        ),
+    ),
 )
 
 CORE_DOCS: tuple[str, ...] = (

@@ -38,6 +38,7 @@ class FeatureDashboard:
     description: str
     primary_labels: tuple[str, ...] = ()
     leaderboard_files: tuple[str, ...] = ()
+    model_summary_doc: str | None = None
 
 
 FEATURES: dict[str, FeatureDashboard] = {
@@ -197,6 +198,7 @@ FEATURES: dict[str, FeatureDashboard] = {
             "oc.next_interval.swept_both_sides",
         ),
         leaderboard_files=("itr_snapshot_leaderboard_xctx.parquet",),
+        model_summary_doc="docs/ML_SNAPSHOT_LEADERBOARD_ITR_XCTX.md",
     ),
     "macro": FeatureDashboard(
         short_name="macro",
@@ -209,7 +211,8 @@ FEATURES: dict[str, FeatureDashboard] = {
             "oc.next_15m.took_pre_60m_low",
             "oc.next_60m.swept_both_pre_60m_sides",
         ),
-        leaderboard_files=("macro_event_snapshot_leaderboard.parquet",),
+        leaderboard_files=("macro_snapshot_leaderboard_xctx.parquet",),
+        model_summary_doc="docs/ML_SNAPSHOT_LEADERBOARD_MACRO_XCTX.md",
     ),
 }
 
@@ -514,7 +517,13 @@ def _leaderboard_rows(config: FeatureDashboard) -> list[dict[str, Any]]:
         ok = df[df["status"].eq("ok")].copy()
         if ok.empty:
             continue
-        ok["_source"] = file_name.replace("_snapshot_leaderboard.parquet", "")
+        source = file_name
+        for suffix in (
+            "_snapshot_leaderboard.parquet",
+            "_snapshot_leaderboard_xctx.parquet",
+        ):
+            source = source.replace(suffix, "")
+        ok["_source"] = source
         for _, row in ok.iterrows():
             out.append(row.to_dict())
     return out
@@ -535,7 +544,7 @@ def _leaderboard_table(config: FeatureDashboard) -> tuple[str, dict[str, Any] | 
     table_rows = []
     for row in rows[:10]:
         base = float(row.get("test_rate", float("nan")))
-        note = "high base rate" if base >= 0.9 or base <= 0.1 else ""
+        note = "imbalanced base rate" if base >= 0.9 or base <= 0.1 else ""
         table_rows.append([
             row.get("_source", config.short_name),
             row.get("side", "-"),
@@ -701,7 +710,10 @@ def _render_feature_stats(config: FeatureDashboard, df: pd.DataFrame) -> tuple[s
             ["Artifact", "Path"],
             [
                 ["Feature matrix", f"`data/ml/features/{config.short_name}.parquet`"],
-                ["Model summary", f"`docs/ML_SNAPSHOT_LEADERBOARD_{config.short_name.upper()}.md`"],
+                [
+                    "Model summary",
+                    f"`{config.model_summary_doc or f'docs/ML_SNAPSHOT_LEADERBOARD_{config.short_name.upper()}.md'}`",
+                ],
                 ["Dataset catalog", "`docs/ML_DATASET_CATALOG.md`"],
             ],
         ),

@@ -1,23 +1,23 @@
 # ML dataset catalog
 
-_Generated `2026-05-13T23:08:49.390160+00:00`._
+_Generated `2026-05-14T01:12:18.788769+00:00`._
 
 ## Summary
 
 | item | value |
 |---|---|
-| research_events rows | 691,810 |
-| registered detectors | 15 |
-| registered outcome computers | 15 |
-| feature matrices | 15 |
-| snapshot-builder anchor coverage | displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, interval_true_range, liquidity_sweep, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile |
+| research_events rows | 710,224 |
+| registered detectors | 16 |
+| registered outcome computers | 16 |
+| feature matrices | 16 |
+| snapshot-builder anchor coverage | displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, interval_true_range, liquidity_sweep, macro_event_anchor, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile |
 | catalog json | C:\Users\benbr\BacktestStation\data\ml\catalog\ml_dataset_catalog.json |
 
 ## What Already Exists
 
 - The repo already has registered concept detectors and matching outcome modules.
 - `data/ml/features` contains per-detector feature matrices for the registered concepts.
-- Snapshot/as-of coverage currently exists for displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, interval_true_range, liquidity_sweep, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile.
+- Snapshot/as-of coverage currently exists for displacement_candle, equal_levels, first_third_range, forming_volume_profile, fvg_formation, interval_true_range, liquidity_sweep, macro_event_anchor, opening_gap_levels, opening_range_breakout, order_block, psp_candle_divergence, smt_htf_reference_divergence, swing_pivot, time_profile, volume_profile.
 - SMT has richer `at_fire` plus `at_period_close` matrices; generic non-SMT coverage currently starts with conservative `at_fire` snapshots.
 - The model leaderboard and walk-forward reports now cover multiple anchor concepts, including opening gaps and live-style forming volume profile.
 
@@ -36,6 +36,7 @@ _Generated `2026-05-13T23:08:49.390160+00:00`._
 | vp | volume_profile | 36,095 | 212 | 42 | 144 | 126 | 14 | 100.0% | 2014-12-28 | 2026-05-08 |
 | orb | opening_range_breakout | 34,040 | 99 | 21 | 53 | 16 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
 | tp | time_profile | 19,414 | 84 | 26 | 32 | 7 | 14 | 100.0% | 2014-12-28 | 2026-05-07 |
+| macro | macro_event_anchor | 18,414 | 276 | 50 | 197 | 98 | 15 | 100.0% | 2015-01-02 | 2026-05-12 |
 | psp | psp_candle_divergence | 15,827 | 88 | 26 | 36 | 2 | 14 | 100.0% | 2015-01-02 | 2026-05-07 |
 | ft | first_third_range | 10,373 | 97 | 20 | 52 | 15 | 14 | 100.0% | 2015-01-02 | 2026-05-08 |
 | ogap | opening_gap_levels | 9,438 | 210 | 18 | 166 | 73 | 14 | 100.0% | 2015-01-04 | 2026-05-07 |
@@ -111,6 +112,16 @@ _Generated `2026-05-13T23:08:49.390160+00:00`._
 | itr_snapshots.schema.json | json | 36,095 | - | at_fire | - |
 | itr_snapshots_xctx.parquet | parquet | 36,095 | 897 | at_fire | - |
 | itr_snapshots_xctx.schema.json | json | 36,095 | - | at_fire | - |
+| macro_event_snapshots.parquet | parquet | 18,414 | 262 | at_fire | - |
+| macro_event_snapshots.schema.json | json | 18,414 | - | at_fire | - |
+| macro_event_snapshots_xctx.parquet | parquet | 18,414 | 1,070 | at_fire | - |
+| macro_event_snapshots_xctx.schema.json | json | 18,414 | - | at_fire | - |
+| macro_snapshot_leaderboard_xctx.csv | csv | 33 | 30 | - | {"ok": 31, "skip_test_imbalance": 2} |
+| macro_snapshot_leaderboard_xctx.parquet | parquet | 33 | 30 | - | {"ok": 31, "skip_test_imbalance": 2} |
+| macro_snapshot_walk_forward_folds_xctx.csv | csv | 48 | 33 | - | {"ok": 48} |
+| macro_snapshot_walk_forward_folds_xctx.parquet | parquet | 48 | 33 | - | {"ok": 48} |
+| macro_snapshot_walk_forward_summary_xctx.csv | csv | 8 | 18 | - | - |
+| macro_snapshot_walk_forward_summary_xctx.parquet | parquet | 8 | 18 | - | - |
 | ob_snapshot_leaderboard.csv | csv | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard.parquet | parquet | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard_xctx.csv | csv | 39 | 30 | - | {"ok": 39} |

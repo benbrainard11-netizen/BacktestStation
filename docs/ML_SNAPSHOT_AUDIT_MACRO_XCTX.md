@@ -1,11 +1,11 @@
 # ML snapshot matrix audit
 
-_Generated `2026-05-14T00:38:12.511382+00:00`._
+_Generated `2026-05-14T00:47:08.014405+00:00`._
 
-- Matrix: `C:\Users\benbr\BacktestStation\data\ml\anchors\macro_event_snapshots.parquet`
-- Schema: `C:\Users\benbr\BacktestStation\data\ml\anchors\macro_event_snapshots.schema.json`
+- Matrix: `C:\Users\benbr\BacktestStation\data\ml\anchors\macro_event_snapshots_xctx.parquet`
+- Schema: `C:\Users\benbr\BacktestStation\data\ml\anchors\macro_event_snapshots_xctx.schema.json`
 - Rows: `18414`
-- Columns: `262`
+- Columns: `1070`
 - Snapshots: `at_fire`
 
 ## Checks

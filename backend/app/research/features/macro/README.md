@@ -47,6 +47,7 @@ python backend\scripts\import_macro_events.py --input C:\path\to\clean_macro_eve
 | Detector | `backend/app/research/detectors/macro_event_anchor.py` |
 | Outcomes | `backend/app/research/outcomes/macro_event_reactions.py` |
 | Importer | `backend/scripts/import_macro_events.py` |
+| ForexFactory archive importer | `backend/scripts/import_forex_factory_archive.py` |
 | Feature matrix | `data/ml/features/macro.parquet` |
 | Snapshot matrix | `data/ml/anchors/macro_event_snapshots.parquet` |
 | Tests | `backend/tests/test_macro_event_anchor.py` |
@@ -84,6 +85,7 @@ Typical sequence after importing a real CSV:
 
 ```powershell
 python backend\scripts\import_macro_events.py --input C:\path\to\clean_macro_events.csv
+python backend\scripts\import_forex_factory_archive.py --input data\raw\macro_events\forex_factory_cache.csv --output data\research\macro_events\macro_events.csv --currencies USD --impacts HIGH,MEDIUM --start-year 2015 --merge
 cd backend
 python -m app.cli.scan_research_events --detector macro_event_anchor --mode pre_release --symbols NQ.c.0 ES.c.0 YM.c.0 --start 2015-01-01 --end 2026-05-14 --params "events_path=C:\Users\benbr\BacktestStation\data\research\macro_events\macro_events.csv;currencies=USD;impacts=high,medium"
 python -m app.cli.compute_research_outcomes --computer macro_event_reactions_v1 --force

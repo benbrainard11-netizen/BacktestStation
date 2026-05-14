@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
@@ -696,15 +697,30 @@ def main() -> int:
     folds.to_parquet(args.folds_parquet_output, index=False)
     summary.to_csv(args.summary_csv_output, index=False)
     summary.to_parquet(args.summary_parquet_output, index=False)
-    _write_report(
-        path=args.doc,
-        args=args,
-        schema=schema,
-        candidates=candidates,
-        folds=folds,
-        summary=summary,
-        years=years,
-    )
+    report_path = args.doc
+    try:
+        _write_report(
+            path=report_path,
+            args=args,
+            schema=schema,
+            candidates=candidates,
+            folds=folds,
+            summary=summary,
+            years=years,
+        )
+    except PermissionError as exc:
+        stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        report_path = Path(tempfile.gettempdir()) / f"{args.doc.stem}_{stamp}{args.doc.suffix}"
+        _write_report(
+            path=report_path,
+            args=args,
+            schema=schema,
+            candidates=candidates,
+            folds=folds,
+            summary=summary,
+            years=years,
+        )
+        print(f"warning: could not write {args.doc}: {exc}; wrote {report_path}")
 
     if not summary.empty:
         best = summary.iloc[0]
@@ -715,7 +731,7 @@ def main() -> int:
             f"min_auc={_fmt_num(best['min_test_auc'])}, "
             f"mean_top_rate={_fmt_pct(best['mean_top_bucket_rate'])}"
         )
-    print(f"wrote {args.doc}")
+    print(f"wrote {report_path}")
     print(f"wrote {args.summary_parquet_output}")
     print(f"wrote {args.folds_parquet_output}")
     return 0
