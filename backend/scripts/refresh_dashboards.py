@@ -198,6 +198,19 @@ FEATURES: dict[str, FeatureDashboard] = {
         ),
         leaderboard_files=("itr_snapshot_leaderboard_xctx.parquet",),
     ),
+    "macro": FeatureDashboard(
+        short_name="macro",
+        feature_name="macro_event_anchor",
+        title="Scheduled Macro Events",
+        description="Scheduled economic-calendar release anchors and post-release reaction labels.",
+        primary_labels=(
+            "oc.next_5m.range_expanded_2x_pre_15m",
+            "oc.next_15m.took_pre_60m_high",
+            "oc.next_15m.took_pre_60m_low",
+            "oc.next_60m.swept_both_pre_60m_sides",
+        ),
+        leaderboard_files=("macro_event_snapshot_leaderboard.parquet",),
+    ),
 }
 
 BASELINE_WARNINGS = {
@@ -698,7 +711,36 @@ def _render_feature_stats(config: FeatureDashboard, df: pd.DataFrame) -> tuple[s
 
 
 def refresh_feature(config: FeatureDashboard) -> dict[str, Any]:
-    df = _read_feature_df(config.short_name)
+    try:
+        df = _read_feature_df(config.short_name)
+    except FileNotFoundError:
+        out_dir = DASHBOARD_DIR / config.short_name
+        out_dir.mkdir(parents=True, exist_ok=True)
+        text = "\n".join([
+            f"# {config.title} - Current Stats",
+            "",
+            f"_Generated `{_now_utc()}` by `backend/scripts/refresh_dashboards.py`._",
+            "",
+            "## Status",
+            "",
+            f"No feature matrix exists yet at `data/ml/features/{config.short_name}.parquet`.",
+            "",
+            "This usually means the detector is registered but historical events have not been scanned and exported yet.",
+            "",
+        ])
+        (out_dir / "stats.md").write_text(text, encoding="utf-8")
+        return {
+            "short_name": config.short_name,
+            "title": config.title,
+            "rows": 0,
+            "columns": 0,
+            "coverage": None,
+            "min_bar_end_utc": None,
+            "max_bar_end_utc": None,
+            "best_auc": None,
+            "best_label": None,
+            "assessment": "No feature matrix found yet.",
+        }
     text, stats = _render_feature_stats(config, df)
     out_dir = DASHBOARD_DIR / config.short_name
     out_dir.mkdir(parents=True, exist_ok=True)

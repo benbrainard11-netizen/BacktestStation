@@ -165,6 +165,14 @@ ANCHORS: dict[str, AnchorConfig] = {
         knowable_col="ed.interval_end_utc",
         label_horizon_minutes=60 * 24 * 45,
     ),
+    "macro": AnchorConfig(
+        short_name="macro",
+        feature_name="macro_event_anchor",
+        feature_path=FEATURES_DIR / "macro.parquet",
+        output_stem="macro_event_snapshots",
+        knowable_col="ed.known_ts_utc",
+        label_horizon_minutes=60 * 24,
+    ),
 }
 
 OUTCOME_NON_TARGET_COLUMNS = {
@@ -172,6 +180,7 @@ OUTCOME_NON_TARGET_COLUMNS = {
     "oc.outcome_version",
     "oc.thesis_direction",
     "oc.reference_close",
+    "oc.max_horizon_minutes",
     "oc.manipulation_close",
     "oc.ref_price",
     "oc.ref_side",

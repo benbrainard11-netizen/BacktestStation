@@ -110,6 +110,7 @@ from app.research.outcomes import (  # noqa: E402,F401
     fvg_reactions,
     interval_true_range_reactions,
     liquidity_sweep_reactions,
+    macro_event_reactions,
     opening_gap_reactions,
     orb_reactions,
     order_block_reactions,

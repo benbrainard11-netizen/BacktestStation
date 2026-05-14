@@ -37,6 +37,7 @@ import json
 import logging
 import sys
 from datetime import date
+from typing import Any
 
 from app.data.reader import read_bars
 from app.db.session import create_all, make_engine, make_session_factory
@@ -56,6 +57,26 @@ def _setup_logging() -> None:
 
 def _parse_date(value: str) -> date:
     return date.fromisoformat(value)
+
+
+def _parse_params(value: str | None) -> dict[str, Any]:
+    if not value:
+        return {}
+    out: dict[str, Any] = {}
+    for part in value.split(","):
+        item = part.strip()
+        if not item:
+            continue
+        if "=" not in item:
+            raise argparse.ArgumentTypeError(
+                f"invalid --params item {item!r}; expected key=value"
+            )
+        key, raw = item.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise argparse.ArgumentTypeError("invalid --params item with empty key")
+        out[key] = raw.strip()
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -103,6 +124,12 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--params",
+        type=_parse_params,
+        default={},
+        help="Detector-specific params as comma-separated key=value pairs.",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Run the scan but roll back instead of committing.",
@@ -145,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
             bar_reader=read_bars,
             db=db,
             mode=args.mode,
+            params=args.params,
         )
         if args.dry_run:
             db.rollback()

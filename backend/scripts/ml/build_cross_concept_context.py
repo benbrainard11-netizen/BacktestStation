@@ -75,6 +75,7 @@ DETECTOR_TO_SHORT = {
     "forming_volume_profile": "fvp",
     "opening_gap_levels": "ogap",
     "interval_true_range": "itr",
+    "macro_event_anchor": "macro",
 }
 SHORT_TO_DETECTOR = {v: k for k, v in DETECTOR_TO_SHORT.items()}
 
@@ -124,7 +125,8 @@ def _read_research_events(db_path: Path) -> pd.DataFrame:
                 json_extract(event_data, '$.parent_period_end_utc') AS ed_parent_period_end_utc,
                 json_extract(event_data, '$.asof_ts_utc') AS ed_asof_ts_utc,
                 json_extract(event_data, '$.gap_open_ts_utc') AS ed_gap_open_ts_utc,
-                json_extract(event_data, '$.interval_end_utc') AS ed_interval_end_utc
+                json_extract(event_data, '$.interval_end_utc') AS ed_interval_end_utc,
+                json_extract(event_data, '$.known_ts_utc') AS ed_macro_known_ts_utc
             FROM research_events
             """,
             con,
@@ -186,6 +188,11 @@ def _compute_knowable_ts(events: pd.DataFrame) -> pd.Series:
     if itr.any():
         ts = pd.to_datetime(events.loc[itr, "ed_interval_end_utc"], utc=True, errors="coerce")
         out.loc[itr] = ts.fillna(events.loc[itr, "bar_end_utc"])
+
+    macro = events["short_name"].eq("macro")
+    if macro.any():
+        ts = pd.to_datetime(events.loc[macro, "ed_macro_known_ts_utc"], utc=True, errors="coerce")
+        out.loc[macro] = ts.fillna(events.loc[macro, "bar_end_utc"])
 
     missing = events[out.isna()]
     if not missing.empty:

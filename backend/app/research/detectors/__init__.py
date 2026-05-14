@@ -125,6 +125,7 @@ from app.research.detectors import (  # noqa: E402,F401
     fvg_formation,
     interval_true_range,
     liquidity_sweep,
+    macro_event_anchor,
     opening_gap_levels,
     opening_range_breakout,
     order_block,

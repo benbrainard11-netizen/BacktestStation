@@ -102,6 +102,13 @@ _EVENT_DATA_FILL_AFTER_FIRE_PATTERNS: dict[tuple[str, str], tuple[str, ...]] = {
 }
 
 
+def _event_data_patterns(feature: str, event_type: str) -> tuple[str, ...]:
+    patterns = _EVENT_DATA_FILL_AFTER_FIRE_PATTERNS.get((feature, event_type), ())
+    if feature == "macro_event_anchor" and event_type.startswith("pre_"):
+        return (*patterns, "actual", "actual_raw", "actual_value", "surprise", "surprise_*")
+    return patterns
+
+
 def parse_dt(s: str) -> datetime:
     return datetime.fromisoformat(s)
 
@@ -201,6 +208,10 @@ def main() -> int:
                     knowable_ts = parse_dt(ed["knowable_ts_utc"])
                     if knowable_ts.tzinfo is None:
                         knowable_ts = knowable_ts.replace(tzinfo=UTC)
+                elif isinstance(ed, dict) and ed.get("known_ts_utc"):
+                    knowable_ts = parse_dt(ed["known_ts_utc"])
+                    if knowable_ts.tzinfo is None:
+                        knowable_ts = knowable_ts.replace(tzinfo=UTC)
                 else:
                     # No clear knowability rule for this class; skip
                     continue
@@ -235,7 +246,7 @@ def main() -> int:
             # Soft check: event_data fields whose semantics require looking
             # forward after the event fired. These are reported so ML scripts
             # can exclude them, but they do not make this audit fail.
-            patterns = _EVENT_DATA_FILL_AFTER_FIRE_PATTERNS.get((feature, event_type), ())
+            patterns = _event_data_patterns(feature, event_type)
             if patterns and ed:
                 flat_ed = flatten_json_paths(ed)
                 flagged = sorted(

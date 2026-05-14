@@ -178,6 +178,12 @@ FEATURE_RULES: tuple[FeatureRule, ...] = (
         description="Completed daily/weekly/session interval range fields known after the interval closes.",
     ),
     FeatureRule(
+        prefix="macro.",
+        family="macro_event_time",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="Scheduled macro-event fields known before release plus pre-release market context.",
+    ),
+    FeatureRule(
         prefix="xd.",
         family="prior_cross_detector",
         valid_snapshots=("at_fire", "at_period_close"),

@@ -42,6 +42,7 @@ DETECTOR_TO_SHORT = {
     "forming_volume_profile": "fvp",
     "opening_gap_levels": "ogap",
     "interval_true_range": "itr",
+    "macro_event_anchor": "macro",
 }
 SHORT_TO_DETECTOR = {v: k for k, v in DETECTOR_TO_SHORT.items()}
 
