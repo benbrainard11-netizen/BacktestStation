@@ -1,16 +1,16 @@
 {
-  "current_package": "strategy_lab_core_2026_05_14_macro_v2",
-  "zip_name": "strategy_lab_core_2026_05_14_macro_v2.zip",
-  "release_tag": "strategy-lab-core-2026-05-14-macro-v2",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_macro_v2.zip",
-  "size_bytes": 250469357,
-  "sha256": "915f4cf2130eee20fe924a57b90f94c46f4e8fcb5c4d0caef27f883fc70e3a3e",
-  "generated_utc": "2026-05-14T02:13:05.128008+00:00",
+  "current_package": "strategy_lab_core_2026_05_14_reaction_v2",
+  "zip_name": "strategy_lab_core_2026_05_14_reaction_v2.zip",
+  "release_tag": "strategy-lab-core-2026-05-14-reaction-v2",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_reaction_v2.zip",
+  "size_bytes": 263095495,
+  "sha256": "7e0c73993b9970258c79d66ee9466c3083f13b619a1b795ce8c073aeeb74a86a",
+  "generated_utc": "2026-05-14T04:33:33.061597+00:00",
   "generated_local_date": "2026-05-14",
   "asset_universe": {
     "universe_id": "futures_core_v1",
     "dataset_fingerprint": "a0ea3d8b427fbf3ce317a6faeb8b1886dbed2755ea0b460ce6603a6dadc4c6a3",
-    "generated_utc": "2026-05-14T02:12:44+00:00",
+    "generated_utc": "2026-05-14T04:30:13+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -98,16 +98,16 @@
       "matrix": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx.parquet",
       "schema": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx.schema.json",
       "rows": 9438,
-      "feature_column_count": 937,
-      "label_column_count": 122
+      "feature_column_count": 1047,
+      "label_column_count": 396
     },
     {
       "name": "itr_xctx",
       "matrix": "data/ml/anchors/itr_snapshots_xctx.parquet",
       "schema": "data/ml/anchors/itr_snapshots_xctx.schema.json",
       "rows": 36095,
-      "feature_column_count": 850,
-      "label_column_count": 35
+      "feature_column_count": 899,
+      "label_column_count": 59
     },
     {
       "name": "forming_vp_xctx_gapctx",
