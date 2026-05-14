@@ -23,6 +23,7 @@ from app.api import (
     prop_firm,
     replay,
     research,
+    research_atlas,
     research_events,
     risk_profiles,
     settings as settings_api,
@@ -78,5 +79,6 @@ app.include_router(chat.router, prefix="/api")
 app.include_router(ai_context.router, prefix="/api")
 app.include_router(features.router, prefix="/api")
 app.include_router(research.router, prefix="/api")
+app.include_router(research_atlas.router, prefix="/api")
 app.include_router(research_events.router, prefix="/api")
 app.include_router(promotion_checks.router, prefix="/api")
