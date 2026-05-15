@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-15T04:06:39.213239+00:00`._
+_Generated `2026-05-15T13:31:43.804765+00:00`._
 
 ## Summary
 
@@ -159,6 +159,15 @@ _Generated `2026-05-15T04:06:39.213239+00:00`._
 | opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom.schema.json | json | 9,438 | - | at_fire | - |
 | opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.parquet | parquet | 9,438 | 3,281 | at_fire | - |
 | opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.schema.json | json | 9,438 | - | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.parquet | parquet | 9,438 | 3,308 | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.schema.json | json | 9,438 | - | at_fire | - |
+| opening_gap_strict_context_leaderboard.csv | csv | 60 | 30 | - | {"ok": 57, "skip_train_imbalance": 2, "skip_test_imbalance": 1} |
+| opening_gap_strict_context_leaderboard.parquet | parquet | 60 | 30 | - | {"ok": 57, "skip_train_imbalance": 2, "skip_test_imbalance": 1} |
+| opening_gap_strict_context_walk_forward_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
+| opening_gap_strict_context_walk_forward_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| opening_gap_strict_context_walk_forward_summary.csv | csv | 12 | 18 | - | - |
+| opening_gap_strict_context_walk_forward_summary.parquet | parquet | 12 | 18 | - | - |
+| opening_gap_strict_label_stats.csv | csv | 81 | 5 | - | - |
 | opening_gap_walk_forward_xctx_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_obgeom_liqgeom_regime_folds.csv | csv | 96 | 33 | - | {"ok": 93, "skip_test_imbalance": 3} |

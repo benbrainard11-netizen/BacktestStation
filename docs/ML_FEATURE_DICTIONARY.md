@@ -1,13 +1,13 @@
 # ML Feature Dictionary
 
-_Generated `2026-05-15T04:01:57.840560+00:00`._
+_Generated `2026-05-15T13:28:27.931206+00:00`._
 
 This is the database map. It explains column families, which matrices use them, and which parts are features versus labels.
 
 ## Totals
 
 - Phase 1 feature matrices: `16`
-- Snapshot matrices: `49`
+- Snapshot matrices: `50`
 - Column families: `35`
 
 ## Column Families
@@ -15,8 +15,8 @@ This is the database map. It explains column families, which matrices use them, 
 | Prefix | Family | Datasets | Column refs | Meaning |
 |---|---|---|---|---|
 | `(root)` | raw_metadata | 19 | 162 | Top-level event identifiers, timestamp pieces, side, symbol, and event type. |
-| `anchor.` | anchor_metadata | 48 | 323 | Anchor event identifiers and raw event-time metadata. |
-| `asof.` | snapshot_metadata | 48 | 234 | Snapshot identity, cutoff timestamp, and label window timestamps. |
+| `anchor.` | anchor_metadata | 49 | 330 | Anchor event identifiers and raw event-time metadata. |
+| `asof.` | snapshot_metadata | 49 | 239 | Snapshot identity, cutoff timestamp, and label window timestamps. |
 | `ctx.` | raw_context | 16 | 58 | Flattened detector context fields captured at event creation. |
 | `disp.` | displacement_event_time | 1 | 29 | Filtered displacement-candle event-time fields knowable at detector fire. |
 | `ed.` | raw_event_data | 16 | 500 | Flattened detector payload from the original event. Safe only when the event is already knowable. |
@@ -25,30 +25,30 @@ This is the database map. It explains column families, which matrices use them, 
 | `fvg.` | fvg_event_time | 4 | 120 | Filtered FVG event-time fields knowable at detector fire. |
 | `fvggeom.` | fvg_geometry_context | 12 | 5,412 | State-aware nearest FVG zone geometry known by the snapshot cutoff. |
 | `fvp.` | forming_volume_profile_event_time | 4 | 216 | Filtered forming volume-profile fields knowable at the as-of snapshot cutoff. |
-| `gapctx.` | opening_gap_memory_context | 6 | 1,188 | State-aware nearest NDOG/NWOG memory levels known by the snapshot cutoff. |
+| `gapctx.` | opening_gap_memory_context | 7 | 1,386 | State-aware nearest NDOG/NWOG memory levels known by the snapshot cutoff. |
 | `itr.` | interval_true_range_event_time | 2 | 168 | Completed daily/weekly/session interval range fields known after the interval closes. |
-| `label.` | forward_label | 46 | 7,571 | Forward prediction targets. These must never be fed back as model features. |
-| `liqgeom.` | swing_equal_level_geometry_context | 6 | 6,054 | State-aware nearest swing/equal-high/equal-low liquidity levels known by the snapshot cutoff. |
+| `label.` | forward_label | 47 | 7,994 | Forward prediction targets. These must never be fed back as model features. |
+| `liqgeom.` | swing_equal_level_geometry_context | 7 | 7,063 | State-aware nearest swing/equal-high/equal-low liquidity levels known by the snapshot cutoff. |
 | `macro.` | macro_event_time | 2 | 102 | Scheduled macro-event fields known before release plus pre-release market context. |
 | `next_15m.` | unregistered | 1 | 36 | No explicit registry description yet; inspect the owning detector/schema. |
 | `next_5m.` | unregistered | 1 | 3 | No explicit registry description yet; inspect the owning detector/schema. |
 | `next_60m.` | unregistered | 1 | 9 | No explicit registry description yet; inspect the owning detector/schema. |
 | `ob.` | order_block_event_time | 2 | 86 | Filtered order-block event-time fields knowable at detector fire. |
-| `obgeom.` | order_block_geometry_context | 13 | 8,593 | State-aware nearest order-block zone geometry known by the snapshot cutoff. |
+| `obgeom.` | order_block_geometry_context | 14 | 9,254 | State-aware nearest order-block zone geometry known by the snapshot cutoff. |
 | `oc.` | raw_outcomes | 16 | 2,354 | Flattened forward outcomes. These are labels or diagnostics, not model features unless explicitly converted. |
-| `ogap.` | opening_gap_event_time | 6 | 132 | Filtered NDOG/NWOG level fields knowable at the new day/week open. |
+| `ogap.` | opening_gap_event_time | 7 | 154 | Filtered NDOG/NWOG level fields knowable at the new day/week open. |
 | `orb.` | opening_range_event_time | 1 | 25 | Filtered opening-range fields knowable after the range window closes. |
 | `pc.` | period_close | 9 | 1,696 | Fields and aligned event flags knowable only by period N close. |
 | `psp.` | psp_event_time | 1 | 36 | Filtered PSP event-time fields knowable at detector fire. |
-| `regime.` | completed_interval_regime_context | 3 | 468 | Completed session/day/week true-range regime features known before the snapshot cutoff. |
+| `regime.` | completed_interval_regime_context | 4 | 624 | Completed session/day/week true-range regime features known before the snapshot cutoff. |
 | `smt.` | smt_event_time | 7 | 168 | Filtered SMT fields knowable at first divergent break. |
 | `sweep.` | sweep_event_time | 6 | 162 | Filtered liquidity-sweep event-time fields knowable at detector fire. |
 | `swing.` | swing_pivot_event_time | 1 | 22 | Filtered swing-pivot fields knowable after right-side confirmation bars. |
 | `tp.` | time_profile_event_time | 4 | 124 | Filtered time-profile fields knowable after the parent period closes. |
-| `ts.` | time | 46 | 184 | Calendar features computed from the snapshot timestamp. |
+| `ts.` | time | 47 | 188 | Calendar features computed from the snapshot timestamp. |
 | `vp.` | volume_profile_event_time | 3 | 150 | Filtered volume-profile fields knowable after the parent period closes. |
-| `xctx.` | cross_concept_context | 29 | 20,972 | Generated cross-concept prior-event counts, flags, and age features. |
-| `xd.` | prior_cross_detector | 62 | 832 | Coarse Phase 1 flags for prior detector events before anchor fire. |
+| `xctx.` | cross_concept_context | 30 | 21,780 | Generated cross-concept prior-event counts, flags, and age features. |
+| `xd.` | prior_cross_detector | 63 | 847 | Coarse Phase 1 flags for prior detector events before anchor fire. |
 
 ## Phase 1 Feature Matrices
 
@@ -99,6 +99,7 @@ This is the database map. It explains column families, which matrices use them, 
 | `opening_gap_snapshots_xctx_gapctx_obgeom` | `ogap` | 9,438 | 2,116 | 1,708 | 396 |
 | `opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom` | `ogap` | 9,438 | 3,125 | 2,717 | 396 |
 | `opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime` | `ogap` | 9,438 | 3,281 | 2,873 | 396 |
+| `opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict` | `ogap` | 9,438 | 3,308 | 2,873 | 423 |
 | `orb_snapshots` | `orb` | 34,040 | 90 | 40 | 38 |
 | `psp_snapshots` | `psp` | 15,827 | 96 | 51 | 33 |
 | `smt_previous_day_snapshots` | `smt` | 4,676 | 310 | 281 | 18 |

@@ -1,6 +1,6 @@
 # ML Model Result Index
 
-_Generated `2026-05-15T04:01:57.145144+00:00`._
+_Generated `2026-05-15T13:28:27.165194+00:00`._
 
 This file consolidates all saved leaderboard and walk-forward result parquet files.
 
@@ -39,6 +39,8 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `opening_gap` | `xctx_gapctx` | `walk_forward_summary` | 12 |
 | `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `leaderboard` | 684 |
 | `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `walk_forward_summary` | 16 |
+| `opening_gap_strict_context` | `summary` | `walk_forward_summary` | 12 |
+| `opening_gap_strict_context_leaderboard` | `base` | `leaderboard` | 60 |
 | `orb` | `base` | `leaderboard` | 45 |
 | `psp` | `base` | `leaderboard` | 3 |
 | `smt` | `base` | `leaderboard` | 60 |
@@ -113,8 +115,8 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_primary_took_period_n_high` | 6 | 699 | 0.975 | 0.966 | 1.000 |
 | `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_240m.range_expanded_2x_gap` | 6 | 5,157 | 0.974 | 0.965 | 1.000 |
 | `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_close_moved_with_thesis` | 6 | 699 | 0.970 | 0.953 | 0.987 |
-| `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 6 | 699 | 0.967 | 0.955 | 1.000 |
 | `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 6 | 699 | 0.967 | 0.955 | 1.000 |
+| `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 6 | 699 | 0.967 | 0.955 | 1.000 |
 | `macro_event_type` | `summary` | `at_fire` | `high` | `label.next_5m.range_expanded_2x_pre_15m` | 4 | 423 | 0.966 | 0.953 | 0.859 |
 | `macro_event_type` | `summary` | `at_fire` | `all` | `label.next_5m.range_expanded_2x_pre_15m` | 4 | 432 | 0.966 | 0.946 | 0.841 |
 | `smt_previous_day` | `fvggeom` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 6 | 699 | 0.964 | 0.955 | 1.000 |
@@ -129,8 +131,8 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `forming_vp` | `xctx` | `at_fire` | `balanced` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 12,916 | 0.952 | 0.928 | 1.000 |
 | `forming_vp` | `gapctx` | `at_fire` | `all` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 22,922 | 0.950 | 0.917 | 0.999 |
 | `forming_vp` | `xctx` | `at_fire` | `all` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 22,922 | 0.949 | 0.916 | 0.999 |
-| `smt_previous_day` | `xctx` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 6 | 699 | 0.948 | 0.927 | 1.000 |
 | `smt_previous_day` | `xctx` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 6 | 699 | 0.948 | 0.927 | 1.000 |
+| `smt_previous_day` | `xctx` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 6 | 699 | 0.948 | 0.927 | 1.000 |
 | `smt_previous_day` | `xctx` | `at_period_close` | `high` | `label.n1_close_moved_with_thesis` | 6 | 699 | 0.945 | 0.923 | 0.987 |
 | `forming_vp` | `xctx` | `at_fire` | `buying` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 5,814 | 0.943 | 0.908 | 0.999 |
 
