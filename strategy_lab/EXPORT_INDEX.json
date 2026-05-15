@@ -3,14 +3,14 @@
   "zip_name": "strategy_lab_core_2026_05_14_context_layers.zip",
   "release_tag": "strategy-lab-core-2026-05-14-context-layers",
   "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_context_layers.zip",
-  "size_bytes": 897484156,
-  "sha256": "6806040881e1cc4a6121f404a9bda10865679ad181283046d02f413d99c8e280",
-  "generated_utc": "2026-05-15T00:21:09.677761+00:00",
+  "size_bytes": 897690550,
+  "sha256": "55cd4c3c02f76d86e96a8335b27f7c609f0d3c4b53398f03f15bd27621b2d403",
+  "generated_utc": "2026-05-15T02:19:29.744864+00:00",
   "generated_local_date": "2026-05-15",
   "asset_universe": {
     "universe_id": "futures_core_v1",
-    "dataset_fingerprint": "eca4a35c1cb01f41a469d6d42a6437918c810e96fa4ade2eef3ba436f17f6ed9",
-    "generated_utc": "2026-05-15T00:21:01+00:00",
+    "dataset_fingerprint": "1e4a60b6829bcc09178de52f64f60894b6b55b2b66d878cd3c36ee01fe06a622",
+    "generated_utc": "2026-05-15T02:19:22+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -18,7 +18,7 @@
     ],
     "active_symbol_count": 3,
     "active_ohlcv_1m_earliest_date": "2015-01-01",
-    "active_ohlcv_1m_latest_date": "2026-05-12",
+    "active_ohlcv_1m_latest_date": "2026-05-14",
     "warehouse_symbols": [
       "ES.c.0",
       "ESM6",
@@ -38,7 +38,7 @@
     ],
     "research_events": 710224,
     "feature_matrix_count": 16,
-    "anchor_artifact_count": 241,
+    "anchor_artifact_count": 257,
     "warnings": [
       "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
       "DB datasets registry is empty; manifest used direct warehouse path scan."

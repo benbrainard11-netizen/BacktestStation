@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-15T00:12:49.977788+00:00`._
+_Generated `2026-05-15T02:17:55.687925+00:00`._
 
 ## Summary
 
@@ -169,6 +169,8 @@ _Generated `2026-05-15T00:12:49.977788+00:00`._
 | smt_previous_day_snapshot_leaderboard_xctx.parquet | parquet | 60 | 30 | - | {"ok": 60} |
 | smt_previous_day_snapshot_leaderboard_xctx_fvggeom.csv | csv | 60 | 30 | - | {"ok": 60} |
 | smt_previous_day_snapshot_leaderboard_xctx_fvggeom.parquet | parquet | 60 | 30 | - | {"ok": 60} |
+| smt_previous_day_snapshot_leaderboard_xctx_fvggeom_obgeom_liqgeom_regime.csv | csv | 60 | 30 | - | {"ok": 60} |
+| smt_previous_day_snapshot_leaderboard_xctx_fvggeom_obgeom_liqgeom_regime.parquet | parquet | 60 | 30 | - | {"ok": 60} |
 | smt_previous_day_snapshots.parquet | parquet | 4,676 | 310 | at_fire, at_period_close | - |
 | smt_previous_day_snapshots.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
 | smt_previous_day_snapshots_xctx.parquet | parquet | 4,676 | 902 | at_fire, at_period_close | - |
@@ -181,10 +183,18 @@ _Generated `2026-05-15T00:12:49.977788+00:00`._
 | smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
 | smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet | parquet | 4,676 | 3,179 | at_fire, at_period_close | - |
 | smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
+| smt_previous_day_walk_forward_at_fire_thesis_context_layers_folds.csv | csv | 36 | 33 | - | {"ok": 36} |
+| smt_previous_day_walk_forward_at_fire_thesis_context_layers_folds.parquet | parquet | 36 | 33 | - | {"ok": 36} |
+| smt_previous_day_walk_forward_at_fire_thesis_context_layers_summary.csv | csv | 6 | 18 | - | - |
+| smt_previous_day_walk_forward_at_fire_thesis_context_layers_summary.parquet | parquet | 6 | 18 | - | - |
 | smt_previous_day_walk_forward_folds_xctx.csv | csv | 48 | 33 | - | {"ok": 48} |
 | smt_previous_day_walk_forward_folds_xctx.parquet | parquet | 48 | 33 | - | {"ok": 48} |
 | smt_previous_day_walk_forward_fvggeom_folds.csv | csv | 126 | 33 | - | {"ok": 108, "skip_small_split": 18} |
 | smt_previous_day_walk_forward_fvggeom_folds.parquet | parquet | 126 | 33 | - | {"ok": 108, "skip_small_split": 18} |
+| smt_previous_day_walk_forward_fvggeom_obgeom_liqgeom_regime_folds.csv | csv | 48 | 33 | - | {"ok": 48} |
+| smt_previous_day_walk_forward_fvggeom_obgeom_liqgeom_regime_folds.parquet | parquet | 48 | 33 | - | {"ok": 48} |
+| smt_previous_day_walk_forward_fvggeom_obgeom_liqgeom_regime_summary.csv | csv | 8 | 18 | - | - |
+| smt_previous_day_walk_forward_fvggeom_obgeom_liqgeom_regime_summary.parquet | parquet | 8 | 18 | - | - |
 | smt_previous_day_walk_forward_fvggeom_summary.csv | csv | 18 | 18 | - | - |
 | smt_previous_day_walk_forward_fvggeom_summary.parquet | parquet | 18 | 18 | - | - |
 | smt_previous_day_walk_forward_summary_xctx.csv | csv | 8 | 18 | - | - |
@@ -209,6 +219,8 @@ _Generated `2026-05-15T00:12:49.977788+00:00`._
 | sweep_snapshot_leaderboard_xctx_fvggeom.parquet | parquet | 45 | 30 | - | {"ok": 45} |
 | sweep_snapshot_leaderboard_xctx_fvggeom_obgeom.csv | csv | 45 | 30 | - | {"ok": 45} |
 | sweep_snapshot_leaderboard_xctx_fvggeom_obgeom.parquet | parquet | 45 | 30 | - | {"ok": 45} |
+| sweep_snapshot_leaderboard_xctx_fvggeom_obgeom_liqgeom_regime.csv | csv | 105 | 30 | - | {"ok": 103, "skip_train_imbalance": 2} |
+| sweep_snapshot_leaderboard_xctx_fvggeom_obgeom_liqgeom_regime.parquet | parquet | 105 | 30 | - | {"ok": 103, "skip_train_imbalance": 2} |
 | sweep_snapshots.parquet | parquet | 52,946 | 153 | at_fire | - |
 | sweep_snapshots.schema.json | json | 52,946 | - | at_fire | - |
 | sweep_snapshots_xctx.parquet | parquet | 52,946 | 961 | at_fire | - |
@@ -229,6 +241,10 @@ _Generated `2026-05-15T00:12:49.977788+00:00`._
 | sweep_walk_forward_fvggeom_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | sweep_walk_forward_fvggeom_obgeom_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | sweep_walk_forward_fvggeom_obgeom_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| sweep_walk_forward_fvggeom_obgeom_liqgeom_regime_folds.csv | csv | 48 | 33 | - | {"ok": 48} |
+| sweep_walk_forward_fvggeom_obgeom_liqgeom_regime_folds.parquet | parquet | 48 | 33 | - | {"ok": 48} |
+| sweep_walk_forward_fvggeom_obgeom_liqgeom_regime_summary.csv | csv | 8 | 18 | - | - |
+| sweep_walk_forward_fvggeom_obgeom_liqgeom_regime_summary.parquet | parquet | 8 | 18 | - | - |
 | sweep_walk_forward_fvggeom_obgeom_summary.csv | csv | 12 | 18 | - | - |
 | sweep_walk_forward_fvggeom_obgeom_summary.parquet | parquet | 12 | 18 | - | - |
 | sweep_walk_forward_fvggeom_summary.csv | csv | 12 | 18 | - | - |
