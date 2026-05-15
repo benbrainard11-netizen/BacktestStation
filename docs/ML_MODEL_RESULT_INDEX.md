@@ -1,6 +1,6 @@
 # ML Model Result Index
 
-_Generated `2026-05-15T19:10:28.444894+00:00`._
+_Generated `2026-05-15T21:57:38.124640+00:00`._
 
 This file consolidates all saved leaderboard and walk-forward result parquet files.
 
@@ -62,6 +62,8 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `sweep` | `fvggeom` | `walk_forward_summary` | 12 |
 | `sweep` | `fvggeom_obgeom` | `walk_forward_summary` | 12 |
 | `sweep` | `fvggeom_obgeom_liqgeom_regime` | `walk_forward_summary` | 8 |
+| `sweep` | `strict_context` | `leaderboard` | 30 |
+| `sweep` | `strict_context` | `walk_forward_summary` | 4 |
 | `sweep` | `xctx` | `leaderboard` | 9 |
 | `sweep` | `xctx` | `walk_forward_summary` | 6 |
 | `sweep` | `xctx_fvggeom` | `leaderboard` | 45 |
@@ -84,8 +86,8 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 
 | Concept | Flavor | Snapshot | Side | Label | Test rows | Base rate | AUC | Top bucket |
 |---|---|---|---|---|---|---|---|---|
-| `macro_event_type` | `base` | `at_fire` | `high` | `label.next_15m.range_expanded_2x_pre_60m` | 144 | 0.167 | 1.000 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `all` | `label.next_15m.range_expanded_2x_pre_60m` | 144 | 0.167 | 1.000 | 1.000 |
+| `macro_event_type` | `base` | `at_fire` | `high` | `label.next_15m.range_expanded_2x_pre_60m` | 144 | 0.167 | 1.000 | 1.000 |
 | `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_240m.range_expanded_1x_gap` | 1,032 | 0.923 | 0.996 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `all` | `label.next_15m.range_expanded_2x_pre_60m` | 180 | 0.072 | 0.993 | 0.722 |
 | `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_1d.range_expanded_2x_gap` | 1,032 | 0.936 | 0.993 | 1.000 |
@@ -108,7 +110,7 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `all` | `label.n1_primary_took_period_n_high` | 528 | 0.530 | 0.962 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `high` | `label.next_5m.range_expanded_2x_pre_15m` | 144 | 0.215 | 0.961 | 0.933 |
 | `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_240m.range_expanded_2x_gap` | 1,032 | 0.859 | 0.961 | 1.000 |
-| `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 277 | 0.433 | 0.961 | 1.000 |
+| `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 277 | 0.433 | 0.961 | 1.000 |
 
 ## Highest Walk-Forward Mean AUC Rows
 

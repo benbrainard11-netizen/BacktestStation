@@ -1,6 +1,6 @@
 # Asset Universe Manifest
 
-_Generated `2026-05-15T19:14:26+00:00`._
+_Generated `2026-05-15T21:59:16+00:00`._
 
 This pins the data identity behind the current ML/research build.
 
@@ -10,13 +10,13 @@ This pins the data identity behind the current ML/research build.
 |---|---|
 | Universe id | `futures_core_v1` |
 | Dataset fingerprint | `1e4a60b6829bcc09178de52f64f60894b6b55b2b66d878cd3c36ee01fe06a622` |
-| Git commit | `ae79ae87ec7cf0308da3bd8a873d0d64e831ef82` |
+| Git commit | `1909d5f50e109303fcc0cdbbc5d0ef71b17075e5` |
 | Git dirty when generated | `True` |
 | Warehouse root | `D:\data` |
 | Active symbols | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 | Research events | 710,224 |
 | Feature matrices | 16 |
-| Anchor/model artifacts | 276 |
+| Anchor/model artifacts | 291 |
 | Active 1m bar coverage | 2015-01-01 -> 2026-05-14 |
 
 ## Active Research Universe

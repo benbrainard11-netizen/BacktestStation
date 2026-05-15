@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-15T19:15:02.738773+00:00`._
+_Generated `2026-05-15T22:00:03.754665+00:00`._
 
 ## Summary
 
@@ -247,6 +247,8 @@ _Generated `2026-05-15T19:15:02.738773+00:00`._
 | smt_weekly_snapshots.schema.json | json | 1,060 | - | at_fire, at_period_close | - |
 | sweep_snapshot_leaderboard.csv | csv | 9 | 30 | - | {"ok": 9} |
 | sweep_snapshot_leaderboard.parquet | parquet | 9 | 30 | - | {"ok": 9} |
+| sweep_snapshot_leaderboard_strict_context.csv | csv | 30 | 30 | - | {"ok": 30} |
+| sweep_snapshot_leaderboard_strict_context.parquet | parquet | 30 | 30 | - | {"ok": 30} |
 | sweep_snapshot_leaderboard_xctx.csv | csv | 9 | 30 | - | {"ok": 9} |
 | sweep_snapshot_leaderboard_xctx.parquet | parquet | 9 | 30 | - | {"ok": 9} |
 | sweep_snapshot_leaderboard_xctx_fvggeom.csv | csv | 45 | 30 | - | {"ok": 45} |
@@ -267,6 +269,9 @@ _Generated `2026-05-15T19:15:02.738773+00:00`._
 | sweep_snapshots_xctx_fvggeom_obgeom_liqgeom.schema.json | json | 52,946 | - | at_fire | - |
 | sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet | parquet | 52,946 | 3,238 | at_fire | - |
 | sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json | json | 52,946 | - | at_fire | - |
+| sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime_strict.parquet | parquet | 52,946 | 3,248 | at_fire | - |
+| sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime_strict.schema.json | json | 52,946 | - | at_fire | - |
+| sweep_strict_label_stats.csv | csv | 450 | 6 | - | - |
 | sweep_walk_forward_folds_base.csv | csv | 36 | 33 | - | {"ok": 36} |
 | sweep_walk_forward_folds_base.parquet | parquet | 36 | 33 | - | {"ok": 36} |
 | sweep_walk_forward_folds_xctx.csv | csv | 36 | 33 | - | {"ok": 36} |
@@ -283,6 +288,10 @@ _Generated `2026-05-15T19:15:02.738773+00:00`._
 | sweep_walk_forward_fvggeom_obgeom_summary.parquet | parquet | 12 | 18 | - | - |
 | sweep_walk_forward_fvggeom_summary.csv | csv | 12 | 18 | - | - |
 | sweep_walk_forward_fvggeom_summary.parquet | parquet | 12 | 18 | - | - |
+| sweep_walk_forward_strict_context_folds.csv | csv | 24 | 33 | - | {"ok": 24} |
+| sweep_walk_forward_strict_context_folds.parquet | parquet | 24 | 33 | - | {"ok": 24} |
+| sweep_walk_forward_strict_context_summary.csv | csv | 4 | 18 | - | - |
+| sweep_walk_forward_strict_context_summary.parquet | parquet | 4 | 18 | - | - |
 | sweep_walk_forward_summary_base.csv | csv | 6 | 18 | - | - |
 | sweep_walk_forward_summary_base.parquet | parquet | 6 | 18 | - | - |
 | sweep_walk_forward_summary_xctx.csv | csv | 6 | 18 | - | - |
