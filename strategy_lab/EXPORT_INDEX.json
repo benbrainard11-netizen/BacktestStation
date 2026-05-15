@@ -3,14 +3,14 @@
   "zip_name": "strategy_lab_core_2026_05_14_context_layers.zip",
   "release_tag": "strategy-lab-core-2026-05-14-context-layers",
   "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_context_layers.zip",
-  "size_bytes": 897690550,
-  "sha256": "55cd4c3c02f76d86e96a8335b27f7c609f0d3c4b53398f03f15bd27621b2d403",
-  "generated_utc": "2026-05-15T02:19:29.744864+00:00",
+  "size_bytes": 938891510,
+  "sha256": "52b741aa07de767960c20dd76b9413d26a42597803024e44521d5619ef98b720",
+  "generated_utc": "2026-05-15T04:10:05.908944+00:00",
   "generated_local_date": "2026-05-15",
   "asset_universe": {
     "universe_id": "futures_core_v1",
     "dataset_fingerprint": "1e4a60b6829bcc09178de52f64f60894b6b55b2b66d878cd3c36ee01fe06a622",
-    "generated_utc": "2026-05-15T02:19:22+00:00",
+    "generated_utc": "2026-05-15T04:09:56+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -38,7 +38,7 @@
     ],
     "research_events": 710224,
     "feature_matrix_count": 16,
-    "anchor_artifact_count": 257,
+    "anchor_artifact_count": 267,
     "warnings": [
       "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
       "DB datasets registry is empty; manifest used direct warehouse path scan."
@@ -147,6 +147,14 @@
       "schema": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx_obgeom.schema.json",
       "rows": 9438,
       "feature_column_count": 1708,
+      "label_column_count": 396
+    },
+    {
+      "name": "opening_gap_xctx_gapctx_obgeom_liqgeom_regime",
+      "matrix": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.parquet",
+      "schema": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.schema.json",
+      "rows": 9438,
+      "feature_column_count": 2873,
       "label_column_count": 396
     },
     {

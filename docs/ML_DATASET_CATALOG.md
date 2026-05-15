@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-15T02:17:55.687925+00:00`._
+_Generated `2026-05-15T04:06:39.213239+00:00`._
 
 ## Summary
 
@@ -145,6 +145,8 @@ _Generated `2026-05-15T02:17:55.687925+00:00`._
 | opening_gap_age_decay.csv | csv | 21 | 33 | - | - |
 | opening_gap_snapshot_leaderboard_xctx_gapctx.csv | csv | 45 | 30 | - | {"ok": 45} |
 | opening_gap_snapshot_leaderboard_xctx_gapctx.parquet | parquet | 45 | 30 | - | {"ok": 45} |
+| opening_gap_snapshot_leaderboard_xctx_gapctx_obgeom_liqgeom_regime.csv | csv | 684 | 30 | - | {"ok": 530, "skip_train_imbalance": 123, "skip_test_imbalance": 31} |
+| opening_gap_snapshot_leaderboard_xctx_gapctx_obgeom_liqgeom_regime.parquet | parquet | 684 | 30 | - | {"ok": 530, "skip_train_imbalance": 123, "skip_test_imbalance": 31} |
 | opening_gap_snapshots.parquet | parquet | 9,438 | 449 | at_fire | - |
 | opening_gap_snapshots.schema.json | json | 9,438 | - | at_fire | - |
 | opening_gap_snapshots_xctx.parquet | parquet | 9,438 | 1,257 | at_fire | - |
@@ -153,8 +155,16 @@ _Generated `2026-05-15T02:17:55.687925+00:00`._
 | opening_gap_snapshots_xctx_gapctx.schema.json | json | 9,438 | - | at_fire | - |
 | opening_gap_snapshots_xctx_gapctx_obgeom.parquet | parquet | 9,438 | 2,116 | at_fire | - |
 | opening_gap_snapshots_xctx_gapctx_obgeom.schema.json | json | 9,438 | - | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom.parquet | parquet | 9,438 | 3,125 | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom.schema.json | json | 9,438 | - | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.parquet | parquet | 9,438 | 3,281 | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.schema.json | json | 9,438 | - | at_fire | - |
 | opening_gap_walk_forward_xctx_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| opening_gap_walk_forward_xctx_gapctx_obgeom_liqgeom_regime_folds.csv | csv | 96 | 33 | - | {"ok": 93, "skip_test_imbalance": 3} |
+| opening_gap_walk_forward_xctx_gapctx_obgeom_liqgeom_regime_folds.parquet | parquet | 96 | 33 | - | {"ok": 93, "skip_test_imbalance": 3} |
+| opening_gap_walk_forward_xctx_gapctx_obgeom_liqgeom_regime_summary.csv | csv | 16 | 18 | - | - |
+| opening_gap_walk_forward_xctx_gapctx_obgeom_liqgeom_regime_summary.parquet | parquet | 16 | 18 | - | - |
 | opening_gap_walk_forward_xctx_gapctx_summary.csv | csv | 12 | 18 | - | - |
 | opening_gap_walk_forward_xctx_gapctx_summary.parquet | parquet | 12 | 18 | - | - |
 | orb_snapshot_leaderboard.csv | csv | 45 | 30 | - | {"ok": 45} |

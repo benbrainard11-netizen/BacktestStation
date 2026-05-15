@@ -1,6 +1,6 @@
 # ML Model Result Index
 
-_Generated `2026-05-15T02:13:38.075088+00:00`._
+_Generated `2026-05-15T04:01:57.145144+00:00`._
 
 This file consolidates all saved leaderboard and walk-forward result parquet files.
 
@@ -37,6 +37,8 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `ob` | `xctx` | `leaderboard` | 39 |
 | `opening_gap` | `xctx_gapctx` | `leaderboard` | 45 |
 | `opening_gap` | `xctx_gapctx` | `walk_forward_summary` | 12 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `leaderboard` | 684 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `walk_forward_summary` | 16 |
 | `orb` | `base` | `leaderboard` | 45 |
 | `psp` | `base` | `leaderboard` | 3 |
 | `smt` | `base` | `leaderboard` | 60 |
@@ -76,40 +78,43 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 
 | Concept | Flavor | Snapshot | Side | Label | Test rows | Base rate | AUC | Top bucket |
 |---|---|---|---|---|---|---|---|---|
-| `macro_event_type` | `base` | `at_fire` | `all` | `label.next_15m.range_expanded_2x_pre_60m` | 144 | 0.167 | 1.000 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `high` | `label.next_15m.range_expanded_2x_pre_60m` | 144 | 0.167 | 1.000 | 1.000 |
+| `macro_event_type` | `base` | `at_fire` | `all` | `label.next_15m.range_expanded_2x_pre_60m` | 144 | 0.167 | 1.000 | 1.000 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_240m.range_expanded_1x_gap` | 1,032 | 0.923 | 0.996 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `all` | `label.next_15m.range_expanded_2x_pre_60m` | 180 | 0.072 | 0.993 | 0.722 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_1d.range_expanded_2x_gap` | 1,032 | 0.936 | 0.993 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `high` | `label.next_15m.range_expanded_2x_pre_60m` | 180 | 0.072 | 0.991 | 0.722 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_1d.range_expanded_2x_gap` | 1,854 | 0.962 | 0.984 | 1.000 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_240m.range_expanded_1x_gap` | 1,854 | 0.950 | 0.976 | 0.995 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_240m.range_expanded_2x_gap` | 1,854 | 0.880 | 0.974 | 1.000 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_60m.range_expanded_1x_gap` | 1,032 | 0.891 | 0.972 | 1.000 |
 | `smt_previous_day` | `xctx_fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_primary_took_period_n_high` | 277 | 0.563 | 0.970 | 1.000 |
 | `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `high` | `label.n1_primary_took_period_n_high` | 277 | 0.563 | 0.970 | 1.000 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_60m.range_expanded_1x_gap` | 1,854 | 0.922 | 0.970 | 1.000 |
 | `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `low` | `label.n1_primary_took_period_n_low` | 251 | 0.482 | 0.967 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `all` | `label.next_5m.range_expanded_2x_pre_15m` | 75 | 0.187 | 0.966 | 0.875 |
 | `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `all` | `label.n1_primary_took_period_n_low` | 528 | 0.456 | 0.964 | 1.000 |
 | `smt_previous_day` | `xctx_fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `all` | `label.n1_primary_took_period_n_high` | 528 | 0.530 | 0.964 | 1.000 |
 | `smt_previous_day` | `xctx_fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `low` | `label.n1_primary_took_period_n_low` | 251 | 0.482 | 0.963 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `all` | `label.next_5m.range_expanded_2x_pre_15m` | 180 | 0.072 | 0.963 | 0.611 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_down` | `label.next_240m.range_expanded_2x_gap` | 822 | 0.906 | 0.963 | 1.000 |
 | `forming_vp` | `gapctx` | `at_fire` | `balanced` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 4,678 | 0.742 | 0.962 | 1.000 |
 | `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `all` | `label.n1_primary_took_period_n_high` | 528 | 0.530 | 0.962 | 1.000 |
 | `macro_event_type` | `base` | `at_fire` | `high` | `label.next_5m.range_expanded_2x_pre_15m` | 144 | 0.215 | 0.961 | 0.933 |
-| `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 277 | 0.433 | 0.961 | 1.000 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_240m.range_expanded_2x_gap` | 1,032 | 0.859 | 0.961 | 1.000 |
 | `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 277 | 0.433 | 0.961 | 1.000 |
-| `vp` | `base` | `at_fire` | `buying` | `label.vwap_1sd_low_touch.wicked_above` | 1,803 | 0.982 | 0.961 | 1.000 |
-| `smt_previous_day` | `xctx_fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `all` | `label.n1_primary_took_period_n_low` | 528 | 0.456 | 0.960 | 1.000 |
-| `forming_vp` | `gapctx` | `at_fire` | `all` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 8,130 | 0.718 | 0.960 | 0.999 |
-| `forming_vp` | `xctx` | `at_fire` | `balanced` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 4,678 | 0.742 | 0.960 | 1.000 |
-| `smt_previous_day` | `xctx_fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 277 | 0.433 | 0.959 | 1.000 |
-| `smt_previous_day` | `xctx_fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 277 | 0.433 | 0.959 | 1.000 |
-| `forming_vp` | `xctx` | `at_fire` | `all` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 8,130 | 0.718 | 0.959 | 0.999 |
-| `smt_previous_day` | `xctx_fvggeom` | `at_period_close` | `high` | `label.n1_close_moved_with_thesis` | 277 | 0.437 | 0.958 | 0.964 |
 
 ## Highest Walk-Forward Mean AUC Rows
 
 | Concept | Flavor | Snapshot | Side | Label | Folds ok | Rows | Mean AUC | Min AUC | Top bucket |
 |---|---|---|---|---|---|---|---|---|---|
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_1d.range_expanded_2x_gap` | 5 | 4,323 | 0.988 | 0.978 | 1.000 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `gap_up` | `label.next_240m.range_expanded_1x_gap` | 4 | 1,835 | 0.979 | 0.958 | 1.000 |
 | `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_primary_took_period_n_high` | 6 | 699 | 0.975 | 0.966 | 1.000 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_240m.range_expanded_2x_gap` | 6 | 5,157 | 0.974 | 0.965 | 1.000 |
 | `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_close_moved_with_thesis` | 6 | 699 | 0.970 | 0.953 | 0.987 |
-| `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 6 | 699 | 0.967 | 0.955 | 1.000 |
 | `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 6 | 699 | 0.967 | 0.955 | 1.000 |
+| `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 6 | 699 | 0.967 | 0.955 | 1.000 |
 | `macro_event_type` | `summary` | `at_fire` | `high` | `label.next_5m.range_expanded_2x_pre_15m` | 4 | 423 | 0.966 | 0.953 | 0.859 |
 | `macro_event_type` | `summary` | `at_fire` | `all` | `label.next_5m.range_expanded_2x_pre_15m` | 4 | 432 | 0.966 | 0.946 | 0.841 |
 | `smt_previous_day` | `fvggeom` | `at_period_close` | `high` | `label.n1_thesis_confirmed_strict` | 6 | 699 | 0.964 | 0.955 | 1.000 |
@@ -119,6 +124,7 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `smt_previous_day` | `fvggeom` | `at_period_close` | `low` | `label.n1_thesis_confirmed_strict` | 6 | 650 | 0.959 | 0.946 | 1.000 |
 | `smt_previous_day` | `fvggeom_obgeom_liqgeom_regime` | `at_period_close` | `all` | `label.n1_close_moved_with_thesis` | 6 | 1,349 | 0.957 | 0.946 | 1.000 |
 | `smt_previous_day` | `fvggeom` | `at_period_close` | `all` | `label.n1_thesis_confirmed_strict` | 6 | 1,349 | 0.955 | 0.944 | 0.991 |
+| `opening_gap` | `xctx_gapctx_obgeom_liqgeom_regime` | `at_fire` | `all` | `label.next_60m.range_expanded_2x_gap` | 6 | 5,157 | 0.953 | 0.941 | 1.000 |
 | `forming_vp` | `gapctx` | `at_fire` | `balanced` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 12,916 | 0.952 | 0.925 | 0.999 |
 | `forming_vp` | `xctx` | `at_fire` | `balanced` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 12,916 | 0.952 | 0.928 | 1.000 |
 | `forming_vp` | `gapctx` | `at_fire` | `all` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 22,922 | 0.950 | 0.917 | 0.999 |
@@ -127,10 +133,6 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `smt_previous_day` | `xctx` | `at_period_close` | `high` | `label.n1_primary_took_period_n_low` | 6 | 699 | 0.948 | 0.927 | 1.000 |
 | `smt_previous_day` | `xctx` | `at_period_close` | `high` | `label.n1_close_moved_with_thesis` | 6 | 699 | 0.945 | 0.923 | 0.987 |
 | `forming_vp` | `xctx` | `at_fire` | `buying` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 5,814 | 0.943 | 0.908 | 0.999 |
-| `forming_vp` | `xctx` | `at_fire` | `selling` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 4,192 | 0.943 | 0.909 | 0.995 |
-| `forming_vp` | `gapctx` | `at_fire` | `buying` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 5,814 | 0.943 | 0.905 | 0.997 |
-| `forming_vp` | `gapctx` | `at_fire` | `selling` | `label.rest_of_day.range_expanded_1x_profile_so_far` | 6 | 4,192 | 0.942 | 0.904 | 0.995 |
-| `smt_previous_day` | `xctx` | `at_period_close` | `low` | `label.n1_primary_took_period_n_low` | 6 | 650 | 0.940 | 0.909 | 0.987 |
 
 ## Reading The Results
 
