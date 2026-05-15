@@ -16,6 +16,7 @@ import re
 import sqlite3
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -26,7 +27,7 @@ try:
 except Exception:  # pragma: no cover - dependency exists in normal ML env
     pq = None
 
-ROOT = Path(r"C:\Users\benbr\BacktestStation")
+ROOT = Path(__file__).resolve().parents[3]
 BACKEND = ROOT / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
@@ -191,11 +192,13 @@ def _rollup_partition_dirs(
     schema: str,
     symbol_dir: Path,
     count_rows: bool,
+    row_count_workers: int,
 ) -> PartitionRollup:
     dates: set[date] = set()
     file_count = 0
     total_bytes = 0
     row_count = 0 if count_rows else None
+    parquet_files: list[Path] = []
 
     for date_dir in sorted(symbol_dir.glob("date=*")):
         if not date_dir.is_dir():
@@ -211,9 +214,12 @@ def _rollup_partition_dirs(
             file_count += 1
             total_bytes += int(path.stat().st_size)
             if row_count is not None:
-                rows = _parquet_rows(path)
-                if rows is not None:
-                    row_count += rows
+                parquet_files.append(path)
+
+    if row_count is not None and parquet_files and pq is not None:
+        workers = max(1, row_count_workers)
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            row_count = sum(row or 0 for row in executor.map(_parquet_rows, parquet_files))
 
     missing_count, missing_sample = _missing_ex_saturday(dates)
     return PartitionRollup(
@@ -231,7 +237,12 @@ def _rollup_partition_dirs(
     )
 
 
-def _scan_warehouse(warehouse_root: Path, *, count_rows: bool) -> dict[str, Any]:
+def _scan_warehouse(
+    warehouse_root: Path,
+    *,
+    count_rows: bool,
+    row_count_workers: int,
+) -> dict[str, Any]:
     by_symbol_schema: list[dict[str, Any]] = []
 
     bars_root = warehouse_root / "processed" / "bars"
@@ -248,6 +259,7 @@ def _scan_warehouse(warehouse_root: Path, *, count_rows: bool) -> dict[str, Any]
                             schema=schema,
                             symbol_dir=symbol_dir,
                             count_rows=count_rows,
+                            row_count_workers=row_count_workers,
                         ))
                     )
 
@@ -263,6 +275,7 @@ def _scan_warehouse(warehouse_root: Path, *, count_rows: bool) -> dict[str, Any]
                             schema=schema_dir.name,
                             symbol_dir=symbol_dir,
                             count_rows=count_rows,
+                            row_count_workers=row_count_workers,
                         ))
                     )
 
@@ -278,6 +291,7 @@ def _scan_warehouse(warehouse_root: Path, *, count_rows: bool) -> dict[str, Any]
                 file_count = 0
                 total_bytes = 0
                 row_count = 0 if count_rows else None
+                parquet_files: list[Path] = []
                 for path in sorted(schema_dir.glob("*.parquet")):
                     try:
                         dates.add(date.fromisoformat(path.stem))
@@ -286,9 +300,11 @@ def _scan_warehouse(warehouse_root: Path, *, count_rows: bool) -> dict[str, Any]
                     file_count += 1
                     total_bytes += int(path.stat().st_size)
                     if row_count is not None:
-                        rows = _parquet_rows(path)
-                        if rows is not None:
-                            row_count += rows
+                        parquet_files.append(path)
+                if row_count is not None and parquet_files and pq is not None:
+                    workers = max(1, row_count_workers)
+                    with ThreadPoolExecutor(max_workers=workers) as executor:
+                        row_count = sum(row or 0 for row in executor.map(_parquet_rows, parquet_files))
                 missing_count, missing_sample = _missing_ex_saturday(dates)
                 by_symbol_schema.append(
                     {
@@ -486,7 +502,13 @@ def _fingerprint(payload: dict[str, Any]) -> str:
     return hashlib.sha256(blob).hexdigest()
 
 
-def _warnings(active: dict[str, Any], warehouse: dict[str, Any], research: dict[str, Any]) -> list[str]:
+def _warnings(
+    active: dict[str, Any],
+    warehouse: dict[str, Any],
+    research: dict[str, Any],
+    *,
+    db_path: Path,
+) -> list[str]:
     out: list[str] = []
     if active["data_only_symbols"]:
         out.append(
@@ -500,7 +522,7 @@ def _warnings(active: dict[str, Any], warehouse: dict[str, Any], research: dict[
         )
     datasets_count = 0
     try:
-        con = sqlite3.connect(DB_PATH)
+        con = sqlite3.connect(db_path)
         cur = con.cursor()
         cur.execute("SELECT COUNT(*) FROM datasets")
         datasets_count = int(cur.fetchone()[0])
@@ -691,7 +713,11 @@ def _write_doc(path: Path, manifest: dict[str, Any]) -> None:
 def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
     warehouse_root = args.warehouse_root
     count_rows = not args.skip_parquet_row_counts
-    warehouse = _scan_warehouse(warehouse_root, count_rows=count_rows)
+    warehouse = _scan_warehouse(
+        warehouse_root,
+        count_rows=count_rows,
+        row_count_workers=args.row_count_workers,
+    )
     research = _research_summary(args.database)
     catalog = _load_ml_catalog(args.ml_catalog)
     active = _active_universe(warehouse=warehouse, research=research, catalog=catalog)
@@ -714,7 +740,7 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
         "research_events": research,
         "ml_catalog": catalog,
     }
-    manifest["warnings"] = _warnings(active, warehouse, research)
+    manifest["warnings"] = _warnings(active, warehouse, research, db_path=args.database)
     manifest["dataset_fingerprint"] = _fingerprint(manifest)
     return manifest
 
@@ -731,6 +757,12 @@ def main() -> int:
         "--skip-parquet-row-counts",
         action="store_true",
         help="Only count partitions/files/bytes; faster for huge warehouses.",
+    )
+    parser.add_argument(
+        "--row-count-workers",
+        type=int,
+        default=16,
+        help="Worker threads for parquet metadata row counts.",
     )
     args = parser.parse_args()
 

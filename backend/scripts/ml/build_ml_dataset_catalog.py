@@ -12,8 +12,10 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
-ROOT = Path(r"C:\Users\benbr\BacktestStation")
+ROOT = Path(__file__).resolve().parents[3]
 BACKEND = ROOT / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
@@ -186,33 +188,53 @@ def _db_stats(con: sqlite3.Connection) -> dict[str, Any]:
 
 
 def _feature_matrix_stats(path: Path, *, hash_files: bool) -> dict[str, Any]:
-    df = pd.read_parquet(path)
-    label_cols = [c for c in df.columns if c.startswith("oc.")]
-    ed_cols = [c for c in df.columns if c.startswith("ed.")]
-    ctx_cols = [c for c in df.columns if c.startswith("ctx.")]
-    xd_cols = [c for c in df.columns if c.startswith("xd.")]
-    binary_labels = [c for c in label_cols if _is_binary_like(df[c])]
-    numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
-    object_cols = [c for c in df.columns if pd.api.types.is_object_dtype(df[c])]
+    parquet = pq.ParquetFile(path)
+    schema = parquet.schema_arrow
+    columns = list(schema.names)
+    label_cols = [c for c in columns if c.startswith("oc.")]
+    ed_cols = [c for c in columns if c.startswith("ed.")]
+    ctx_cols = [c for c in columns if c.startswith("ctx.")]
+    xd_cols = [c for c in columns if c.startswith("xd.")]
+    binary_labels = [
+        c for c in label_cols
+        if pa.types.is_boolean(schema.field(c).type)
+    ]
+    numeric_cols = [
+        c for c in columns
+        if (
+            pa.types.is_integer(schema.field(c).type)
+            or pa.types.is_floating(schema.field(c).type)
+            or pa.types.is_boolean(schema.field(c).type)
+        )
+    ]
+    object_cols = [
+        c for c in columns
+        if pa.types.is_string(schema.field(c).type)
+    ]
+    sample_cols = [
+        c for c in ("bar_end_utc", "event_type", "side", "primary_symbol")
+        if c in columns
+    ]
+    sample = pd.read_parquet(path, columns=sample_cols) if sample_cols else pd.DataFrame()
     short_name = path.stem
     feature_name = SHORT_TO_DETECTOR.get(short_name, short_name)
     out = {
         "short_name": short_name,
         "feature_name": feature_name,
         "file": _file_meta(path, hash_files=hash_files),
-        "rows": int(len(df)),
-        "columns": int(len(df.columns)),
+        "rows": int(parquet.metadata.num_rows),
+        "columns": int(len(columns)),
         "min_bar_end_utc": (
-            pd.to_datetime(df["bar_end_utc"], utc=True).min().isoformat()
-            if "bar_end_utc" in df.columns and len(df) else None
+            pd.to_datetime(sample["bar_end_utc"], utc=True).min().isoformat()
+            if "bar_end_utc" in sample.columns and len(sample) else None
         ),
         "max_bar_end_utc": (
-            pd.to_datetime(df["bar_end_utc"], utc=True).max().isoformat()
-            if "bar_end_utc" in df.columns and len(df) else None
+            pd.to_datetime(sample["bar_end_utc"], utc=True).max().isoformat()
+            if "bar_end_utc" in sample.columns and len(sample) else None
         ),
-        "event_types": sorted(str(x) for x in df.get("event_type", pd.Series(dtype=object)).dropna().unique()),
-        "sides": sorted(str(x) for x in df.get("side", pd.Series(dtype=object)).dropna().unique()),
-        "primary_symbols": sorted(str(x) for x in df.get("primary_symbol", pd.Series(dtype=object)).dropna().unique()),
+        "event_types": sorted(str(x) for x in sample.get("event_type", pd.Series(dtype=object)).dropna().unique()),
+        "sides": sorted(str(x) for x in sample.get("side", pd.Series(dtype=object)).dropna().unique()),
+        "primary_symbols": sorted(str(x) for x in sample.get("primary_symbol", pd.Series(dtype=object)).dropna().unique()),
         "column_counts": {
             "event_data": len(ed_cols),
             "outcome_labels": len(label_cols),

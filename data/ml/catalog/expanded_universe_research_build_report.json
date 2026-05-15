@@ -1,0 +1,488 @@
+{
+  "universe_id": "futures_expanded_v1",
+  "generated_utc": "2026-05-15T14:07:59+00:00",
+  "phase": "outcomes",
+  "dry_run": false,
+  "start_date": "2018-05-01",
+  "end_date": "2026-04-25",
+  "active_symbols": [
+    "NQ.c.0",
+    "ES.c.0",
+    "YM.c.0",
+    "RTY.c.0",
+    "6E.c.0",
+    "6B.c.0",
+    "6S.c.0",
+    "6A.c.0",
+    "6C.c.0",
+    "6N.c.0",
+    "CL.c.0",
+    "BZ.c.0",
+    "RB.c.0",
+    "HO.c.0",
+    "ZT.c.0",
+    "ZF.c.0",
+    "ZN.c.0",
+    "ZB.c.0",
+    "ZC.c.0",
+    "ZS.c.0",
+    "ZW.c.0",
+    "6J.c.0",
+    "NG.c.0"
+  ],
+  "correlated_clusters": {
+    "index_triads": [
+      "NQ.c.0",
+      "ES.c.0",
+      "YM.c.0",
+      "RTY.c.0"
+    ],
+    "fx_europe": [
+      "6E.c.0",
+      "6B.c.0",
+      "6S.c.0"
+    ],
+    "fx_commodity": [
+      "6A.c.0",
+      "6C.c.0",
+      "6N.c.0"
+    ],
+    "oil_products": [
+      "CL.c.0",
+      "BZ.c.0",
+      "RB.c.0",
+      "HO.c.0"
+    ],
+    "rates_curve": [
+      "ZT.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZB.c.0"
+    ],
+    "grains": [
+      "ZC.c.0",
+      "ZS.c.0",
+      "ZW.c.0"
+    ]
+  },
+  "warehouse_only_symbols": {
+    "GC.c.0": "sparse 1m bars in warehouse inventory",
+    "SI.c.0": "sparse 1m bars in warehouse inventory",
+    "HG.c.0": "sparse 1m bars in warehouse inventory",
+    "PL.c.0": "sparse 1m bars in warehouse inventory",
+    "PA.c.0": "sparse 1m bars in warehouse inventory"
+  },
+  "results": [
+    {
+      "label": "outcomes displacement_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 2313.697,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "-m",
+        "app.cli.compute_research_outcomes",
+        "--computer",
+        "displacement_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "feature_name": "displacement_candle",
+        "outcome_version": "v1",
+        "n_candidates": 187595,
+        "n_updated": 187563,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 32,
+        "n_errors": 0,
+        "error_messages": [],
+        "started_at": "2026-05-14T05:10:57.561090+00:00",
+        "finished_at": "2026-05-14T05:49:24.317451+00:00"
+      },
+      "stdout_tail": "{\n  \"feature_name\": \"displacement_candle\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 187595,\n  \"n_updated\": 187563,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 32,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"started_at\": \"2026-05-14T05:10:57.561090+00:00\",\n  \"finished_at\": \"2026-05-14T05:49:24.317451+00:00\"\n}\n",
+      "stderr_tail": "d D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-06-27\\part-000.parquet)\n2026-05-13 22:49:24,306 [INFO] missing partition: symbol=NG.c.0 date=2026-06-28 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-06-28\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-06-29 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-06-29\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-06-30 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-06-30\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-01 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-01\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-02 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-02\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-03 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-03\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-04 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-04\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-05 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-05\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-06 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-06\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-07 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-07\\part-000.parquet)\n2026-05-13 22:49:24,307 [INFO] missing partition: symbol=NG.c.0 date=2026-07-08 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-07-08\\part-000.parquet)\n"
+    },
+    {
+      "label": "outcomes equal_levels_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 1.043,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "-m",
+        "app.cli.compute_research_outcomes",
+        "--computer",
+        "equal_levels_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "feature_name": "equal_levels",
+        "outcome_version": "v1",
+        "n_candidates": 0,
+        "n_updated": 0,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 0,
+        "n_errors": 0,
+        "error_messages": [],
+        "started_at": "2026-05-14T13:29:13.271374+00:00",
+        "finished_at": "2026-05-14T13:29:13.282406+00:00"
+      },
+      "stdout_tail": "{\n  \"feature_name\": \"equal_levels\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 0,\n  \"n_updated\": 0,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 0,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"started_at\": \"2026-05-14T13:29:13.271374+00:00\",\n  \"finished_at\": \"2026-05-14T13:29:13.282406+00:00\"\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "label": "outcomes first_third_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 3475.317,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "-m",
+        "app.cli.compute_research_outcomes",
+        "--computer",
+        "first_third_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "feature_name": "first_third_range",
+        "outcome_version": "v1",
+        "n_candidates": 52791,
+        "n_updated": 52603,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 188,
+        "n_errors": 0,
+        "error_messages": [],
+        "started_at": "2026-05-14T13:31:14.205936+00:00",
+        "finished_at": "2026-05-14T14:29:06.848182+00:00"
+      },
+      "stdout_tail": "{\n  \"feature_name\": \"first_third_range\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 52791,\n  \"n_updated\": 52603,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 188,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"started_at\": \"2026-05-14T13:31:14.205936+00:00\",\n  \"finished_at\": \"2026-05-14T14:29:06.848182+00:00\"\n}\n",
+      "stderr_tail": "d D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-02-14\\part-000.parquet)\n2026-05-14 07:29:04,484 [INFO] missing partition: symbol=NG.c.0 date=2026-02-21 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-02-21\\part-000.parquet)\n2026-05-14 07:29:04,740 [INFO] missing partition: symbol=NG.c.0 date=2026-02-28 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-02-28\\part-000.parquet)\n2026-05-14 07:29:04,927 [INFO] missing partition: symbol=NG.c.0 date=2026-03-07 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-03-07\\part-000.parquet)\n2026-05-14 07:29:05,283 [INFO] missing partition: symbol=NG.c.0 date=2026-03-14 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-03-14\\part-000.parquet)\n2026-05-14 07:29:05,573 [INFO] missing partition: symbol=NG.c.0 date=2026-03-21 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-03-21\\part-000.parquet)\n2026-05-14 07:29:05,818 [INFO] missing partition: symbol=NG.c.0 date=2026-03-28 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-03-28\\part-000.parquet)\n2026-05-14 07:29:05,973 [INFO] missing partition: symbol=NG.c.0 date=2026-04-03 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-04-03\\part-000.parquet)\n2026-05-14 07:29:05,973 [INFO] missing partition: symbol=NG.c.0 date=2026-04-04 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-04-04\\part-000.parquet)\n2026-05-14 07:29:06,193 [INFO] missing partition: symbol=NG.c.0 date=2026-04-11 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-04-11\\part-000.parquet)\n2026-05-14 07:29:06,400 [INFO] missing partition: symbol=NG.c.0 date=2026-04-18 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-04-18\\part-000.parquet)\n2026-05-14 07:29:06,642 [INFO] missing partition: symbol=NG.c.0 date=2026-04-25 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2026-04-25\\part-000.parquet)\n"
+    },
+    {
+      "label": "outcomes forming_volume_profile_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 13204.407,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_forming_volume_profile_outcomes.py",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "feature_name": "forming_volume_profile",
+        "outcome_version": "v1",
+        "n_candidates": 1132868,
+        "n_groups": 91645,
+        "n_updated": 1097982,
+        "n_skipped_no_data": 34886,
+        "n_errors": 0,
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"feature_name\": \"forming_volume_profile\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 1132868,\n  \"n_groups\": 91645,\n  \"n_updated\": 1097982,\n  \"n_skipped_no_data\": 34886,\n  \"n_errors\": 0,\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "6J.c.0\\date=2025-01-12\\part-000.parquet)\n2026-05-14 18:14:08,697 [INFO] missing partition: symbol=6J.c.0 date=2025-07-20 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=6J.c.0\\date=2025-07-20\\part-000.parquet)\n2026-05-14 18:14:09,752 [INFO] missing partition: symbol=6J.c.0 date=2025-08-10 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=6J.c.0\\date=2025-08-10\\part-000.parquet)\n2026-05-14 18:14:14,102 [INFO] missing partition: symbol=6J.c.0 date=2025-11-16 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=6J.c.0\\date=2025-11-16\\part-000.parquet)\n2026-05-14 18:14:15,850 [INFO] processed 89500 groups; candidates=1132868 updated=1087317 skipped_no_data=34842 errors=0\n2026-05-14 18:14:16,147 [INFO] missing partition: symbol=6J.c.0 date=2026-01-01 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=6J.c.0\\date=2026-01-01\\part-000.parquet)\n2026-05-14 18:14:21,460 [INFO] missing partition: symbol=NG.c.0 date=2018-04-30 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2018-04-30\\part-000.parquet)\n2026-05-14 18:14:32,854 [INFO] processed 89750 groups; candidates=1132868 updated=1088538 skipped_no_data=34856 errors=0\n2026-05-14 18:14:51,197 [INFO] processed 90000 groups; candidates=1132868 updated=1089780 skipped_no_data=34864 errors=0\n2026-05-14 18:15:10,424 [INFO] processed 90250 groups; candidates=1132868 updated=1091023 skipped_no_data=34871 errors=0\n2026-05-14 18:15:32,473 [INFO] processed 90500 groups; candidates=1132868 updated=1092265 skipped_no_data=34879 errors=0\n2026-05-14 18:15:53,495 [INFO] processed 90750 groups; candidates=1132868 updated=1093512 skipped_no_data=34881 errors=0\n2026-05-14 18:16:11,116 [INFO] processed 91000 groups; candidates=1132868 updated=1094761 skipped_no_data=34882 errors=0\n2026-05-14 18:16:29,215 [INFO] processed 91250 groups; candidates=1132868 updated=1096010 skipped_no_data=34883 errors=0\n2026-05-14 18:16:51,163 [INFO] processed 91500 groups; candidates=1132868 updated=1097258 skipped_no_data=34885 errors=0\n"
+    },
+    {
+      "label": "outcomes fvg_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 2535.683,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "fvg_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "fvg_reactions_v1",
+        "feature_name": "fvg_formation",
+        "outcome_version": "v2",
+        "n_candidates": 1243757,
+        "n_updated": 1240341,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 3416,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"fvg_reactions_v1\",\n  \"feature_name\": \"fvg_formation\",\n  \"outcome_version\": \"v2\",\n  \"n_candidates\": 1243757,\n  \"n_updated\": 1240341,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 3416,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": " combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-14 19:47:00,825 [INFO] processed=1243757 updated=1240341 current=0 skipped_no_data=3416 errors=0 cache=CacheInfo(hits=1256418, misses=828, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes interval_true_range_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 3360.534,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_interval_true_range_outcomes.py",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "feature_name": "interval_true_range",
+        "outcome_version": "v1",
+        "n_candidates": 190192,
+        "n_groups": 207,
+        "n_updated": 185769,
+        "n_skipped_no_data": 4423,
+        "n_errors": 0,
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"feature_name\": \"interval_true_range\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 190192,\n  \"n_groups\": 207,\n  \"n_updated\": 185769,\n  \"n_skipped_no_data\": 4423,\n  \"n_errors\": 0,\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "193 skipped=3982 errors=0\n2026-05-14 20:44:16,650 [INFO] processed 187/207 groups; updated=168053 skipped=4044 errors=0\n2026-05-14 20:44:27,434 [INFO] processed 188/207 groups; updated=168921 skipped=4102 errors=0\n2026-05-14 20:44:31,277 [INFO] processed 189/207 groups; updated=169201 skipped=4125 errors=0\n2026-05-14 20:44:38,951 [INFO] processed 190/207 groups; updated=169845 skipped=4145 errors=0\n2026-05-14 20:44:48,280 [INFO] processed 191/207 groups; updated=170795 skipped=4180 errors=0\n2026-05-14 20:44:57,213 [INFO] processed 192/207 groups; updated=171751 skipped=4218 errors=0\n2026-05-14 20:45:05,862 [INFO] processed 193/207 groups; updated=172672 skipped=4250 errors=0\n2026-05-14 20:45:17,133 [INFO] processed 194/207 groups; updated=173718 skipped=4264 errors=0\n2026-05-14 20:45:28,749 [INFO] processed 195/207 groups; updated=174762 skipped=4281 errors=0\n2026-05-14 20:45:40,100 [INFO] processed 196/207 groups; updated=175824 skipped=4296 errors=0\n2026-05-14 20:45:50,516 [INFO] processed 197/207 groups; updated=176883 skipped=4313 errors=0\n2026-05-14 20:45:53,533 [INFO] processed 198/207 groups; updated=177213 skipped=4322 errors=0\n2026-05-14 20:46:08,429 [INFO] processed 199/207 groups; updated=177936 skipped=4328 errors=0\n2026-05-14 20:46:32,220 [INFO] processed 200/207 groups; updated=179008 skipped=4340 errors=0\n2026-05-14 20:46:57,271 [INFO] processed 201/207 groups; updated=180076 skipped=4356 errors=0\n2026-05-14 20:47:20,923 [INFO] processed 202/207 groups; updated=181148 skipped=4366 errors=0\n2026-05-14 20:47:44,019 [INFO] processed 203/207 groups; updated=182224 skipped=4374 errors=0\n2026-05-14 20:48:06,199 [INFO] processed 204/207 groups; updated=183293 skipped=4388 errors=0\n2026-05-14 20:48:28,237 [INFO] processed 205/207 groups; updated=184369 skipped=4400 errors=0\n2026-05-14 20:48:51,066 [INFO] processed 206/207 groups; updated=185441 skipped=4412 errors=0\n2026-05-14 20:48:58,074 [INFO] processed 207/207 groups; updated=185769 skipped=4423 errors=0\n"
+    },
+    {
+      "label": "outcomes liquidity_sweep_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 1621.72,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "liquidity_sweep_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "liquidity_sweep_reactions_v1",
+        "feature_name": "liquidity_sweep",
+        "outcome_version": "v1",
+        "n_candidates": 237569,
+        "n_updated": 237546,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 23,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"liquidity_sweep_reactions_v1\",\n  \"feature_name\": \"liquidity_sweep\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 237569,\n  \"n_updated\": 237546,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 23,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "y.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-14 21:16:00,559 [INFO] processed=237569 updated=237546 current=0 skipped_no_data=23 errors=0 cache=CacheInfo(hits=239913, misses=2898, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes opening_gap_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 275.501,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_opening_gap_outcomes.py",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "feature_name": "opening_gap_levels",
+        "outcome_version": "v1",
+        "n_candidates": 36944,
+        "n_groups": 182,
+        "n_updated": 36944,
+        "n_skipped_no_data": 0,
+        "n_errors": 0,
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"feature_name\": \"opening_gap_levels\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 36944,\n  \"n_groups\": 182,\n  \"n_updated\": 36944,\n  \"n_skipped_no_data\": 0,\n  \"n_errors\": 0,\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-12 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-12\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-13 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-13\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-14 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-14\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-15 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-15\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-16 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-16\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-17 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-17\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-18 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-18\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-19 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-19\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-20 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-20\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-21 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-21\\part-000.parquet)\n2026-05-14 21:20:33,394 [INFO] missing partition: symbol=NG.c.0 date=2027-01-22 (expected D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0\\date=2027-01-22\\part-000.parquet)\n2026-05-14 21:20:34,009 [INFO] processed 182/182 groups; updated=36944 skipped=0 errors=0\n"
+    },
+    {
+      "label": "outcomes orb_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 2632.095,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "orb_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "orb_reactions_v1",
+        "feature_name": "opening_range_breakout",
+        "outcome_version": "v1",
+        "n_candidates": 158941,
+        "n_updated": 151336,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 7605,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"orb_reactions_v1\",\n  \"feature_name\": \"opening_range_breakout\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 158941,\n  \"n_updated\": 151336,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 7605,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": ".\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-14 22:06:28,502 [INFO] processed=158941 updated=151336 current=0 skipped_no_data=7605 errors=0 cache=CacheInfo(hits=151501, misses=801, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes order_block_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 1135.803,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "order_block_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "order_block_reactions_v1",
+        "feature_name": "order_block",
+        "outcome_version": "v1",
+        "n_candidates": 198069,
+        "n_updated": 198063,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 6,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"order_block_reactions_v1\",\n  \"feature_name\": \"order_block\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 198069,\n  \"n_updated\": 198063,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 6,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "ry.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-14 22:25:24,336 [INFO] processed=198069 updated=198063 current=0 skipped_no_data=6 errors=0 cache=CacheInfo(hits=199408, misses=2898, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes psp_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 134.79,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "psp_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "psp_reactions_v1",
+        "feature_name": "psp_candle_divergence",
+        "outcome_version": "v1",
+        "n_candidates": 73278,
+        "n_updated": 72592,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 686,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"psp_reactions_v1\",\n  \"feature_name\": \"psp_candle_divergence\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 73278,\n  \"n_updated\": 72592,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 686,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "ary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-14 22:27:39,142 [INFO] processed=73278 updated=72592 current=0 skipped_no_data=686 errors=0 cache=CacheInfo(hits=248234, misses=567, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes smt_htf_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 52.33,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "smt_htf_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "smt_htf_reactions_v1",
+        "feature_name": "smt_htf_reference_divergence",
+        "outcome_version": "v2",
+        "n_candidates": 10889,
+        "n_updated": 10889,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 0,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"smt_htf_reactions_v1\",\n  \"feature_name\": \"smt_htf_reference_divergence\",\n  \"outcome_version\": \"v2\",\n  \"n_candidates\": 10889,\n  \"n_updated\": 10889,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 0,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": " which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-14 22:28:08,895 [INFO] processed=5000 updated=5000 current=0 skipped_no_data=0 errors=0 cache=CacheInfo(hits=14914, misses=225, maxsize=12, currsize=12)\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-14 22:28:27,890 [INFO] processed=10000 updated=10000 current=0 skipped_no_data=0 errors=0 cache=CacheInfo(hits=29810, misses=331, maxsize=12, currsize=12)\n2026-05-14 22:28:31,446 [INFO] processed=10889 updated=10889 current=0 skipped_no_data=0 errors=0 cache=CacheInfo(hits=32457, misses=351, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes swing_pivot_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 880.228,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "swing_pivot_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "swing_pivot_reactions_v1",
+        "feature_name": "swing_pivot",
+        "outcome_version": "v1",
+        "n_candidates": 345702,
+        "n_updated": 345672,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 30,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"swing_pivot_reactions_v1\",\n  \"feature_name\": \"swing_pivot\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 345702,\n  \"n_updated\": 345672,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 30,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "y.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-15 06:42:45,011 [INFO] processed=345702 updated=345672 current=0 skipped_no_data=30 errors=0 cache=CacheInfo(hits=351254, misses=1035, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes time_profile_reactions_v1",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 169.602,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "time_profile_reactions_v1",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "time_profile_reactions_v1",
+        "feature_name": "time_profile",
+        "outcome_version": "v1",
+        "n_candidates": 105819,
+        "n_updated": 105124,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 695,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"time_profile_reactions_v1\",\n  \"feature_name\": \"time_profile\",\n  \"outcome_version\": \"v1\",\n  \"n_candidates\": 105819,\n  \"n_updated\": 105124,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 695,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "y.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-15 06:45:34,568 [INFO] processed=105819 updated=105124 current=0 skipped_no_data=695 errors=0 cache=CacheInfo(hits=106715, misses=828, maxsize=12, currsize=12)\n"
+    },
+    {
+      "label": "outcomes volume_profile_reactions_v2",
+      "status": "ok",
+      "returncode": 0,
+      "elapsed_seconds": 1344.355,
+      "command": [
+        "C:\\Users\\benbr\\BacktestStation\\backend\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py",
+        "--computer",
+        "volume_profile_reactions_v2",
+        "--database-url",
+        "sqlite:///C:/Users/benbr/BacktestStation-assets-expanded-v1/data/meta.sqlite"
+      ],
+      "summary": {
+        "computer": "volume_profile_reactions_v2",
+        "feature_name": "volume_profile",
+        "outcome_version": "v2",
+        "n_candidates": 183662,
+        "n_updated": 173798,
+        "n_skipped_already_current": 0,
+        "n_skipped_no_data": 9864,
+        "n_errors": 0,
+        "error_messages": [],
+        "dry_run": false
+      },
+      "stdout_tail": "{\n  \"computer\": \"volume_profile_reactions_v2\",\n  \"feature_name\": \"volume_profile\",\n  \"outcome_version\": \"v2\",\n  \"n_candidates\": 183662,\n  \"n_updated\": 173798,\n  \"n_skipped_already_current\": 0,\n  \"n_skipped_no_data\": 9864,\n  \"n_errors\": 0,\n  \"error_messages\": [],\n  \"dry_run\": false\n}\n",
+      "stderr_tail": "\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\nC:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\backend\\scripts\\backfill_research_outcomes_cached.py:134: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.\n  combined = pd.concat(frames, copy=False) if len(frames) > 1 else frames[0]\n2026-05-15 07:07:58,933 [INFO] processed=183662 updated=173798 current=0 skipped_no_data=9864 errors=0 cache=CacheInfo(hits=184167, misses=1035, maxsize=12, currsize=12)\n"
+    }
+  ]
+}

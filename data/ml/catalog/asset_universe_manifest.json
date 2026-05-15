@@ -1,0 +1,5692 @@
+{
+  "schema_version": 1,
+  "universe_id": "futures_expanded_v1",
+  "generated_utc": "2026-05-15T16:47:57+00:00",
+  "builder": "backend/scripts/ml/build_asset_universe_manifest.py",
+  "git": {
+    "branch": "assets/expanded-universe-v1",
+    "commit": "6cd92e9dd0677ffa61772aeb12a5f9e8348b67d2",
+    "dirty": true
+  },
+  "paths": {
+    "repo_root": "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1",
+    "database": "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\data\\meta.sqlite",
+    "ml_catalog": "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\data\\ml\\catalog\\ml_dataset_catalog.json"
+  },
+  "symbol_metadata": {
+    "6A.c.0": {
+      "symbol": "6A.c.0",
+      "root_symbol": "6A",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "6B.c.0": {
+      "symbol": "6B.c.0",
+      "root_symbol": "6B",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "6C.c.0": {
+      "symbol": "6C.c.0",
+      "root_symbol": "6C",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "6E.c.0": {
+      "symbol": "6E.c.0",
+      "root_symbol": "6E",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "6J.c.0": {
+      "symbol": "6J.c.0",
+      "root_symbol": "6J",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "6N.c.0": {
+      "symbol": "6N.c.0",
+      "root_symbol": "6N",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "6S.c.0": {
+      "symbol": "6S.c.0",
+      "root_symbol": "6S",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "BZ.c.0": {
+      "symbol": "BZ.c.0",
+      "root_symbol": "BZ",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "CL.c.0": {
+      "symbol": "CL.c.0",
+      "root_symbol": "CL",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "ES.c.0": {
+      "name": "E-mini S&P 500",
+      "asset_class": "futures",
+      "exchange": "CME Globex",
+      "dataset_code": "GLBX.MDP3",
+      "tick_size": 0.25,
+      "tick_value_usd": 12.5,
+      "point_value_usd": 50.0,
+      "session_calendar": "CME equity index futures / Globex",
+      "display_timezone": "America/New_York",
+      "symbol": "ES.c.0",
+      "root_symbol": "ES",
+      "symbol_kind": "continuous_front_month"
+    },
+    "GC.c.0": {
+      "symbol": "GC.c.0",
+      "root_symbol": "GC",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "HG.c.0": {
+      "symbol": "HG.c.0",
+      "root_symbol": "HG",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "HO.c.0": {
+      "symbol": "HO.c.0",
+      "root_symbol": "HO",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "NG.c.0": {
+      "symbol": "NG.c.0",
+      "root_symbol": "NG",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "NQ.c.0": {
+      "name": "E-mini Nasdaq-100",
+      "asset_class": "futures",
+      "exchange": "CME Globex",
+      "dataset_code": "GLBX.MDP3",
+      "tick_size": 0.25,
+      "tick_value_usd": 5.0,
+      "point_value_usd": 20.0,
+      "session_calendar": "CME equity index futures / Globex",
+      "display_timezone": "America/New_York",
+      "symbol": "NQ.c.0",
+      "root_symbol": "NQ",
+      "symbol_kind": "continuous_front_month"
+    },
+    "PA.c.0": {
+      "symbol": "PA.c.0",
+      "root_symbol": "PA",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "PL.c.0": {
+      "symbol": "PL.c.0",
+      "root_symbol": "PL",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "RB.c.0": {
+      "symbol": "RB.c.0",
+      "root_symbol": "RB",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "RTY.c.0": {
+      "name": "E-mini Russell 2000",
+      "asset_class": "futures",
+      "exchange": "CME Globex",
+      "dataset_code": "GLBX.MDP3",
+      "tick_size": 0.1,
+      "tick_value_usd": 5.0,
+      "point_value_usd": 50.0,
+      "session_calendar": "CME equity index futures / Globex",
+      "display_timezone": "America/New_York",
+      "symbol": "RTY.c.0",
+      "root_symbol": "RTY",
+      "symbol_kind": "continuous_front_month"
+    },
+    "SI.c.0": {
+      "symbol": "SI.c.0",
+      "root_symbol": "SI",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "YM.c.0": {
+      "name": "E-mini Dow",
+      "asset_class": "futures",
+      "exchange": "CBOT Globex",
+      "dataset_code": "GLBX.MDP3",
+      "tick_size": 1.0,
+      "tick_value_usd": 5.0,
+      "point_value_usd": 5.0,
+      "session_calendar": "CME equity index futures / Globex",
+      "display_timezone": "America/New_York",
+      "symbol": "YM.c.0",
+      "root_symbol": "YM",
+      "symbol_kind": "continuous_front_month"
+    },
+    "ZB.c.0": {
+      "symbol": "ZB.c.0",
+      "root_symbol": "ZB",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "ZC.c.0": {
+      "symbol": "ZC.c.0",
+      "root_symbol": "ZC",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "ZF.c.0": {
+      "symbol": "ZF.c.0",
+      "root_symbol": "ZF",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "ZN.c.0": {
+      "symbol": "ZN.c.0",
+      "root_symbol": "ZN",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "ZS.c.0": {
+      "symbol": "ZS.c.0",
+      "root_symbol": "ZS",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "ZT.c.0": {
+      "symbol": "ZT.c.0",
+      "root_symbol": "ZT",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    },
+    "ZW.c.0": {
+      "symbol": "ZW.c.0",
+      "root_symbol": "ZW",
+      "symbol_kind": "continuous_front_month",
+      "asset_class": "unknown",
+      "session_calendar": "unknown",
+      "display_timezone": "unknown"
+    }
+  },
+  "active_universe": {
+    "symbols": [
+      "6A.c.0",
+      "6B.c.0",
+      "6C.c.0",
+      "6E.c.0",
+      "6J.c.0",
+      "6N.c.0",
+      "6S.c.0",
+      "BZ.c.0",
+      "CL.c.0",
+      "ES.c.0",
+      "HO.c.0",
+      "NG.c.0",
+      "NQ.c.0",
+      "RB.c.0",
+      "RTY.c.0",
+      "YM.c.0",
+      "ZB.c.0",
+      "ZC.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZS.c.0",
+      "ZT.c.0",
+      "ZW.c.0"
+    ],
+    "symbol_count": 23,
+    "research_symbols": [
+      "6A.c.0",
+      "6B.c.0",
+      "6C.c.0",
+      "6E.c.0",
+      "6J.c.0",
+      "6N.c.0",
+      "6S.c.0",
+      "BZ.c.0",
+      "CL.c.0",
+      "ES.c.0",
+      "HO.c.0",
+      "NG.c.0",
+      "NQ.c.0",
+      "RB.c.0",
+      "RTY.c.0",
+      "YM.c.0",
+      "ZB.c.0",
+      "ZC.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZS.c.0",
+      "ZT.c.0",
+      "ZW.c.0"
+    ],
+    "ml_symbols": [
+      "6A.c.0",
+      "6B.c.0",
+      "6C.c.0",
+      "6E.c.0",
+      "6J.c.0",
+      "6N.c.0",
+      "6S.c.0",
+      "BZ.c.0",
+      "CL.c.0",
+      "ES.c.0",
+      "HO.c.0",
+      "NG.c.0",
+      "NQ.c.0",
+      "RB.c.0",
+      "RTY.c.0",
+      "YM.c.0",
+      "ZB.c.0",
+      "ZC.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZS.c.0",
+      "ZT.c.0",
+      "ZW.c.0"
+    ],
+    "warehouse_symbols": [
+      "6A.c.0",
+      "6B.c.0",
+      "6C.c.0",
+      "6E.c.0",
+      "6J.c.0",
+      "6N.c.0",
+      "6S.c.0",
+      "BZ.c.0",
+      "CL.c.0",
+      "ES.c.0",
+      "GC.c.0",
+      "HG.c.0",
+      "HO.c.0",
+      "NG.c.0",
+      "NQ.c.0",
+      "PA.c.0",
+      "PL.c.0",
+      "RB.c.0",
+      "RTY.c.0",
+      "SI.c.0",
+      "YM.c.0",
+      "ZB.c.0",
+      "ZC.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZS.c.0",
+      "ZT.c.0",
+      "ZW.c.0"
+    ],
+    "data_only_symbols": [
+      "GC.c.0",
+      "HG.c.0",
+      "PA.c.0",
+      "PL.c.0",
+      "SI.c.0"
+    ],
+    "active_symbols_without_warehouse_bars": [],
+    "active_ohlcv_1m_earliest_date": "2015-01-01",
+    "active_ohlcv_1m_latest_date": "2026-05-05"
+  },
+  "warehouse": {
+    "warehouse_root": "D:\\data",
+    "backend": "local",
+    "counted_parquet_rows": true,
+    "symbol_count": 28,
+    "symbols": [
+      "6A.c.0",
+      "6B.c.0",
+      "6C.c.0",
+      "6E.c.0",
+      "6J.c.0",
+      "6N.c.0",
+      "6S.c.0",
+      "BZ.c.0",
+      "CL.c.0",
+      "ES.c.0",
+      "GC.c.0",
+      "HG.c.0",
+      "HO.c.0",
+      "NG.c.0",
+      "NQ.c.0",
+      "PA.c.0",
+      "PL.c.0",
+      "RB.c.0",
+      "RTY.c.0",
+      "SI.c.0",
+      "YM.c.0",
+      "ZB.c.0",
+      "ZC.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZS.c.0",
+      "ZT.c.0",
+      "ZW.c.0"
+    ],
+    "schemas": [
+      "mbp-1",
+      "ohlcv-1m",
+      "tbbo"
+    ],
+    "by_symbol_schema": [
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6A.c.0",
+        "partition_count": 2351,
+        "file_count": 2351,
+        "total_bytes": 30640857,
+        "row_count": 902877,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 149,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-14",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-29",
+          "2018-08-12",
+          "2018-09-23",
+          "2018-09-30",
+          "2018-10-07",
+          "2018-10-12",
+          "2018-10-28",
+          "2018-10-29",
+          "2018-11-04",
+          "2018-12-25",
+          "2018-12-30",
+          "2019-01-01",
+          "2019-01-06",
+          "2019-01-13",
+          "2019-01-20",
+          "2019-01-27",
+          "2019-02-05",
+          "2019-02-10"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=6A.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6A.c.0",
+        "partition_count": 2351,
+        "file_count": 2351,
+        "total_bytes": 30610693,
+        "row_count": 902877,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 149,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-14",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-29",
+          "2018-08-12",
+          "2018-09-23",
+          "2018-09-30",
+          "2018-10-07",
+          "2018-10-12",
+          "2018-10-28",
+          "2018-10-29",
+          "2018-11-04",
+          "2018-12-25",
+          "2018-12-30",
+          "2019-01-01",
+          "2019-01-06",
+          "2019-01-13",
+          "2019-01-20",
+          "2019-01-27",
+          "2019-02-05",
+          "2019-02-10"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=6A.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "6A.c.0",
+        "partition_count": 292,
+        "file_count": 292,
+        "total_bytes": 29275561,
+        "row_count": 1550875,
+        "earliest_date": "2025-05-02",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 15,
+        "missing_calendar_days_sample": [
+          "2025-05-04",
+          "2025-05-09",
+          "2025-05-11",
+          "2025-05-18",
+          "2025-07-06",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-08-17",
+          "2025-09-21",
+          "2025-11-02",
+          "2025-12-25",
+          "2026-01-01",
+          "2026-02-08"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=6A.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6B.c.0",
+        "partition_count": 2331,
+        "file_count": 2331,
+        "total_bytes": 30173095,
+        "row_count": 872295,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 169,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-07-01",
+          "2018-07-15",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-09-30",
+          "2018-10-28",
+          "2018-11-11",
+          "2018-11-18",
+          "2018-12-23",
+          "2018-12-30",
+          "2019-01-06",
+          "2019-01-13",
+          "2019-02-10",
+          "2019-04-07",
+          "2019-04-14",
+          "2019-04-19",
+          "2019-04-21",
+          "2019-04-28",
+          "2019-05-13",
+          "2019-06-23",
+          "2019-07-14",
+          "2019-07-21",
+          "2019-07-22"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=6B.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6B.c.0",
+        "partition_count": 2331,
+        "file_count": 2331,
+        "total_bytes": 30143203,
+        "row_count": 872295,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 169,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-07-01",
+          "2018-07-15",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-09-30",
+          "2018-10-28",
+          "2018-11-11",
+          "2018-11-18",
+          "2018-12-23",
+          "2018-12-30",
+          "2019-01-06",
+          "2019-01-13",
+          "2019-02-10",
+          "2019-04-07",
+          "2019-04-14",
+          "2019-04-19",
+          "2019-04-21",
+          "2019-04-28",
+          "2019-05-13",
+          "2019-06-23",
+          "2019-07-14",
+          "2019-07-21",
+          "2019-07-22"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=6B.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "6B.c.0",
+        "partition_count": 288,
+        "file_count": 288,
+        "total_bytes": 22935531,
+        "row_count": 1215703,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 20,
+        "missing_calendar_days_sample": [
+          "2025-05-04",
+          "2025-05-18",
+          "2025-07-13",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-08-17",
+          "2025-09-28",
+          "2025-10-12",
+          "2025-11-02",
+          "2025-11-09",
+          "2025-11-16",
+          "2025-12-25",
+          "2025-12-28",
+          "2026-01-04",
+          "2026-01-11",
+          "2026-02-01",
+          "2026-02-08",
+          "2026-04-12"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=6B.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6C.c.0",
+        "partition_count": 2260,
+        "file_count": 2260,
+        "total_bytes": 27693327,
+        "row_count": 790787,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 240,
+        "missing_calendar_days_sample": [
+          "2018-05-03",
+          "2018-05-06",
+          "2018-05-07",
+          "2018-05-13",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-29",
+          "2018-08-06",
+          "2018-08-12",
+          "2018-09-23",
+          "2018-10-07",
+          "2018-10-21",
+          "2018-10-23",
+          "2018-10-28",
+          "2018-11-01",
+          "2018-11-04",
+          "2018-11-05",
+          "2018-11-11",
+          "2018-11-12",
+          "2018-11-16",
+          "2018-11-19",
+          "2018-11-20",
+          "2018-12-25",
+          "2018-12-30"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=6C.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6C.c.0",
+        "partition_count": 2260,
+        "file_count": 2260,
+        "total_bytes": 27664031,
+        "row_count": 790787,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 240,
+        "missing_calendar_days_sample": [
+          "2018-05-03",
+          "2018-05-06",
+          "2018-05-07",
+          "2018-05-13",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-29",
+          "2018-08-06",
+          "2018-08-12",
+          "2018-09-23",
+          "2018-10-07",
+          "2018-10-21",
+          "2018-10-23",
+          "2018-10-28",
+          "2018-11-01",
+          "2018-11-04",
+          "2018-11-05",
+          "2018-11-11",
+          "2018-11-12",
+          "2018-11-16",
+          "2018-11-19",
+          "2018-11-20",
+          "2018-12-25",
+          "2018-12-30"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=6C.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "6C.c.0",
+        "partition_count": 282,
+        "file_count": 282,
+        "total_bytes": 17134271,
+        "row_count": 864849,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 26,
+        "missing_calendar_days_sample": [
+          "2025-05-18",
+          "2025-06-29",
+          "2025-07-06",
+          "2025-07-13",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-09-21",
+          "2025-09-28",
+          "2025-10-05",
+          "2025-11-02",
+          "2025-11-09",
+          "2025-12-21",
+          "2025-12-25",
+          "2025-12-26",
+          "2026-01-01",
+          "2026-01-11",
+          "2026-01-18",
+          "2026-01-25",
+          "2026-02-01",
+          "2026-02-08",
+          "2026-02-15",
+          "2026-03-29",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=6C.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6E.c.0",
+        "partition_count": 2410,
+        "file_count": 2410,
+        "total_bytes": 34782832,
+        "row_count": 1003612,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 90,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-07-15",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-10-14",
+          "2018-11-18",
+          "2019-01-06",
+          "2019-01-13",
+          "2019-02-03",
+          "2019-02-10",
+          "2019-03-31",
+          "2019-04-07",
+          "2019-04-19",
+          "2019-06-30",
+          "2019-08-04",
+          "2019-08-11",
+          "2019-08-18",
+          "2019-10-06",
+          "2019-10-20",
+          "2019-10-27",
+          "2019-11-03",
+          "2019-11-10",
+          "2019-11-17",
+          "2019-12-25",
+          "2020-01-01"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=6E.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6E.c.0",
+        "partition_count": 2410,
+        "file_count": 2410,
+        "total_bytes": 34752096,
+        "row_count": 1003612,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 90,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-07-15",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-10-14",
+          "2018-11-18",
+          "2019-01-06",
+          "2019-01-13",
+          "2019-02-03",
+          "2019-02-10",
+          "2019-03-31",
+          "2019-04-07",
+          "2019-04-19",
+          "2019-06-30",
+          "2019-08-04",
+          "2019-08-11",
+          "2019-08-18",
+          "2019-10-06",
+          "2019-10-20",
+          "2019-10-27",
+          "2019-11-03",
+          "2019-11-10",
+          "2019-11-17",
+          "2019-12-25",
+          "2020-01-01"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=6E.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "6E.c.0",
+        "partition_count": 305,
+        "file_count": 305,
+        "total_bytes": 53731775,
+        "row_count": 3007744,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 3,
+        "missing_calendar_days_sample": [
+          "2025-05-18",
+          "2025-09-28",
+          "2025-11-16"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=6E.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6J.c.0",
+        "partition_count": 2374,
+        "file_count": 2374,
+        "total_bytes": 31972413,
+        "row_count": 938460,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 126,
+        "missing_calendar_days_sample": [
+          "2018-05-13",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-29",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-10-28",
+          "2018-11-04",
+          "2018-12-23",
+          "2019-01-06",
+          "2019-01-20",
+          "2019-01-27",
+          "2019-02-03",
+          "2019-04-07",
+          "2019-04-14",
+          "2019-04-19",
+          "2019-04-21",
+          "2019-04-28",
+          "2019-05-03",
+          "2019-05-12",
+          "2019-07-14",
+          "2019-07-21",
+          "2019-07-28",
+          "2019-08-11"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=6J.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6J.c.0",
+        "partition_count": 2374,
+        "file_count": 2374,
+        "total_bytes": 31942061,
+        "row_count": 938460,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 126,
+        "missing_calendar_days_sample": [
+          "2018-05-13",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-29",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-10-28",
+          "2018-11-04",
+          "2018-12-23",
+          "2019-01-06",
+          "2019-01-20",
+          "2019-01-27",
+          "2019-02-03",
+          "2019-04-07",
+          "2019-04-14",
+          "2019-04-19",
+          "2019-04-21",
+          "2019-04-28",
+          "2019-05-03",
+          "2019-05-12",
+          "2019-07-14",
+          "2019-07-21",
+          "2019-07-28",
+          "2019-08-11"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=6J.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "6J.c.0",
+        "partition_count": 304,
+        "file_count": 304,
+        "total_bytes": 38436415,
+        "row_count": 2111844,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 4,
+        "missing_calendar_days_sample": [
+          "2025-07-20",
+          "2025-08-10",
+          "2025-11-16",
+          "2026-01-01"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=6J.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6N.c.0",
+        "partition_count": 2485,
+        "file_count": 2485,
+        "total_bytes": 52125046,
+        "row_count": 2399182,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 15,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-04-10",
+          "2020-09-13",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2024-06-16",
+          "2025-04-18",
+          "2025-06-15"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=6N.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6N.c.0",
+        "partition_count": 2485,
+        "file_count": 2485,
+        "total_bytes": 52107510,
+        "row_count": 2399182,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 15,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-04-10",
+          "2020-09-13",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2024-06-16",
+          "2025-04-18",
+          "2025-06-15"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=6N.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "6N.c.0",
+        "partition_count": 307,
+        "file_count": 307,
+        "total_bytes": 43192216,
+        "row_count": 2385142,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 1,
+        "missing_calendar_days_sample": [
+          "2025-06-15"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=6N.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6S.c.0",
+        "partition_count": 2483,
+        "file_count": 2483,
+        "total_bytes": 51549847,
+        "row_count": 2258483,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 17,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2019-06-16",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-06-12",
+          "2022-09-18",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-09-17",
+          "2023-12-17",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=6S.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "6S.c.0",
+        "partition_count": 2483,
+        "file_count": 2483,
+        "total_bytes": 51531275,
+        "row_count": 2258483,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 17,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2019-06-16",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-06-12",
+          "2022-09-18",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-09-17",
+          "2023-12-17",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=6S.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "6S.c.0",
+        "partition_count": 308,
+        "file_count": 308,
+        "total_bytes": 50763713,
+        "row_count": 2863565,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 0,
+        "missing_calendar_days_sample": [],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=6S.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "BZ.c.0",
+        "partition_count": 2481,
+        "file_count": 2481,
+        "total_bytes": 44853494,
+        "row_count": 1786531,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 19,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2019-12-29",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2024-12-29",
+          "2025-03-30",
+          "2025-04-18",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=BZ.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "BZ.c.0",
+        "partition_count": 2481,
+        "file_count": 2481,
+        "total_bytes": 44819990,
+        "row_count": 1786531,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 19,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2019-12-29",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2024-12-29",
+          "2025-03-30",
+          "2025-04-18",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=BZ.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "BZ.c.0",
+        "partition_count": 307,
+        "file_count": 307,
+        "total_bytes": 45766623,
+        "row_count": 2544226,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 1,
+        "missing_calendar_days_sample": [
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=BZ.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "CL.c.0",
+        "partition_count": 2484,
+        "file_count": 2484,
+        "total_bytes": 58139902,
+        "row_count": 2645370,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 16,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=CL.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "CL.c.0",
+        "partition_count": 2484,
+        "file_count": 2484,
+        "total_bytes": 58122934,
+        "row_count": 2645370,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 16,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=CL.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "CL.c.0",
+        "partition_count": 307,
+        "file_count": 307,
+        "total_bytes": 353952758,
+        "row_count": 22455662,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 1,
+        "missing_calendar_days_sample": [
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=CL.c.0"
+      },
+      {
+        "schema": "mbp-1",
+        "symbol": "ES.c.0",
+        "partition_count": 49,
+        "file_count": 49,
+        "total_bytes": 5060734941,
+        "row_count": 439100706,
+        "earliest_date": "2026-03-02",
+        "latest_date": "2026-05-04",
+        "missing_calendar_days_ex_saturday": 6,
+        "missing_calendar_days_sample": [
+          "2026-03-08",
+          "2026-03-15",
+          "2026-03-22",
+          "2026-03-29",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\mbp-1\\symbol=ES.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ES.c.0",
+        "partition_count": 3527,
+        "file_count": 3527,
+        "total_bytes": 86093027,
+        "row_count": 3948707,
+        "earliest_date": "2015-01-01",
+        "latest_date": "2026-05-04",
+        "missing_calendar_days_ex_saturday": 23,
+        "missing_calendar_days_sample": [
+          "2015-12-25",
+          "2016-01-01",
+          "2016-03-25",
+          "2016-12-25",
+          "2017-01-01",
+          "2017-04-14",
+          "2017-12-24",
+          "2017-12-31",
+          "2018-03-30",
+          "2019-04-19",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ES.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ES.c.0",
+        "partition_count": 315,
+        "file_count": 315,
+        "total_bytes": 1348963241,
+        "row_count": 111054920,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-05-05",
+        "missing_calendar_days_ex_saturday": 2,
+        "missing_calendar_days_sample": [
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ES.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "GC.c.0",
+        "partition_count": 2106,
+        "file_count": 2106,
+        "total_bytes": 16678490,
+        "row_count": 95386,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 394,
+        "missing_calendar_days_sample": [
+          "2018-05-03",
+          "2018-05-04",
+          "2018-05-06",
+          "2018-05-09",
+          "2018-05-11",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-22",
+          "2018-05-23",
+          "2018-05-24",
+          "2018-05-25",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-05-29",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-17",
+          "2018-07-20",
+          "2018-07-22",
+          "2018-07-24",
+          "2018-07-25"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=GC.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "GC.c.0",
+        "partition_count": 2106,
+        "file_count": 2106,
+        "total_bytes": 16644962,
+        "row_count": 95386,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 394,
+        "missing_calendar_days_sample": [
+          "2018-05-03",
+          "2018-05-04",
+          "2018-05-06",
+          "2018-05-09",
+          "2018-05-11",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-22",
+          "2018-05-23",
+          "2018-05-24",
+          "2018-05-25",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-05-29",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-17",
+          "2018-07-20",
+          "2018-07-22",
+          "2018-07-24",
+          "2018-07-25"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=GC.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "GC.c.0",
+        "partition_count": 273,
+        "file_count": 273,
+        "total_bytes": 3361142,
+        "row_count": 45455,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 35,
+        "missing_calendar_days_sample": [
+          "2025-05-18",
+          "2025-05-25",
+          "2025-05-28",
+          "2025-06-22",
+          "2025-07-06",
+          "2025-07-13",
+          "2025-07-27",
+          "2025-07-29",
+          "2025-08-10",
+          "2025-08-24",
+          "2025-08-31",
+          "2025-09-14",
+          "2025-09-26",
+          "2025-10-05",
+          "2025-10-29",
+          "2025-11-09",
+          "2025-11-23",
+          "2025-11-25",
+          "2025-12-07",
+          "2025-12-14",
+          "2025-12-21",
+          "2025-12-28",
+          "2026-01-01",
+          "2026-01-04",
+          "2026-01-11"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=GC.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "HG.c.0",
+        "partition_count": 2122,
+        "file_count": 2122,
+        "total_bytes": 16564257,
+        "row_count": 60017,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 378,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-24",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-27",
+          "2018-07-29",
+          "2018-08-07",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-08-27",
+          "2018-09-09",
+          "2018-09-23",
+          "2018-10-07",
+          "2018-10-14",
+          "2018-10-28",
+          "2018-11-04",
+          "2018-11-11",
+          "2018-11-12",
+          "2018-11-14",
+          "2018-11-18"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=HG.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "HG.c.0",
+        "partition_count": 2122,
+        "file_count": 2122,
+        "total_bytes": 16530305,
+        "row_count": 60017,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 378,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-24",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-27",
+          "2018-07-29",
+          "2018-08-07",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-08-27",
+          "2018-09-09",
+          "2018-09-23",
+          "2018-10-07",
+          "2018-10-14",
+          "2018-10-28",
+          "2018-11-04",
+          "2018-11-11",
+          "2018-11-12",
+          "2018-11-14",
+          "2018-11-18"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=HG.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "HG.c.0",
+        "partition_count": 265,
+        "file_count": 265,
+        "total_bytes": 2836000,
+        "row_count": 13238,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 43,
+        "missing_calendar_days_sample": [
+          "2025-05-04",
+          "2025-05-18",
+          "2025-05-25",
+          "2025-06-01",
+          "2025-06-08",
+          "2025-06-15",
+          "2025-06-22",
+          "2025-07-06",
+          "2025-07-13",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-08-17",
+          "2025-08-24",
+          "2025-08-27",
+          "2025-08-31",
+          "2025-09-07",
+          "2025-09-14",
+          "2025-09-21",
+          "2025-10-05",
+          "2025-10-12",
+          "2025-10-19",
+          "2025-11-02",
+          "2025-11-09"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=HG.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "HO.c.0",
+        "partition_count": 2476,
+        "file_count": 2476,
+        "total_bytes": 58815986,
+        "row_count": 1637013,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 24,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-08-30",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-01-30",
+          "2022-02-27",
+          "2022-04-15",
+          "2022-05-29",
+          "2022-10-30",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-07-30",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2025-06-29",
+          "2025-11-27",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=HO.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "HO.c.0",
+        "partition_count": 2476,
+        "file_count": 2476,
+        "total_bytes": 58783198,
+        "row_count": 1637013,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 24,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-08-30",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-01-30",
+          "2022-02-27",
+          "2022-04-15",
+          "2022-05-29",
+          "2022-10-30",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-07-30",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2025-06-29",
+          "2025-11-27",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=HO.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "HO.c.0",
+        "partition_count": 305,
+        "file_count": 305,
+        "total_bytes": 61031968,
+        "row_count": 3302984,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 3,
+        "missing_calendar_days_sample": [
+          "2025-06-29",
+          "2025-11-27",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=HO.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "NG.c.0",
+        "partition_count": 2484,
+        "file_count": 2484,
+        "total_bytes": 54654874,
+        "row_count": 2363245,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 16,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=NG.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "NG.c.0",
+        "partition_count": 2484,
+        "file_count": 2484,
+        "total_bytes": 54636166,
+        "row_count": 2363245,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 16,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=NG.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "NG.c.0",
+        "partition_count": 307,
+        "file_count": 307,
+        "total_bytes": 188221793,
+        "row_count": 11436932,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 1,
+        "missing_calendar_days_sample": [
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=NG.c.0"
+      },
+      {
+        "schema": "mbp-1",
+        "symbol": "NQ.c.0",
+        "partition_count": 50,
+        "file_count": 50,
+        "total_bytes": 6104981408,
+        "row_count": 509912414,
+        "earliest_date": "2026-03-02",
+        "latest_date": "2026-05-05",
+        "missing_calendar_days_ex_saturday": 6,
+        "missing_calendar_days_sample": [
+          "2026-03-08",
+          "2026-03-15",
+          "2026-03-22",
+          "2026-03-29",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\mbp-1\\symbol=NQ.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "NQ.c.0",
+        "partition_count": 3528,
+        "file_count": 3528,
+        "total_bytes": 92113022,
+        "row_count": 3893190,
+        "earliest_date": "2015-01-01",
+        "latest_date": "2026-05-05",
+        "missing_calendar_days_ex_saturday": 23,
+        "missing_calendar_days_sample": [
+          "2015-12-25",
+          "2016-01-01",
+          "2016-03-25",
+          "2016-12-25",
+          "2017-01-01",
+          "2017-04-14",
+          "2017-12-24",
+          "2017-12-31",
+          "2018-03-30",
+          "2019-04-19",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=NQ.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "NQ.c.0",
+        "partition_count": 340,
+        "file_count": 340,
+        "total_bytes": 1395871167,
+        "row_count": 97226261,
+        "earliest_date": "2025-04-01",
+        "latest_date": "2026-05-05",
+        "missing_calendar_days_ex_saturday": 3,
+        "missing_calendar_days_sample": [
+          "2025-04-18",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=NQ.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "PA.c.0",
+        "partition_count": 440,
+        "file_count": 440,
+        "total_bytes": 3177876,
+        "row_count": 4532,
+        "earliest_date": "2018-05-30",
+        "latest_date": "2026-04-14",
+        "missing_calendar_days_ex_saturday": 2026,
+        "missing_calendar_days_sample": [
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-11",
+          "2018-06-13",
+          "2018-06-14",
+          "2018-06-18",
+          "2018-06-22",
+          "2018-06-24",
+          "2018-06-25",
+          "2018-06-27",
+          "2018-06-28",
+          "2018-06-29",
+          "2018-07-01",
+          "2018-07-02",
+          "2018-07-03",
+          "2018-07-04",
+          "2018-07-05",
+          "2018-07-06",
+          "2018-07-08",
+          "2018-07-09",
+          "2018-07-10",
+          "2018-07-11",
+          "2018-07-12",
+          "2018-07-13",
+          "2018-07-15"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=PA.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "PA.c.0",
+        "partition_count": 440,
+        "file_count": 440,
+        "total_bytes": 3170836,
+        "row_count": 4532,
+        "earliest_date": "2018-05-30",
+        "latest_date": "2026-04-14",
+        "missing_calendar_days_ex_saturday": 2026,
+        "missing_calendar_days_sample": [
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-11",
+          "2018-06-13",
+          "2018-06-14",
+          "2018-06-18",
+          "2018-06-22",
+          "2018-06-24",
+          "2018-06-25",
+          "2018-06-27",
+          "2018-06-28",
+          "2018-06-29",
+          "2018-07-01",
+          "2018-07-02",
+          "2018-07-03",
+          "2018-07-04",
+          "2018-07-05",
+          "2018-07-06",
+          "2018-07-08",
+          "2018-07-09",
+          "2018-07-10",
+          "2018-07-11",
+          "2018-07-12",
+          "2018-07-13",
+          "2018-07-15"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=PA.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "PA.c.0",
+        "partition_count": 79,
+        "file_count": 79,
+        "total_bytes": 785631,
+        "row_count": 1402,
+        "earliest_date": "2025-05-29",
+        "latest_date": "2026-04-14",
+        "missing_calendar_days_ex_saturday": 196,
+        "missing_calendar_days_sample": [
+          "2025-06-01",
+          "2025-06-03",
+          "2025-06-06",
+          "2025-06-08",
+          "2025-06-11",
+          "2025-06-12",
+          "2025-06-13",
+          "2025-06-15",
+          "2025-06-17",
+          "2025-06-20",
+          "2025-06-22",
+          "2025-06-24",
+          "2025-06-25",
+          "2025-06-26",
+          "2025-06-27",
+          "2025-06-29",
+          "2025-06-30",
+          "2025-07-01",
+          "2025-07-02",
+          "2025-07-03",
+          "2025-07-04",
+          "2025-07-06",
+          "2025-07-07",
+          "2025-07-08",
+          "2025-07-09"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=PA.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "PL.c.0",
+        "partition_count": 691,
+        "file_count": 691,
+        "total_bytes": 5109353,
+        "row_count": 12925,
+        "earliest_date": "2018-05-11",
+        "latest_date": "2026-04-23",
+        "missing_calendar_days_ex_saturday": 1799,
+        "missing_calendar_days_sample": [
+          "2018-05-13",
+          "2018-05-14",
+          "2018-05-15",
+          "2018-05-16",
+          "2018-05-17",
+          "2018-05-18",
+          "2018-05-20",
+          "2018-05-21",
+          "2018-05-22",
+          "2018-05-23",
+          "2018-05-24",
+          "2018-05-25",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-05-29",
+          "2018-05-31",
+          "2018-06-01",
+          "2018-06-03",
+          "2018-06-04",
+          "2018-06-05",
+          "2018-06-06",
+          "2018-06-07",
+          "2018-06-08",
+          "2018-06-10",
+          "2018-06-11"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=PL.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "PL.c.0",
+        "partition_count": 691,
+        "file_count": 691,
+        "total_bytes": 5098297,
+        "row_count": 12925,
+        "earliest_date": "2018-05-11",
+        "latest_date": "2026-04-23",
+        "missing_calendar_days_ex_saturday": 1799,
+        "missing_calendar_days_sample": [
+          "2018-05-13",
+          "2018-05-14",
+          "2018-05-15",
+          "2018-05-16",
+          "2018-05-17",
+          "2018-05-18",
+          "2018-05-20",
+          "2018-05-21",
+          "2018-05-22",
+          "2018-05-23",
+          "2018-05-24",
+          "2018-05-25",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-05-29",
+          "2018-05-31",
+          "2018-06-01",
+          "2018-06-03",
+          "2018-06-04",
+          "2018-06-05",
+          "2018-06-06",
+          "2018-06-07",
+          "2018-06-08",
+          "2018-06-10",
+          "2018-06-11"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=PL.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "PL.c.0",
+        "partition_count": 105,
+        "file_count": 105,
+        "total_bytes": 1111230,
+        "row_count": 6025,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-23",
+        "missing_calendar_days_ex_saturday": 202,
+        "missing_calendar_days_sample": [
+          "2025-05-04",
+          "2025-05-05",
+          "2025-05-06",
+          "2025-05-07",
+          "2025-05-08",
+          "2025-05-09",
+          "2025-05-11",
+          "2025-05-12",
+          "2025-05-13",
+          "2025-05-15",
+          "2025-05-16",
+          "2025-05-18",
+          "2025-05-19",
+          "2025-05-20",
+          "2025-05-21",
+          "2025-05-22",
+          "2025-05-23",
+          "2025-05-25",
+          "2025-05-26",
+          "2025-05-27",
+          "2025-05-28",
+          "2025-05-30",
+          "2025-06-01",
+          "2025-06-02",
+          "2025-06-10"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=PL.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "RB.c.0",
+        "partition_count": 2476,
+        "file_count": 2476,
+        "total_bytes": 56329748,
+        "row_count": 1540193,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 24,
+        "missing_calendar_days_sample": [
+          "2018-12-30",
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-08-30",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-01-30",
+          "2022-04-15",
+          "2022-05-29",
+          "2022-10-30",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-07-30",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2024-09-29",
+          "2025-04-18",
+          "2025-06-29",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=RB.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "RB.c.0",
+        "partition_count": 2476,
+        "file_count": 2476,
+        "total_bytes": 56294296,
+        "row_count": 1540193,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 24,
+        "missing_calendar_days_sample": [
+          "2018-12-30",
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-08-30",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-04-02",
+          "2021-12-24",
+          "2022-01-30",
+          "2022-04-15",
+          "2022-05-29",
+          "2022-10-30",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-04-07",
+          "2023-07-30",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2024-09-29",
+          "2025-04-18",
+          "2025-06-29",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=RB.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "RB.c.0",
+        "partition_count": 306,
+        "file_count": 306,
+        "total_bytes": 53346956,
+        "row_count": 2884601,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 2,
+        "missing_calendar_days_sample": [
+          "2025-06-29",
+          "2026-04-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=RB.c.0"
+      },
+      {
+        "schema": "mbp-1",
+        "symbol": "RTY.c.0",
+        "partition_count": 49,
+        "file_count": 49,
+        "total_bytes": 1941160083,
+        "row_count": 157634732,
+        "earliest_date": "2026-03-02",
+        "latest_date": "2026-05-04",
+        "missing_calendar_days_ex_saturday": 6,
+        "missing_calendar_days_sample": [
+          "2026-03-08",
+          "2026-03-15",
+          "2026-03-22",
+          "2026-03-29",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\mbp-1\\symbol=RTY.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "RTY.c.0",
+        "partition_count": 2494,
+        "file_count": 2494,
+        "total_bytes": 58640369,
+        "row_count": 2633007,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-05-04",
+        "missing_calendar_days_ex_saturday": 14,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=RTY.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "RTY.c.0",
+        "partition_count": 2488,
+        "file_count": 2488,
+        "total_bytes": 58141188,
+        "row_count": 2624966,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 12,
+        "missing_calendar_days_sample": [
+          "2019-04-19",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=RTY.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "RTY.c.0",
+        "partition_count": 315,
+        "file_count": 315,
+        "total_bytes": 420964184,
+        "row_count": 24493018,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-05-05",
+        "missing_calendar_days_ex_saturday": 2,
+        "missing_calendar_days_sample": [
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=RTY.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "SI.c.0",
+        "partition_count": 1787,
+        "file_count": 1787,
+        "total_bytes": 13577727,
+        "row_count": 46672,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-23",
+        "missing_calendar_days_ex_saturday": 712,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-24",
+          "2018-05-27",
+          "2018-05-29",
+          "2018-06-01",
+          "2018-06-03",
+          "2018-06-04",
+          "2018-06-10",
+          "2018-06-12",
+          "2018-06-17",
+          "2018-06-18",
+          "2018-06-20",
+          "2018-06-21",
+          "2018-06-24",
+          "2018-06-26",
+          "2018-06-27",
+          "2018-07-08",
+          "2018-07-10",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-08-05",
+          "2018-08-06",
+          "2018-08-07"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=SI.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "SI.c.0",
+        "partition_count": 1787,
+        "file_count": 1787,
+        "total_bytes": 13549135,
+        "row_count": 46672,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-23",
+        "missing_calendar_days_ex_saturday": 712,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-24",
+          "2018-05-27",
+          "2018-05-29",
+          "2018-06-01",
+          "2018-06-03",
+          "2018-06-04",
+          "2018-06-10",
+          "2018-06-12",
+          "2018-06-17",
+          "2018-06-18",
+          "2018-06-20",
+          "2018-06-21",
+          "2018-06-24",
+          "2018-06-26",
+          "2018-06-27",
+          "2018-07-08",
+          "2018-07-10",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-08-05",
+          "2018-08-06",
+          "2018-08-07"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=SI.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "SI.c.0",
+        "partition_count": 252,
+        "file_count": 252,
+        "total_bytes": 2828252,
+        "row_count": 22529,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-23",
+        "missing_calendar_days_ex_saturday": 55,
+        "missing_calendar_days_sample": [
+          "2025-05-15",
+          "2025-05-18",
+          "2025-05-25",
+          "2025-05-26",
+          "2025-06-01",
+          "2025-06-08",
+          "2025-06-09",
+          "2025-06-15",
+          "2025-06-19",
+          "2025-06-22",
+          "2025-06-25",
+          "2025-07-13",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-08-14",
+          "2025-08-17",
+          "2025-08-18",
+          "2025-08-21",
+          "2025-08-22",
+          "2025-08-24",
+          "2025-08-27",
+          "2025-09-07",
+          "2025-09-10"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=SI.c.0"
+      },
+      {
+        "schema": "mbp-1",
+        "symbol": "YM.c.0",
+        "partition_count": 49,
+        "file_count": 49,
+        "total_bytes": 1616933738,
+        "row_count": 137578141,
+        "earliest_date": "2026-03-02",
+        "latest_date": "2026-05-04",
+        "missing_calendar_days_ex_saturday": 6,
+        "missing_calendar_days_sample": [
+          "2026-03-08",
+          "2026-03-15",
+          "2026-03-22",
+          "2026-03-29",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\mbp-1\\symbol=YM.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "YM.c.0",
+        "partition_count": 3526,
+        "file_count": 3526,
+        "total_bytes": 84452802,
+        "row_count": 3846440,
+        "earliest_date": "2015-01-01",
+        "latest_date": "2026-05-04",
+        "missing_calendar_days_ex_saturday": 24,
+        "missing_calendar_days_sample": [
+          "2015-12-25",
+          "2016-01-01",
+          "2016-03-25",
+          "2016-12-25",
+          "2017-01-01",
+          "2017-04-14",
+          "2017-12-24",
+          "2017-12-31",
+          "2018-03-30",
+          "2019-04-19",
+          "2020-02-28",
+          "2020-04-10",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-12-24",
+          "2023-12-31",
+          "2024-03-29",
+          "2025-04-18",
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=YM.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "YM.c.0",
+        "partition_count": 315,
+        "file_count": 315,
+        "total_bytes": 283578825,
+        "row_count": 15982141,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-05-05",
+        "missing_calendar_days_ex_saturday": 2,
+        "missing_calendar_days_sample": [
+          "2026-04-26",
+          "2026-05-03"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=YM.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZB.c.0",
+        "partition_count": 2449,
+        "file_count": 2449,
+        "total_bytes": 41963406,
+        "row_count": 1937240,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 51,
+        "missing_calendar_days_sample": [
+          "2018-12-16",
+          "2019-03-17",
+          "2019-04-19",
+          "2019-12-15",
+          "2020-02-28",
+          "2020-03-15",
+          "2020-04-10",
+          "2020-09-20",
+          "2020-12-13",
+          "2020-12-20",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-03-14",
+          "2021-03-21",
+          "2021-06-20",
+          "2021-09-12",
+          "2021-09-19",
+          "2021-12-12",
+          "2021-12-24",
+          "2022-03-06",
+          "2022-03-13",
+          "2022-03-20",
+          "2022-04-15",
+          "2022-06-12",
+          "2022-06-19"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ZB.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZB.c.0",
+        "partition_count": 2449,
+        "file_count": 2449,
+        "total_bytes": 41941970,
+        "row_count": 1937240,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 51,
+        "missing_calendar_days_sample": [
+          "2018-12-16",
+          "2019-03-17",
+          "2019-04-19",
+          "2019-12-15",
+          "2020-02-28",
+          "2020-03-15",
+          "2020-04-10",
+          "2020-09-20",
+          "2020-12-13",
+          "2020-12-20",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-03-14",
+          "2021-03-21",
+          "2021-06-20",
+          "2021-09-12",
+          "2021-09-19",
+          "2021-12-12",
+          "2021-12-24",
+          "2022-03-06",
+          "2022-03-13",
+          "2022-03-20",
+          "2022-04-15",
+          "2022-06-12",
+          "2022-06-19"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=ZB.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ZB.c.0",
+        "partition_count": 305,
+        "file_count": 305,
+        "total_bytes": 114817769,
+        "row_count": 7173384,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 3,
+        "missing_calendar_days_sample": [
+          "2025-06-08",
+          "2025-06-15",
+          "2026-03-15"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ZB.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZC.c.0",
+        "partition_count": 2007,
+        "file_count": 2007,
+        "total_bytes": 30071044,
+        "row_count": 1280885,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 493,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-04",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-29",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-09-02",
+          "2018-09-03",
+          "2018-09-09",
+          "2018-09-16",
+          "2018-09-23",
+          "2018-09-30",
+          "2018-10-07"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ZC.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZC.c.0",
+        "partition_count": 2007,
+        "file_count": 2007,
+        "total_bytes": 30039688,
+        "row_count": 1280885,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 493,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-04",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-29",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-09-02",
+          "2018-09-03",
+          "2018-09-09",
+          "2018-09-16",
+          "2018-09-23",
+          "2018-09-30",
+          "2018-10-07"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=ZC.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ZC.c.0",
+        "partition_count": 247,
+        "file_count": 247,
+        "total_bytes": 39615684,
+        "row_count": 2268429,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 61,
+        "missing_calendar_days_sample": [
+          "2025-05-04",
+          "2025-05-11",
+          "2025-05-18",
+          "2025-05-25",
+          "2025-05-26",
+          "2025-06-01",
+          "2025-06-08",
+          "2025-06-15",
+          "2025-06-19",
+          "2025-06-22",
+          "2025-06-29",
+          "2025-07-04",
+          "2025-07-06",
+          "2025-07-13",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-08-17",
+          "2025-08-24",
+          "2025-08-31",
+          "2025-09-01",
+          "2025-09-07",
+          "2025-09-14",
+          "2025-09-21"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ZC.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZF.c.0",
+        "partition_count": 2345,
+        "file_count": 2345,
+        "total_bytes": 39081577,
+        "row_count": 1721224,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 155,
+        "missing_calendar_days_sample": [
+          "2018-06-10",
+          "2018-06-24",
+          "2018-09-16",
+          "2018-09-23",
+          "2018-12-16",
+          "2018-12-23",
+          "2018-12-25",
+          "2018-12-30",
+          "2019-03-17",
+          "2019-03-24",
+          "2019-03-28",
+          "2019-04-19",
+          "2019-06-23",
+          "2019-09-15",
+          "2019-09-22",
+          "2019-09-29",
+          "2019-09-30",
+          "2019-12-15",
+          "2019-12-22",
+          "2019-12-23",
+          "2019-12-25",
+          "2019-12-29",
+          "2019-12-30",
+          "2020-02-28",
+          "2020-03-15"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ZF.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZF.c.0",
+        "partition_count": 2345,
+        "file_count": 2345,
+        "total_bytes": 39059489,
+        "row_count": 1721224,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 155,
+        "missing_calendar_days_sample": [
+          "2018-06-10",
+          "2018-06-24",
+          "2018-09-16",
+          "2018-09-23",
+          "2018-12-16",
+          "2018-12-23",
+          "2018-12-25",
+          "2018-12-30",
+          "2019-03-17",
+          "2019-03-24",
+          "2019-03-28",
+          "2019-04-19",
+          "2019-06-23",
+          "2019-09-15",
+          "2019-09-22",
+          "2019-09-29",
+          "2019-09-30",
+          "2019-12-15",
+          "2019-12-22",
+          "2019-12-23",
+          "2019-12-25",
+          "2019-12-29",
+          "2019-12-30",
+          "2020-02-28",
+          "2020-03-15"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=ZF.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ZF.c.0",
+        "partition_count": 283,
+        "file_count": 283,
+        "total_bytes": 155765127,
+        "row_count": 10014415,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 25,
+        "missing_calendar_days_sample": [
+          "2025-06-08",
+          "2025-06-15",
+          "2025-06-22",
+          "2025-06-23",
+          "2025-06-25",
+          "2025-06-29",
+          "2025-09-07",
+          "2025-09-14",
+          "2025-09-21",
+          "2025-09-23",
+          "2025-09-26",
+          "2025-09-28",
+          "2025-09-30",
+          "2025-12-07",
+          "2025-12-14",
+          "2025-12-21",
+          "2025-12-22",
+          "2025-12-23",
+          "2025-12-25",
+          "2025-12-28",
+          "2025-12-31",
+          "2026-03-15",
+          "2026-03-20",
+          "2026-03-22",
+          "2026-03-29"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ZF.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZN.c.0",
+        "partition_count": 2458,
+        "file_count": 2458,
+        "total_bytes": 44712638,
+        "row_count": 2112335,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 42,
+        "missing_calendar_days_sample": [
+          "2019-03-17",
+          "2019-04-19",
+          "2019-06-16",
+          "2019-12-15",
+          "2020-02-28",
+          "2020-03-15",
+          "2020-04-10",
+          "2020-09-13",
+          "2020-12-20",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-03-14",
+          "2021-03-21",
+          "2021-06-20",
+          "2021-09-19",
+          "2021-12-19",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-06-19",
+          "2022-09-18",
+          "2022-12-11",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-03-19",
+          "2023-06-11"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ZN.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZN.c.0",
+        "partition_count": 2458,
+        "file_count": 2458,
+        "total_bytes": 44691658,
+        "row_count": 2112335,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 42,
+        "missing_calendar_days_sample": [
+          "2019-03-17",
+          "2019-04-19",
+          "2019-06-16",
+          "2019-12-15",
+          "2020-02-28",
+          "2020-03-15",
+          "2020-04-10",
+          "2020-09-13",
+          "2020-12-20",
+          "2020-12-25",
+          "2021-01-01",
+          "2021-03-14",
+          "2021-03-21",
+          "2021-06-20",
+          "2021-09-19",
+          "2021-12-19",
+          "2021-12-24",
+          "2022-04-15",
+          "2022-06-19",
+          "2022-09-18",
+          "2022-12-11",
+          "2022-12-25",
+          "2023-01-01",
+          "2023-03-19",
+          "2023-06-11"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=ZN.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ZN.c.0",
+        "partition_count": 304,
+        "file_count": 304,
+        "total_bytes": 252622672,
+        "row_count": 16808113,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 4,
+        "missing_calendar_days_sample": [
+          "2025-06-15",
+          "2025-09-07",
+          "2025-09-14",
+          "2025-12-14"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ZN.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZS.c.0",
+        "partition_count": 1993,
+        "file_count": 1993,
+        "total_bytes": 29766341,
+        "row_count": 1207507,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 507,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-04",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-29",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-09-02",
+          "2018-09-03",
+          "2018-09-09",
+          "2018-09-14",
+          "2018-09-16",
+          "2018-09-23"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ZS.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZS.c.0",
+        "partition_count": 1993,
+        "file_count": 1993,
+        "total_bytes": 29736061,
+        "row_count": 1207507,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 507,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-04",
+          "2018-07-08",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-29",
+          "2018-08-05",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-09-02",
+          "2018-09-03",
+          "2018-09-09",
+          "2018-09-14",
+          "2018-09-16",
+          "2018-09-23"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=ZS.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ZS.c.0",
+        "partition_count": 243,
+        "file_count": 243,
+        "total_bytes": 44016253,
+        "row_count": 2672528,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 65,
+        "missing_calendar_days_sample": [
+          "2025-05-04",
+          "2025-05-11",
+          "2025-05-18",
+          "2025-05-25",
+          "2025-05-26",
+          "2025-06-01",
+          "2025-06-08",
+          "2025-06-15",
+          "2025-06-19",
+          "2025-06-22",
+          "2025-06-29",
+          "2025-07-04",
+          "2025-07-06",
+          "2025-07-13",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-08-14",
+          "2025-08-17",
+          "2025-08-24",
+          "2025-08-31",
+          "2025-09-01",
+          "2025-09-07",
+          "2025-09-09"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ZS.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZT.c.0",
+        "partition_count": 2297,
+        "file_count": 2297,
+        "total_bytes": 34222149,
+        "row_count": 1442001,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 203,
+        "missing_calendar_days_sample": [
+          "2018-06-17",
+          "2018-06-24",
+          "2018-09-02",
+          "2018-09-09",
+          "2018-09-16",
+          "2018-09-23",
+          "2018-09-28",
+          "2018-12-23",
+          "2018-12-30",
+          "2018-12-31",
+          "2019-03-10",
+          "2019-03-17",
+          "2019-03-24",
+          "2019-03-26",
+          "2019-03-29",
+          "2019-04-19",
+          "2019-06-16",
+          "2019-06-23",
+          "2019-09-08",
+          "2019-09-15",
+          "2019-09-22",
+          "2019-09-26",
+          "2019-09-29",
+          "2019-12-15",
+          "2019-12-19"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ZT.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZT.c.0",
+        "partition_count": 2297,
+        "file_count": 2297,
+        "total_bytes": 34194997,
+        "row_count": 1442001,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 203,
+        "missing_calendar_days_sample": [
+          "2018-06-17",
+          "2018-06-24",
+          "2018-09-02",
+          "2018-09-09",
+          "2018-09-16",
+          "2018-09-23",
+          "2018-09-28",
+          "2018-12-23",
+          "2018-12-30",
+          "2018-12-31",
+          "2019-03-10",
+          "2019-03-17",
+          "2019-03-24",
+          "2019-03-26",
+          "2019-03-29",
+          "2019-04-19",
+          "2019-06-16",
+          "2019-06-23",
+          "2019-09-08",
+          "2019-09-15",
+          "2019-09-22",
+          "2019-09-26",
+          "2019-09-29",
+          "2019-12-15",
+          "2019-12-19"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=ZT.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ZT.c.0",
+        "partition_count": 282,
+        "file_count": 282,
+        "total_bytes": 79330724,
+        "row_count": 4346618,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 26,
+        "missing_calendar_days_sample": [
+          "2025-06-08",
+          "2025-06-10",
+          "2025-06-15",
+          "2025-06-19",
+          "2025-06-22",
+          "2025-06-24",
+          "2025-06-25",
+          "2025-06-29",
+          "2025-06-30",
+          "2025-09-07",
+          "2025-09-14",
+          "2025-09-21",
+          "2025-09-22",
+          "2025-09-23",
+          "2025-09-28",
+          "2025-12-07",
+          "2025-12-14",
+          "2025-12-21",
+          "2025-12-24",
+          "2025-12-25",
+          "2025-12-26",
+          "2025-12-28",
+          "2026-03-22",
+          "2026-03-24",
+          "2026-03-29"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ZT.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZW.c.0",
+        "partition_count": 1946,
+        "file_count": 1946,
+        "total_bytes": 29452834,
+        "row_count": 1234895,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 554,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-11",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-04",
+          "2018-07-08",
+          "2018-07-11",
+          "2018-07-13",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-29",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-09-02",
+          "2018-09-03",
+          "2018-09-09",
+          "2018-09-16"
+        ],
+        "path_prefix": "D:\\data\\processed\\bars\\timeframe=1m\\symbol=ZW.c.0"
+      },
+      {
+        "schema": "ohlcv-1m",
+        "symbol": "ZW.c.0",
+        "partition_count": 1946,
+        "file_count": 1946,
+        "total_bytes": 29421878,
+        "row_count": 1234895,
+        "earliest_date": "2018-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 554,
+        "missing_calendar_days_sample": [
+          "2018-05-06",
+          "2018-05-11",
+          "2018-05-13",
+          "2018-05-20",
+          "2018-05-27",
+          "2018-05-28",
+          "2018-06-03",
+          "2018-06-10",
+          "2018-06-17",
+          "2018-06-24",
+          "2018-07-01",
+          "2018-07-04",
+          "2018-07-08",
+          "2018-07-11",
+          "2018-07-13",
+          "2018-07-15",
+          "2018-07-22",
+          "2018-07-29",
+          "2018-08-12",
+          "2018-08-19",
+          "2018-08-26",
+          "2018-09-02",
+          "2018-09-03",
+          "2018-09-09",
+          "2018-09-16"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\ohlcv-1m\\symbol=ZW.c.0"
+      },
+      {
+        "schema": "tbbo",
+        "symbol": "ZW.c.0",
+        "partition_count": 239,
+        "file_count": 239,
+        "total_bytes": 30431918,
+        "row_count": 1791131,
+        "earliest_date": "2025-05-01",
+        "latest_date": "2026-04-24",
+        "missing_calendar_days_ex_saturday": 69,
+        "missing_calendar_days_sample": [
+          "2025-05-04",
+          "2025-05-09",
+          "2025-05-11",
+          "2025-05-12",
+          "2025-05-13",
+          "2025-05-14",
+          "2025-05-18",
+          "2025-05-25",
+          "2025-05-26",
+          "2025-06-01",
+          "2025-06-08",
+          "2025-06-15",
+          "2025-06-19",
+          "2025-06-22",
+          "2025-06-29",
+          "2025-07-04",
+          "2025-07-06",
+          "2025-07-13",
+          "2025-07-20",
+          "2025-07-27",
+          "2025-08-03",
+          "2025-08-10",
+          "2025-08-17",
+          "2025-08-24",
+          "2025-08-31"
+        ],
+        "path_prefix": "D:\\data\\raw\\databento\\tbbo\\symbol=ZW.c.0"
+      }
+    ]
+  },
+  "research_events": {
+    "available": true,
+    "path": "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\data\\meta.sqlite",
+    "total_events": 4158076,
+    "symbols": [
+      "6A.c.0",
+      "6B.c.0",
+      "6C.c.0",
+      "6E.c.0",
+      "6J.c.0",
+      "6N.c.0",
+      "6S.c.0",
+      "BZ.c.0",
+      "CL.c.0",
+      "ES.c.0",
+      "HO.c.0",
+      "NG.c.0",
+      "NQ.c.0",
+      "RB.c.0",
+      "RTY.c.0",
+      "YM.c.0",
+      "ZB.c.0",
+      "ZC.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZS.c.0",
+      "ZT.c.0",
+      "ZW.c.0"
+    ],
+    "by_symbol": [
+      {
+        "symbol": "6A.c.0",
+        "rows": 169842,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:07:00.000000",
+        "outcomes_non_null": 164294,
+        "outcome_coverage_pct": 0.96733434603926
+      },
+      {
+        "symbol": "6B.c.0",
+        "rows": 170317,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:07:00.000000",
+        "outcomes_non_null": 165458,
+        "outcome_coverage_pct": 0.9714708455409619
+      },
+      {
+        "symbol": "6C.c.0",
+        "rows": 129702,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:00:00.000000",
+        "outcomes_non_null": 125088,
+        "outcome_coverage_pct": 0.9644261460887265
+      },
+      {
+        "symbol": "6E.c.0",
+        "rows": 206756,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 203070,
+        "outcome_coverage_pct": 0.9821722223297027
+      },
+      {
+        "symbol": "6J.c.0",
+        "rows": 179035,
+        "feature_count": 12,
+        "event_type_count": 64,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:07:00.000000",
+        "outcomes_non_null": 174208,
+        "outcome_coverage_pct": 0.9730387912977909
+      },
+      {
+        "symbol": "6N.c.0",
+        "rows": 195901,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 194693,
+        "outcome_coverage_pct": 0.9938336200427768
+      },
+      {
+        "symbol": "6S.c.0",
+        "rows": 199368,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 198223,
+        "outcome_coverage_pct": 0.9942568516512178
+      },
+      {
+        "symbol": "BZ.c.0",
+        "rows": 215739,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 214357,
+        "outcome_coverage_pct": 0.9935941114031306
+      },
+      {
+        "symbol": "CL.c.0",
+        "rows": 193910,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 192770,
+        "outcome_coverage_pct": 0.9941209839616317
+      },
+      {
+        "symbol": "ES.c.0",
+        "rows": 190769,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-28 08:00:00.000000",
+        "outcomes_non_null": 189435,
+        "outcome_coverage_pct": 0.9930072496055439
+      },
+      {
+        "symbol": "HO.c.0",
+        "rows": 222290,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 221042,
+        "outcome_coverage_pct": 0.9943857123577309
+      },
+      {
+        "symbol": "NG.c.0",
+        "rows": 188699,
+        "feature_count": 12,
+        "event_type_count": 64,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 187629,
+        "outcome_coverage_pct": 0.9943295936915405
+      },
+      {
+        "symbol": "NQ.c.0",
+        "rows": 197176,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-28 08:00:00.000000",
+        "outcomes_non_null": 195835,
+        "outcome_coverage_pct": 0.9931989694486144
+      },
+      {
+        "symbol": "RB.c.0",
+        "rows": 223231,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 221951,
+        "outcome_coverage_pct": 0.9942660293597215
+      },
+      {
+        "symbol": "RTY.c.0",
+        "rows": 200421,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 199065,
+        "outcome_coverage_pct": 0.9932342419207568
+      },
+      {
+        "symbol": "YM.c.0",
+        "rows": 195146,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 193803,
+        "outcome_coverage_pct": 0.9931179732098019
+      },
+      {
+        "symbol": "ZB.c.0",
+        "rows": 173192,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 171433,
+        "outcome_coverage_pct": 0.9898436417386485
+      },
+      {
+        "symbol": "ZC.c.0",
+        "rows": 146575,
+        "feature_count": 14,
+        "event_type_count": 67,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:00:00.000000",
+        "outcomes_non_null": 141098,
+        "outcome_coverage_pct": 0.9626334640968788
+      },
+      {
+        "symbol": "ZF.c.0",
+        "rows": 153081,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 151019,
+        "outcome_coverage_pct": 0.9865300069897636
+      },
+      {
+        "symbol": "ZN.c.0",
+        "rows": 167586,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 165937,
+        "outcome_coverage_pct": 0.9901602759180361
+      },
+      {
+        "symbol": "ZS.c.0",
+        "rows": 152170,
+        "feature_count": 13,
+        "event_type_count": 65,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:00:00.000000",
+        "outcomes_non_null": 146354,
+        "outcome_coverage_pct": 0.9617795886179931
+      },
+      {
+        "symbol": "ZT.c.0",
+        "rows": 141369,
+        "feature_count": 14,
+        "event_type_count": 69,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 139184,
+        "outcome_coverage_pct": 0.9845439947937666
+      },
+      {
+        "symbol": "ZW.c.0",
+        "rows": 145801,
+        "feature_count": 14,
+        "event_type_count": 67,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:00:00.000000",
+        "outcomes_non_null": 140276,
+        "outcome_coverage_pct": 0.9621058840474345
+      }
+    ],
+    "by_feature": [
+      {
+        "feature_name": "fvg_formation",
+        "rows": 1243757,
+        "primary_symbols": 23,
+        "event_types": 4,
+        "min_bar_end_utc": "2018-05-01 00:30:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:45:00.000000",
+        "outcomes_non_null": 1240341,
+        "outcome_coverage_pct": 0.9972534827944687
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "rows": 1132868,
+        "primary_symbols": 23,
+        "event_types": 2,
+        "min_bar_end_utc": "2018-04-30 23:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:00:00.000000",
+        "outcomes_non_null": 1097982,
+        "outcome_coverage_pct": 0.9692055914722634
+      },
+      {
+        "feature_name": "swing_pivot",
+        "rows": 345702,
+        "primary_symbols": 23,
+        "event_types": 5,
+        "min_bar_end_utc": "2018-05-01 00:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 17:00:00.000000",
+        "outcomes_non_null": 345672,
+        "outcome_coverage_pct": 0.9999132200565806
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "rows": 237569,
+        "primary_symbols": 23,
+        "event_types": 14,
+        "min_bar_end_utc": "2018-04-30 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 17:00:00.000000",
+        "outcomes_non_null": 237546,
+        "outcome_coverage_pct": 0.9999031860217452
+      },
+      {
+        "feature_name": "order_block",
+        "rows": 198069,
+        "primary_symbols": 23,
+        "event_types": 14,
+        "min_bar_end_utc": "2018-04-30 23:00:00.000000",
+        "max_bar_end_utc": "2026-04-28 08:00:00.000000",
+        "outcomes_non_null": 198063,
+        "outcome_coverage_pct": 0.9999697075261651
+      },
+      {
+        "feature_name": "interval_true_range",
+        "rows": 190192,
+        "primary_symbols": 23,
+        "event_types": 5,
+        "min_bar_end_utc": "2018-05-01 00:32:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:59:00.000000",
+        "outcomes_non_null": 185769,
+        "outcome_coverage_pct": 0.9767445528728863
+      },
+      {
+        "feature_name": "displacement_candle",
+        "rows": 187595,
+        "primary_symbols": 23,
+        "event_types": 3,
+        "min_bar_end_utc": "2018-05-01 08:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 18:00:00.000000",
+        "outcomes_non_null": 187563,
+        "outcome_coverage_pct": 0.9998294197606546
+      },
+      {
+        "feature_name": "volume_profile",
+        "rows": 183662,
+        "primary_symbols": 23,
+        "event_types": 5,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 13:30:00.000000",
+        "outcomes_non_null": 173798,
+        "outcome_coverage_pct": 0.946292646274134
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "rows": 158941,
+        "primary_symbols": 23,
+        "event_types": 4,
+        "min_bar_end_utc": "2018-04-30 23:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 14:00:00.000000",
+        "outcomes_non_null": 151336,
+        "outcome_coverage_pct": 0.9521520564234527
+      },
+      {
+        "feature_name": "time_profile",
+        "rows": 105819,
+        "primary_symbols": 23,
+        "event_types": 4,
+        "min_bar_end_utc": "2018-04-29 22:00:00.000000",
+        "max_bar_end_utc": "2026-04-23 22:00:00.000000",
+        "outcomes_non_null": 105124,
+        "outcome_coverage_pct": 0.9934321813662953
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "rows": 73278,
+        "primary_symbols": 21,
+        "event_types": 3,
+        "min_bar_end_utc": "2018-05-01 00:00:00.000000",
+        "max_bar_end_utc": "2026-04-24 20:00:00.000000",
+        "outcomes_non_null": 72592,
+        "outcome_coverage_pct": 0.9906383907857748
+      },
+      {
+        "feature_name": "first_third_range",
+        "rows": 52791,
+        "primary_symbols": 23,
+        "event_types": 2,
+        "min_bar_end_utc": "2018-05-01 00:32:00.000000",
+        "max_bar_end_utc": "2026-04-24 05:39:00.000000",
+        "outcomes_non_null": 52603,
+        "outcome_coverage_pct": 0.9964387869144362
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "rows": 36944,
+        "primary_symbols": 22,
+        "event_types": 2,
+        "min_bar_end_utc": "2018-04-29 22:30:00.000000",
+        "max_bar_end_utc": "2026-04-23 22:23:00.000000",
+        "outcomes_non_null": 36944,
+        "outcome_coverage_pct": 1.0
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "rows": 10889,
+        "primary_symbols": 21,
+        "event_types": 2,
+        "min_bar_end_utc": "2018-05-02 00:00:00.000000",
+        "max_bar_end_utc": "2026-04-23 12:00:00.000000",
+        "outcomes_non_null": 10889,
+        "outcome_coverage_pct": 1.0
+      }
+    ],
+    "feature_symbol_counts": [
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "6A.c.0",
+        "rows": 7162
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "6B.c.0",
+        "rows": 7278
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "6C.c.0",
+        "rows": 5662
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "6E.c.0",
+        "rows": 8437
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "6J.c.0",
+        "rows": 7441
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "6N.c.0",
+        "rows": 8429
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "6S.c.0",
+        "rows": 9036
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "BZ.c.0",
+        "rows": 9291
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "CL.c.0",
+        "rows": 9266
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ES.c.0",
+        "rows": 9130
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "HO.c.0",
+        "rows": 9444
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "NG.c.0",
+        "rows": 9552
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "NQ.c.0",
+        "rows": 9168
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "RB.c.0",
+        "rows": 9265
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "RTY.c.0",
+        "rows": 9218
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "YM.c.0",
+        "rows": 9233
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ZB.c.0",
+        "rows": 8420
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ZC.c.0",
+        "rows": 6610
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ZF.c.0",
+        "rows": 7412
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ZN.c.0",
+        "rows": 8534
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ZS.c.0",
+        "rows": 6183
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ZT.c.0",
+        "rows": 7352
+      },
+      {
+        "feature_name": "displacement_candle",
+        "symbol": "ZW.c.0",
+        "rows": 6072
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "6A.c.0",
+        "rows": 2257
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "6B.c.0",
+        "rows": 1961
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "6C.c.0",
+        "rows": 1601
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "6E.c.0",
+        "rows": 2349
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "6J.c.0",
+        "rows": 2299
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "6N.c.0",
+        "rows": 2480
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "6S.c.0",
+        "rows": 2481
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "BZ.c.0",
+        "rows": 2467
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "CL.c.0",
+        "rows": 2477
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ES.c.0",
+        "rows": 2481
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "HO.c.0",
+        "rows": 2442
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "NG.c.0",
+        "rows": 2477
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "NQ.c.0",
+        "rows": 2481
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "RB.c.0",
+        "rows": 2441
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "RTY.c.0",
+        "rows": 2481
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "YM.c.0",
+        "rows": 2480
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ZB.c.0",
+        "rows": 2299
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ZC.c.0",
+        "rows": 2279
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ZF.c.0",
+        "rows": 2034
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ZN.c.0",
+        "rows": 2375
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ZS.c.0",
+        "rows": 2106
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ZT.c.0",
+        "rows": 1973
+      },
+      {
+        "feature_name": "first_third_range",
+        "symbol": "ZW.c.0",
+        "rows": 2070
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "6A.c.0",
+        "rows": 43052
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "6B.c.0",
+        "rows": 40090
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "6C.c.0",
+        "rows": 29483
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "6E.c.0",
+        "rows": 47957
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "6J.c.0",
+        "rows": 45036
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "6N.c.0",
+        "rows": 55540
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "6S.c.0",
+        "rows": 55550
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "BZ.c.0",
+        "rows": 54240
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "CL.c.0",
+        "rows": 55386
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ES.c.0",
+        "rows": 55726
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "HO.c.0",
+        "rows": 54259
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "NG.c.0",
+        "rows": 55465
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "NQ.c.0",
+        "rows": 55726
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "RB.c.0",
+        "rows": 54151
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "RTY.c.0",
+        "rows": 55715
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "YM.c.0",
+        "rows": 55699
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ZB.c.0",
+        "rows": 50469
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ZC.c.0",
+        "rows": 45805
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ZF.c.0",
+        "rows": 44508
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ZN.c.0",
+        "rows": 52185
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ZS.c.0",
+        "rows": 42328
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ZT.c.0",
+        "rows": 42695
+      },
+      {
+        "feature_name": "forming_volume_profile",
+        "symbol": "ZW.c.0",
+        "rows": 41803
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "6A.c.0",
+        "rows": 58540
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "6B.c.0",
+        "rows": 58990
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "6C.c.0",
+        "rows": 41839
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "6E.c.0",
+        "rows": 80093
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "6J.c.0",
+        "rows": 65374
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "6N.c.0",
+        "rows": 57740
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "6S.c.0",
+        "rows": 57782
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "BZ.c.0",
+        "rows": 74661
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "CL.c.0",
+        "rows": 52763
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ES.c.0",
+        "rows": 49087
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "HO.c.0",
+        "rows": 79115
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "NG.c.0",
+        "rows": 51035
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "NQ.c.0",
+        "rows": 52325
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "RB.c.0",
+        "rows": 81878
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "RTY.c.0",
+        "rows": 54850
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "YM.c.0",
+        "rows": 52586
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ZB.c.0",
+        "rows": 45560
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ZC.c.0",
+        "rows": 33850
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ZF.c.0",
+        "rows": 40754
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ZN.c.0",
+        "rows": 40505
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ZS.c.0",
+        "rows": 42602
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ZT.c.0",
+        "rows": 33586
+      },
+      {
+        "feature_name": "fvg_formation",
+        "symbol": "ZW.c.0",
+        "rows": 38242
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "6A.c.0",
+        "rows": 8060
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "6B.c.0",
+        "rows": 7918
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "6C.c.0",
+        "rows": 6844
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "6E.c.0",
+        "rows": 8511
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "6J.c.0",
+        "rows": 8209
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "6N.c.0",
+        "rows": 8646
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "6S.c.0",
+        "rows": 8655
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "BZ.c.0",
+        "rows": 8645
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "CL.c.0",
+        "rows": 8657
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ES.c.0",
+        "rows": 8634
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "HO.c.0",
+        "rows": 8617
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "NG.c.0",
+        "rows": 8657
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "NQ.c.0",
+        "rows": 8634
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "RB.c.0",
+        "rows": 8616
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "RTY.c.0",
+        "rows": 8634
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "YM.c.0",
+        "rows": 8630
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ZB.c.0",
+        "rows": 8392
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ZC.c.0",
+        "rows": 8130
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ZF.c.0",
+        "rows": 7738
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ZN.c.0",
+        "rows": 8544
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ZS.c.0",
+        "rows": 7773
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ZT.c.0",
+        "rows": 7509
+      },
+      {
+        "feature_name": "interval_true_range",
+        "symbol": "ZW.c.0",
+        "rows": 7539
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "6A.c.0",
+        "rows": 10336
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "6B.c.0",
+        "rows": 10133
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "6C.c.0",
+        "rows": 9177
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "6E.c.0",
+        "rows": 10568
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "6J.c.0",
+        "rows": 10315
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "6N.c.0",
+        "rows": 10786
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "6S.c.0",
+        "rows": 10735
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "BZ.c.0",
+        "rows": 10631
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "CL.c.0",
+        "rows": 10785
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ES.c.0",
+        "rows": 10965
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "HO.c.0",
+        "rows": 10716
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "NG.c.0",
+        "rows": 10931
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "NQ.c.0",
+        "rows": 10980
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "RB.c.0",
+        "rows": 10820
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "RTY.c.0",
+        "rows": 10893
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "YM.c.0",
+        "rows": 10911
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ZB.c.0",
+        "rows": 10307
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ZC.c.0",
+        "rows": 9802
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ZF.c.0",
+        "rows": 9643
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ZN.c.0",
+        "rows": 10329
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ZS.c.0",
+        "rows": 9577
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ZT.c.0",
+        "rows": 9091
+      },
+      {
+        "feature_name": "liquidity_sweep",
+        "symbol": "ZW.c.0",
+        "rows": 9138
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "6A.c.0",
+        "rows": 1423
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "6B.c.0",
+        "rows": 1259
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "6C.c.0",
+        "rows": 1085
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "6E.c.0",
+        "rows": 1606
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "6J.c.0",
+        "rows": 1505
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "6N.c.0",
+        "rows": 2070
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "6S.c.0",
+        "rows": 2096
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "BZ.c.0",
+        "rows": 2153
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "CL.c.0",
+        "rows": 2146
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "ES.c.0",
+        "rows": 2218
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "HO.c.0",
+        "rows": 2231
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "NG.c.0",
+        "rows": 2125
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "NQ.c.0",
+        "rows": 2335
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "RB.c.0",
+        "rows": 2232
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "RTY.c.0",
+        "rows": 2277
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "YM.c.0",
+        "rows": 2297
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "ZB.c.0",
+        "rows": 1612
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "ZC.c.0",
+        "rows": 2
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "ZF.c.0",
+        "rows": 1419
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "ZN.c.0",
+        "rows": 1620
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "ZT.c.0",
+        "rows": 1231
+      },
+      {
+        "feature_name": "opening_gap_levels",
+        "symbol": "ZW.c.0",
+        "rows": 2
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "6A.c.0",
+        "rows": 4791
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "6B.c.0",
+        "rows": 4952
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "6C.c.0",
+        "rows": 4046
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "6E.c.0",
+        "rows": 6310
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "6J.c.0",
+        "rows": 5217
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "6N.c.0",
+        "rows": 8144
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "6S.c.0",
+        "rows": 8157
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "BZ.c.0",
+        "rows": 7939
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "CL.c.0",
+        "rows": 8132
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ES.c.0",
+        "rows": 8150
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "HO.c.0",
+        "rows": 8084
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "NG.c.0",
+        "rows": 8152
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "NQ.c.0",
+        "rows": 8147
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "RB.c.0",
+        "rows": 8022
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "RTY.c.0",
+        "rows": 8141
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "YM.c.0",
+        "rows": 8140
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ZB.c.0",
+        "rows": 7358
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ZC.c.0",
+        "rows": 5866
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ZF.c.0",
+        "rows": 6417
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ZN.c.0",
+        "rows": 7567
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ZS.c.0",
+        "rows": 5623
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ZT.c.0",
+        "rows": 6262
+      },
+      {
+        "feature_name": "opening_range_breakout",
+        "symbol": "ZW.c.0",
+        "rows": 5324
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "6A.c.0",
+        "rows": 7693
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "6B.c.0",
+        "rows": 7599
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "6C.c.0",
+        "rows": 5928
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "6E.c.0",
+        "rows": 8857
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "6J.c.0",
+        "rows": 8000
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "6N.c.0",
+        "rows": 9460
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "6S.c.0",
+        "rows": 9395
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "BZ.c.0",
+        "rows": 9333
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "CL.c.0",
+        "rows": 9495
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ES.c.0",
+        "rows": 9624
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "HO.c.0",
+        "rows": 9368
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "NG.c.0",
+        "rows": 9556
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "NQ.c.0",
+        "rows": 9625
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "RB.c.0",
+        "rows": 9441
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "RTY.c.0",
+        "rows": 9651
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "YM.c.0",
+        "rows": 9627
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ZB.c.0",
+        "rows": 8640
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ZC.c.0",
+        "rows": 8077
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ZF.c.0",
+        "rows": 7748
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ZN.c.0",
+        "rows": 8801
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ZS.c.0",
+        "rows": 7521
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ZT.c.0",
+        "rows": 7182
+      },
+      {
+        "feature_name": "order_block",
+        "symbol": "ZW.c.0",
+        "rows": 7448
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "6A.c.0",
+        "rows": 1642
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "6B.c.0",
+        "rows": 5124
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "6C.c.0",
+        "rows": 3909
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "6E.c.0",
+        "rows": 2943
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "6N.c.0",
+        "rows": 2112
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "6S.c.0",
+        "rows": 4626
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "BZ.c.0",
+        "rows": 3632
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "CL.c.0",
+        "rows": 2729
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ES.c.0",
+        "rows": 2544
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "HO.c.0",
+        "rows": 6169
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "NQ.c.0",
+        "rows": 5087
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "RB.c.0",
+        "rows": 4664
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "RTY.c.0",
+        "rows": 6093
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "YM.c.0",
+        "rows": 3161
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ZB.c.0",
+        "rows": 2469
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ZC.c.0",
+        "rows": 3060
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ZF.c.0",
+        "rows": 690
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ZN.c.0",
+        "rows": 184
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ZS.c.0",
+        "rows": 5138
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ZT.c.0",
+        "rows": 2210
+      },
+      {
+        "feature_name": "psp_candle_divergence",
+        "symbol": "ZW.c.0",
+        "rows": 5092
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "6A.c.0",
+        "rows": 678
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "6B.c.0",
+        "rows": 715
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "6C.c.0",
+        "rows": 452
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "6E.c.0",
+        "rows": 575
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "6N.c.0",
+        "rows": 350
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "6S.c.0",
+        "rows": 456
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "BZ.c.0",
+        "rows": 1310
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "CL.c.0",
+        "rows": 352
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ES.c.0",
+        "rows": 989
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "HO.c.0",
+        "rows": 550
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "NQ.c.0",
+        "rows": 595
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "RB.c.0",
+        "rows": 343
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "RTY.c.0",
+        "rows": 589
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "YM.c.0",
+        "rows": 382
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ZB.c.0",
+        "rows": 1048
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ZC.c.0",
+        "rows": 222
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ZF.c.0",
+        "rows": 504
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ZN.c.0",
+        "rows": 122
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ZS.c.0",
+        "rows": 183
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ZT.c.0",
+        "rows": 333
+      },
+      {
+        "feature_name": "smt_htf_reference_divergence",
+        "symbol": "ZW.c.0",
+        "rows": 141
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "6A.c.0",
+        "rows": 12499
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "6B.c.0",
+        "rows": 12595
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "6C.c.0",
+        "rows": 9777
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "6E.c.0",
+        "rows": 15682
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "6J.c.0",
+        "rows": 13580
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "6N.c.0",
+        "rows": 16873
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "6S.c.0",
+        "rows": 17121
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "BZ.c.0",
+        "rows": 18187
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "CL.c.0",
+        "rows": 18432
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ES.c.0",
+        "rows": 17946
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "HO.c.0",
+        "rows": 18075
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "NG.c.0",
+        "rows": 17459
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "NQ.c.0",
+        "rows": 18798
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "RB.c.0",
+        "rows": 18139
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "RTY.c.0",
+        "rows": 18604
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "YM.c.0",
+        "rows": 18731
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ZB.c.0",
+        "rows": 13813
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ZC.c.0",
+        "rows": 10455
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ZF.c.0",
+        "rows": 12324
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ZN.c.0",
+        "rows": 13777
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ZS.c.0",
+        "rows": 11193
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ZT.c.0",
+        "rows": 10359
+      },
+      {
+        "feature_name": "swing_pivot",
+        "symbol": "ZW.c.0",
+        "rows": 11283
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "6A.c.0",
+        "rows": 4623
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "6B.c.0",
+        "rows": 4631
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "6C.c.0",
+        "rows": 4553
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "6E.c.0",
+        "rows": 4641
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "6J.c.0",
+        "rows": 4637
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "6N.c.0",
+        "rows": 4641
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "6S.c.0",
+        "rows": 4641
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "BZ.c.0",
+        "rows": 4633
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "CL.c.0",
+        "rows": 4633
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ES.c.0",
+        "rows": 4641
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "HO.c.0",
+        "rows": 4631
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "NG.c.0",
+        "rows": 4633
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "NQ.c.0",
+        "rows": 4641
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "RB.c.0",
+        "rows": 4633
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "RTY.c.0",
+        "rows": 4641
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "YM.c.0",
+        "rows": 4639
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ZB.c.0",
+        "rows": 4635
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ZC.c.0",
+        "rows": 4525
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ZF.c.0",
+        "rows": 4551
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ZN.c.0",
+        "rows": 4635
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ZS.c.0",
+        "rows": 4499
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ZT.c.0",
+        "rows": 4479
+      },
+      {
+        "feature_name": "time_profile",
+        "symbol": "ZW.c.0",
+        "rows": 4403
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "6A.c.0",
+        "rows": 7086
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "6B.c.0",
+        "rows": 7072
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "6C.c.0",
+        "rows": 5346
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "6E.c.0",
+        "rows": 8227
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "6J.c.0",
+        "rows": 7422
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "6N.c.0",
+        "rows": 8630
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "6S.c.0",
+        "rows": 8637
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "BZ.c.0",
+        "rows": 8617
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "CL.c.0",
+        "rows": 8657
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ES.c.0",
+        "rows": 8634
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "HO.c.0",
+        "rows": 8589
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "NG.c.0",
+        "rows": 8657
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "NQ.c.0",
+        "rows": 8634
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "RB.c.0",
+        "rows": 8586
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "RTY.c.0",
+        "rows": 8634
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "YM.c.0",
+        "rows": 8630
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ZB.c.0",
+        "rows": 8170
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ZC.c.0",
+        "rows": 7892
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ZF.c.0",
+        "rows": 7339
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ZN.c.0",
+        "rows": 8408
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ZS.c.0",
+        "rows": 7444
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ZT.c.0",
+        "rows": 7107
+      },
+      {
+        "feature_name": "volume_profile",
+        "symbol": "ZW.c.0",
+        "rows": 7244
+      }
+    ]
+  },
+  "ml_catalog": {
+    "available": true,
+    "path": "C:\\Users\\benbr\\BacktestStation-assets-expanded-v1\\data\\ml\\catalog\\ml_dataset_catalog.json",
+    "generated_utc": "2026-05-15T16:30:05.693712+00:00",
+    "total_events": 4158076,
+    "feature_matrix_count": 14,
+    "anchor_artifact_count": 0,
+    "symbols": [
+      "6A.c.0",
+      "6B.c.0",
+      "6C.c.0",
+      "6E.c.0",
+      "6J.c.0",
+      "6N.c.0",
+      "6S.c.0",
+      "BZ.c.0",
+      "CL.c.0",
+      "ES.c.0",
+      "HO.c.0",
+      "NG.c.0",
+      "NQ.c.0",
+      "RB.c.0",
+      "RTY.c.0",
+      "YM.c.0",
+      "ZB.c.0",
+      "ZC.c.0",
+      "ZF.c.0",
+      "ZN.c.0",
+      "ZS.c.0",
+      "ZT.c.0",
+      "ZW.c.0"
+    ],
+    "feature_matrices": [
+      {
+        "short_name": "disp",
+        "feature_name": "displacement_candle",
+        "rows": 187595,
+        "columns": 91,
+        "min_bar_end_utc": "2018-05-01T08:00:00+00:00",
+        "max_bar_end_utc": "2026-04-24T18:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 3
+      },
+      {
+        "short_name": "ft",
+        "feature_name": "first_third_range",
+        "rows": 52791,
+        "columns": 97,
+        "min_bar_end_utc": "2018-05-01T00:32:00+00:00",
+        "max_bar_end_utc": "2026-04-24T05:39:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 2
+      },
+      {
+        "short_name": "fvg",
+        "feature_name": "fvg_formation",
+        "rows": 1243757,
+        "columns": 124,
+        "min_bar_end_utc": "2018-05-01T00:30:00+00:00",
+        "max_bar_end_utc": "2026-04-24T20:45:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 4
+      },
+      {
+        "short_name": "fvp",
+        "feature_name": "forming_volume_profile",
+        "rows": 1132868,
+        "columns": 495,
+        "min_bar_end_utc": "2018-04-30T23:00:00+00:00",
+        "max_bar_end_utc": "2026-04-24T20:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 2
+      },
+      {
+        "short_name": "itr",
+        "feature_name": "interval_true_range",
+        "rows": 190192,
+        "columns": 143,
+        "min_bar_end_utc": "2018-05-01T00:32:00+00:00",
+        "max_bar_end_utc": "2026-04-24T20:59:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 5
+      },
+      {
+        "short_name": "ob",
+        "feature_name": "order_block",
+        "rows": 198069,
+        "columns": 297,
+        "min_bar_end_utc": "2018-04-30T23:00:00+00:00",
+        "max_bar_end_utc": "2026-04-28T08:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 14
+      },
+      {
+        "short_name": "ogap",
+        "feature_name": "opening_gap_levels",
+        "rows": 36944,
+        "columns": 210,
+        "min_bar_end_utc": "2018-04-29T22:30:00+00:00",
+        "max_bar_end_utc": "2026-04-23T22:23:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 2
+      },
+      {
+        "short_name": "orb",
+        "feature_name": "opening_range_breakout",
+        "rows": 158941,
+        "columns": 99,
+        "min_bar_end_utc": "2018-04-30T23:00:00+00:00",
+        "max_bar_end_utc": "2026-04-24T14:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 4
+      },
+      {
+        "short_name": "psp",
+        "feature_name": "psp_candle_divergence",
+        "rows": 73278,
+        "columns": 232,
+        "min_bar_end_utc": "2018-05-01T00:00:00+00:00",
+        "max_bar_end_utc": "2026-04-24T20:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 3
+      },
+      {
+        "short_name": "smt",
+        "feature_name": "smt_htf_reference_divergence",
+        "rows": 10889,
+        "columns": 301,
+        "min_bar_end_utc": "2018-05-02T00:00:00+00:00",
+        "max_bar_end_utc": "2026-04-23T12:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 2
+      },
+      {
+        "short_name": "sweep",
+        "feature_name": "liquidity_sweep",
+        "rows": 237569,
+        "columns": 82,
+        "min_bar_end_utc": "2018-04-30T22:00:00+00:00",
+        "max_bar_end_utc": "2026-04-24T17:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 14
+      },
+      {
+        "short_name": "swing",
+        "feature_name": "swing_pivot",
+        "rows": 345702,
+        "columns": 73,
+        "min_bar_end_utc": "2018-05-01T00:00:00+00:00",
+        "max_bar_end_utc": "2026-04-24T17:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 5
+      },
+      {
+        "short_name": "tp",
+        "feature_name": "time_profile",
+        "rows": 105819,
+        "columns": 84,
+        "min_bar_end_utc": "2018-04-29T22:00:00+00:00",
+        "max_bar_end_utc": "2026-04-23T22:00:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 4
+      },
+      {
+        "short_name": "vp",
+        "feature_name": "volume_profile",
+        "rows": 183662,
+        "columns": 212,
+        "min_bar_end_utc": "2018-04-29T22:00:00+00:00",
+        "max_bar_end_utc": "2026-04-24T13:30:00+00:00",
+        "primary_symbols": [
+          "6A.c.0",
+          "6B.c.0",
+          "6C.c.0",
+          "6E.c.0",
+          "6J.c.0",
+          "6N.c.0",
+          "6S.c.0",
+          "BZ.c.0",
+          "CL.c.0",
+          "ES.c.0",
+          "HO.c.0",
+          "NG.c.0",
+          "NQ.c.0",
+          "RB.c.0",
+          "RTY.c.0",
+          "YM.c.0",
+          "ZB.c.0",
+          "ZC.c.0",
+          "ZF.c.0",
+          "ZN.c.0",
+          "ZS.c.0",
+          "ZT.c.0",
+          "ZW.c.0"
+        ],
+        "event_type_count": 5
+      }
+    ]
+  },
+  "warnings": [
+    "Warehouse contains symbols not present in current research/ML universe: GC.c.0, HG.c.0, PA.c.0, PL.c.0, SI.c.0",
+    "DB datasets registry is empty; manifest used direct warehouse path scan."
+  ],
+  "dataset_fingerprint": "2791049fe357bb9cba61e3cb46799c8ae9c7f3716a4b74dce81d028e81d885e3"
+}

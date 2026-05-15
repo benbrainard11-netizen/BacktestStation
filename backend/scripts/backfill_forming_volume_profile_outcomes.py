@@ -10,14 +10,14 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sqlite3
 import sys
-from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pandas as pd
-from sqlalchemy import select
 
 THIS_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = THIS_DIR.parent
@@ -25,8 +25,6 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from app.data.reader import read_bars
-from app.db.models import ResearchEvent
-from app.db.session import create_all, make_engine, make_session_factory
 from app.research.outcomes.forming_volume_profile_reactions import (
     WINDOWS_MIN,
     _ensure_utc_index,
@@ -71,7 +69,7 @@ def _load_group_bars(symbol: str, start: datetime, end: datetime) -> pd.DataFram
     return bars[(bars.index >= start) & (bars.index < end)]
 
 
-def _build_outcome(event: ResearchEvent, bars: pd.DataFrame) -> dict[str, Any] | None:
+def _build_outcome(event: Any, bars: pd.DataFrame) -> dict[str, Any] | None:
     ed = event.event_data or {}
     try:
         asof_ts = _to_utc(datetime.fromisoformat(ed["asof_ts_utc"]))
@@ -129,13 +127,90 @@ def _build_outcome(event: ResearchEvent, bars: pd.DataFrame) -> dict[str, Any] |
     return outcomes
 
 
-def _group_key(event: ResearchEvent) -> tuple[str, str, str]:
-    ed = event.event_data or {}
+def _sqlite_path(database_url: str | None) -> str:
+    if not database_url:
+        return str(BACKEND_DIR.parent / "data" / "meta.sqlite")
+    prefix = "sqlite:///"
+    if not database_url.startswith(prefix):
+        raise ValueError(f"only sqlite database URLs are supported: {database_url}")
+    return database_url[len(prefix) :]
+
+
+def _candidate_where(force: bool) -> str:
+    if force:
+        return "feature_name = ?"
     return (
-        event.primary_symbol,
-        str(ed.get("parent_period_start_utc", "")),
-        str(ed.get("parent_period_end_utc", "")),
+        "feature_name = ? AND ("
+        "outcomes IS NULL OR "
+        "json_extract(outcomes, '$.outcome_version') IS NULL OR "
+        "json_extract(outcomes, '$.outcome_version') != ?"
+        ")"
     )
+
+
+def _candidate_params(force: bool) -> tuple[str, ...]:
+    return (FEATURE_NAME,) if force else (FEATURE_NAME, OUTCOME_VERSION)
+
+
+def _iter_groups(
+    con: sqlite3.Connection,
+    *,
+    force: bool,
+    limit: int | None,
+) -> Any:
+    where_sql = _candidate_where(force)
+    limit_sql = "" if limit is None else f" LIMIT {int(limit)}"
+    sql = f"""
+        SELECT
+            id,
+            primary_symbol,
+            event_data,
+            json_extract(event_data, '$.parent_period_start_utc') AS parent_start,
+            json_extract(event_data, '$.parent_period_end_utc') AS parent_end
+        FROM research_events
+        WHERE {where_sql}
+        ORDER BY id
+        {limit_sql}
+    """
+    cur = con.execute(sql, _candidate_params(force))
+    current_key: tuple[str, str, str] | None = None
+    current_rows: list[SimpleNamespace] = []
+    for row in cur:
+        event_id, symbol, event_data_raw, start_raw, end_raw = row
+        key = (str(symbol), str(start_raw or ""), str(end_raw or ""))
+        if current_key is not None and key != current_key:
+            yield current_key, current_rows
+            current_rows = []
+        current_key = key
+        try:
+            event_data = json.loads(event_data_raw) if isinstance(event_data_raw, str) else event_data_raw
+        except json.JSONDecodeError:
+            event_data = {}
+        current_rows.append(
+            SimpleNamespace(
+                id=int(event_id),
+                primary_symbol=str(symbol),
+                event_data=event_data or {},
+            )
+        )
+    if current_key is not None:
+        yield current_key, current_rows
+
+
+def _candidate_count(
+    con: sqlite3.Connection,
+    *,
+    force: bool,
+    limit: int | None,
+) -> int:
+    if limit is not None:
+        return int(limit)
+    where_sql = _candidate_where(force)
+    row = con.execute(
+        f"SELECT COUNT(*) FROM research_events WHERE {where_sql}",
+        _candidate_params(force),
+    ).fetchone()
+    return int(row[0] if row else 0)
 
 
 def main() -> int:
@@ -147,30 +222,20 @@ def main() -> int:
     args = parser.parse_args()
     _setup_logging()
 
-    engine = make_engine(args.database_url) if args.database_url else make_engine()
-    create_all(engine)
-    session_factory = make_session_factory(engine)
-
-    with session_factory() as db:
-        stmt = select(ResearchEvent).where(ResearchEvent.feature_name == FEATURE_NAME)
-        if args.limit:
-            stmt = stmt.limit(args.limit)
-        rows = list(db.scalars(stmt))
-        candidates = [
-            row
-            for row in rows
-            if args.force
-            or not row.outcomes
-            or row.outcomes.get("outcome_version") != OUTCOME_VERSION
-        ]
-        groups: dict[tuple[str, str, str], list[ResearchEvent]] = defaultdict(list)
-        for row in candidates:
-            groups[_group_key(row)].append(row)
-
+    db_path = _sqlite_path(args.database_url)
+    with sqlite3.connect(db_path, timeout=60) as con:
+        con.execute("PRAGMA busy_timeout=60000")
+        n_candidates = _candidate_count(con, force=args.force, limit=args.limit)
         updated = 0
         skipped_no_data = 0
         errors = 0
-        for i, ((symbol, start_raw, end_raw), group_rows) in enumerate(groups.items(), start=1):
+        groups_seen = 0
+        pending_updates: list[tuple[str, int]] = []
+        for i, ((symbol, start_raw, end_raw), group_rows) in enumerate(
+            _iter_groups(con, force=args.force, limit=args.limit),
+            start=1,
+        ):
+            groups_seen = i
             try:
                 start = _to_utc(datetime.fromisoformat(start_raw))
                 end = _to_utc(datetime.fromisoformat(end_raw))
@@ -183,34 +248,46 @@ def main() -> int:
                     if outcome is None:
                         skipped_no_data += 1
                         continue
-                    event.outcomes = outcome
+                    pending_updates.append((json.dumps(outcome), event.id))
                     updated += 1
             except Exception as exc:
                 errors += len(group_rows)
                 log.exception("failed group %s %s -> %s: %s", symbol, start_raw, end_raw, exc)
 
+            if pending_updates and not args.dry_run and len(pending_updates) >= 5000:
+                con.executemany(
+                    "UPDATE research_events SET outcomes = ? WHERE id = ?",
+                    pending_updates,
+                )
+                con.commit()
+                pending_updates.clear()
+
             if i % 250 == 0:
                 log.info(
-                    "processed %d/%d groups; updated=%d skipped_no_data=%d errors=%d",
+                    "processed %d groups; candidates=%d updated=%d skipped_no_data=%d errors=%d",
                     i,
-                    len(groups),
+                    n_candidates,
                     updated,
                     skipped_no_data,
                     errors,
                 )
 
         if args.dry_run:
-            db.rollback()
-        else:
-            db.commit()
+            con.rollback()
+        elif pending_updates:
+            con.executemany(
+                "UPDATE research_events SET outcomes = ? WHERE id = ?",
+                pending_updates,
+            )
+            con.commit()
 
     print(
         json.dumps(
             {
                 "feature_name": FEATURE_NAME,
                 "outcome_version": OUTCOME_VERSION,
-                "n_candidates": len(candidates),
-                "n_groups": len(groups),
+                "n_candidates": n_candidates,
+                "n_groups": groups_seen,
                 "n_updated": updated,
                 "n_skipped_no_data": skipped_no_data,
                 "n_errors": errors,
