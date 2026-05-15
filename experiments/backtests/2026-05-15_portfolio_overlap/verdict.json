@@ -1,0 +1,13 @@
+{
+  "test_year": 2025,
+  "signals_in_portfolio": 5,
+  "raw_top10_picks_total": 198,
+  "distinct_date_symbol_combos": 75,
+  "portfolio_efficiency": 0.3787878787878788,
+  "consensus_counts": {
+    "1": 37,
+    "2": 38
+  },
+  "interpretation": "Highly correlated \u2014 signals largely fire on same days",
+  "generated_at": "2026-05-15T22:09:35.381195+00:00"
+}
