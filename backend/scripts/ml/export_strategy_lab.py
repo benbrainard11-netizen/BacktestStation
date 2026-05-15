@@ -123,6 +123,18 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
         ),
     ),
     ExportDataset(
+        name="tp_xctx_fvggeom_obgeom",
+        description="Time-profile anchor rows with cross-concept context, FVG geometry, and state-aware nearby order-block geometry.",
+        matrix="data/ml/anchors/tp_snapshots_xctx_fvggeom_obgeom.parquet",
+        schema="data/ml/anchors/tp_snapshots_xctx_fvggeom_obgeom.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_TP_FVGGEOM_OBGEOM.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_TP_FVGGEOM.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_TP_FVGGEOM.md",
+        result_files=(
+            "data/ml/context/tp_ob_geometry_context.parquet",
+        ),
+    ),
+    ExportDataset(
         name="smt_previous_day_xctx_fvggeom",
         description="Previous-day SMT anchor rows with cross-concept context and state-aware nearby FVG geometry.",
         matrix="data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom.parquet",
@@ -140,6 +152,26 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
         ),
     ),
     ExportDataset(
+        name="smt_previous_day_xctx_fvggeom_obgeom_liqgeom_regime",
+        description="Previous-day SMT anchor rows with cross-concept context, FVG geometry, OB geometry, swing/equal-level liquidity geometry, and completed-interval regime context.",
+        matrix="data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet",
+        schema="data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_SMT_FVGGEOM_OBGEOM_LIQGEOM_REGIME.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_SMT_FVGGEOM.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_SMT_FVGGEOM.md",
+        result_files=(
+            "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom.parquet",
+            "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom.schema.json",
+            "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom.parquet",
+            "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom.schema.json",
+            "data/ml/context/smt_previous_day_ob_geometry_context.parquet",
+            "data/ml/context/smt_previous_day_liquidity_level_context.parquet",
+            "data/ml/context/smt_previous_day_regime_context.parquet",
+            "docs/ML_SNAPSHOT_AUDIT_SMT_FVGGEOM_OBGEOM.md",
+            "docs/ML_SNAPSHOT_AUDIT_SMT_FVGGEOM_OBGEOM_LIQGEOM.md",
+        ),
+    ),
+    ExportDataset(
         name="vp_v2_xctx",
         description="Volume-profile anchor rows with v2 post-touch reaction labels and cross-concept context.",
         matrix="data/ml/anchors/vp_snapshots_xctx.parquet",
@@ -154,6 +186,18 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
             "data/ml/anchors/vp_walk_forward_v2_xctx_summary.parquet",
             "data/ml/anchors/vp_walk_forward_v2_xctx_folds.csv",
             "data/ml/anchors/vp_walk_forward_v2_xctx_folds.parquet",
+        ),
+    ),
+    ExportDataset(
+        name="vp_v2_xctx_obgeom",
+        description="Volume-profile anchor rows with v2 post-touch reaction labels, cross-concept context, and state-aware nearby order-block geometry.",
+        matrix="data/ml/anchors/vp_snapshots_xctx_obgeom.parquet",
+        schema="data/ml/anchors/vp_snapshots_xctx_obgeom.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_VP_XCTX_OBGEOM.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_VP_V2_XCTX.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_VP_V2_XCTX.md",
+        result_files=(
+            "data/ml/context/vp_ob_geometry_context.parquet",
         ),
     ),
     ExportDataset(
@@ -197,6 +241,18 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
         ),
     ),
     ExportDataset(
+        name="opening_gap_xctx_gapctx_obgeom",
+        description="NDOG/NWOG anchor rows with cross-concept context, prior opening-gap memory, and state-aware nearby order-block geometry.",
+        matrix="data/ml/anchors/opening_gap_snapshots_xctx_gapctx_obgeom.parquet",
+        schema="data/ml/anchors/opening_gap_snapshots_xctx_gapctx_obgeom.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_OPENING_GAP_XCTX_GAPCTX_OBGEOM.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_OPENING_GAP_XCTX_GAPCTX.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_OPENING_GAP_XCTX_GAPCTX.md",
+        result_files=(
+            "data/ml/context/opening_gap_ob_geometry_context.parquet",
+        ),
+    ),
+    ExportDataset(
         name="itr_xctx",
         description="Interval true range anchor rows for daily, weekly, and session ranges with cross-concept context.",
         matrix="data/ml/anchors/itr_snapshots_xctx.parquet",
@@ -234,6 +290,34 @@ CORE_DATASETS: tuple[ExportDataset, ...] = (
             "data/ml/anchors/forming_vp_walk_forward_gapctx_summary.parquet",
             "data/ml/anchors/forming_vp_walk_forward_gapctx_folds.csv",
             "data/ml/anchors/forming_vp_walk_forward_gapctx_folds.parquet",
+        ),
+    ),
+    ExportDataset(
+        name="forming_vp_xctx_gapctx_obgeom",
+        description="Live-style daily forming volume-profile rows with cross-concept context, NDOG/NWOG memory, and state-aware nearby order-block geometry.",
+        matrix="data/ml/anchors/forming_vp_snapshots_xctx_gapctx_obgeom.parquet",
+        schema="data/ml/anchors/forming_vp_snapshots_xctx_gapctx_obgeom.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_FORMING_VP_GAPCTX_OBGEOM.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_FORMING_VP_GAPCTX.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_FORMING_VP_GAPCTX.md",
+        result_files=(
+            "data/ml/context/forming_vp_ob_geometry_context.parquet",
+        ),
+    ),
+    ExportDataset(
+        name="sweep_xctx_fvggeom_obgeom_liqgeom_regime",
+        description="Liquidity sweep anchor rows with cross-concept context, FVG geometry, OB geometry, swing/equal-level liquidity geometry, and completed-interval regime context.",
+        matrix="data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet",
+        schema="data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json",
+        audit_doc="docs/ML_SNAPSHOT_AUDIT_SWEEP_FVGGEOM_OBGEOM_LIQGEOM_REGIME.md",
+        leaderboard_doc="docs/ML_SNAPSHOT_LEADERBOARD_SWEEP_FVGGEOM_OBGEOM.md",
+        walk_forward_doc="docs/ML_SNAPSHOT_WALK_FORWARD_SWEEP_FVGGEOM_OBGEOM.md",
+        result_files=(
+            "data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom_liqgeom.parquet",
+            "data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom_liqgeom.schema.json",
+            "data/ml/context/sweep_liquidity_level_context.parquet",
+            "data/ml/context/sweep_regime_context.parquet",
+            "docs/ML_SNAPSHOT_AUDIT_SWEEP_FVGGEOM_OBGEOM_LIQGEOM.md",
         ),
     ),
     ExportDataset(
@@ -277,6 +361,10 @@ CORE_DOCS: tuple[str, ...] = (
     "docs/ML_DATASET_CATALOG.md",
     "docs/ML_FVG_GEOMETRY_CONTEXT.md",
     "docs/ML_OB_GEOMETRY_CONTEXT.md",
+    "docs/ML_LIQUIDITY_LEVEL_CONTEXT.md",
+    "docs/ML_REGIME_CONTEXT.md",
+    "docs/ML_FEATURE_DICTIONARY.md",
+    "docs/ML_MODEL_RESULT_INDEX.md",
     "docs/ML_VP_V2_LABELS.md",
     "docs/ML_FORMING_VP_ASOF.md",
     "docs/ML_OPENING_GAP_LEVELS.md",
@@ -290,6 +378,10 @@ CORE_DOCS: tuple[str, ...] = (
 CATALOG_FILES: tuple[str, ...] = (
     "data/ml/catalog/ml_dataset_catalog.json",
     "data/ml/catalog/asset_universe_manifest.json",
+    "data/ml/catalog/feature_dictionary.json",
+    "data/ml/catalog/model_result_index.csv",
+    "data/ml/catalog/model_result_index.parquet",
+    "data/ml/catalog/model_result_index.json",
 )
 
 

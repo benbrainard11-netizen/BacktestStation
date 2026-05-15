@@ -214,6 +214,18 @@ FEATURE_RULES: tuple[FeatureRule, ...] = (
         description="State-aware nearest NDOG/NWOG memory levels known by the snapshot cutoff.",
     ),
     FeatureRule(
+        prefix="liqgeom.",
+        family="swing_equal_level_geometry_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="State-aware nearest swing/equal-high/equal-low liquidity levels known by the snapshot cutoff.",
+    ),
+    FeatureRule(
+        prefix="regime.",
+        family="completed_interval_regime_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="Completed session/day/week true-range regime features known before the snapshot cutoff.",
+    ),
+    FeatureRule(
         prefix="pc.",
         family="period_close",
         valid_snapshots=("at_period_close",),

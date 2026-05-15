@@ -1,16 +1,16 @@
 {
-  "current_package": "strategy_lab_core_2026_05_14_obgeom",
-  "zip_name": "strategy_lab_core_2026_05_14_obgeom.zip",
-  "release_tag": "strategy-lab-core-2026-05-14-obgeom",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_obgeom.zip",
-  "size_bytes": 572025274,
-  "sha256": "07e479f601974cc8d3a093abe7913532dc4d72a1887b4e38ba84dd44c8addf4f",
-  "generated_utc": "2026-05-14T20:38:28.360124+00:00",
-  "generated_local_date": "2026-05-14",
+  "current_package": "strategy_lab_core_2026_05_14_context_layers",
+  "zip_name": "strategy_lab_core_2026_05_14_context_layers.zip",
+  "release_tag": "strategy-lab-core-2026-05-14-context-layers",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_context_layers.zip",
+  "size_bytes": 897484156,
+  "sha256": "6806040881e1cc4a6121f404a9bda10865679ad181283046d02f413d99c8e280",
+  "generated_utc": "2026-05-15T00:21:09.677761+00:00",
+  "generated_local_date": "2026-05-15",
   "asset_universe": {
     "universe_id": "futures_core_v1",
     "dataset_fingerprint": "eca4a35c1cb01f41a469d6d42a6437918c810e96fa4ade2eef3ba436f17f6ed9",
-    "generated_utc": "2026-05-14T20:37:33+00:00",
+    "generated_utc": "2026-05-15T00:21:01+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -38,7 +38,7 @@
     ],
     "research_events": 710224,
     "feature_matrix_count": 16,
-    "anchor_artifact_count": 223,
+    "anchor_artifact_count": 241,
     "warnings": [
       "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
       "DB datasets registry is empty; manifest used direct warehouse path scan."
@@ -86,6 +86,14 @@
       "label_column_count": 24
     },
     {
+      "name": "tp_xctx_fvggeom_obgeom",
+      "matrix": "data/ml/anchors/tp_snapshots_xctx_fvggeom_obgeom.parquet",
+      "schema": "data/ml/anchors/tp_snapshots_xctx_fvggeom_obgeom.schema.json",
+      "rows": 19414,
+      "feature_column_count": 1738,
+      "label_column_count": 24
+    },
+    {
       "name": "smt_previous_day_xctx_fvggeom",
       "matrix": "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom.parquet",
       "schema": "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom.schema.json",
@@ -94,11 +102,27 @@
       "label_column_count": 18
     },
     {
+      "name": "smt_previous_day_xctx_fvggeom_obgeom_liqgeom_regime",
+      "matrix": "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet",
+      "schema": "data/ml/anchors/smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json",
+      "rows": 4676,
+      "feature_column_count": 3150,
+      "label_column_count": 18
+    },
+    {
       "name": "vp_v2_xctx",
       "matrix": "data/ml/anchors/vp_snapshots_xctx.parquet",
       "schema": "data/ml/anchors/vp_snapshots_xctx.schema.json",
       "rows": 36095,
       "feature_column_count": 657,
+      "label_column_count": 139
+    },
+    {
+      "name": "vp_v2_xctx_obgeom",
+      "matrix": "data/ml/anchors/vp_snapshots_xctx_obgeom.parquet",
+      "schema": "data/ml/anchors/vp_snapshots_xctx_obgeom.schema.json",
+      "rows": 36095,
+      "feature_column_count": 1318,
       "label_column_count": 139
     },
     {
@@ -118,6 +142,14 @@
       "label_column_count": 396
     },
     {
+      "name": "opening_gap_xctx_gapctx_obgeom",
+      "matrix": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx_obgeom.parquet",
+      "schema": "data/ml/anchors/opening_gap_snapshots_xctx_gapctx_obgeom.schema.json",
+      "rows": 9438,
+      "feature_column_count": 1708,
+      "label_column_count": 396
+    },
+    {
       "name": "itr_xctx",
       "matrix": "data/ml/anchors/itr_snapshots_xctx.parquet",
       "schema": "data/ml/anchors/itr_snapshots_xctx.schema.json",
@@ -132,6 +164,22 @@
       "rows": 43150,
       "feature_column_count": 1067,
       "label_column_count": 507
+    },
+    {
+      "name": "forming_vp_xctx_gapctx_obgeom",
+      "matrix": "data/ml/anchors/forming_vp_snapshots_xctx_gapctx_obgeom.parquet",
+      "schema": "data/ml/anchors/forming_vp_snapshots_xctx_gapctx_obgeom.schema.json",
+      "rows": 43150,
+      "feature_column_count": 1728,
+      "label_column_count": 507
+    },
+    {
+      "name": "sweep_xctx_fvggeom_obgeom_liqgeom_regime",
+      "matrix": "data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet",
+      "schema": "data/ml/anchors/sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json",
+      "rows": 52946,
+      "feature_column_count": 3131,
+      "label_column_count": 95
     },
     {
       "name": "macro_xctx",

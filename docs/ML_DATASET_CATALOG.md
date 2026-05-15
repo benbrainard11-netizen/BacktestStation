@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-14T20:36:42.152682+00:00`._
+_Generated `2026-05-15T00:12:49.977788+00:00`._
 
 ## Summary
 
@@ -64,6 +64,8 @@ _Generated `2026-05-14T20:36:42.152682+00:00`._
 | forming_vp_snapshots_xctx.schema.json | json | 43,150 | - | at_fire | - |
 | forming_vp_snapshots_xctx_gapctx.parquet | parquet | 43,150 | 1,586 | at_fire | - |
 | forming_vp_snapshots_xctx_gapctx.schema.json | json | 43,150 | - | at_fire | - |
+| forming_vp_snapshots_xctx_gapctx_obgeom.parquet | parquet | 43,150 | 2,247 | at_fire | - |
+| forming_vp_snapshots_xctx_gapctx_obgeom.schema.json | json | 43,150 | - | at_fire | - |
 | forming_vp_walk_forward_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | forming_vp_walk_forward_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | forming_vp_walk_forward_gapctx_summary.csv | csv | 12 | 18 | - | - |
@@ -149,6 +151,8 @@ _Generated `2026-05-14T20:36:42.152682+00:00`._
 | opening_gap_snapshots_xctx.schema.json | json | 9,438 | - | at_fire | - |
 | opening_gap_snapshots_xctx_gapctx.parquet | parquet | 9,438 | 1,455 | at_fire | - |
 | opening_gap_snapshots_xctx_gapctx.schema.json | json | 9,438 | - | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom.parquet | parquet | 9,438 | 2,116 | at_fire | - |
+| opening_gap_snapshots_xctx_gapctx_obgeom.schema.json | json | 9,438 | - | at_fire | - |
 | opening_gap_walk_forward_xctx_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_summary.csv | csv | 12 | 18 | - | - |
@@ -171,6 +175,12 @@ _Generated `2026-05-14T20:36:42.152682+00:00`._
 | smt_previous_day_snapshots_xctx.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
 | smt_previous_day_snapshots_xctx_fvggeom.parquet | parquet | 4,676 | 1,353 | at_fire, at_period_close | - |
 | smt_previous_day_snapshots_xctx_fvggeom.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
+| smt_previous_day_snapshots_xctx_fvggeom_obgeom.parquet | parquet | 4,676 | 2,014 | at_fire, at_period_close | - |
+| smt_previous_day_snapshots_xctx_fvggeom_obgeom.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
+| smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom.parquet | parquet | 4,676 | 3,023 | at_fire, at_period_close | - |
+| smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
+| smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet | parquet | 4,676 | 3,179 | at_fire, at_period_close | - |
+| smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json | json | 4,676 | - | at_fire, at_period_close | - |
 | smt_previous_day_walk_forward_folds_xctx.csv | csv | 48 | 33 | - | {"ok": 48} |
 | smt_previous_day_walk_forward_folds_xctx.parquet | parquet | 48 | 33 | - | {"ok": 48} |
 | smt_previous_day_walk_forward_fvggeom_folds.csv | csv | 126 | 33 | - | {"ok": 108, "skip_small_split": 18} |
@@ -207,6 +217,10 @@ _Generated `2026-05-14T20:36:42.152682+00:00`._
 | sweep_snapshots_xctx_fvggeom.schema.json | json | 52,946 | - | at_fire | - |
 | sweep_snapshots_xctx_fvggeom_obgeom.parquet | parquet | 52,946 | 2,073 | at_fire | - |
 | sweep_snapshots_xctx_fvggeom_obgeom.schema.json | json | 52,946 | - | at_fire | - |
+| sweep_snapshots_xctx_fvggeom_obgeom_liqgeom.parquet | parquet | 52,946 | 3,082 | at_fire | - |
+| sweep_snapshots_xctx_fvggeom_obgeom_liqgeom.schema.json | json | 52,946 | - | at_fire | - |
+| sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.parquet | parquet | 52,946 | 3,238 | at_fire | - |
+| sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime.schema.json | json | 52,946 | - | at_fire | - |
 | sweep_walk_forward_folds_base.csv | csv | 36 | 33 | - | {"ok": 36} |
 | sweep_walk_forward_folds_base.parquet | parquet | 36 | 33 | - | {"ok": 36} |
 | sweep_walk_forward_folds_xctx.csv | csv | 36 | 33 | - | {"ok": 36} |
@@ -243,6 +257,8 @@ _Generated `2026-05-14T20:36:42.152682+00:00`._
 | tp_snapshots_xctx.schema.json | json | 19,414 | - | at_fire | - |
 | tp_snapshots_xctx_fvggeom.parquet | parquet | 19,414 | 1,113 | at_fire | - |
 | tp_snapshots_xctx_fvggeom.schema.json | json | 19,414 | - | at_fire | - |
+| tp_snapshots_xctx_fvggeom_obgeom.parquet | parquet | 19,414 | 1,774 | at_fire | - |
+| tp_snapshots_xctx_fvggeom_obgeom.schema.json | json | 19,414 | - | at_fire | - |
 | tp_walk_forward_folds_base.csv | csv | 48 | 33 | - | {"ok": 48} |
 | tp_walk_forward_folds_base.parquet | parquet | 48 | 33 | - | {"ok": 48} |
 | tp_walk_forward_folds_xctx.csv | csv | 48 | 33 | - | {"ok": 48} |
@@ -265,6 +281,8 @@ _Generated `2026-05-14T20:36:42.152682+00:00`._
 | vp_snapshots.schema.json | json | 36,095 | - | at_fire | - |
 | vp_snapshots_xctx.parquet | parquet | 36,095 | 808 | at_fire | - |
 | vp_snapshots_xctx.schema.json | json | 36,095 | - | at_fire | - |
+| vp_snapshots_xctx_obgeom.parquet | parquet | 36,095 | 1,469 | at_fire | - |
+| vp_snapshots_xctx_obgeom.schema.json | json | 36,095 | - | at_fire | - |
 | vp_walk_forward_v2_xctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | vp_walk_forward_v2_xctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | vp_walk_forward_v2_xctx_summary.csv | csv | 12 | 18 | - | - |
