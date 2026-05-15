@@ -1,0 +1,42 @@
+{
+  "label": "label.next_60m.resistance_rejection_3bar",
+  "test_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "per_symbol_top10": {
+    "ES.c.0": {
+      "mean_precision": 1.0,
+      "min_precision": 1.0,
+      "mean_edge": 0.35912042655603965,
+      "min_edge": 0.25384615384615383,
+      "total_signals_over_6yr": 74
+    },
+    "NQ.c.0": {
+      "mean_precision": 0.933982683982684,
+      "min_precision": 0.7857142857142857,
+      "mean_edge": 0.2520853655120317,
+      "min_edge": 0.12857142857142856,
+      "total_signals_over_6yr": 78
+    },
+    "YM.c.0": {
+      "mean_precision": 0.8920634920634921,
+      "min_precision": 0.6666666666666666,
+      "mean_edge": 0.2763206251089744,
+      "min_edge": 0.16770186335403725,
+      "total_signals_over_6yr": 79
+    },
+    "pooled": {
+      "mean_precision": 0.9496151835663363,
+      "min_precision": 0.7941176470588235,
+      "mean_edge": 0.30533808369354365,
+      "min_edge": 0.20859430314253036,
+      "total_signals_over_6yr": 231
+    }
+  },
+  "generated_at": "2026-05-15T21:59:29.098031+00:00"
+}
