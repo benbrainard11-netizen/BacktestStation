@@ -1,0 +1,10 @@
+{
+  "candidates_total": 10,
+  "verdict_counts": {
+    "ROBUST": 6,
+    "MIXED": 2,
+    "FLUKE": 2
+  },
+  "elapsed_min": 3.1,
+  "generated_at": "2026-05-15T22:04:20.085800+00:00"
+}
