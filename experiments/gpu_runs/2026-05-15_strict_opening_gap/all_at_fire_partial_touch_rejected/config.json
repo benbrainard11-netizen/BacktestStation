@@ -1,0 +1,28 @@
+{
+  "cuda_available": true,
+  "device_requested": "auto",
+  "device_resolved": "cuda",
+  "event_type": "all",
+  "filtered_rows": 9438,
+  "git_sha": "7307feb570aa68d65c7eecdc7be40d8a1f7bf193",
+  "include_manual_cell": false,
+  "label": "label.strict.next_240m.partial_touch_rejected",
+  "matrix": "D:\\BacktestStationData\\strategy_lab_core_2026_05_14_context_layers\\data\\ml\\anchors\\opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.parquet",
+  "matrix_sha256": "c91fd7887862b27921a56a7729e27d0909691b7c9a94b9291d70a8c0af002886",
+  "n_feature_pool": 2873,
+  "schema": "D:\\BacktestStationData\\strategy_lab_core_2026_05_14_context_layers\\data\\ml\\anchors\\opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.schema.json",
+  "seed": 20260510,
+  "side": "all",
+  "snapshot": "at_fire",
+  "test_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "top_pct": 0.1,
+  "written_at": "2026-05-15T17:16:19.665194+00:00",
+  "xgboost_version": "3.2.0"
+}
