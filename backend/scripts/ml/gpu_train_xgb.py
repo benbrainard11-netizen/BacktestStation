@@ -109,17 +109,29 @@ class FoldOutputs:
     feature_importance: dict[str, float]
 
 
-def _build_dmatrix(x: np.ndarray, y: np.ndarray | None, *, feature_names: list[str]):
+def _build_dmatrix(
+    x: np.ndarray,
+    y: np.ndarray | None,
+    *,
+    feature_names: list[str],
+    ref=None,
+):
     """Use `QuantileDMatrix` for GPU efficiency; falls back to DMatrix.
 
     `QuantileDMatrix` works for both CPU and GPU `hist` and uses less
-    memory than a plain `DMatrix`. Imported lazily so the rest of the
-    module remains import-safe without xgboost installed.
+    memory than a plain `DMatrix`. Val/test matrices passed to `xgb.train`
+    or `booster.predict` must reference the train matrix via `ref=` or
+    XGBoost rejects them. Imported lazily so the rest of the module
+    remains import-safe without xgboost installed.
     """
     import xgboost as xgb
 
-    cls = getattr(xgb, "QuantileDMatrix", xgb.DMatrix)
-    return cls(x, label=y, feature_names=feature_names)
+    cls = getattr(xgb, "QuantileDMatrix", None)
+    if cls is None:
+        return xgb.DMatrix(x, label=y, feature_names=feature_names)
+    if ref is None:
+        return cls(x, label=y, feature_names=feature_names)
+    return cls(x, label=y, feature_names=feature_names, ref=ref)
 
 
 def train_one_fold(
@@ -142,7 +154,7 @@ def train_one_fold(
     dval = None
     use_es = False
     if x_val is not None and y_val is not None and len(np.unique(y_val)) > 1:
-        dval = _build_dmatrix(x_val, y_val, feature_names=feature_names)
+        dval = _build_dmatrix(x_val, y_val, feature_names=feature_names, ref=dtrain)
         evals.append((dval, "val"))
         use_es = True
 
@@ -165,7 +177,7 @@ def train_one_fold(
         if dval is not None
         else np.zeros(0, dtype=np.float64)
     )
-    dtest = _build_dmatrix(x_test, None, feature_names=feature_names)
+    dtest = _build_dmatrix(x_test, None, feature_names=feature_names, ref=dtrain)
     p_test = booster.predict(dtest, iteration_range=iteration_range)
 
     importance = booster.get_score(importance_type="gain")
