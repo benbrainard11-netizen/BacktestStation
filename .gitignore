@@ -16,6 +16,15 @@
 # should be shared intentionally, not committed.
 /exports/
 
+# GPU training run outputs. Small summary artifacts (config.json,
+# metrics_summary.csv, feature_importance.csv, README.md) are committed
+# for reproducibility; per-row predictions and folds parquet can be
+# multi-GB and are local-only.
+/experiments/gpu_runs/*/predictions.parquet
+/experiments/gpu_runs/*/folds.parquet
+/experiments/gpu_runs/**/predictions.parquet
+/experiments/gpu_runs/**/folds.parquet
+
 # Python
 __pycache__/
 *.py[cod]
