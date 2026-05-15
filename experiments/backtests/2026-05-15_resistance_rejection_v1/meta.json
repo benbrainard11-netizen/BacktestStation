@@ -1,0 +1,21 @@
+{
+  "label": "label.next_60m.resistance_rejection_3bar",
+  "matrix": "opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.parquet",
+  "side": "gap_down",
+  "snapshot": "at_fire",
+  "test_year": 2025,
+  "n_train": 4051,
+  "n_val": 337,
+  "n_test": 427,
+  "test_auc": 0.776497802452001,
+  "test_base_rate": 0.6135831381733021,
+  "blind_n": 427,
+  "blind_precision": 0.6135831381733021,
+  "blind_cum_r": 97.0,
+  "best_threshold": 0.7,
+  "best_n_signals": 223,
+  "best_precision": 0.8161434977578476,
+  "best_cum_r": 141.0,
+  "best_avg_r": 0.6322869955156951,
+  "generated_at": "2026-05-15T21:14:38.098818+00:00"
+}
