@@ -1,0 +1,19 @@
+{
+  "label": "label.next_60m.resistance_rejection_3bar",
+  "matrix": "opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime.parquet",
+  "side": "gap_down",
+  "test_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_years_ok": 6,
+  "top_10pct_precision_mean": 0.9496151835663363,
+  "top_10pct_precision_min": 0.7941176470588235,
+  "top_10pct_years_above_85pct": 5,
+  "verdict": "ROBUST \u2014 top-10% precision >= 0.85 in >= 5 of 6 years",
+  "generated_at": "2026-05-15T21:29:40.320670+00:00"
+}
