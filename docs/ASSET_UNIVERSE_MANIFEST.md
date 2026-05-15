@@ -1,6 +1,6 @@
 # Asset Universe Manifest
 
-_Generated `2026-05-13T18:28:29+00:00`._
+_Generated `2026-05-15T13:49:59+00:00`._
 
 This pins the data identity behind the current ML/research build.
 
@@ -9,80 +9,83 @@ This pins the data identity behind the current ML/research build.
 | Field | Value |
 |---|---|
 | Universe id | `futures_core_v1` |
-| Dataset fingerprint | `eedc1042d13d99124e1643236731ab497952b2a126159bf37d8866948a8cc900` |
-| Git commit | `80200bf9d517e2541cd7853c915236e9f6c4b1c1` |
-| Git dirty when generated | `False` |
+| Dataset fingerprint | `2b63cfdec09781549255db1eb0c2ceeb6ded69ff3db5e94feb94994501b5f4d5` |
+| Git commit | `16955695bdb85fe09f1d89811053d90e68420a19` |
+| Git dirty when generated | `True` |
 | Warehouse root | `D:\data` |
-| Active symbols | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| Research events | 691,810 |
-| Feature matrices | 15 |
-| Anchor/model artifacts | 195 |
-| Active 1m bar coverage | 2015-01-01 -> 2026-05-12 |
+| Active symbols | `6A.c.0`, `6B.c.0`, `6C.c.0`, `6E.c.0`, `6J.c.0`, `6N.c.0`, `6S.c.0`, `BZ.c.0`, `CL.c.0`, `ES.c.0`, `GC.c.0`, `HG.c.0`, `HO.c.0`, `NG.c.0`, `NQ.c.0`, `PA.c.0`, `PL.c.0`, `RB.c.0`, `RTY.c.0`, `SI.c.0`, `YM.c.0`, `ZB.c.0`, `ZC.c.0`, `ZF.c.0`, `ZN.c.0`, `ZS.c.0`, `ZT.c.0`, `ZW.c.0` |
+| Research events | 5,228,184 |
+| Feature matrices | - |
+| Anchor/model artifacts | - |
+| Active 1m bar coverage | 2015-01-01 -> 2026-05-05 |
 
 ## Active Research Universe
 
 | Symbol | Name | Kind | Bars start | Bars end | 1m partitions | 1m rows | Research events |
 |---|---|---|---|---|---|---|---|
-| `ES.c.0` | E-mini S&P 500 | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,466 | 3,878,198 | 231,181 |
-| `NQ.c.0` | E-mini Nasdaq-100 | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,466 | 3,821,312 | 234,454 |
-| `YM.c.0` | E-mini Dow | continuous_front_month | 2015-01-01 | 2026-05-12 | 3,465 | 3,776,622 | 226,175 |
+| `6A.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,351 | 902,877 | 188,937 |
+| `6B.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,331 | 872,295 | 185,975 |
+| `6C.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,260 | 790,787 | 141,802 |
+| `6E.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,410 | 1,003,612 | 230,484 |
+| `6J.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,374 | 938,460 | 202,496 |
+| `6N.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,485 | 2,399,182 | 223,176 |
+| `6S.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,483 | 2,258,483 | 224,229 |
+| `BZ.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,481 | 1,786,531 | 242,665 |
+| `CL.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,484 | 2,645,370 | 223,037 |
+| `ES.c.0` | E-mini S&P 500 | continuous_front_month | 2015-01-01 | 2026-05-04 | 3,527 | 3,948,707 | 296,490 |
+| `GC.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,106 | 95,386 | 122,519 |
+| `HG.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,122 | 60,017 | 114,988 |
+| `HO.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,476 | 1,637,013 | 247,255 |
+| `NG.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,484 | 2,363,245 | 219,146 |
+| `NQ.c.0` | E-mini Nasdaq-100 | continuous_front_month | 2015-01-01 | 2026-05-05 | 3,528 | 3,893,190 | 295,819 |
+| `PA.c.0` | - | continuous_front_month | 2018-05-30 | 2026-04-14 | 440 | 4,532 | 11,975 |
+| `PL.c.0` | - | continuous_front_month | 2018-05-11 | 2026-04-23 | 691 | 12,925 | 22,243 |
+| `RB.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,476 | 1,540,193 | 250,001 |
+| `RTY.c.0` | E-mini Russell 2000 | continuous_front_month | 2018-05-01 | 2026-05-04 | 2,494 | 2,633,007 | 224,768 |
+| `SI.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-23 | 1,787 | 46,672 | 79,991 |
+| `YM.c.0` | E-mini Dow | continuous_front_month | 2015-01-01 | 2026-05-04 | 3,526 | 3,846,440 | 285,838 |
+| `ZB.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,449 | 1,937,240 | 193,503 |
+| `ZC.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,007 | 1,280,885 | 159,714 |
+| `ZF.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,345 | 1,721,224 | 173,093 |
+| `ZN.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,458 | 2,112,335 | 191,002 |
+| `ZS.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 1,993 | 1,207,507 | 162,876 |
+| `ZT.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 2,297 | 1,442,001 | 156,505 |
+| `ZW.c.0` | - | continuous_front_month | 2018-05-01 | 2026-04-24 | 1,946 | 1,234,895 | 157,657 |
 
 ## Warehouse-Only Symbols
 
 These exist on disk but are not yet part of the current research/ML matrices.
 
-| Symbol | Kind | Bars start | Bars end | 1m partitions | 1m rows |
-|---|---|---|---|---|---|
-| `ESM6` | specific_contract | 2026-04-27 | 2026-05-12 | 12 | 15,069 |
-| `NQM6` | specific_contract | 2026-04-27 | 2026-05-12 | 12 | 15,070 |
-| `RTY.c.0` | continuous_front_month | 2026-03-01 | 2026-05-12 | 43 | 47,124 |
-| `RTYM6` | specific_contract | 2026-04-27 | 2026-05-12 | 12 | 14,869 |
-| `YMM6` | specific_contract | 2026-04-27 | 2026-05-12 | 12 | 14,855 |
+None.
 
 ## Research Events By Feature
 
 | Feature | Rows | Symbols | Event types | First event | Last event | Outcome coverage |
 |---|---|---|---|---|---|---|
-| `fvg_formation` | 209,339 | 3 | 4 | 2015-01-01 23:30:00.000000 | 2026-05-08 20:00:00.000000 | 99.9% |
-| `swing_pivot` | 76,786 | 3 | 5 | 2015-01-02 07:00:00.000000 | 2026-05-07 20:00:00.000000 | 100.0% |
-| `equal_levels` | 60,338 | 3 | 7 | 2015-01-02 14:00:00.000000 | 2026-05-07 15:00:00.000000 | 100.0% |
-| `liquidity_sweep` | 52,946 | 3 | 14 | 2015-01-04 23:00:00.000000 | 2026-05-08 14:00:00.000000 | 100.0% |
-| `order_block` | 46,331 | 3 | 14 | 2015-01-05 01:00:00.000000 | 2026-05-08 15:00:00.000000 | 100.0% |
-| `forming_volume_profile` | 43,150 | 3 | 1 | 2015-01-02 03:00:00.000000 | 2026-05-08 18:00:00.000000 | 98.5% |
-| `displacement_candle` | 38,747 | 3 | 3 | 2015-01-02 19:00:00.000000 | 2026-05-07 16:00:00.000000 | 100.0% |
-| `interval_true_range` | 36,095 | 3 | 5 | 2015-01-02 06:59:00.000000 | 2026-05-08 20:59:00.000000 | 98.6% |
-| `volume_profile` | 36,095 | 3 | 5 | 2014-12-28 23:00:00.000000 | 2026-05-08 13:30:00.000000 | 95.2% |
-| `opening_range_breakout` | 34,040 | 3 | 4 | 2015-01-02 00:00:00.000000 | 2026-05-08 14:00:00.000000 | 99.9% |
-| `time_profile` | 19,414 | 3 | 4 | 2014-12-28 23:00:00.000000 | 2026-05-07 22:00:00.000000 | 99.8% |
-| `psp_candle_divergence` | 15,827 | 3 | 3 | 2015-01-02 00:00:00.000000 | 2026-05-07 20:00:00.000000 | 99.2% |
-| `first_third_range` | 10,373 | 3 | 2 | 2015-01-02 06:38:00.000000 | 2026-05-08 05:39:00.000000 | 99.9% |
-| `opening_gap_levels` | 9,438 | 3 | 2 | 2015-01-04 23:00:00.000000 | 2026-05-07 22:00:00.000000 | 100.0% |
-| `smt_htf_reference_divergence` | 2,891 | 3 | 2 | 2015-01-08 16:00:00.000000 | 2026-05-05 00:00:00.000000 | 100.0% |
+| `fvg_formation` | 1,426,589 | 28 | 4 | 2015-01-01 23:30:00.000000 | 2026-05-04 23:00:00.000000 | 0.0% |
+| `forming_volume_profile` | 1,266,561 | 28 | 2 | 2015-01-02 00:00:00.000000 | 2026-05-06 20:00:00.000000 | 0.0% |
+| `equal_levels` | 578,915 | 28 | 7 | 2015-01-02 14:00:00.000000 | 2026-05-04 16:00:00.000000 | 0.0% |
+| `swing_pivot` | 390,222 | 28 | 5 | 2015-01-02 07:00:00.000000 | 2026-05-04 16:00:00.000000 | 0.0% |
+| `liquidity_sweep` | 276,096 | 28 | 14 | 2015-01-04 23:00:00.000000 | 2026-05-05 22:00:00.000000 | 0.0% |
+| `order_block` | 223,096 | 28 | 14 | 2015-01-05 01:00:00.000000 | 2026-05-05 23:00:00.000000 | 0.0% |
+| `interval_true_range` | 220,562 | 28 | 5 | 2015-01-02 06:59:00.000000 | 2026-05-05 23:59:00.000000 | 0.0% |
+| `displacement_candle` | 213,271 | 28 | 3 | 2015-01-02 19:00:00.000000 | 2026-05-04 17:00:00.000000 | 0.0% |
+| `volume_profile` | 208,019 | 28 | 5 | 2014-12-28 23:00:00.000000 | 2026-05-05 22:00:00.000000 | 0.0% |
+| `opening_range_breakout` | 176,631 | 28 | 4 | 2015-01-02 00:00:00.000000 | 2026-05-05 23:00:00.000000 | 0.0% |
+| `time_profile` | 127,285 | 28 | 4 | 2014-12-28 23:00:00.000000 | 2026-05-05 22:00:00.000000 | 0.0% |
+| `first_third_range` | 59,904 | 28 | 2 | 2015-01-02 06:38:00.000000 | 2026-05-05 23:59:00.000000 | 0.0% |
+| `opening_gap_levels` | 41,408 | 27 | 2 | 2015-01-04 23:00:00.000000 | 2026-05-05 22:00:00.000000 | 0.0% |
+| `psp_candle_divergence` | 17,013 | 15 | 3 | 2018-05-01 00:00:00.000000 | 2026-05-04 23:00:00.000000 | 0.0% |
+| `smt_htf_reference_divergence` | 2,612 | 18 | 2 | 2018-05-02 08:00:00.000000 | 2026-04-30 02:00:00.000000 | 0.0% |
 
 ## Feature Matrices
 
 | Short | Feature | Rows | Columns | Symbols |
 |---|---|---|---|---|
-| `disp` | `displacement_candle` | 38,747 | 91 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `eql` | `equal_levels` | 60,338 | 81 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `ft` | `first_third_range` | 10,373 | 97 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `fvg` | `fvg_formation` | 209,339 | 124 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `fvp` | `forming_volume_profile` | 43,150 | 495 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `itr` | `interval_true_range` | 36,095 | 143 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `ob` | `order_block` | 46,331 | 297 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `ogap` | `opening_gap_levels` | 9,438 | 210 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `orb` | `opening_range_breakout` | 34,040 | 99 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `psp` | `psp_candle_divergence` | 15,827 | 88 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `smt` | `smt_htf_reference_divergence` | 2,891 | 121 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `sweep` | `liquidity_sweep` | 52,946 | 86 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `swing` | `swing_pivot` | 76,786 | 73 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `tp` | `time_profile` | 19,414 | 84 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
-| `vp` | `volume_profile` | 36,095 | 212 | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
 
 ## Warnings
 
-- Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6
-- DB datasets registry is empty; manifest used direct warehouse path scan.
+- None
 
 ## Rule
 
