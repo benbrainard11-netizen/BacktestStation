@@ -1,0 +1,24 @@
+2026-05-15 13:05:44,618 [INFO] device=cuda xgb=3.2.0
+2026-05-15 13:05:44,618 [INFO] === fvg_snapshots_xctx_fvggeom_obgeom_strict (4 configs) ===
+2026-05-15 13:05:45,439 [INFO]   loaded: rows=209,339 cols=2,114 (0.8s)
+2026-05-15 13:07:30,243 [INFO]   [1/4] OK          all|label.strict.forward_10c.after_tap_failed_1x_against         AUC GPU=0.719 CPU=0.717 d=+0.001 lift GPU=+0.136 CPU=+0.133 (105s)
+2026-05-15 13:09:03,179 [INFO]   [2/4] OK          all|label.strict.no_touch_continuation                           AUC GPU=0.719 CPU=0.715 d=+0.005 lift GPU=+0.091 CPU=+0.089 (93s)
+2026-05-15 13:10:42,400 [INFO]   [3/4] OK          all|label.strict.forward_10c.after_tap_1x_clean                  AUC GPU=0.695 CPU=0.692 d=+0.003 lift GPU=+0.084 CPU=+0.079 (99s)
+2026-05-15 13:11:54,425 [INFO]   [4/4] OK          all|label.strict.tap_wick_rejected                               AUC GPU=0.532 CPU=0.533 d=-0.001 lift GPU=+0.032 CPU=+0.032 (72s)
+2026-05-15 13:11:54,540 [INFO]   matrix done in 6.2 min
+2026-05-15 13:11:54,566 [INFO] === opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict (12 configs) ===
+2026-05-15 13:11:54,944 [INFO]   loaded: rows=9,438 cols=3,308 (0.4s)
+2026-05-15 13:12:10,442 [INFO]   [1/12] OK          all|label.strict.next_240m.partial_touch_rejected                AUC GPU=0.845 CPU=0.837 d=+0.009 lift GPU=+0.526 CPU=+0.534 (15s)
+2026-05-15 13:12:26,370 [INFO]   [2/12] OK     gap_down|label.strict.next_240m.partial_touch_rejected                AUC GPU=0.832 CPU=0.833 d=-0.000 lift GPU=+0.521 CPU=+0.504 (16s)
+2026-05-15 13:12:39,598 [INFO]   [3/12] OK       gap_up|label.strict.next_60m.partial_touch_rejected                 AUC GPU=0.832 CPU=0.830 d=+0.003 lift GPU=+0.501 CPU=+0.503 (13s)
+2026-05-15 13:12:54,908 [INFO]   [4/12] OK          all|label.strict.next_240m.unfilled_clean_continuation           AUC GPU=0.831 CPU=0.827 d=+0.005 lift GPU=+0.477 CPU=+0.473 (15s)
+2026-05-15 13:13:10,798 [INFO]   [5/12] OK          all|label.strict.next_60m.partial_touch_rejected                 AUC GPU=0.831 CPU=0.826 d=+0.005 lift GPU=+0.549 CPU=+0.570 (16s)
+2026-05-15 13:13:24,090 [INFO]   [6/12] OK          all|label.strict.next_1d.partial_touch_rejected                  AUC GPU=0.844 CPU=0.825 d=+0.019 lift GPU=+0.342 CPU=+0.312 (13s)
+2026-05-15 13:13:37,882 [INFO]   [7/12] OK          all|label.strict.next_1d.unfilled_clean_continuation             AUC GPU=0.839 CPU=0.823 d=+0.017 lift GPU=+0.309 CPU=+0.304 (14s)
+2026-05-15 13:13:52,512 [INFO]   [8/12] OK     gap_down|label.strict.next_240m.unfilled_clean_continuation           AUC GPU=0.828 CPU=0.822 d=+0.005 lift GPU=+0.519 CPU=+0.462 (15s)
+2026-05-15 13:14:04,777 [INFO]   [9/12] OK       gap_up|label.strict.next_240m.partial_touch_rejected                AUC GPU=0.834 CPU=0.822 d=+0.012 lift GPU=+0.498 CPU=+0.460 (12s)
+2026-05-15 13:14:16,857 [INFO]   [10/12] OK       gap_up|label.strict.next_240m.unfilled_clean_continuation           AUC GPU=0.822 CPU=0.814 d=+0.008 lift GPU=+0.428 CPU=+0.428 (12s)
+2026-05-15 13:14:28,017 [INFO]   [11/12] OK       gap_up|label.strict.next_1d.partial_touch_rejected                  AUC GPU=0.813 CPU=0.787 d=+0.026 lift GPU=+0.321 CPU=+0.261 (11s)
+2026-05-15 13:14:40,055 [INFO]   [12/12] OK       gap_up|label.strict.next_1d.unfilled_clean_continuation             AUC GPU=0.812 CPU=0.783 d=+0.029 lift GPU=+0.320 CPU=+0.254 (12s)
+2026-05-15 13:14:40,060 [INFO]   matrix done in 2.8 min
+2026-05-15 13:14:40,060 [INFO] === DONE in 8.9 min ===
