@@ -1,0 +1,23 @@
+2026-05-15 13:34:53,757 [INFO] loading fvg_snapshots_xctx_fvggeom_obgeom_strict.parquet
+2026-05-15 13:34:56,041 [INFO]   rows=209,339 cols=2,114
+2026-05-15 13:36:17,387 [INFO]   [1/20] OK    15m_fvg label.strict.forward_10c.after_tap_failed_1x_again AUC=0.720 lift=+0.141 base=0.119 n=154461 (81s)
+2026-05-15 13:36:41,261 [INFO]   [2/20] OK     1h_fvg label.strict.forward_10c.after_tap_failed_1x_again AUC=0.718 lift=+0.114 base=0.116 n= 40207 (24s)
+2026-05-15 13:36:54,832 [INFO]   [3/20] OK     4h_fvg label.strict.forward_10c.after_tap_failed_1x_again AUC=0.703 lift=+0.131 base=0.131 n= 11883 (14s)
+2026-05-15 13:37:00,830 [INFO]   [4/20] OK  daily_fvg label.strict.forward_10c.after_tap_failed_1x_again AUC=0.675 lift=+0.160 base=0.143 n=  2788 (6s)
+2026-05-15 13:38:42,349 [INFO]   [5/20] OK        all label.strict.forward_10c.after_tap_failed_1x_again AUC=0.719 lift=+0.136 base=0.119 n=209339 (102s)
+2026-05-15 13:39:49,786 [INFO]   [6/20] OK    15m_fvg label.strict.no_touch_continuation                 AUC=0.725 lift=+0.095 base=0.052 n=154461 (67s)
+2026-05-15 13:40:10,670 [INFO]   [7/20] OK     1h_fvg label.strict.no_touch_continuation                 AUC=0.696 lift=+0.073 base=0.050 n= 40207 (21s)
+2026-05-15 13:40:21,354 [INFO]   [8/20] OK     4h_fvg label.strict.no_touch_continuation                 AUC=0.660 lift=+0.069 base=0.053 n= 11883 (11s)
+2026-05-15 13:40:22,481 [INFO]   [9/20] OK  daily_fvg label.strict.no_touch_continuation                 AUC=0.373 lift=-0.041 base=0.079 n=  2788 (1s)
+2026-05-15 13:41:55,682 [INFO]   [10/20] OK        all label.strict.no_touch_continuation                 AUC=0.719 lift=+0.091 base=0.052 n=209339 (93s)
+2026-05-15 13:43:04,293 [INFO]   [11/20] OK    15m_fvg label.strict.forward_10c.after_tap_1x_clean        AUC=0.687 lift=+0.080 base=0.072 n=154461 (69s)
+2026-05-15 13:43:27,465 [INFO]   [12/20] OK     1h_fvg label.strict.forward_10c.after_tap_1x_clean        AUC=0.719 lift=+0.095 base=0.069 n= 40207 (23s)
+2026-05-15 13:43:37,745 [INFO]   [13/20] OK     4h_fvg label.strict.forward_10c.after_tap_1x_clean        AUC=0.681 lift=+0.069 base=0.068 n= 11883 (10s)
+2026-05-15 13:43:40,026 [INFO]   [14/20] OK  daily_fvg label.strict.forward_10c.after_tap_1x_clean        AUC=0.589 lift=+0.067 base=0.104 n=  2788 (2s)
+2026-05-15 13:45:18,271 [INFO]   [15/20] OK        all label.strict.forward_10c.after_tap_1x_clean        AUC=0.695 lift=+0.084 base=0.071 n=209339 (98s)
+2026-05-15 13:46:12,754 [INFO]   [16/20] OK    15m_fvg label.strict.tap_wick_rejected                     AUC=0.534 lift=+0.036 base=0.449 n=154461 (54s)
+2026-05-15 13:46:28,807 [INFO]   [17/20] OK     1h_fvg label.strict.tap_wick_rejected                     AUC=0.533 lift=+0.049 base=0.465 n= 40207 (16s)
+2026-05-15 13:46:35,839 [INFO]   [18/20] OK     4h_fvg label.strict.tap_wick_rejected                     AUC=0.510 lift=-0.002 base=0.466 n= 11883 (7s)
+2026-05-15 13:46:40,659 [INFO]   [19/20] OK  daily_fvg label.strict.tap_wick_rejected                     AUC=0.537 lift=+0.039 base=0.433 n=  2788 (5s)
+2026-05-15 13:47:51,076 [INFO]   [20/20] OK        all label.strict.tap_wick_rejected                     AUC=0.532 lift=+0.032 base=0.453 n=209339 (70s)
+2026-05-15 13:47:51,076 [INFO] === DONE in 12.9 min ===
