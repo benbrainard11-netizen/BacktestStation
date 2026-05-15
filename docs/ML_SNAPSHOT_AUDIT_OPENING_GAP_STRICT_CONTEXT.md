@@ -1,6 +1,6 @@
 # ML snapshot matrix audit
 
-_Generated `2026-05-15T04:37:03.719799+00:00`._
+_Generated `2026-05-15T14:51:32.805915+00:00`._
 
 - Matrix: `data\ml\anchors\opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.parquet`
 - Schema: `data\ml\anchors\opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.schema.json`

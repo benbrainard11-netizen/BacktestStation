@@ -44,11 +44,11 @@ STRICT_SPECS = {
     "failed_fill_expanded_away": (
         "Gap was touched but left unfilled, then expanded away from the gap.",
     ),
-    "no_touch_expanded_away": (
-        "Gap was never touched and price expanded away from it.",
+    "unfilled_expanded_away": (
+        "Gap stayed unfilled and price made at least a 1x-gap excursion away in the gap direction.",
     ),
-    "clean_gap_continuation": (
-        "No touch plus 3-bar acceptance in the opening-gap continuation direction.",
+    "unfilled_clean_continuation": (
+        "Gap stayed unfilled and got 3-bar acceptance in the opening-gap continuation direction.",
     ),
 }
 
@@ -84,6 +84,9 @@ def _build_for_window(df: pd.DataFrame, window: str) -> dict[str, pd.Series]:
     filled = _bool(df, prefix + "fully_filled")
     unfilled = _bool(df, prefix + "unfilled_at_window_end")
     expanded_1x = _bool(df, prefix + "range_expanded_1x_gap")
+    gap_range = pd.to_numeric(df.get(prefix + "gap_range_pts"), errors="coerce")
+    mfe_up = pd.to_numeric(df.get(prefix + "mfe_up_pts"), errors="coerce")
+    mfe_down = pd.to_numeric(df.get(prefix + "mfe_down_pts"), errors="coerce")
 
     support_rejection = _bool(df, prefix + "support_rejection_3bar")
     resistance_rejection = _bool(df, prefix + "resistance_rejection_3bar")
@@ -103,6 +106,10 @@ def _build_for_window(df: pd.DataFrame, window: str) -> dict[str, pd.Series]:
     through_acceptance = (gap_up & accepted_below) | (gap_down & accepted_above)
     closed_away = (gap_up & closed_above) | (gap_down & closed_below)
     rejected_inside = (gap_up & rejected_low_inside) | (gap_down & rejected_high_inside)
+    directional_mfe_1x = (
+        (gap_up & (mfe_up >= gap_range))
+        | (gap_down & (mfe_down >= gap_range))
+    )
 
     return {
         _label_col(window, "gap_held_rejection"): touched & directional_rejection,
@@ -112,8 +119,8 @@ def _build_for_window(df: pd.DataFrame, window: str) -> dict[str, pd.Series]:
         _label_col(window, "filled_then_rejected_inside"): filled & rejected_inside & ~through_acceptance,
         _label_col(window, "filled_then_continued_through"): filled & through_acceptance,
         _label_col(window, "failed_fill_expanded_away"): touched & unfilled & expanded_1x & closed_away,
-        _label_col(window, "no_touch_expanded_away"): ~touched & expanded_1x & closed_away,
-        _label_col(window, "clean_gap_continuation"): ~touched & expanded_1x & continuation_acceptance,
+        _label_col(window, "unfilled_expanded_away"): unfilled & directional_mfe_1x,
+        _label_col(window, "unfilled_clean_continuation"): unfilled & continuation_acceptance,
     }
 
 

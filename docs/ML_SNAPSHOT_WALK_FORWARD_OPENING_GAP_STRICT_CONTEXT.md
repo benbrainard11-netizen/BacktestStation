@@ -1,12 +1,12 @@
 # ML snapshot walk-forward validation
 
-_Generated `2026-05-15T04:52:03.151475+00:00`._
+_Generated `2026-05-15T15:11:29.994286+00:00`._
 
 ## Setup
 
 - Matrix: `data\ml\anchors\opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.parquet`
 - Schema: `data\ml\anchors\opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict.schema.json`
-- Leaderboard source: `data\ml\anchors\opening_gap_strict_context_leaderboard.parquet`
+- Leaderboard source: `data\ml\anchors\opening_gap_snapshot_leaderboard_strict_context.parquet`
 - Event type: `all`
 - Candidates: `12`
 - Test years attempted: `2020, 2021, 2022, 2023, 2024, 2025`
@@ -19,10 +19,10 @@ _Generated `2026-05-15T04:52:03.151475+00:00`._
 
 | file | purpose |
 |---|---|
-| data\ml\anchors\opening_gap_strict_context_walk_forward_summary.csv | candidate summary CSV |
-| data\ml\anchors\opening_gap_strict_context_walk_forward_summary.parquet | candidate summary parquet |
-| data\ml\anchors\opening_gap_strict_context_walk_forward_folds.csv | per-fold CSV |
-| data\ml\anchors\opening_gap_strict_context_walk_forward_folds.parquet | per-fold parquet |
+| data\ml\anchors\opening_gap_walk_forward_strict_context_summary.csv | candidate summary CSV |
+| data\ml\anchors\opening_gap_walk_forward_strict_context_summary.parquet | candidate summary parquet |
+| data\ml\anchors\opening_gap_walk_forward_strict_context_folds.csv | per-fold CSV |
+| data\ml\anchors\opening_gap_walk_forward_strict_context_folds.parquet | per-fold parquet |
 
 ## Coverage
 
@@ -42,44 +42,44 @@ _Generated `2026-05-15T04:52:03.151475+00:00`._
 | at_fire | all | label.strict.next_240m.partial_touch_rejected | 6 | 5157 | 0.837 | 0.825 | 0.805 | 0.032 | 75.9% | 64.3% | 53.4% |
 | at_fire | gap_down | label.strict.next_240m.partial_touch_rejected | 6 | 2303 | 0.833 | 0.854 | 0.738 | 0.055 | 72.2% | 52.9% | 50.4% |
 | at_fire | gap_up | label.strict.next_60m.partial_touch_rejected | 6 | 2854 | 0.830 | 0.832 | 0.777 | 0.042 | 83.9% | 66.7% | 50.3% |
+| at_fire | all | label.strict.next_240m.unfilled_clean_continuation | 6 | 5157 | 0.827 | 0.821 | 0.798 | 0.027 | 68.9% | 60.7% | 47.3% |
 | at_fire | all | label.strict.next_60m.partial_touch_rejected | 6 | 5157 | 0.826 | 0.835 | 0.792 | 0.024 | 89.9% | 77.4% | 57.0% |
 | at_fire | all | label.strict.next_1d.partial_touch_rejected | 6 | 5157 | 0.825 | 0.806 | 0.791 | 0.034 | 40.5% | 27.9% | 31.2% |
+| at_fire | all | label.strict.next_1d.unfilled_clean_continuation | 6 | 5157 | 0.823 | 0.803 | 0.794 | 0.032 | 39.7% | 24.7% | 30.4% |
+| at_fire | gap_down | label.strict.next_240m.unfilled_clean_continuation | 6 | 2303 | 0.822 | 0.852 | 0.710 | 0.063 | 66.9% | 41.2% | 46.2% |
 | at_fire | gap_up | label.strict.next_240m.partial_touch_rejected | 6 | 2854 | 0.822 | 0.839 | 0.734 | 0.048 | 68.7% | 48.1% | 46.0% |
-| at_fire | gap_down | label.strict.next_60m.partial_touch_rejected | 6 | 2303 | 0.820 | 0.831 | 0.753 | 0.052 | 89.0% | 73.5% | 57.5% |
+| at_fire | gap_up | label.strict.next_240m.unfilled_clean_continuation | 6 | 2854 | 0.814 | 0.822 | 0.759 | 0.031 | 64.6% | 44.4% | 42.8% |
 | at_fire | gap_up | label.strict.next_1d.partial_touch_rejected | 6 | 2854 | 0.787 | 0.778 | 0.736 | 0.047 | 36.3% | 7.4% | 26.1% |
-| at_fire | all | label.strict.next_1d.filled_then_continued_through | 6 | 5157 | 0.762 | 0.755 | 0.731 | 0.028 | 96.0% | 93.1% | 8.3% |
-| at_fire | all | label.strict.next_1d.failed_fill_expanded_away | 6 | 5157 | 0.750 | 0.745 | 0.708 | 0.031 | 15.9% | 7.1% | 8.1% |
-| at_fire | gap_up | label.strict.next_1d.filled_then_continued_through | 6 | 2854 | 0.740 | 0.749 | 0.661 | 0.056 | 97.9% | 96.3% | 11.3% |
-| at_fire | gap_up | label.strict.next_240m.filled_then_continued_through | 6 | 2854 | 0.738 | 0.736 | 0.660 | 0.055 | 86.7% | 71.4% | 19.3% |
+| at_fire | gap_up | label.strict.next_1d.unfilled_clean_continuation | 6 | 2854 | 0.783 | 0.777 | 0.736 | 0.040 | 35.5% | 7.4% | 25.4% |
 
 ## Fold Detail
 
 | snapshot | side | label | test_year | test_n | base_rate | auc | acc | majority_acc | top_n | top_rate |
 |---|---|---|---|---|---|---|---|---|---|---|
-| at_fire | all | label.strict.next_1d.failed_fill_expanded_away | 2020 | 886 | 12.3% | 0.708 | 0.877 | 0.877 | 89 | 23.6% |
-| at_fire | all | label.strict.next_1d.failed_fill_expanded_away | 2021 | 834 | 5.6% | 0.755 | 0.944 | 0.944 | 84 | 11.9% |
-| at_fire | all | label.strict.next_1d.failed_fill_expanded_away | 2022 | 854 | 7.1% | 0.728 | 0.929 | 0.929 | 86 | 11.6% |
-| at_fire | all | label.strict.next_1d.failed_fill_expanded_away | 2023 | 844 | 6.2% | 0.735 | 0.938 | 0.938 | 85 | 7.1% |
-| at_fire | all | label.strict.next_1d.failed_fill_expanded_away | 2024 | 872 | 7.2% | 0.767 | 0.928 | 0.928 | 88 | 18.2% |
-| at_fire | all | label.strict.next_1d.failed_fill_expanded_away | 2025 | 867 | 8.3% | 0.806 | 0.917 | 0.917 | 87 | 23.0% |
-| at_fire | all | label.strict.next_1d.filled_then_continued_through | 2020 | 886 | 83.4% | 0.768 | 0.832 | 0.834 | 89 | 95.5% |
-| at_fire | all | label.strict.next_1d.filled_then_continued_through | 2021 | 834 | 90.4% | 0.731 | 0.897 | 0.904 | 84 | 94.0% |
-| at_fire | all | label.strict.next_1d.filled_then_continued_through | 2022 | 854 | 89.5% | 0.742 | 0.885 | 0.895 | 86 | 98.8% |
-| at_fire | all | label.strict.next_1d.filled_then_continued_through | 2023 | 844 | 88.6% | 0.740 | 0.889 | 0.886 | 85 | 98.8% |
-| at_fire | all | label.strict.next_1d.filled_then_continued_through | 2024 | 872 | 87.7% | 0.776 | 0.882 | 0.877 | 88 | 95.5% |
-| at_fire | all | label.strict.next_1d.filled_then_continued_through | 2025 | 867 | 86.4% | 0.814 | 0.875 | 0.864 | 87 | 93.1% |
 | at_fire | all | label.strict.next_1d.partial_touch_rejected | 2020 | 886 | 13.8% | 0.808 | 0.862 | 0.862 | 89 | 43.8% |
 | at_fire | all | label.strict.next_1d.partial_touch_rejected | 2021 | 834 | 5.9% | 0.805 | 0.944 | 0.941 | 84 | 31.0% |
 | at_fire | all | label.strict.next_1d.partial_touch_rejected | 2022 | 854 | 8.2% | 0.791 | 0.904 | 0.918 | 86 | 27.9% |
 | at_fire | all | label.strict.next_1d.partial_touch_rejected | 2023 | 844 | 7.6% | 0.802 | 0.927 | 0.924 | 85 | 31.8% |
 | at_fire | all | label.strict.next_1d.partial_touch_rejected | 2024 | 872 | 9.5% | 0.861 | 0.909 | 0.905 | 88 | 51.1% |
 | at_fire | all | label.strict.next_1d.partial_touch_rejected | 2025 | 867 | 10.8% | 0.882 | 0.908 | 0.892 | 87 | 57.5% |
+| at_fire | all | label.strict.next_1d.unfilled_clean_continuation | 2020 | 886 | 13.8% | 0.802 | 0.862 | 0.862 | 89 | 48.3% |
+| at_fire | all | label.strict.next_1d.unfilled_clean_continuation | 2021 | 834 | 5.9% | 0.802 | 0.944 | 0.941 | 84 | 26.2% |
+| at_fire | all | label.strict.next_1d.unfilled_clean_continuation | 2022 | 854 | 8.2% | 0.794 | 0.911 | 0.918 | 86 | 31.4% |
+| at_fire | all | label.strict.next_1d.unfilled_clean_continuation | 2023 | 844 | 7.3% | 0.804 | 0.927 | 0.927 | 85 | 24.7% |
+| at_fire | all | label.strict.next_1d.unfilled_clean_continuation | 2024 | 872 | 9.5% | 0.856 | 0.912 | 0.905 | 88 | 50.0% |
+| at_fire | all | label.strict.next_1d.unfilled_clean_continuation | 2025 | 867 | 10.8% | 0.878 | 0.915 | 0.892 | 87 | 57.5% |
 | at_fire | all | label.strict.next_240m.partial_touch_rejected | 2020 | 886 | 27.0% | 0.875 | 0.823 | 0.730 | 89 | 79.8% |
 | at_fire | all | label.strict.next_240m.partial_touch_rejected | 2021 | 834 | 16.3% | 0.805 | 0.865 | 0.837 | 84 | 64.3% |
 | at_fire | all | label.strict.next_240m.partial_touch_rejected | 2022 | 854 | 23.7% | 0.835 | 0.816 | 0.763 | 86 | 76.7% |
 | at_fire | all | label.strict.next_240m.partial_touch_rejected | 2023 | 844 | 21.1% | 0.815 | 0.850 | 0.789 | 85 | 80.0% |
 | at_fire | all | label.strict.next_240m.partial_touch_rejected | 2024 | 872 | 21.9% | 0.805 | 0.829 | 0.781 | 88 | 73.9% |
 | at_fire | all | label.strict.next_240m.partial_touch_rejected | 2025 | 867 | 24.8% | 0.885 | 0.856 | 0.752 | 87 | 80.5% |
+| at_fire | all | label.strict.next_240m.unfilled_clean_continuation | 2020 | 886 | 26.3% | 0.858 | 0.804 | 0.737 | 89 | 73.0% |
+| at_fire | all | label.strict.next_240m.unfilled_clean_continuation | 2021 | 834 | 16.1% | 0.807 | 0.853 | 0.839 | 84 | 60.7% |
+| at_fire | all | label.strict.next_240m.unfilled_clean_continuation | 2022 | 854 | 23.2% | 0.835 | 0.816 | 0.768 | 86 | 65.1% |
+| at_fire | all | label.strict.next_240m.unfilled_clean_continuation | 2023 | 844 | 20.1% | 0.798 | 0.827 | 0.799 | 85 | 68.2% |
+| at_fire | all | label.strict.next_240m.unfilled_clean_continuation | 2024 | 872 | 21.2% | 0.799 | 0.825 | 0.788 | 88 | 68.2% |
+| at_fire | all | label.strict.next_240m.unfilled_clean_continuation | 2025 | 867 | 22.5% | 0.864 | 0.837 | 0.775 | 87 | 78.2% |
 | at_fire | all | label.strict.next_60m.partial_touch_rejected | 2020 | 886 | 37.4% | 0.848 | 0.797 | 0.626 | 89 | 100.0% |
 | at_fire | all | label.strict.next_60m.partial_touch_rejected | 2021 | 834 | 27.2% | 0.794 | 0.799 | 0.728 | 84 | 77.4% |
 | at_fire | all | label.strict.next_60m.partial_touch_rejected | 2022 | 854 | 35.5% | 0.838 | 0.788 | 0.645 | 86 | 97.7% |
@@ -92,36 +92,36 @@ _Generated `2026-05-15T04:52:03.151475+00:00`._
 | at_fire | gap_down | label.strict.next_240m.partial_touch_rejected | 2023 | 427 | 21.5% | 0.782 | 0.813 | 0.785 | 43 | 69.8% |
 | at_fire | gap_down | label.strict.next_240m.partial_touch_rejected | 2024 | 337 | 12.8% | 0.738 | 0.878 | 0.872 | 34 | 52.9% |
 | at_fire | gap_down | label.strict.next_240m.partial_touch_rejected | 2025 | 427 | 22.2% | 0.865 | 0.857 | 0.778 | 43 | 72.1% |
-| at_fire | gap_down | label.strict.next_60m.partial_touch_rejected | 2020 | 407 | 38.6% | 0.885 | 0.830 | 0.614 | 41 | 100.0% |
-| at_fire | gap_down | label.strict.next_60m.partial_touch_rejected | 2021 | 294 | 25.2% | 0.839 | 0.850 | 0.748 | 30 | 93.3% |
-| at_fire | gap_down | label.strict.next_60m.partial_touch_rejected | 2022 | 411 | 39.7% | 0.871 | 0.798 | 0.603 | 42 | 95.2% |
-| at_fire | gap_down | label.strict.next_60m.partial_touch_rejected | 2023 | 427 | 35.1% | 0.753 | 0.735 | 0.649 | 43 | 90.7% |
-| at_fire | gap_down | label.strict.next_60m.partial_touch_rejected | 2024 | 337 | 20.2% | 0.753 | 0.855 | 0.798 | 34 | 73.5% |
-| at_fire | gap_down | label.strict.next_60m.partial_touch_rejected | 2025 | 427 | 30.2% | 0.823 | 0.808 | 0.698 | 43 | 81.4% |
-| at_fire | gap_up | label.strict.next_1d.filled_then_continued_through | 2020 | 479 | 82.7% | 0.771 | 0.839 | 0.827 | 48 | 97.9% |
-| at_fire | gap_up | label.strict.next_1d.filled_then_continued_through | 2021 | 540 | 90.0% | 0.728 | 0.878 | 0.900 | 54 | 100.0% |
-| at_fire | gap_up | label.strict.next_1d.filled_then_continued_through | 2022 | 443 | 93.2% | 0.684 | 0.919 | 0.932 | 45 | 97.8% |
-| at_fire | gap_up | label.strict.next_1d.filled_then_continued_through | 2023 | 417 | 88.0% | 0.661 | 0.885 | 0.880 | 42 | 97.6% |
-| at_fire | gap_up | label.strict.next_1d.filled_then_continued_through | 2024 | 535 | 84.9% | 0.777 | 0.849 | 0.849 | 54 | 96.3% |
-| at_fire | gap_up | label.strict.next_1d.filled_then_continued_through | 2025 | 440 | 80.9% | 0.822 | 0.809 | 0.809 | 44 | 97.7% |
+| at_fire | gap_down | label.strict.next_240m.unfilled_clean_continuation | 2020 | 407 | 26.5% | 0.881 | 0.838 | 0.735 | 41 | 87.8% |
+| at_fire | gap_down | label.strict.next_240m.unfilled_clean_continuation | 2021 | 294 | 16.3% | 0.873 | 0.871 | 0.837 | 30 | 73.3% |
+| at_fire | gap_down | label.strict.next_240m.unfilled_clean_continuation | 2022 | 411 | 28.2% | 0.833 | 0.783 | 0.718 | 42 | 71.4% |
+| at_fire | gap_down | label.strict.next_240m.unfilled_clean_continuation | 2023 | 427 | 20.1% | 0.767 | 0.799 | 0.799 | 43 | 55.8% |
+| at_fire | gap_down | label.strict.next_240m.unfilled_clean_continuation | 2024 | 337 | 12.2% | 0.710 | 0.887 | 0.878 | 34 | 41.2% |
+| at_fire | gap_down | label.strict.next_240m.unfilled_clean_continuation | 2025 | 427 | 21.3% | 0.872 | 0.829 | 0.787 | 43 | 72.1% |
 | at_fire | gap_up | label.strict.next_1d.partial_touch_rejected | 2020 | 479 | 14.0% | 0.785 | 0.864 | 0.860 | 48 | 37.5% |
 | at_fire | gap_up | label.strict.next_1d.partial_touch_rejected | 2021 | 540 | 5.2% | 0.739 | 0.937 | 0.948 | 54 | 7.4% |
 | at_fire | gap_up | label.strict.next_1d.partial_touch_rejected | 2022 | 443 | 4.5% | 0.736 | 0.941 | 0.955 | 45 | 17.8% |
 | at_fire | gap_up | label.strict.next_1d.partial_touch_rejected | 2023 | 417 | 9.6% | 0.771 | 0.909 | 0.904 | 42 | 28.6% |
 | at_fire | gap_up | label.strict.next_1d.partial_touch_rejected | 2024 | 535 | 12.9% | 0.821 | 0.871 | 0.871 | 54 | 53.7% |
 | at_fire | gap_up | label.strict.next_1d.partial_touch_rejected | 2025 | 440 | 15.0% | 0.871 | 0.855 | 0.850 | 44 | 72.7% |
-| at_fire | gap_up | label.strict.next_240m.filled_then_continued_through | 2020 | 479 | 64.3% | 0.760 | 0.754 | 0.643 | 48 | 85.4% |
-| at_fire | gap_up | label.strict.next_240m.filled_then_continued_through | 2021 | 540 | 73.5% | 0.711 | 0.730 | 0.735 | 54 | 94.4% |
-| at_fire | gap_up | label.strict.next_240m.filled_then_continued_through | 2022 | 443 | 74.3% | 0.694 | 0.716 | 0.743 | 45 | 91.1% |
-| at_fire | gap_up | label.strict.next_240m.filled_then_continued_through | 2023 | 417 | 67.1% | 0.660 | 0.705 | 0.671 | 42 | 71.4% |
-| at_fire | gap_up | label.strict.next_240m.filled_then_continued_through | 2024 | 535 | 64.1% | 0.782 | 0.727 | 0.641 | 54 | 87.0% |
-| at_fire | gap_up | label.strict.next_240m.filled_then_continued_through | 2025 | 440 | 61.4% | 0.820 | 0.761 | 0.614 | 44 | 90.9% |
+| at_fire | gap_up | label.strict.next_1d.unfilled_clean_continuation | 2020 | 479 | 14.0% | 0.785 | 0.864 | 0.860 | 48 | 37.5% |
+| at_fire | gap_up | label.strict.next_1d.unfilled_clean_continuation | 2021 | 540 | 5.2% | 0.739 | 0.937 | 0.948 | 54 | 7.4% |
+| at_fire | gap_up | label.strict.next_1d.unfilled_clean_continuation | 2022 | 443 | 4.5% | 0.736 | 0.941 | 0.955 | 45 | 17.8% |
+| at_fire | gap_up | label.strict.next_1d.unfilled_clean_continuation | 2023 | 417 | 9.1% | 0.770 | 0.914 | 0.909 | 42 | 28.6% |
+| at_fire | gap_up | label.strict.next_1d.unfilled_clean_continuation | 2024 | 535 | 12.9% | 0.821 | 0.871 | 0.871 | 54 | 53.7% |
+| at_fire | gap_up | label.strict.next_1d.unfilled_clean_continuation | 2025 | 440 | 15.0% | 0.847 | 0.855 | 0.850 | 44 | 68.2% |
 | at_fire | gap_up | label.strict.next_240m.partial_touch_rejected | 2020 | 479 | 26.1% | 0.841 | 0.802 | 0.739 | 48 | 79.2% |
 | at_fire | gap_up | label.strict.next_240m.partial_touch_rejected | 2021 | 540 | 15.9% | 0.734 | 0.804 | 0.841 | 54 | 48.1% |
 | at_fire | gap_up | label.strict.next_240m.partial_touch_rejected | 2022 | 443 | 18.5% | 0.793 | 0.824 | 0.815 | 45 | 48.9% |
 | at_fire | gap_up | label.strict.next_240m.partial_touch_rejected | 2023 | 417 | 20.6% | 0.836 | 0.830 | 0.794 | 42 | 64.3% |
 | at_fire | gap_up | label.strict.next_240m.partial_touch_rejected | 2024 | 535 | 27.7% | 0.841 | 0.798 | 0.723 | 54 | 85.2% |
 | at_fire | gap_up | label.strict.next_240m.partial_touch_rejected | 2025 | 440 | 27.3% | 0.889 | 0.836 | 0.727 | 44 | 86.4% |
+| at_fire | gap_up | label.strict.next_240m.unfilled_clean_continuation | 2020 | 479 | 26.1% | 0.815 | 0.802 | 0.739 | 48 | 79.2% |
+| at_fire | gap_up | label.strict.next_240m.unfilled_clean_continuation | 2021 | 540 | 15.9% | 0.759 | 0.811 | 0.841 | 54 | 44.4% |
+| at_fire | gap_up | label.strict.next_240m.unfilled_clean_continuation | 2022 | 443 | 18.5% | 0.792 | 0.797 | 0.815 | 45 | 44.4% |
+| at_fire | gap_up | label.strict.next_240m.unfilled_clean_continuation | 2023 | 417 | 20.1% | 0.828 | 0.818 | 0.799 | 42 | 61.9% |
+| at_fire | gap_up | label.strict.next_240m.unfilled_clean_continuation | 2024 | 535 | 26.9% | 0.837 | 0.798 | 0.731 | 54 | 85.2% |
+| at_fire | gap_up | label.strict.next_240m.unfilled_clean_continuation | 2025 | 440 | 23.6% | 0.854 | 0.811 | 0.764 | 44 | 72.7% |
 | at_fire | gap_up | label.strict.next_60m.partial_touch_rejected | 2020 | 479 | 36.3% | 0.839 | 0.783 | 0.637 | 48 | 91.7% |
 | at_fire | gap_up | label.strict.next_60m.partial_touch_rejected | 2021 | 540 | 28.3% | 0.779 | 0.759 | 0.717 | 54 | 70.4% |
 | at_fire | gap_up | label.strict.next_60m.partial_touch_rejected | 2022 | 443 | 31.6% | 0.777 | 0.765 | 0.684 | 45 | 82.2% |

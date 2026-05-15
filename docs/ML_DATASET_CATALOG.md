@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-15T13:31:43.804765+00:00`._
+_Generated `2026-05-15T19:15:02.738773+00:00`._
 
 ## Summary
 
@@ -80,6 +80,8 @@ _Generated `2026-05-15T13:31:43.804765+00:00`._
 | ft_snapshots.schema.json | json | 10,373 | - | at_fire | - |
 | fvg_snapshot_leaderboard.csv | csv | 15 | 30 | - | {"ok": 15} |
 | fvg_snapshot_leaderboard.parquet | parquet | 15 | 30 | - | {"ok": 15} |
+| fvg_snapshot_leaderboard_strict_context.csv | csv | 4 | 30 | - | {"ok": 4} |
+| fvg_snapshot_leaderboard_strict_context.parquet | parquet | 4 | 30 | - | {"ok": 4} |
 | fvg_snapshot_leaderboard_xctx.csv | csv | 15 | 30 | - | {"ok": 15} |
 | fvg_snapshot_leaderboard_xctx.parquet | parquet | 15 | 30 | - | {"ok": 15} |
 | fvg_snapshot_leaderboard_xctx_fvggeom.csv | csv | 42 | 30 | - | {"ok": 41, "skip_test_imbalance": 1} |
@@ -92,6 +94,9 @@ _Generated `2026-05-15T13:31:43.804765+00:00`._
 | fvg_snapshots_xctx_fvggeom.schema.json | json | 209,339 | - | at_fire | - |
 | fvg_snapshots_xctx_fvggeom_obgeom.parquet | parquet | 209,339 | 2,090 | at_fire | - |
 | fvg_snapshots_xctx_fvggeom_obgeom.schema.json | json | 209,339 | - | at_fire | - |
+| fvg_snapshots_xctx_fvggeom_obgeom_strict.parquet | parquet | 209,339 | 2,114 | at_fire | - |
+| fvg_snapshots_xctx_fvggeom_obgeom_strict.schema.json | json | 209,339 | - | at_fire | - |
+| fvg_strict_label_stats.csv | csv | 360 | 6 | - | - |
 | fvg_walk_forward_fvggeom_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | fvg_walk_forward_fvggeom_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | fvg_walk_forward_fvggeom_summary.csv | csv | 12 | 18 | - | - |
@@ -100,6 +105,10 @@ _Generated `2026-05-15T13:31:43.804765+00:00`._
 | fvg_walk_forward_fvggeom_top5_folds.parquet | parquet | 25 | 33 | - | {"ok": 25} |
 | fvg_walk_forward_fvggeom_top5_summary.csv | csv | 5 | 18 | - | - |
 | fvg_walk_forward_fvggeom_top5_summary.parquet | parquet | 5 | 18 | - | - |
+| fvg_walk_forward_strict_context_folds.csv | csv | 24 | 33 | - | {"ok": 24} |
+| fvg_walk_forward_strict_context_folds.parquet | parquet | 24 | 33 | - | {"ok": 24} |
+| fvg_walk_forward_strict_context_summary.csv | csv | 4 | 18 | - | - |
+| fvg_walk_forward_strict_context_summary.parquet | parquet | 4 | 18 | - | - |
 | fvg_walk_forward_xctx_top5_folds.csv | csv | 25 | 33 | - | {"ok": 25} |
 | fvg_walk_forward_xctx_top5_folds.parquet | parquet | 25 | 33 | - | {"ok": 25} |
 | fvg_walk_forward_xctx_top5_summary.csv | csv | 5 | 18 | - | - |
@@ -143,6 +152,8 @@ _Generated `2026-05-15T13:31:43.804765+00:00`._
 | ob_snapshots_xctx.parquet | parquet | 46,331 | 888 | at_fire | - |
 | ob_snapshots_xctx.schema.json | json | 46,331 | - | at_fire | - |
 | opening_gap_age_decay.csv | csv | 21 | 33 | - | - |
+| opening_gap_snapshot_leaderboard_strict_context.csv | csv | 81 | 30 | - | {"ok": 75, "skip_train_imbalance": 5, "skip_test_imbalance": 1} |
+| opening_gap_snapshot_leaderboard_strict_context.parquet | parquet | 81 | 30 | - | {"ok": 75, "skip_train_imbalance": 5, "skip_test_imbalance": 1} |
 | opening_gap_snapshot_leaderboard_xctx_gapctx.csv | csv | 45 | 30 | - | {"ok": 45} |
 | opening_gap_snapshot_leaderboard_xctx_gapctx.parquet | parquet | 45 | 30 | - | {"ok": 45} |
 | opening_gap_snapshot_leaderboard_xctx_gapctx_obgeom_liqgeom_regime.csv | csv | 684 | 30 | - | {"ok": 530, "skip_train_imbalance": 123, "skip_test_imbalance": 31} |
@@ -168,6 +179,10 @@ _Generated `2026-05-15T13:31:43.804765+00:00`._
 | opening_gap_strict_context_walk_forward_summary.csv | csv | 12 | 18 | - | - |
 | opening_gap_strict_context_walk_forward_summary.parquet | parquet | 12 | 18 | - | - |
 | opening_gap_strict_label_stats.csv | csv | 81 | 5 | - | - |
+| opening_gap_walk_forward_strict_context_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
+| opening_gap_walk_forward_strict_context_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
+| opening_gap_walk_forward_strict_context_summary.csv | csv | 12 | 18 | - | - |
+| opening_gap_walk_forward_strict_context_summary.parquet | parquet | 12 | 18 | - | - |
 | opening_gap_walk_forward_xctx_gapctx_folds.csv | csv | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_folds.parquet | parquet | 72 | 33 | - | {"ok": 72} |
 | opening_gap_walk_forward_xctx_gapctx_obgeom_liqgeom_regime_folds.csv | csv | 96 | 33 | - | {"ok": 93, "skip_test_imbalance": 3} |

@@ -1,16 +1,16 @@
 {
-  "current_package": "strategy_lab_core_2026_05_14_context_layers",
-  "zip_name": "strategy_lab_core_2026_05_14_context_layers.zip",
-  "release_tag": "strategy-lab-core-2026-05-14-context-layers",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_14_context_layers.zip",
-  "size_bytes": 956082887,
-  "sha256": "4df99d40db0f9f03107f0275c1ecfeb5227aa19f0ac237eaae4a653fa44a6b63",
-  "generated_utc": "2026-05-15T13:32:45.618677+00:00",
+  "current_package": "strategy_lab_core_2026_05_15_strict_reactions",
+  "zip_name": "strategy_lab_core_2026_05_15_strict_reactions.zip",
+  "release_tag": "strategy-lab-core-2026-05-15-strict-reactions",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_15_strict_reactions.zip",
+  "size_bytes": 1133197285,
+  "sha256": "c157331b4377fb1b06a32c84854bd0a3d97207f2ecd9cebfc6307166b7adf17a",
+  "generated_utc": "2026-05-15T19:15:24.729391+00:00",
   "generated_local_date": "2026-05-15",
   "asset_universe": {
     "universe_id": "futures_core_v1",
     "dataset_fingerprint": "1e4a60b6829bcc09178de52f64f60894b6b55b2b66d878cd3c36ee01fe06a622",
-    "generated_utc": "2026-05-15T13:32:37+00:00",
+    "generated_utc": "2026-05-15T19:14:26+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -60,6 +60,14 @@
       "rows": 209339,
       "feature_column_count": 1969,
       "label_column_count": 109
+    },
+    {
+      "name": "fvg_xctx_fvggeom_obgeom_strict",
+      "matrix": "data/ml/anchors/fvg_snapshots_xctx_fvggeom_obgeom_strict.parquet",
+      "schema": "data/ml/anchors/fvg_snapshots_xctx_fvggeom_obgeom_strict.schema.json",
+      "rows": 209339,
+      "feature_column_count": 1969,
+      "label_column_count": 133
     },
     {
       "name": "sweep_xctx_fvggeom",

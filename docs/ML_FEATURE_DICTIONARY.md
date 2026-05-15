@@ -1,13 +1,13 @@
 # ML Feature Dictionary
 
-_Generated `2026-05-15T13:28:27.931206+00:00`._
+_Generated `2026-05-15T19:10:29.228680+00:00`._
 
 This is the database map. It explains column families, which matrices use them, and which parts are features versus labels.
 
 ## Totals
 
 - Phase 1 feature matrices: `16`
-- Snapshot matrices: `50`
+- Snapshot matrices: `51`
 - Column families: `35`
 
 ## Column Families
@@ -15,26 +15,26 @@ This is the database map. It explains column families, which matrices use them, 
 | Prefix | Family | Datasets | Column refs | Meaning |
 |---|---|---|---|---|
 | `(root)` | raw_metadata | 19 | 162 | Top-level event identifiers, timestamp pieces, side, symbol, and event type. |
-| `anchor.` | anchor_metadata | 49 | 330 | Anchor event identifiers and raw event-time metadata. |
-| `asof.` | snapshot_metadata | 49 | 239 | Snapshot identity, cutoff timestamp, and label window timestamps. |
+| `anchor.` | anchor_metadata | 50 | 337 | Anchor event identifiers and raw event-time metadata. |
+| `asof.` | snapshot_metadata | 50 | 244 | Snapshot identity, cutoff timestamp, and label window timestamps. |
 | `ctx.` | raw_context | 16 | 58 | Flattened detector context fields captured at event creation. |
 | `disp.` | displacement_event_time | 1 | 29 | Filtered displacement-candle event-time fields knowable at detector fire. |
 | `ed.` | raw_event_data | 16 | 500 | Flattened detector payload from the original event. Safe only when the event is already knowable. |
 | `eql.` | equal_levels_event_time | 1 | 24 | Filtered equal-level fields knowable after the confirming pivot is knowable. |
 | `ft.` | first_third_event_time | 1 | 25 | Filtered first-third range fields knowable after the first-third window closes. |
-| `fvg.` | fvg_event_time | 4 | 120 | Filtered FVG event-time fields knowable at detector fire. |
-| `fvggeom.` | fvg_geometry_context | 12 | 5,412 | State-aware nearest FVG zone geometry known by the snapshot cutoff. |
+| `fvg.` | fvg_event_time | 5 | 150 | Filtered FVG event-time fields knowable at detector fire. |
+| `fvggeom.` | fvg_geometry_context | 13 | 5,863 | State-aware nearest FVG zone geometry known by the snapshot cutoff. |
 | `fvp.` | forming_volume_profile_event_time | 4 | 216 | Filtered forming volume-profile fields knowable at the as-of snapshot cutoff. |
 | `gapctx.` | opening_gap_memory_context | 7 | 1,386 | State-aware nearest NDOG/NWOG memory levels known by the snapshot cutoff. |
 | `itr.` | interval_true_range_event_time | 2 | 168 | Completed daily/weekly/session interval range fields known after the interval closes. |
-| `label.` | forward_label | 47 | 7,994 | Forward prediction targets. These must never be fed back as model features. |
+| `label.` | forward_label | 48 | 8,127 | Forward prediction targets. These must never be fed back as model features. |
 | `liqgeom.` | swing_equal_level_geometry_context | 7 | 7,063 | State-aware nearest swing/equal-high/equal-low liquidity levels known by the snapshot cutoff. |
 | `macro.` | macro_event_time | 2 | 102 | Scheduled macro-event fields known before release plus pre-release market context. |
 | `next_15m.` | unregistered | 1 | 36 | No explicit registry description yet; inspect the owning detector/schema. |
 | `next_5m.` | unregistered | 1 | 3 | No explicit registry description yet; inspect the owning detector/schema. |
 | `next_60m.` | unregistered | 1 | 9 | No explicit registry description yet; inspect the owning detector/schema. |
 | `ob.` | order_block_event_time | 2 | 86 | Filtered order-block event-time fields knowable at detector fire. |
-| `obgeom.` | order_block_geometry_context | 14 | 9,254 | State-aware nearest order-block zone geometry known by the snapshot cutoff. |
+| `obgeom.` | order_block_geometry_context | 15 | 9,915 | State-aware nearest order-block zone geometry known by the snapshot cutoff. |
 | `oc.` | raw_outcomes | 16 | 2,354 | Flattened forward outcomes. These are labels or diagnostics, not model features unless explicitly converted. |
 | `ogap.` | opening_gap_event_time | 7 | 154 | Filtered NDOG/NWOG level fields knowable at the new day/week open. |
 | `orb.` | opening_range_event_time | 1 | 25 | Filtered opening-range fields knowable after the range window closes. |
@@ -45,10 +45,10 @@ This is the database map. It explains column families, which matrices use them, 
 | `sweep.` | sweep_event_time | 6 | 162 | Filtered liquidity-sweep event-time fields knowable at detector fire. |
 | `swing.` | swing_pivot_event_time | 1 | 22 | Filtered swing-pivot fields knowable after right-side confirmation bars. |
 | `tp.` | time_profile_event_time | 4 | 124 | Filtered time-profile fields knowable after the parent period closes. |
-| `ts.` | time | 47 | 188 | Calendar features computed from the snapshot timestamp. |
+| `ts.` | time | 48 | 192 | Calendar features computed from the snapshot timestamp. |
 | `vp.` | volume_profile_event_time | 3 | 150 | Filtered volume-profile fields knowable after the parent period closes. |
-| `xctx.` | cross_concept_context | 30 | 21,780 | Generated cross-concept prior-event counts, flags, and age features. |
-| `xd.` | prior_cross_detector | 63 | 847 | Coarse Phase 1 flags for prior detector events before anchor fire. |
+| `xctx.` | cross_concept_context | 31 | 22,588 | Generated cross-concept prior-event counts, flags, and age features. |
+| `xd.` | prior_cross_detector | 64 | 862 | Coarse Phase 1 flags for prior detector events before anchor fire. |
 
 ## Phase 1 Feature Matrices
 
@@ -82,6 +82,7 @@ This is the database map. It explains column families, which matrices use them, 
 | `fvg_snapshots_xctx` | `fvg` | 209,339 | 978 | 857 | 109 |
 | `fvg_snapshots_xctx_fvggeom` | `fvg` | 209,339 | 1,429 | 1,308 | 109 |
 | `fvg_snapshots_xctx_fvggeom_obgeom` | `fvg` | 209,339 | 2,090 | 1,969 | 109 |
+| `fvg_snapshots_xctx_fvggeom_obgeom_strict` | `fvg` | 209,339 | 2,114 | 1,969 | 133 |
 | `forming_vp_snapshots` | `fvp` | 43,150 | 592 | 73 | 507 |
 | `forming_vp_snapshots_xctx` | `fvp` | 43,150 | 1,388 | 869 | 507 |
 | `forming_vp_snapshots_xctx_gapctx` | `fvp` | 43,150 | 1,586 | 1,067 | 507 |
