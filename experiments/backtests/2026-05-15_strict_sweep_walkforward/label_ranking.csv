@@ -1,0 +1,13 @@
+label,side,years_ok,mean_auc,mean_base,mean_top10_prec,min_top10_prec,mean_top10_edge,min_top10_edge,total_top10_signals,verdict
+label.strict.next_60m.sweep_failed_recovered,low,6,0.9082,0.2705,0.8270,0.7440,0.5564,0.5177,1315,FLUKE (2/6 >= 0.85)
+label.strict.next_60m.sweep_failed_recovered,all,6,0.9018,0.2419,0.7752,0.7128,0.5332,0.4821,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_60m.sweep_failed_recovered,high,6,0.9088,0.2193,0.7744,0.7137,0.5551,0.4912,1557,FLUKE (0/6 >= 0.85)
+label.strict.next_240m.sweep_failed_recovered,all,6,0.8564,0.2558,0.6799,0.6054,0.4241,0.3679,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_60m.sweep_succeeded_held_rejection,all,6,0.8923,0.1435,0.5231,0.4948,0.3796,0.3598,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_240m.sweep_succeeded_held_rejection,all,6,0.8236,0.1718,0.4546,0.4147,0.2828,0.2451,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_240m.sweep_failed_immediately,all,6,0.7298,0.1985,0.4461,0.3967,0.2476,0.2015,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_60m.sweep_failed_immediately,all,6,0.7285,0.1983,0.4440,0.3946,0.2457,0.1995,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_240m.sweep_extended_continuation,all,6,0.7222,0.1117,0.2719,0.1965,0.1601,0.0787,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_240m.sweep_partial_retest_rejected,all,6,0.7588,0.0909,0.2140,0.1944,0.1231,0.1027,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_60m.sweep_extended_continuation,all,6,0.7984,0.0648,0.2078,0.1685,0.1429,0.1026,2872,FLUKE (0/6 >= 0.85)
+label.strict.next_60m.sweep_partial_retest_rejected,all,6,0.8269,0.0576,0.1900,0.1274,0.1323,0.0733,2872,FLUKE (0/6 >= 0.85)

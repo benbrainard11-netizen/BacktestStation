@@ -1,0 +1,11 @@
+{
+  "test_year": 2025,
+  "raw_picks": 879,
+  "unique_date_symbol_combos": 380,
+  "consensus_counts": {
+    "1": 214,
+    "2": 160,
+    "3": 6
+  },
+  "generated_at": "2026-05-16T00:03:32.218196+00:00"
+}
