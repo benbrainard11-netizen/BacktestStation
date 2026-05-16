@@ -146,7 +146,12 @@ def _excluded(path: Path, root: Path, excludes: Iterable[str]) -> bool:
 
 def _matches(path: Path, root: Path, patterns: Iterable[str]) -> bool:
     rel = _posix(path.relative_to(root))
-    return any(fnmatch.fnmatch(rel, pattern) for pattern in patterns)
+    for pattern in patterns:
+        if fnmatch.fnmatch(rel, pattern):
+            return True
+        if pattern.startswith("**/") and fnmatch.fnmatch(rel, pattern[3:]):
+            return True
+    return False
 
 
 def _sha256(path: Path) -> str:

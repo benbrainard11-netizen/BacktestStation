@@ -13,6 +13,8 @@ def test_enumerate_artifacts_builds_stable_r2_keys(tmp_path: Path) -> None:
     matrix = root / "data" / "ml" / "anchors" / "matrix.parquet"
     matrix.parent.mkdir(parents=True)
     matrix.write_bytes(b"parquet-ish")
+    manifest = root / "data" / "ml" / "manifest.json"
+    manifest.write_text("{}", encoding="utf-8")
     excluded = root / "data" / "ml" / "tmp_patch" / "scratch.parquet"
     excluded.parent.mkdir(parents=True)
     excluded.write_bytes(b"skip")
@@ -33,6 +35,7 @@ def test_enumerate_artifacts_builds_stable_r2_keys(tmp_path: Path) -> None:
     assert missing == 0
     assert [a.r2_key for a in artifacts] == [
         "data/ml/anchors/matrix.parquet",
+        "data/ml/manifest.json",
         "exports/strategy_lab.zip",
     ]
 
