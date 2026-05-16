@@ -71,3 +71,11 @@ Thumbs.db
 
 # Local machine-specific launcher.
 /start_server.ps1
+
+# Claude Code internal state (scheduler lock, etc).
+.claude/scheduled_tasks.lock
+
+# GPU run artifacts are tracked per-experiment under experiments/backtests/.
+# The /experiments/gpu_runs/ subtree was an earlier experiments layout that
+# we don't track anymore — keep on disk for reference, don't commit.
+/experiments/gpu_runs/
