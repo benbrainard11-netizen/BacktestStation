@@ -1,0 +1,15 @@
+{
+  "n_fx_symbols_tested": 7,
+  "n_fx_symbols_positive": 5,
+  "n_fx_symbols_robust": 5,
+  "n_fx_symbols_solid_and_robust": 5,
+  "solid_robust_symbols": [
+    "6N.c.0",
+    "6C.c.0",
+    "6E.c.0",
+    "6B.c.0",
+    "6A.c.0"
+  ],
+  "total_fx_cum_r": 83.9262,
+  "verdict": "FX EDGE CONFIRMED \u2014 multiple stable contributors"
+}

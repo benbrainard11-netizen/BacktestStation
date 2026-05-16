@@ -1,0 +1,12 @@
+2026-05-16 10:47:22,160 [INFO] device=cuda xgb=3.2.0
+2026-05-16 10:47:22,161 [INFO] configs to verify: 8
+2026-05-16 10:47:22,287 [INFO] loaded ob_snapshots_xctx_strict.parquet: rows=46,331 cols=898
+2026-05-16 10:47:37,226 [INFO]   [1/8]      all|label.strict.next_60m.ob_broken_through_continuation         AUC GPU=0.797 CPU=0.797 d=-0.000 (15s)
+2026-05-16 10:47:46,627 [INFO]   [2/8]  bearish|label.strict.next_60m.ob_broken_through_continuation         AUC GPU=0.793 CPU=0.794 d=-0.001 (9s)
+2026-05-16 10:47:58,137 [INFO]   [3/8]      all|label.strict.next_60m.ob_swept_and_recovered                 AUC GPU=0.798 CPU=0.793 d=+0.005 (12s)
+2026-05-16 10:48:06,684 [INFO]   [4/8]  bullish|label.strict.next_60m.ob_broken_through_continuation         AUC GPU=0.784 CPU=0.785 d=-0.001 (9s)
+2026-05-16 10:48:14,221 [INFO]   [5/8]  bullish|label.strict.next_60m.ob_swept_and_recovered                 AUC GPU=0.787 CPU=0.781 d=+0.006 (8s)
+2026-05-16 10:48:28,327 [INFO]   [6/8]      all|label.strict.next_240m.ob_broken_through_continuation        AUC GPU=0.772 CPU=0.770 d=+0.002 (14s)
+2026-05-16 10:48:42,653 [INFO]   [7/8]      all|label.strict.next_60m.ob_failed_immediately                  AUC GPU=0.766 CPU=0.767 d=-0.001 (14s)
+2026-05-16 10:48:53,045 [INFO]   [8/8]  bearish|label.strict.next_240m.ob_broken_through_continuation        AUC GPU=0.767 CPU=0.766 d=+0.001 (10s)
+2026-05-16 10:48:53,045 [INFO] DONE in 1.5 min
