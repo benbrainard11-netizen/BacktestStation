@@ -1,0 +1,10 @@
+{
+  "no_slippage_cum_r": 12847.550085000647,
+  "1tick_cum_r": 10671.84531079873,
+  "2tick_cum_r": 8445.806656425071,
+  "survival_1tick": 0.8306521663813535,
+  "survival_2tick": 0.6573865523424146,
+  "verdict": "SURVIVES",
+  "elapsed_min": 39.4,
+  "generated_at": "2026-05-16T20:28:39.827078+00:00"
+}

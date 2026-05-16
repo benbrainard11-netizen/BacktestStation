@@ -1,0 +1,35 @@
+=== V12 — FVG slippage-realistic check ===
+output: C:\Users\benbr\BacktestStation\experiments\backtests\2026-05-16_v12_fvg_slippage
+
+Step 1: gather ALL FVG events...
+  all-event picks: 116,486
+
+Step 2: simulate with 3 slippage scenarios...
+  [no_slippage              ] n=76234 cum_R=+12847.6 avg_R=+0.169 win%=0.498 DD= 93.4 yrs+=6/6
+  [1tick_entry_and_stop     ] n=76234 cum_R=+10671.8 avg_R=+0.140 win%=0.486 DD=118.6 yrs+=6/6
+  [2tick_entry_and_stop     ] n=76234 cum_R= +8445.8 avg_R=+0.111 win%=0.475 DD=147.8 yrs+=6/6
+
+=== Rollup ===
+            slippage  n_trades     cum_r  avg_r  win_rate  max_dd_r  years_positive
+         no_slippage     76234 12847.550  0.169     0.498    93.365               6
+1tick_entry_and_stop     76234 10671.845  0.140     0.486   118.595               6
+2tick_entry_and_stop     76234  8445.807  0.111     0.475   147.827               6
+
+=== Per-slippage per-year cum_R ===
+test_year              2020   2021   2022   2023   2024   2025   total
+slippage                                                              
+1tick_entry_and_stop 1766.8 1688.1 1849.3 1409.8 2183.1 1774.8 10671.8
+2tick_entry_and_stop 1419.6 1238.6 1584.6  939.7 1777.7 1485.7  8445.8
+no_slippage          2127.6 2135.6 2112.4 1845.2 2582.4 2044.3 12847.6
+
+=== DONE in 39.4 min ===
+{
+  "no_slippage_cum_r": 12847.550085000647,
+  "1tick_cum_r": 10671.84531079873,
+  "2tick_cum_r": 8445.806656425071,
+  "survival_1tick": 0.8306521663813535,
+  "survival_2tick": 0.6573865523424146,
+  "verdict": "SURVIVES",
+  "elapsed_min": 39.4,
+  "generated_at": "2026-05-16T20:28:39.827078+00:00"
+}
