@@ -1,0 +1,20 @@
+{
+  "n_configs": 60,
+  "n_positive": 60,
+  "n_robust": 11,
+  "best_by_years_pos": {
+    "config": "v5_stop2.0_tgt4.0_tw240",
+    "stop_mult": 2.0,
+    "target_mult": 4.0,
+    "trade_window_min": 240,
+    "n_trades": 629,
+    "cum_r": 95.10629579856729,
+    "win_rate": 0.47058823529411764,
+    "avg_r": 0.1512023780581356,
+    "max_dd": 34.27173913043484,
+    "years_positive": 5,
+    "years_total": 6
+  },
+  "elapsed_min": 7.3,
+  "generated_at": "2026-05-16T02:01:09.341873+00:00"
+}

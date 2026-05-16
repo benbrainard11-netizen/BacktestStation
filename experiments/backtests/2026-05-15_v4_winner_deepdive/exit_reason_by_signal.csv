@@ -1,0 +1,4 @@
+signal,stop,target,time_exit,total
+ogap_gap_down_rejection,86,51,24,161
+ogap_gap_up_rejection,73,36,46,155
+ogap_strict_partial_touch,158,86,69,313

@@ -1,0 +1,22 @@
+{
+  "v5_winner": {
+    "config": "v5_winner_stop2.0_tgt4.0_tw240",
+    "n_trades": 629,
+    "cum_r": 95.10629579856729,
+    "win_rate": 0.47058823529411764,
+    "avg_r": 0.1512023780581356,
+    "max_dd_r": 68.54347826086962,
+    "years_positive": 5,
+    "years_total": 6
+  },
+  "v5_winner_no_ym": {
+    "n_trades": 552,
+    "cum_r": 109.884080223088,
+    "win_rate": 0.4891304347826087,
+    "avg_r": 0.19906536272298553,
+    "years_positive": 5,
+    "years_total": 6
+  },
+  "elapsed_min": 2.6,
+  "generated_at": "2026-05-16T02:05:00.314486+00:00"
+}

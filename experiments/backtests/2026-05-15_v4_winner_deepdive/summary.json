@@ -1,0 +1,13 @@
+{
+  "config": "v4_winner_stop1.5_tgt3.0_tw180",
+  "n_trades": 629,
+  "cum_r": 100.1514447514682,
+  "win_rate": 0.4356120826709062,
+  "avg_r": 0.15922328259374913,
+  "max_dd_r": 71.89855072463752,
+  "n_years_positive": 4,
+  "n_years_total": 6,
+  "n_symbols_positive": 2,
+  "elapsed_min": 2.5,
+  "generated_at": "2026-05-16T01:52:26.254551+00:00"
+}
