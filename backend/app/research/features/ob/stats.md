@@ -1,6 +1,6 @@
 # Order Block - Current Stats
 
-_Generated `2026-05-14T13:41:08+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-16T17:09:00+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -135,25 +135,25 @@ Zero-look-ahead snapshot models. These are safer for ML research than raw detect
 
 | Artifact | Side | Label | test n | base | AUC | top bucket | note |
 |---|---|---|---|---|---|---|---|
-| ob | all | `label.level_tags.open.wick_tapped` | 8,764 | 95.3% | 0.872 | 100.0% | imbalanced base rate |
-| ob | bearish | `label.level_tags.open.wick_tapped` | 4,679 | 96.2% | 0.868 | 100.0% | imbalanced base rate |
-| ob | bullish | `label.level_tags.open.wick_tapped` | 4,085 | 94.2% | 0.858 | 100.0% | imbalanced base rate |
-| ob | bearish | `label.level_tags.q25.wick_tapped` | 4,679 | 95.6% | 0.858 | 99.8% | imbalanced base rate |
-| ob | all | `label.level_tags.q25.wick_tapped` | 8,764 | 94.5% | 0.850 | 99.4% | imbalanced base rate |
-| ob | bearish | `label.level_tags.q50.wick_tapped` | 4,679 | 94.9% | 0.841 | 100.0% | imbalanced base rate |
-| ob | bullish | `label.level_tags.q25.wick_tapped` | 4,085 | 93.2% | 0.830 | 99.5% | imbalanced base rate |
-| ob | all | `label.level_tags.q50.wick_tapped` | 8,764 | 93.3% | 0.817 | 99.9% | imbalanced base rate |
-| ob | bearish | `label.level_tags.q75.wick_tapped` | 4,679 | 94.0% | 0.808 | 99.8% | imbalanced base rate |
-| ob | bullish | `label.level_tags.q50.wick_tapped` | 4,085 | 91.6% | 0.791 | 99.0% | imbalanced base rate |
+| ob_snapshot_leaderboard_strict_context.parquet | bullish | `label.strict.next_60m.ob_swept_and_recovered` | 4,085 | 5.5% | 0.811 | 21.3% | imbalanced base rate |
+| ob_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_60m.ob_broken_through_continuation` | 8,764 | 19.5% | 0.803 | 57.1% |  |
+| ob_snapshot_leaderboard_strict_context.parquet | bearish | `label.strict.next_60m.ob_broken_through_continuation` | 4,679 | 20.6% | 0.803 | 59.8% |  |
+| ob_snapshot_leaderboard_strict_context.parquet | bullish | `label.strict.next_60m.ob_broken_through_continuation` | 4,085 | 18.2% | 0.792 | 55.7% |  |
+| ob_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_60m.ob_swept_and_recovered` | 8,764 | 5.4% | 0.790 | 18.7% | imbalanced base rate |
+| ob_snapshot_leaderboard_strict_context.parquet | bearish | `label.strict.next_240m.ob_broken_through_continuation` | 4,679 | 39.6% | 0.776 | 75.6% |  |
+| ob_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_240m.ob_broken_through_continuation` | 8,764 | 38.3% | 0.776 | 77.7% |  |
+| ob_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_60m.ob_failed_immediately` | 8,764 | 31.9% | 0.771 | 66.5% |  |
+| ob_snapshot_leaderboard_strict_context.parquet | bullish | `label.strict.next_240m.ob_broken_through_continuation` | 4,085 | 36.7% | 0.770 | 77.0% |  |
+| ob_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_240m.ob_failed_immediately` | 8,764 | 32.1% | 0.770 | 65.8% |  |
 
 ## Reading
 
-Strong ranking signal, but the best label is very imbalanced. Keep it, but design harder labels.
+Good standalone signal.
 
 ## Source Artifacts
 
 | Artifact | Path |
 |---|---|
 | Feature matrix | `data/ml/features/ob.parquet` |
-| Model summary | `docs/ML_SNAPSHOT_LEADERBOARD_OB.md` |
+| Model summary | `docs/ML_SNAPSHOT_LEADERBOARD_OB_STRICT_CONTEXT.md` |
 | Dataset catalog | `docs/ML_DATASET_CATALOG.md` |

@@ -1,16 +1,16 @@
 {
-  "current_package": "strategy_lab_core_2026_05_15_strict_swing_pivot",
-  "zip_name": "strategy_lab_core_2026_05_15_strict_swing_pivot.zip",
-  "release_tag": "strategy-lab-core-2026-05-15-strict-swing-pivot",
-  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_15_strict_swing_pivot.zip",
-  "size_bytes": 1219799643,
-  "sha256": "487b56dc828b86878a39396d8c6748fe5e7445001ec5c8b552eda3a30e978cb1",
-  "generated_utc": "2026-05-16T01:38:13.830408+00:00",
+  "current_package": "strategy_lab_core_2026_05_16_strict_order_block",
+  "zip_name": "strategy_lab_core_2026_05_16_strict_order_block.zip",
+  "release_tag": "strategy-lab-core-2026-05-16-strict-order-block",
+  "source_machine_path": "C:\\Users\\benbr\\BacktestStation\\exports\\strategy_lab_core_2026_05_16_strict_order_block.zip",
+  "size_bytes": 1250360308,
+  "sha256": "7cf914b02c5219ac47da2b35a23cbdb63dd8d02001374fc353bde3e969734837",
+  "generated_utc": "2026-05-16T17:18:09.559415+00:00",
   "generated_local_date": "2026-05-16",
   "asset_universe": {
     "universe_id": "futures_core_v1",
     "dataset_fingerprint": "5dc94d3b12dccb4f928d99d83bbf8fd9610e79d107475aad063045973f9566e1",
-    "generated_utc": "2026-05-16T01:36:13+00:00",
+    "generated_utc": "2026-05-16T17:17:51+00:00",
     "active_symbols": [
       "ES.c.0",
       "NQ.c.0",
@@ -38,7 +38,7 @@
     ],
     "research_events": 710224,
     "feature_matrix_count": 16,
-    "anchor_artifact_count": 309,
+    "anchor_artifact_count": 318,
     "warnings": [
       "Warehouse contains symbols not present in current research/ML universe: ESM6, NQM6, RTY.c.0, RTYM6, YMM6",
       "DB datasets registry is empty; manifest used direct warehouse path scan."
@@ -220,6 +220,14 @@
       "rows": 76786,
       "feature_column_count": 37,
       "label_column_count": 39
+    },
+    {
+      "name": "ob_xctx_strict",
+      "matrix": "data/ml/anchors/ob_snapshots_xctx_strict.parquet",
+      "schema": "data/ml/anchors/ob_snapshots_xctx_strict.schema.json",
+      "rows": 46331,
+      "feature_column_count": 650,
+      "label_column_count": 236
     },
     {
       "name": "macro_xctx",

@@ -15,7 +15,7 @@ Each feature folder can have two files:
 | `fvg` | [guide](fvg/README.md) | [stats](fvg/stats.md) | FVG Formation | 209,339 | 169 | 100.0% | 0.891 | `label.zone_reaction.took_fvg_high` | Strong ranking signal, but the best label is very imbalanced. Keep it, but design harder labels. |
 | `itr` | [guide](itr/README.md) | [stats](itr/stats.md) | ITR - Interval True Range | 36,095 | 172 | 100.0% | 0.818 | `label.next_interval.range_expanded_2x_interval` | Good standalone signal. |
 | `macro` | [guide](macro/README.md) | [stats](macro/stats.md) | Scheduled Macro Events | 18,414 | 468 | 100.0% | 0.927 | `label.next_15m.range_expanded_2x_pre_60m` | Strong ranking signal, but the best label is very imbalanced. Keep it, but design harder labels. |
-| `ob` | [guide](ob/README.md) | [stats](ob/stats.md) | Order Block | 46,331 | 297 | 100.0% | 0.872 | `label.level_tags.open.wick_tapped` | Strong ranking signal, but the best label is very imbalanced. Keep it, but design harder labels. |
+| `ob` | [guide](ob/README.md) | [stats](ob/stats.md) | Order Block | 46,331 | 297 | 100.0% | 0.811 | `label.strict.next_60m.ob_swept_and_recovered` | Good standalone signal. |
 | `ogap` | [guide](ogap/README.md) | [stats](ogap/stats.md) | Opening Gap Levels | 9,438 | 487 | 100.0% | 0.850 | `label.next_240m.unfilled_at_window_end` | Strong standalone signal. |
 | `orb` | [guide](orb/README.md) | [stats](orb/stats.md) | Opening Range Breakout | 34,040 | 99 | 100.0% | 0.704 | `label.broke_only_low` | Useful context signal, but not top-tier standalone. |
 | `psp` | [guide](psp/README.md) | [stats](psp/stats.md) | PSP Candle Divergence | 15,827 | 88 | 100.0% | 0.514 | `label.majority_reaction.all_rolled` | Weak signal in the current label setup. |

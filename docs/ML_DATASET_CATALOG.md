@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-16T01:16:03.917597+00:00`._
+_Generated `2026-05-16T17:15:10.873863+00:00`._
 
 ## Summary
 
@@ -145,12 +145,21 @@ _Generated `2026-05-16T01:16:03.917597+00:00`._
 | macro_snapshot_walk_forward_summary_xctx.parquet | parquet | 10 | 18 | - | - |
 | ob_snapshot_leaderboard.csv | csv | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard.parquet | parquet | 39 | 30 | - | {"ok": 39} |
+| ob_snapshot_leaderboard_strict_context.csv | csv | 30 | 30 | - | {"ok": 30} |
+| ob_snapshot_leaderboard_strict_context.parquet | parquet | 30 | 30 | - | {"ok": 30} |
 | ob_snapshot_leaderboard_xctx.csv | csv | 39 | 30 | - | {"ok": 39} |
 | ob_snapshot_leaderboard_xctx.parquet | parquet | 39 | 30 | - | {"ok": 39} |
 | ob_snapshots.parquet | parquet | 46,331 | 296 | at_fire | - |
 | ob_snapshots.schema.json | json | 46,331 | - | at_fire | - |
 | ob_snapshots_xctx.parquet | parquet | 46,331 | 888 | at_fire | - |
 | ob_snapshots_xctx.schema.json | json | 46,331 | - | at_fire | - |
+| ob_snapshots_xctx_strict.parquet | parquet | 46,331 | 898 | at_fire | - |
+| ob_snapshots_xctx_strict.schema.json | json | 46,331 | - | at_fire | - |
+| ob_strict_label_stats.csv | csv | 450 | 6 | - | - |
+| ob_walk_forward_strict_context_folds.csv | csv | 48 | 33 | - | {"ok": 48} |
+| ob_walk_forward_strict_context_folds.parquet | parquet | 48 | 33 | - | {"ok": 48} |
+| ob_walk_forward_strict_context_summary.csv | csv | 8 | 18 | - | - |
+| ob_walk_forward_strict_context_summary.parquet | parquet | 8 | 18 | - | - |
 | opening_gap_age_decay.csv | csv | 21 | 33 | - | - |
 | opening_gap_snapshot_leaderboard_strict_context.csv | csv | 81 | 30 | - | {"ok": 75, "skip_train_imbalance": 5, "skip_test_imbalance": 1} |
 | opening_gap_snapshot_leaderboard_strict_context.parquet | parquet | 81 | 30 | - | {"ok": 75, "skip_train_imbalance": 5, "skip_test_imbalance": 1} |

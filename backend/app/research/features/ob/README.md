@@ -26,7 +26,9 @@ Sides are `bullish` and `bearish`.
 | Outcomes | `backend/app/research/outcomes/order_block_reactions.py` |
 | Feature matrix | `data/ml/features/ob.parquet` |
 | Snapshot matrix | `data/ml/anchors/ob_snapshots.parquet` |
+| Strict snapshot matrix | `data/ml/anchors/ob_snapshots_xctx_strict.parquet` |
 | Snapshot leaderboard | `docs/ML_SNAPSHOT_LEADERBOARD_OB.md` |
+| Strict label results | `docs/ML_OB_STRICT_LABEL_RESULTS.md` |
 | Tests | `backend/tests/test_order_block_*` |
 | Live stats | `./stats.md` |
 
@@ -46,4 +48,6 @@ Each tag can track wick touches and close-past behavior.
 
 ## ML note
 
-OB has strong ranking signal, but many near-touch labels have very high base rates. For future ML, prioritize harder labels: range-far taps, close-past behavior, and invalidation.
+OB has strong ranking signal, but many native near-touch labels have very high base rates. The stricter ML path is now `ob_snapshots_xctx_strict.parquet`, which adds true-clock-time labels for OB respect, break/continuation, immediate failure, and swept/recovered behavior.
+
+Current best strict signals are short-horizon: `next_60m.ob_broken_through_continuation` is the strongest broad label, while `next_60m.ob_swept_and_recovered` is the best rare label.

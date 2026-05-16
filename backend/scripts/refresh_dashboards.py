@@ -116,7 +116,8 @@ FEATURES: dict[str, FeatureDashboard] = {
             "oc.level_tags.range_far.wick_tapped",
             "oc.level_tags.open.wick_tapped",
         ),
-        leaderboard_files=("ob_snapshot_leaderboard.parquet",),
+        leaderboard_files=("ob_snapshot_leaderboard_strict_context.parquet",),
+        model_summary_doc="docs/ML_SNAPSHOT_LEADERBOARD_OB_STRICT_CONTEXT.md",
     ),
     "psp": FeatureDashboard(
         short_name="psp",
