@@ -1,0 +1,17 @@
+{
+  "signals": [
+    "ogap_gap_down_rejection",
+    "ogap_gap_up_rejection",
+    "ogap_strict_partial_touch"
+  ],
+  "test_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "elapsed_min": 0.7,
+  "generated_at": "2026-05-16T07:39:13.114158+00:00"
+}
