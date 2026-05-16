@@ -89,7 +89,48 @@ $env:BS_R2_ENDPOINT   # should print: https://<account>.r2.cloudflarestorage.com
 $env:BS_R2_ACCESS_KEY # should print the access key
 ```
 
-If all three print, you're done with manual setup. Tell me, and I'll run the uploader smoke test.
+If all three print, you're done with manual setup. Tell me, and I'll run the uploader smoke tests.
+
+## Step 9 - Upload the data lake
+
+The bucket is one private home, but it uses separate prefixes:
+
+- `raw/databento/` and `processed/bars/` for validated warehouse partitions.
+- `data/research_events/` for parquet snapshots of the research event DB.
+- `data/ml/` for feature matrices, anchor matrices, catalogs, and model outputs.
+- `exports/` for exact strategy-lab zip packages.
+- `experiments/` for optional backtest/GPU result artifacts.
+
+Raw/bars warehouse mirror:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.r2_upload --dry-run
+python -m app.ingest.r2_upload
+```
+
+Research events should be exported to parquet before sharing:
+
+```powershell
+cd C:\Users\benbr\BacktestStation
+python backend\scripts\ml\export_research_events_parquet.py --force
+```
+
+ML/research artifacts:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.r2_artifacts --profile core --dry-run
+python -m app.ingest.r2_artifacts --profile core
+```
+
+Optional experiment outputs:
+
+```powershell
+python -m app.ingest.r2_artifacts --profile experiments
+```
+
+See `docs/CLOUD_DATA_LAKE.md` for the full bucket layout and machine roles.
 
 ## What to send Husky later (after Phase 4 lands)
 
