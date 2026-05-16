@@ -132,7 +132,11 @@ FEATURES: dict[str, FeatureDashboard] = {
         title="Swing Pivot",
         description="Confirmed swing highs/lows used as liquidity-map levels.",
         primary_labels=("oc.breakout.wick_taken", "oc.breakout.close_taken"),
-        leaderboard_files=("swing_snapshot_leaderboard.parquet",),
+        leaderboard_files=(
+            "swing_snapshot_leaderboard.parquet",
+            "swing_snapshot_leaderboard_strict_context.parquet",
+        ),
+        model_summary_doc="docs/ML_SNAPSHOT_LEADERBOARD_SWING_STRICT_CONTEXT.md",
     ),
     "eql": FeatureDashboard(
         short_name="eql",

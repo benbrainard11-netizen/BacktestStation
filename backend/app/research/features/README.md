@@ -21,7 +21,7 @@ Each feature folder can have two files:
 | `psp` | [guide](psp/README.md) | [stats](psp/stats.md) | PSP Candle Divergence | 15,827 | 88 | 100.0% | 0.514 | `label.majority_reaction.all_rolled` | Weak signal in the current label setup. |
 | `smt` | [guide](smt/README.md) | [stats](smt/stats.md) | SMT - HTF Reference Divergence | 2,891 | 121 | 100.0% | 0.910 | `label.n1_thesis_confirmed_strict` | Strong standalone signal. |
 | `sweep` | [guide](sweep/README.md) | [stats](sweep/stats.md) | Liquidity Sweep | 52,946 | 155 | 100.0% | 0.894 | `label.ob_confirmation.did_confirm` | Strong ranking signal, but the best label is very imbalanced. Keep it, but design harder labels. |
-| `swing` | [guide](swing/README.md) | [stats](swing/stats.md) | Swing Pivot | 76,786 | 73 | 100.0% | 0.668 | `label.breakout.wick_taken` | Useful context signal, but not top-tier standalone. |
+| `swing` | [guide](swing/README.md) | [stats](swing/stats.md) | Swing Pivot | 76,786 | 73 | 100.0% | 0.805 | `label.strict.next_60m.pivot_broken_through_continuation` | Good standalone signal. |
 | `tp` | [guide](tp/README.md) | [stats](tp/stats.md) | Time Profile | 19,414 | 84 | 100.0% | 0.766 | `label.next_period.took_parent_high` | Good standalone signal. |
 | `vp` | [guide](vp/README.md) | [stats](vp/stats.md) | Volume Profile | 36,095 | 212 | 100.0% | 0.961 | `label.vwap_1sd_low_touch.wicked_above` | Strong ranking signal, but the best label is very imbalanced. Keep it, but design harder labels. |
 | `pre10` | [guide](pre10/README.md) | [stats](pre10/stats.md) | Pre10 | 19 | 47 | - | - | - | Labeled trade outcome dataset found. |

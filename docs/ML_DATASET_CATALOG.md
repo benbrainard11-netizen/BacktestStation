@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-15T22:00:03.754665+00:00`._
+_Generated `2026-05-16T01:16:03.917597+00:00`._
 
 ## Summary
 
@@ -302,8 +302,17 @@ _Generated `2026-05-15T22:00:03.754665+00:00`._
 | sweep_walk_forward_xctx_top9_summary.parquet | parquet | 9 | 18 | - | - |
 | swing_snapshot_leaderboard.csv | csv | 6 | 30 | - | {"ok": 6} |
 | swing_snapshot_leaderboard.parquet | parquet | 6 | 30 | - | {"ok": 6} |
+| swing_snapshot_leaderboard_strict_context.csv | csv | 30 | 30 | - | {"ok": 30} |
+| swing_snapshot_leaderboard_strict_context.parquet | parquet | 30 | 30 | - | {"ok": 30} |
 | swing_snapshots.parquet | parquet | 76,786 | 78 | at_fire | - |
 | swing_snapshots.schema.json | json | 76,786 | - | at_fire | - |
+| swing_snapshots_strict.parquet | parquet | 76,786 | 88 | at_fire | - |
+| swing_snapshots_strict.schema.json | json | 76,786 | - | at_fire | - |
+| swing_strict_label_stats.csv | csv | 180 | 6 | - | - |
+| swing_walk_forward_strict_context_folds.csv | csv | 48 | 33 | - | {"ok": 48} |
+| swing_walk_forward_strict_context_folds.parquet | parquet | 48 | 33 | - | {"ok": 48} |
+| swing_walk_forward_strict_context_summary.csv | csv | 8 | 18 | - | - |
+| swing_walk_forward_strict_context_summary.parquet | parquet | 8 | 18 | - | - |
 | tp_snapshot_leaderboard.csv | csv | 18 | 30 | - | {"ok": 18} |
 | tp_snapshot_leaderboard.parquet | parquet | 18 | 30 | - | {"ok": 18} |
 | tp_snapshot_leaderboard_xctx.csv | csv | 18 | 30 | - | {"ok": 18} |

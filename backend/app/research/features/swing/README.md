@@ -28,7 +28,10 @@ Sides are `high` and `low`.
 | Outcomes | `backend/app/research/outcomes/swing_pivot_reactions.py` |
 | Feature matrix | `data/ml/features/swing.parquet` |
 | Snapshot matrix | `data/ml/anchors/swing_snapshots.parquet` |
-| Snapshot leaderboard | `docs/ML_SNAPSHOT_LEADERBOARD_SWING.md` |
+| Strict snapshot matrix | `data/ml/anchors/swing_snapshots_strict.parquet` |
+| Strict label definitions | `docs/ML_SWING_STRICT_LABELS.md` |
+| Strict result summary | `docs/ML_SWING_STRICT_LABEL_RESULTS.md` |
+| Snapshot leaderboard | `docs/ML_SNAPSHOT_LEADERBOARD_SWING_STRICT_CONTEXT.md` |
 | Tests | `backend/tests/test_swing_pivot.py` |
 | Live stats | `./stats.md` |
 
@@ -39,6 +42,14 @@ The swing outcome computer records:
 - `oc.breakout.wick_taken` - price wicked through the pivot level.
 - `oc.breakout.close_taken` - price closed beyond the pivot level.
 
+The strict snapshot matrix also adds true-clock-time labels for:
+
+- pivot held/rejection
+- pivot break/continuation
+- partial test/rejection
+- immediate pivot failure
+- double-test held
+
 ## ML note
 
-For no-look-ahead ML, use `ed.knowable_ts_utc` or the generated snapshot matrix. Swing pivots are useful context, but current standalone model strength is moderate.
+For no-look-ahead ML, use `ed.knowable_ts_utc` or the generated snapshot matrix. The current strongest swing target is strict pivot break/continuation, especially over the next 60 minutes after the pivot becomes knowable.

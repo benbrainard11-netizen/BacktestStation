@@ -56,6 +56,30 @@ def _is_binary_label(s: pd.Series) -> bool:
     return unique.issubset({0.0, 1.0})
 
 
+def _labels_for_side(labels: list[str], side: str) -> list[str]:
+    """Drop SMT side-specific alias targets when thesis labels are present.
+
+    For SMT, high-side thesis confirmation is equivalent to taking period N's
+    low; low-side thesis confirmation is equivalent to taking period N's high.
+    Keeping both in automatic tournaments double-counts the same target.
+    """
+    out = list(labels)
+    alias_by_side = {
+        "high": {
+            "label.n1_primary_took_period_n_low": "label.n1_thesis_confirmed_strict",
+            "label.n2_primary_took_period_n_low": "label.n2_thesis_confirmed_strict",
+        },
+        "low": {
+            "label.n1_primary_took_period_n_high": "label.n1_thesis_confirmed_strict",
+            "label.n2_primary_took_period_n_high": "label.n2_thesis_confirmed_strict",
+        },
+    }
+    for alias, preferred in alias_by_side.get(side, {}).items():
+        if alias in out and preferred in out:
+            out.remove(alias)
+    return out
+
+
 def _top_bucket_mask(proba: np.ndarray, pct: float) -> np.ndarray:
     top_n = max(1, int(np.ceil(len(proba) * pct)))
     top_idx = np.argsort(-proba)[:top_n]
@@ -483,11 +507,15 @@ def main() -> int:
         raise ValueError("no binary labels found for leaderboard")
 
     results: list[dict[str, Any]] = []
-    total = len(args.snapshots) * len(args.sides) * len(labels)
+    total = sum(
+        len(_labels_for_side(labels, side))
+        for _snapshot in args.snapshots
+        for side in args.sides
+    )
     done = 0
     for snapshot in args.snapshots:
         for side in args.sides:
-            for label in labels:
+            for label in _labels_for_side(labels, side):
                 done += 1
                 print(f"[{done}/{total}] {snapshot}/{side}/{label}")
                 results.append(

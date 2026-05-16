@@ -1,6 +1,6 @@
 # Swing Pivot - Current Stats
 
-_Generated `2026-05-14T13:41:13+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-16T01:10:50+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -108,21 +108,25 @@ Zero-look-ahead snapshot models. These are safer for ML research than raw detect
 
 | Artifact | Side | Label | test n | base | AUC | top bucket | note |
 |---|---|---|---|---|---|---|---|
-| swing | all | `label.breakout.wick_taken` | 14,740 | 69.8% | 0.668 | 85.3% |  |
-| swing | high | `label.breakout.wick_taken` | 7,406 | 74.8% | 0.666 | 86.6% |  |
-| swing | low | `label.breakout.wick_taken` | 7,334 | 64.7% | 0.647 | 79.8% |  |
-| swing | high | `label.breakout.close_taken` | 7,406 | 68.6% | 0.639 | 79.5% |  |
-| swing | all | `label.breakout.close_taken` | 14,740 | 61.8% | 0.626 | 75.6% |  |
-| swing | low | `label.breakout.close_taken` | 7,334 | 55.0% | 0.623 | 69.3% |  |
+| swing_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_60m.pivot_broken_through_continuation` | 14,747 | 5.2% | 0.805 | 18.9% | imbalanced base rate |
+| swing_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_240m.pivot_broken_through_continuation` | 14,747 | 18.1% | 0.804 | 47.7% |  |
+| swing_snapshot_leaderboard_strict_context.parquet | low | `label.strict.next_240m.pivot_broken_through_continuation` | 7,337 | 17.7% | 0.803 | 46.6% |  |
+| swing_snapshot_leaderboard_strict_context.parquet | high | `label.strict.next_240m.pivot_broken_through_continuation` | 7,410 | 18.5% | 0.799 | 47.2% |  |
+| swing_snapshot_leaderboard_strict_context.parquet | high | `label.strict.next_60m.pivot_broken_through_continuation` | 7,410 | 5.4% | 0.799 | 18.1% | imbalanced base rate |
+| swing_snapshot_leaderboard_strict_context.parquet | low | `label.strict.next_60m.pivot_broken_through_continuation` | 7,337 | 5.1% | 0.789 | 17.7% | imbalanced base rate |
+| swing_snapshot_leaderboard_strict_context.parquet | low | `label.strict.next_60m.pivot_failed_immediately` | 7,337 | 5.8% | 0.772 | 17.2% | imbalanced base rate |
+| swing_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_60m.pivot_failed_immediately` | 14,747 | 6.2% | 0.771 | 19.2% | imbalanced base rate |
+| swing_snapshot_leaderboard_strict_context.parquet | all | `label.strict.next_240m.pivot_failed_immediately` | 14,747 | 6.3% | 0.769 | 18.2% | imbalanced base rate |
+| swing_snapshot_leaderboard_strict_context.parquet | low | `label.strict.next_240m.pivot_failed_immediately` | 7,337 | 6.0% | 0.765 | 18.8% | imbalanced base rate |
 
 ## Reading
 
-Useful context signal, but not top-tier standalone.
+Good standalone signal.
 
 ## Source Artifacts
 
 | Artifact | Path |
 |---|---|
 | Feature matrix | `data/ml/features/swing.parquet` |
-| Model summary | `docs/ML_SNAPSHOT_LEADERBOARD_SWING.md` |
+| Model summary | `docs/ML_SNAPSHOT_LEADERBOARD_SWING_STRICT_CONTEXT.md` |
 | Dataset catalog | `docs/ML_DATASET_CATALOG.md` |

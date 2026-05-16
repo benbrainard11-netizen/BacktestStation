@@ -1,6 +1,6 @@
 # ML Model Result Index
 
-_Generated `2026-05-15T21:57:38.124640+00:00`._
+_Generated `2026-05-16T01:17:51.362897+00:00`._
 
 This file consolidates all saved leaderboard and walk-forward result parquet files.
 
@@ -71,6 +71,8 @@ This file consolidates all saved leaderboard and walk-forward result parquet fil
 | `sweep` | `xctx_fvggeom_obgeom_liqgeom_regime` | `leaderboard` | 105 |
 | `sweep` | `xctx_top9` | `walk_forward_summary` | 9 |
 | `swing` | `base` | `leaderboard` | 6 |
+| `swing` | `strict_context` | `leaderboard` | 30 |
+| `swing` | `strict_context` | `walk_forward_summary` | 8 |
 | `tp` | `base` | `leaderboard` | 18 |
 | `tp` | `base` | `walk_forward_summary` | 8 |
 | `tp` | `fvggeom` | `walk_forward_summary` | 10 |
