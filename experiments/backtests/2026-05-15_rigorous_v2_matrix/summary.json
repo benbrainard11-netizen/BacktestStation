@@ -1,0 +1,65 @@
+{
+  "configs": [
+    {
+      "name": "v1_baseline",
+      "description": "Same as v1 \u2014 sanity check",
+      "wait_for_confirmation": true,
+      "stop_atr_mult": 1.0,
+      "target_atr_mult": 2.0,
+      "require_consensus": false,
+      "excluded_signals": []
+    },
+    {
+      "name": "v2a_no_confirmation",
+      "description": "Skip confirmation; enter at close of fire_ts bar",
+      "wait_for_confirmation": false,
+      "stop_atr_mult": 1.0,
+      "target_atr_mult": 2.0,
+      "require_consensus": false,
+      "excluded_signals": []
+    },
+    {
+      "name": "v2b_wider_stop",
+      "description": "2 ATR stop, 2 ATR target (1:1 R:R)",
+      "wait_for_confirmation": true,
+      "stop_atr_mult": 2.0,
+      "target_atr_mult": 2.0,
+      "require_consensus": false,
+      "excluded_signals": []
+    },
+    {
+      "name": "v2c_consensus",
+      "description": "Require 2+ signal consensus on same date+symbol",
+      "wait_for_confirmation": true,
+      "stop_atr_mult": 1.0,
+      "target_atr_mult": 2.0,
+      "require_consensus": true,
+      "excluded_signals": []
+    },
+    {
+      "name": "v2d_no_smt",
+      "description": "Drop SMT signal (1-day mismatched to intraday rules)",
+      "wait_for_confirmation": true,
+      "stop_atr_mult": 1.0,
+      "target_atr_mult": 2.0,
+      "require_consensus": false,
+      "excluded_signals": [
+        "smt_pd_high_thesis"
+      ]
+    },
+    {
+      "name": "v3_consensus_widestop_no_drainers",
+      "description": "v2c + v2b + drop both drainers (SMT, sweep): require consensus on the 3 OGAP signals only, with 2 ATR stops",
+      "wait_for_confirmation": true,
+      "stop_atr_mult": 2.0,
+      "target_atr_mult": 2.0,
+      "require_consensus": true,
+      "excluded_signals": [
+        "smt_pd_high_thesis",
+        "sweep_failed_recovered_all"
+      ]
+    }
+  ],
+  "elapsed_min": 4.7,
+  "generated_at": "2026-05-16T01:31:47.439072+00:00"
+}
