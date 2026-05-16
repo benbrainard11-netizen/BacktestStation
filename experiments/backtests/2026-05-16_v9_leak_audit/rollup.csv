@@ -1,0 +1,5 @@
+variant,n_trades,cum_r,avg_r,win_rate,max_dd_r,years_positive
+A_model_correct,1706,608.6500,0.3568,0.5721,14.2890,6
+B_all_correct,16597,8389.7649,0.5055,0.6501,14.2775,6
+C_model_REVERSED,1706,-680.5727,-0.3989,0.2532,679.6732,0
+D_random_correct,1643,818.1122,0.4979,0.6488,6.4008,6

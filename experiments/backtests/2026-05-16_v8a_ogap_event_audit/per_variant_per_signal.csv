@@ -1,0 +1,16 @@
+variant,signal,n,cum_r,avg_r,win_rate
+A_model_consensus,ogap_gap_down_rejection,136,12.4303,0.0914,0.5221
+A_model_consensus,ogap_gap_up_rejection,141,27.6280,0.1959,0.6312
+A_model_consensus,ogap_strict_partial_touch,275,38.6646,0.1406,0.5745
+B_all_no_consensus,ogap_gap_down_rejection,1518,-27.7015,-0.0182,0.4671
+B_all_no_consensus,ogap_gap_up_rejection,1920,32.4714,0.0169,0.5250
+B_all_no_consensus,ogap_strict_partial_touch,3438,4.7699,0.0014,0.4994
+C_model_REVERSED,ogap_gap_down_rejection,136,-20.8881,-0.1536,0.3971
+C_model_REVERSED,ogap_gap_up_rejection,141,-14.6453,-0.1039,0.3262
+C_model_REVERSED,ogap_strict_partial_touch,275,-34.0184,-0.1237,0.3636
+D_random_consensus,ogap_gap_down_rejection,20,-1.8047,-0.0902,0.4500
+D_random_consensus,ogap_gap_up_rejection,28,-3.9731,-0.1419,0.3929
+D_random_consensus,ogap_strict_partial_touch,47,-5.5882,-0.1189,0.4255
+E_all_consensus,ogap_gap_down_rejection,1518,-27.7015,-0.0182,0.4671
+E_all_consensus,ogap_gap_up_rejection,1920,32.4714,0.0169,0.5250
+E_all_consensus,ogap_strict_partial_touch,3438,4.7699,0.0014,0.4994

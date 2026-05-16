@@ -1,0 +1,4 @@
+config,n_trades,win_rate,cum_r,avg_r,max_dd_r,dd_per_cum_r,years_positive
+v9b_ob_standalone,1706,0.5721,608.6500,0.3568,14.2890,0.0235,6
+v9c_v8a_plus_ob,783,0.5824,156.1208,0.1994,22.4534,0.1438,6
+v9a_v8a_replicate,552,0.5761,78.7229,0.1426,26.6726,0.3388,5

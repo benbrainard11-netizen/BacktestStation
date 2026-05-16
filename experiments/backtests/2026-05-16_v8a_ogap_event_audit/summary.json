@@ -1,0 +1,30 @@
+{
+  "A_model_consensus": {
+    "cum_r": 78.72286717476278,
+    "avg_r": 0.14261388980935286,
+    "n": 552
+  },
+  "B_all_no_consensus": {
+    "cum_r": 9.539818321706553,
+    "avg_r": 0.0013874081328834429,
+    "n": 6876
+  },
+  "C_model_REVERSED": {
+    "cum_r": -69.55177001984413,
+    "avg_r": -0.12599958336928285,
+    "n": 552
+  },
+  "D_random_consensus": {
+    "cum_r": -11.366022792099322,
+    "avg_r": -0.11964234517999287,
+    "n": 95
+  },
+  "E_all_consensus": {
+    "cum_r": 9.539818321706553,
+    "avg_r": 0.0013874081328834429,
+    "n": 6876
+  },
+  "verdict": "DIFFERENT FROM OB \u2014 model and/or consensus add real value on OGAP",
+  "elapsed_min": 3.5,
+  "generated_at": "2026-05-16T18:40:59.597771+00:00"
+}

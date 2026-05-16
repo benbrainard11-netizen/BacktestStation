@@ -1,0 +1,11 @@
+config,signal,n,cum_r,win_rate,avg_r
+v9a_v8a_replicate,ogap_gap_down_rejection,136,12.4303,0.5221,0.0914
+v9a_v8a_replicate,ogap_gap_up_rejection,141,27.6280,0.6312,0.1959
+v9a_v8a_replicate,ogap_strict_partial_touch,275,38.6646,0.5745,0.1406
+v9b_ob_standalone,ob_continuation_bearish,921,323.7894,0.5407,0.3516
+v9b_ob_standalone,ob_continuation_bullish,785,284.8606,0.6089,0.3629
+v9c_v8a_plus_ob,ob_continuation_bearish,111,41.3689,0.5315,0.3727
+v9c_v8a_plus_ob,ob_continuation_bullish,105,39.6983,0.6857,0.3781
+v9c_v8a_plus_ob,ogap_gap_down_rejection,144,12.2170,0.5278,0.0848
+v9c_v8a_plus_ob,ogap_gap_up_rejection,143,28.2914,0.6364,0.1978
+v9c_v8a_plus_ob,ogap_strict_partial_touch,280,34.5452,0.5643,0.1234

@@ -1,0 +1,6 @@
+variant,description,n_trades,cum_r,avg_r,win_rate,max_dd_r,years_positive
+A_model_consensus,"A: model top-10%, correct dir, 2+ consensus (= v8a)",552,78.7229,0.1426,0.5761,26.6726,5
+B_all_no_consensus,"B: ALL events, correct dir, NO consensus",6876,9.5398,0.0014,0.4994,169.9847,4
+C_model_REVERSED,"C: model top-10%, REVERSED dir, 2+ consensus",552,-69.5518,-0.1260,0.3623,80.9702,0
+D_random_consensus,"D: random top-10%, correct dir, 2+ consensus",95,-11.3660,-0.1196,0.4211,14.2104,2
+E_all_consensus,"E: ALL events, correct dir, 2+ consensus",6876,9.5398,0.0014,0.4994,169.9847,4

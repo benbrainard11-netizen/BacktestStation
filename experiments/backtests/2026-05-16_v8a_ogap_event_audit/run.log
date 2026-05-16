@@ -1,0 +1,83 @@
+=== V8a OGAP event audit ===  device=cuda
+output: C:\Users\benbr\BacktestStation\experiments\backtests\2026-05-16_v8a_ogap_event_audit
+
+Step 1: train + score 3 OGAP signals (variants A, C)...
+  model top-10% picks (all 3 signals): 1,032
+Step 2: gather ALL OGAP events in test years...
+  all-event picks: 10,314
+Step 3: random top-10% picks (variant D, seed=42)...
+  random top-10%: 1,032
+
+Step 4: simulate variants...
+  [A_model_consensus     ] n=  552 cum_R=   +78.7 avg_R=+0.143 win%=0.576 DD= 26.7 yrs+=5/6
+  [B_all_no_consensus    ] n= 6876 cum_R=    +9.5 avg_R=+0.001 win%=0.499 DD=170.0 yrs+=4/6
+  [C_model_REVERSED      ] n=  552 cum_R=   -69.6 avg_R=-0.126 win%=0.362 DD= 81.0 yrs+=0/6
+  [D_random_consensus    ] n=   95 cum_R=   -11.4 avg_R=-0.120 win%=0.421 DD= 14.2 yrs+=2/6
+  [E_all_consensus       ] n= 6876 cum_R=    +9.5 avg_R=+0.001 win%=0.499 DD=170.0 yrs+=4/6
+
+=== Rollup ===
+           variant  n_trades   cum_r  avg_r  win_rate  max_dd_r  years_positive
+ A_model_consensus       552  78.723  0.143     0.576    26.673               5
+B_all_no_consensus      6876   9.540  0.001     0.499   169.985               4
+  C_model_REVERSED       552 -69.552 -0.126     0.362    80.970               0
+D_random_consensus        95 -11.366 -0.120     0.421    14.210               2
+   E_all_consensus      6876   9.540  0.001     0.499   169.985               4
+
+=== Per-variant per-year cum_R ===
+test_year            2020  2021   2022   2023   2024  2025  total
+variant                                                          
+A_model_consensus   32.10 16.53   1.94   4.63  28.63 -5.11  78.72
+B_all_no_consensus   3.74  6.72 -53.69 -48.43  57.75 43.45   9.54
+C_model_REVERSED   -32.15 -6.16  -9.06  -4.72 -15.53 -1.93 -69.55
+D_random_consensus  -6.60 -2.97  -2.21  -3.17   2.27  1.31 -11.37
+E_all_consensus      3.74  6.72 -53.69 -48.43  57.75 43.45   9.54
+
+=== Per-variant × per-signal ===
+           variant                    signal    n   cum_r  avg_r  win_rate
+ A_model_consensus   ogap_gap_down_rejection  136  12.430  0.091     0.522
+ A_model_consensus     ogap_gap_up_rejection  141  27.628  0.196     0.631
+ A_model_consensus ogap_strict_partial_touch  275  38.665  0.141     0.575
+B_all_no_consensus   ogap_gap_down_rejection 1518 -27.702 -0.018     0.467
+B_all_no_consensus     ogap_gap_up_rejection 1920  32.471  0.017     0.525
+B_all_no_consensus ogap_strict_partial_touch 3438   4.770  0.001     0.499
+  C_model_REVERSED   ogap_gap_down_rejection  136 -20.888 -0.154     0.397
+  C_model_REVERSED     ogap_gap_up_rejection  141 -14.645 -0.104     0.326
+  C_model_REVERSED ogap_strict_partial_touch  275 -34.018 -0.124     0.364
+D_random_consensus   ogap_gap_down_rejection   20  -1.805 -0.090     0.450
+D_random_consensus     ogap_gap_up_rejection   28  -3.973 -0.142     0.393
+D_random_consensus ogap_strict_partial_touch   47  -5.588 -0.119     0.426
+   E_all_consensus   ogap_gap_down_rejection 1518 -27.702 -0.018     0.467
+   E_all_consensus     ogap_gap_up_rejection 1920  32.471  0.017     0.525
+   E_all_consensus ogap_strict_partial_touch 3438   4.770  0.001     0.499
+
+=== DONE in 3.5 min ===
+{
+  "A_model_consensus": {
+    "cum_r": 78.72286717476278,
+    "avg_r": 0.14261388980935286,
+    "n": 552
+  },
+  "B_all_no_consensus": {
+    "cum_r": 9.539818321706553,
+    "avg_r": 0.0013874081328834429,
+    "n": 6876
+  },
+  "C_model_REVERSED": {
+    "cum_r": -69.55177001984413,
+    "avg_r": -0.12599958336928285,
+    "n": 552
+  },
+  "D_random_consensus": {
+    "cum_r": -11.366022792099322,
+    "avg_r": -0.11964234517999287,
+    "n": 95
+  },
+  "E_all_consensus": {
+    "cum_r": 9.539818321706553,
+    "avg_r": 0.0013874081328834429,
+    "n": 6876
+  },
+  "verdict": "DIFFERENT FROM OB \u2014 model and/or consensus add real value on OGAP",
+  "elapsed_min": 3.5,
+  "generated_at": "2026-05-16T18:40:59.597771+00:00"
+}

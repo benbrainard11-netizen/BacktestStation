@@ -1,0 +1,12 @@
+{
+  "A_model_correct": 608.6500486758671,
+  "B_all_correct": 8389.764943861535,
+  "C_model_REVERSED": -680.5727485375126,
+  "D_random_correct": 818.1122173571007,
+  "B_avg_R_per_trade": 0.5054988819582777,
+  "A_avg_R_per_trade": 0.35677025127542034,
+  "D_avg_R_per_trade": 0.49793805073469305,
+  "verdict_signal": "EVENT_BIASED \u2014 OB event itself carries most of the edge",
+  "elapsed_min": 4.3,
+  "generated_at": "2026-05-16T18:34:55.629927+00:00"
+}

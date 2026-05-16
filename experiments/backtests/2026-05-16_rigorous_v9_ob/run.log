@@ -1,0 +1,50 @@
+=== V9 — OB integration into v8a ===
+device: cuda
+output: C:\Users\benbr\BacktestStation\experiments\backtests\2026-05-16_rigorous_v9_ob
+
+Step 1: train 5 signals × 6 years...
+  ogap_gap_down_rejection        picks=  231
+  ogap_gap_up_rejection          picks=  286
+  ogap_strict_partial_touch      picks=  515
+  ob_continuation_bullish        picks= 1165
+  ob_continuation_bearish        picks= 1335
+  [v9a_v8a_replicate     ] n= 552 cum_R=  +78.7 win%=0.576 DD= 26.7 years_pos=5/6
+  [v9b_ob_standalone     ] n=1706 cum_R= +608.7 win%=0.572 DD= 14.3 years_pos=6/6
+  [v9c_v8a_plus_ob       ] n= 783 cum_R= +156.1 win%=0.582 DD= 22.5 years_pos=6/6
+
+=== Per-config per-year cum_R ===
+test_year          2020   2021   2022   2023  2024  2025  total  years_positive
+config                                                                         
+v9a_v8a_replicate 32.10  16.53   1.94   4.63 28.63 -5.11  78.72               5
+v9b_ob_standalone 96.01 124.23 119.19 113.90 75.29 80.04 608.65               6
+v9c_v8a_plus_ob   47.23  26.64  26.17  16.32 27.96 11.80 156.12               6
+
+=== Per-config × per-signal ===
+           config                    signal   n   cum_r  win_rate  avg_r
+v9a_v8a_replicate   ogap_gap_down_rejection 136  12.430     0.522  0.091
+v9a_v8a_replicate     ogap_gap_up_rejection 141  27.628     0.631  0.196
+v9a_v8a_replicate ogap_strict_partial_touch 275  38.665     0.575  0.141
+v9b_ob_standalone   ob_continuation_bearish 921 323.789     0.541  0.352
+v9b_ob_standalone   ob_continuation_bullish 785 284.861     0.609  0.363
+  v9c_v8a_plus_ob   ob_continuation_bearish 111  41.369     0.532  0.373
+  v9c_v8a_plus_ob   ob_continuation_bullish 105  39.698     0.686  0.378
+  v9c_v8a_plus_ob   ogap_gap_down_rejection 144  12.217     0.528  0.085
+  v9c_v8a_plus_ob     ogap_gap_up_rejection 143  28.291     0.636  0.198
+  v9c_v8a_plus_ob ogap_strict_partial_touch 280  34.545     0.564  0.123
+
+=== Rollup ===
+           config  n_trades  win_rate   cum_r  avg_r  max_dd_r  dd_per_cum_r  years_positive
+v9b_ob_standalone      1706     0.572 608.650  0.357    14.289         0.023               6
+  v9c_v8a_plus_ob       783     0.582 156.121  0.199    22.453         0.144               6
+v9a_v8a_replicate       552     0.576  78.723  0.143    26.673         0.339               5
+
+=== DONE in 1.7 min ===
+{
+  "best_by_cum_r": "v9b_ob_standalone",
+  "best_cum_r": 608.6500486758671,
+  "v8a_baseline_cum_r": 78.72286717476278,
+  "ob_standalone_cum_r": 608.6500486758671,
+  "combined_cum_r": 156.12077883077518,
+  "elapsed_min": 1.7,
+  "generated_at": "2026-05-16T18:02:11.543557+00:00"
+}
