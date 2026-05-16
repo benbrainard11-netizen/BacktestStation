@@ -29,27 +29,28 @@ DEFAULT_OUTPUT = ROOT / "data" / "research_events"
 DEFAULT_MANIFEST = DEFAULT_OUTPUT / "manifest.json"
 UTC = timezone.utc
 
-SQL = """
-SELECT
-    id,
-    event_id,
-    knowledge_card_id,
-    feature_name,
-    event_type,
-    side,
-    primary_symbol,
-    related_symbols,
-    timeframe,
-    bar_start_utc,
-    bar_end_utc,
-    event_data,
-    outcomes,
-    source_run_id,
-    detector_version,
-    created_at
-FROM research_events
-ORDER BY feature_name, bar_end_utc, primary_symbol, id
-"""
+TARGET_COLUMNS = (
+    "id",
+    "event_id",
+    "knowledge_card_id",
+    "feature_name",
+    "event_type",
+    "side",
+    "primary_symbol",
+    "symbols",
+    "related_symbols",
+    "timeframe",
+    "bar_start_utc",
+    "bar_end_utc",
+    "event_data",
+    "context",
+    "outcomes",
+    "replay_pointer",
+    "source_dataset",
+    "source_run_id",
+    "detector_version",
+    "created_at",
+)
 
 
 def _safe_part(value: Any) -> str:
@@ -62,6 +63,36 @@ def _safe_part(value: Any) -> str:
 def _event_year(series: pd.Series) -> pd.Series:
     ts = pd.to_datetime(series, utc=True, errors="coerce")
     return ts.dt.year.fillna(0).astype("int16")
+
+
+def _research_event_columns(con: sqlite3.Connection) -> set[str]:
+    rows = con.execute("PRAGMA table_info(research_events)").fetchall()
+    return {str(row[1]) for row in rows}
+
+
+def _select_expr(column: str, existing_columns: set[str]) -> str:
+    if column in existing_columns:
+        return column
+    if column == "related_symbols" and "symbols" in existing_columns:
+        return "symbols AS related_symbols"
+    if column == "symbols" and "related_symbols" in existing_columns:
+        return "related_symbols AS symbols"
+    return f"NULL AS {column}"
+
+
+def _export_sql(con: sqlite3.Connection) -> str:
+    existing_columns = _research_event_columns(con)
+    if not existing_columns:
+        raise sqlite3.OperationalError("research_events table does not exist or has no columns")
+
+    selected = ",\n    ".join(_select_expr(column, existing_columns) for column in TARGET_COLUMNS)
+    order_columns = [
+        column
+        for column in ("feature_name", "bar_end_utc", "primary_symbol", "id")
+        if column in existing_columns
+    ]
+    order_clause = f"\nORDER BY {', '.join(order_columns)}" if order_columns else ""
+    return f"SELECT\n    {selected}\nFROM research_events{order_clause}"
 
 
 def _write_partition(df: pd.DataFrame, out_dir: Path, part_idx: int) -> Path:
@@ -93,7 +124,8 @@ def export(args: argparse.Namespace) -> dict[str, Any]:
     part_idx = 0
     total_rows = 0
     with sqlite3.connect(args.db) as con:
-        for chunk in pd.read_sql_query(SQL, con, chunksize=args.chunk_size):
+        sql = _export_sql(con)
+        for chunk in pd.read_sql_query(sql, con, chunksize=args.chunk_size):
             if chunk.empty:
                 continue
             chunk["event_year"] = _event_year(chunk["bar_end_utc"])
