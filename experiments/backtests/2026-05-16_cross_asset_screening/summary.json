@@ -1,0 +1,20 @@
+{
+  "test_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_trades_total": 2775,
+  "n_trades_executed": 2724,
+  "cum_r_pooled": 18.720835152996017,
+  "win_rate_pooled": 0.48054331864904554,
+  "n_symbols_positive": 8,
+  "n_symbols_total": 20,
+  "asset_classes_positive": 1,
+  "asset_classes_total": 4,
+  "elapsed_min": 6.9,
+  "generated_at": "2026-05-16T17:17:18.544581+00:00"
+}
