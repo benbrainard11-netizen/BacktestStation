@@ -202,72 +202,103 @@ def build_context(
     primary = anchors["anchor.primary_symbol"].astype(str).to_numpy()
     max_age_ns = max_age_days * 24 * 60 * NS_PER_MIN
 
-    by_primary = {
-        sym: sub.sort_values("knowable_ns").reset_index(drop=True)
-        for sym, sub in gaps.groupby("primary_symbol")
-    }
+    by_primary = {}
+    for sym, sub in gaps.groupby("primary_symbol"):
+        sub = sub.sort_values("knowable_ns").reset_index(drop=True)
+        by_primary[str(sym)] = {
+            "knowable": sub["knowable_ns"].to_numpy(dtype="int64"),
+            "low": pd.to_numeric(sub["ed.gap_low"], errors="coerce").to_numpy(dtype="float64"),
+            "high": pd.to_numeric(sub["ed.gap_high"], errors="coerce").to_numpy(dtype="float64"),
+            "mid": pd.to_numeric(sub["ed.gap_mid"], errors="coerce").to_numpy(dtype="float64"),
+            "size": pd.to_numeric(sub["ed.gap_size_pts"], errors="coerce").to_numpy(dtype="float64"),
+            "type": sub["event_type"].astype(str).to_numpy(),
+            "touch_ns": sub["touch_ns"].to_numpy(dtype="int64"),
+            "mid_ns": sub["mid_ns"].to_numpy(dtype="int64"),
+            "fill_ns": sub["fill_ns"].to_numpy(dtype="int64"),
+        }
 
     for i in range(n):
         price = prices[i]
         if not np.isfinite(price):
             continue
         sym_gaps = by_primary.get(primary[i])
-        if sym_gaps is None or sym_gaps.empty:
+        if sym_gaps is None:
             continue
-        knowable = sym_gaps["knowable_ns"].to_numpy(dtype="int64")
+        knowable = sym_gaps["knowable"]
         right = np.searchsorted(knowable, cutoff_ns[i], side="left")
         left = np.searchsorted(knowable, cutoff_ns[i] - max_age_ns, side="left")
-        cand = sym_gaps.iloc[left:right].copy()
-        if cand.empty:
+        if right <= left:
             continue
+        row_slice = slice(left, right)
+        cutoff_int = int(cutoff_ns[i])
 
-        state_codes = _state_code(cand, int(cutoff_ns[i]))
-        cand["_state_code"] = state_codes
-        cand["_filled"] = state_codes == 3
-        cand["_age_days"] = (cutoff_ns[i] - cand["knowable_ns"].to_numpy(dtype="int64")) / (24 * 60 * NS_PER_MIN)
-        cand["_mid_distance"] = np.abs(cand["ed.gap_mid"].astype(float).to_numpy() - price)
-        rel_masks = _relation_masks(cand, float(price))
+        fill = sym_gaps["fill_ns"][row_slice] < cutoff_int
+        mid = (~fill) & (sym_gaps["mid_ns"][row_slice] < cutoff_int)
+        touch = (~fill) & (~mid) & (sym_gaps["touch_ns"][row_slice] < cutoff_int)
+        state_codes = np.zeros(right - left, dtype=np.int8)
+        state_codes[touch] = 1
+        state_codes[mid] = 2
+        state_codes[fill] = 3
+        filled = state_codes == 3
+
+        lows = sym_gaps["low"][row_slice]
+        highs = sym_gaps["high"][row_slice]
+        mids = sym_gaps["mid"][row_slice]
+        sizes = sym_gaps["size"][row_slice]
+        age_days = (cutoff_ns[i] - knowable[row_slice]) / (24 * 60 * NS_PER_MIN)
+        mid_distance = np.abs(mids - price)
+
+        relation_code = np.full(right - left, -1, dtype=np.int8)
+        distance = np.full(right - left, np.nan, dtype="float64")
+        above = lows > price
+        below = highs < price
+        inside = (lows <= price) & (highs >= price)
+        relation_code[above] = 0
+        relation_code[below] = 1
+        relation_code[inside] = 2
+        distance[above] = lows[above] - price
+        distance[below] = price - highs[below]
+        distance[inside] = 0.0
 
         for gap_type in GAP_TYPES:
-            type_mask = np.ones(len(cand), dtype=bool) if gap_type == "any" else cand["event_type"].eq(gap_type).to_numpy()
+            type_mask = None if gap_type == "any" else (sym_gaps["type"][row_slice] == gap_type)
             for state in STATE_GROUPS:
                 if state == "any":
-                    state_mask = np.ones(len(cand), dtype=bool)
+                    state_mask = None
                 elif state == "unfilled":
-                    state_mask = ~cand["_filled"].to_numpy()
+                    state_mask = ~filled
                 else:
-                    state_mask = cand["_filled"].to_numpy()
-                base_mask = type_mask & state_mask
-                if not base_mask.any():
+                    state_mask = filled
+                if type_mask is None and state_mask is None:
+                    base_mask = np.ones(right - left, dtype=bool)
+                elif type_mask is None:
+                    base_mask = state_mask
+                elif state_mask is None:
+                    base_mask = type_mask
+                else:
+                    base_mask = type_mask & state_mask
+                base_idx = np.flatnonzero(base_mask)
+                if len(base_idx) == 0:
                     continue
 
-                all_dist = np.full(len(cand), np.nan)
-                # Counts are nearest-zone distance regardless of above/below/inside.
-                lows = cand["ed.gap_low"].astype(float).to_numpy()
-                highs = cand["ed.gap_high"].astype(float).to_numpy()
-                all_dist[base_mask & (lows > price)] = lows[base_mask & (lows > price)] - price
-                all_dist[base_mask & (highs < price)] = price - highs[base_mask & (highs < price)]
-                all_dist[base_mask & (lows <= price) & (highs >= price)] = 0.0
+                base_distance = distance[base_idx]
                 for threshold in COUNT_THRESHOLDS:
                     data[f"gapctx.n_{gap_type}_{state}_within_{threshold}pts"][i] = int(
-                        np.nansum(all_dist <= threshold)
+                        np.count_nonzero(base_distance <= threshold)
                     )
 
-                for relation in RELATIONS:
-                    mask = base_mask & rel_masks[relation]
-                    if not mask.any():
+                for rel_idx, relation in enumerate(RELATIONS):
+                    rel_matches = base_idx[relation_code[base_idx] == rel_idx]
+                    if len(rel_matches) == 0:
                         continue
-                    sub = cand.loc[mask].copy()
-                    dist = _distance(sub, float(price), relation)
-                    pick = int(np.nanargmin(dist))
-                    row = sub.iloc[pick]
+                    pick = rel_matches[int(np.nanargmin(distance[rel_matches]))]
                     stem = f"{gap_type}_{state}_{relation}"
                     data[f"gapctx.has_{stem}"][i] = True
-                    data[f"gapctx.distance_pts_{stem}"][i] = float(dist[pick])
-                    data[f"gapctx.age_days_{stem}"][i] = float(row["_age_days"])
-                    data[f"gapctx.size_pts_{stem}"][i] = float(row["ed.gap_size_pts"])
-                    data[f"gapctx.fill_state_code_{stem}"][i] = float(row["_state_code"])
-                    data[f"gapctx.mid_distance_pts_{stem}"][i] = float(row["_mid_distance"])
+                    data[f"gapctx.distance_pts_{stem}"][i] = float(distance[pick])
+                    data[f"gapctx.age_days_{stem}"][i] = float(age_days[pick])
+                    data[f"gapctx.size_pts_{stem}"][i] = float(sizes[pick])
+                    data[f"gapctx.fill_state_code_{stem}"][i] = float(state_codes[pick])
+                    data[f"gapctx.mid_distance_pts_{stem}"][i] = float(mid_distance[pick])
 
     out = pd.DataFrame(data)
     gapctx_cols = sorted(c for c in out.columns if c.startswith("gapctx."))

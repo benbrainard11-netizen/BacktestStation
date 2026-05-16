@@ -316,6 +316,11 @@ def build_context(
     fvg_width = fvg["ed.fvg_width_pts"].to_numpy(dtype="float64")
     fvg_symbol = fvg["primary_symbol"].astype(str).to_numpy()
     fvg_side = fvg["side"].astype(str).to_numpy()
+    tap_ns = fvg["tap_ns"].to_numpy(dtype="int64")
+    mid_ns = fvg["mid_ns"].to_numpy(dtype="int64")
+    full_ns = fvg["full_ns"].to_numpy(dtype="int64")
+    close_through_ns = fvg["close_through_ns"].to_numpy(dtype="int64")
+    horizon_ns = fvg["horizon_ns"].to_numpy(dtype="int64")
     max_age_ns = max_age_days * 24 * 60 * NS_PER_MIN
 
     for i, (cutoff, price, symbol) in enumerate(zip(cutoff_ns, prices, symbols, strict=True)):
@@ -325,50 +330,92 @@ def build_context(
         end = np.searchsorted(fvg_knowable, cutoff, side="left")
         if end <= start:
             continue
-        idx = np.arange(start, end)
-        events = fvg.iloc[idx]
-        state = _state_for_cutoff(events, int(cutoff))
-        known = state != ""
+        row_slice = slice(start, end)
+        cutoff_int = int(cutoff)
+
+        close_through = close_through_ns[row_slice] < cutoff_int
+        full = (~close_through) & (full_ns[row_slice] < cutoff_int)
+        mid = (
+            (~close_through)
+            & (~full)
+            & (mid_ns[row_slice] < cutoff_int)
+            & (cutoff_int <= horizon_ns[row_slice])
+        )
+        tapped = (
+            (~close_through)
+            & (~full)
+            & (~mid)
+            & (tap_ns[row_slice] < cutoff_int)
+            & (cutoff_int <= horizon_ns[row_slice])
+        )
+        untouched = (
+            (~close_through)
+            & (~full)
+            & (~mid)
+            & (~tapped)
+            & (cutoff_int <= horizon_ns[row_slice])
+        )
+
+        state_code = np.full(end - start, -1, dtype=np.int8)
+        state_code[untouched] = 0
+        state_code[tapped] = 1
+        state_code[mid] = 2
+        state_code[full] = 3
+        state_code[close_through] = 4
+        known = state_code >= 0
         if not known.any():
             continue
 
-        low = fvg_low[idx]
-        high = fvg_high[idx]
-        width = fvg_width[idx]
-        relation, distance = _zone_relation(float(price), low, high)
-        age_min = (cutoff - fvg_knowable[idx]) / NS_PER_MIN
-        same_primary = fvg_symbol[idx] == symbol
+        low = fvg_low[row_slice]
+        high = fvg_high[row_slice]
+        width = fvg_width[row_slice]
+        relation_code = np.full(end - start, 2, dtype=np.int8)
+        distance = np.zeros(end - start, dtype="float64")
+        above = price < low
+        below = price > high
+        relation_code[above] = 0
+        relation_code[below] = 1
+        distance[above] = low[above] - price
+        distance[below] = price - high[below]
+        age_min = (cutoff - fvg_knowable[row_slice]) / NS_PER_MIN
 
-        for scope in SCOPES:
-            scope_mask = same_primary if scope == "same_primary" else np.ones(len(idx), dtype=bool)
-            for side in SIDES:
-                side_mask = np.ones(len(idx), dtype=bool) if side == "any_side" else (fvg_side[idx] == side)
-                for state_name in STATES:
-                    state_mask = state == state_name
-                    base_mask = known & scope_mask & side_mask & state_mask
-                    _fill_counts(
-                        data,
-                        i,
-                        scope=scope,
-                        side=side,
-                        state=state_name,
-                        mask=base_mask,
-                        distance=distance,
-                    )
-                    for rel in RELATIONS:
-                        rel_mask = relation == rel
-                        _fill_combo(
-                            data,
-                            i,
-                            scope=scope,
-                            side=side,
-                            state=state_name,
-                            relation=rel,
-                            mask=base_mask & rel_mask,
-                            distance=distance,
-                            age_min=age_min,
-                            width=width,
+        scope_masks = (
+            ("same_primary", fvg_symbol[row_slice] == symbol),
+            ("any_symbol", None),
+        )
+        side_masks = (
+            ("any_side", None),
+            ("bullish", fvg_side[row_slice] == "bullish"),
+            ("bearish", fvg_side[row_slice] == "bearish"),
+        )
+        for scope, scope_mask in scope_masks:
+            for side, side_mask in side_masks:
+                for state_idx, state_name in enumerate(STATES):
+                    base_mask = known & (state_code == state_idx)
+                    if scope_mask is not None:
+                        base_mask = base_mask & scope_mask
+                    if side_mask is not None:
+                        base_mask = base_mask & side_mask
+                    base_idx = np.flatnonzero(base_mask)
+                    if len(base_idx) == 0:
+                        continue
+
+                    base_distance = distance[base_idx]
+                    for threshold in COUNT_THRESHOLDS:
+                        data[f"fvggeom.n_{scope}_{side}_{state_name}_within_{threshold}pts"][i] = int(
+                            np.count_nonzero(base_distance <= threshold)
                         )
+
+                    for rel_idx, rel in enumerate(RELATIONS):
+                        rel_matches = base_idx[relation_code[base_idx] == rel_idx]
+                        if len(rel_matches) == 0:
+                            continue
+                        pick = rel_matches[int(np.argmin(distance[rel_matches]))]
+                        stem = f"{scope}_{side}_{state_name}_{rel}"
+                        data[f"fvggeom.has_{stem}"][i] = True
+                        data[f"fvggeom.distance_pts_{stem}"][i] = float(distance[pick])
+                        data[f"fvggeom.age_min_{stem}"][i] = float(age_min[pick])
+                        data[f"fvggeom.width_pts_{stem}"][i] = float(width[pick])
 
     return pd.DataFrame(data)
 
