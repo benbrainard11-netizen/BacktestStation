@@ -79,6 +79,11 @@ def all_events_picks(sig: Signal, top_pct: float | None = None,
     df["year"] = df["fire_ts"].dt.year
     # Keep only test years (2020-2025) to mirror walk-forward scope
     df = df[df["year"].isin(TEST_YEARS)].copy()
+    # IMPORTANT: dedup by (symbol, fire_ts, side) — source matrices contain
+    # multiple snapshot rows per fire event (different asof.snapshot_ts) which
+    # represent the SAME tradeable moment. Without dedup, P&L gets multiplied
+    # by the snapshot count. See docs/TYPE_B_DEDUP_CORRECTION_2026_05_16.md
+    df = df.drop_duplicates(subset=["symbol", "fire_ts", "anchor_side"], keep="first")
     df["test_year"] = df["year"]
     df["signal_name"] = sig.name
     df["direction_rule"] = sig.direction_rule

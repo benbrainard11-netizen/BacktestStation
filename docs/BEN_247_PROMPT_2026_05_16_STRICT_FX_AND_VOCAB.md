@@ -1,6 +1,28 @@
 # ben-247 next task — tick-aware strict-label builder + FX strict release
 
-_For pasting into the 247 Codex session. ~6-10 hours. 2026-05-16._
+_For pasting into the 247 Codex session. ~6-10 hours. 2026-05-16 (updated post Type B discovery)._
+
+## Important context before you start: the Type B finding
+
+While you were shipping strict-OB labels (and then R2 setup), benpc ran a deep audit and found that **3 of 4 strict label families are not predictive in the ML sense — they identify pre-biased event populations.** The model layer adds nothing or slightly hurts on:
+
+- `label.strict.next_60m.ob_broken_through_continuation` (OB)
+- `label.strict.forward_10c.after_tap_failed_1x_against` (FVG)
+- `label.strict.next_60m.pivot_broken_through_continuation` (Swing) — **and the direction implied by the name is wrong**; the label actually captures post-break reversals
+
+Trading every event in the side-determined direction (no model) delivers ~+13K R over 6 years on NQ+ES with 2-tick slippage. That's ~165× v8a's +79R.
+
+This changes some things for you:
+
+1. **You don't need to build a model for strict-FX labels.** Build the events, audit Type A vs Type B, and if Type B (likely), the deploy is "trade every event in side direction." Don't waste 247's compute on LightGBM if it's not going to add alpha.
+
+2. **The swing label naming should be fixed.** `label.strict.next_60m.pivot_broken_through_continuation` is semantically a "post-break reversal" or "failed breakout" indicator, not a continuation. Rename to something like `label.strict.next_60m.pivot_broken_then_reversed` so the direction implied by the name matches the actual signal.
+
+3. **Dedup matrix rows by (symbol, fire_ts, side).** Source matrices currently emit multiple rows per fire event (different `asof.snapshot_ts` values representing the same tradeable moment). benpc's audit framework over-counted P&L by 25-42% per family before we caught this. Either:
+   - Add a `keep_one_snapshot_per_fire_event` flag to the matrix builder that picks one row per fire event (the at_fire snapshot, not retrospectives), or
+   - Add an explicit `is_fire_anchor_row` boolean column so downstream code knows which row to trade off of.
+
+See `docs/ML_TYPE_B_DISCOVERY_2026_05_16.md` and `docs/TYPE_B_DEDUP_CORRECTION_2026_05_16.md` for full details.
 
 ## Why this is next
 
@@ -78,7 +100,10 @@ In your label release schema, add a `signal_family` column to the summary CSV (e
 - [ ] FVG / sweep / swing-pivot / OB strict-label builders updated to use it
 - [ ] Tick-parity regression test green on the 3-symbol matrix
 - [ ] `docs/ML_STRICT_LABEL_TICK_REFACTOR.md` written
-- [ ] If FX data is present: `strategy-lab-core-2026-05-16-strict-fx-{anchor}` release built + uploaded
+- [ ] **NEW**: dedup matrix rows by (symbol, fire_ts, side) in all strict builders, OR add `is_fire_anchor_row` boolean
+- [ ] **NEW**: rename `pivot_broken_through_continuation` → `pivot_broken_then_reversed` (label is reversal-style, not continuation)
+- [ ] **NEW**: emit a Type A/B audit summary in each strict-label release (run B variant on 3-symbol matrix, report cum_R; helps benpc skip the audit step)
+- [ ] If FX data is present: `strategy-lab-core-2026-05-16-strict-fx-{anchor}` release built + uploaded **to R2 under `data/ml/anchors/` prefix** (the R2 lake just went live tonight; use `python -m app.ingest.r2_artifacts --profile core` after staging files locally)
 - [ ] If FX data is absent: `docs/STRICT_FX_DATA_NEEDS.md` listing what benpc needs to ship to you
 - [ ] `signal_family` column added to release summary CSV schema
 - [ ] Push to `assets/expanded-universe-v1` branch, one commit per logical chunk
