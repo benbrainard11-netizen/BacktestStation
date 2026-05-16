@@ -1,0 +1,5 @@
+family,A_model_correct,B_all_correct,C_model_REVERSED,D_random_correct
+fvg_tap_failed_1x,0.1521,0.1685,-0.1492,0.1962
+ob_continuation,0.3568,0.5055,-0.3989,0.4979
+sweep_failed_recovered,-0.0852,-0.2081,0.0357,-0.1802
+swing_continuation,-0.5694,-0.3139,0.5128,-0.3102

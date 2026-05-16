@@ -1,0 +1,84 @@
+=== V11 multi-family event-bias audit ===  device=cuda
+output: C:\Users\benbr\BacktestStation\experiments\backtests\2026-05-16_v11_multi_family_audit
+
+--- Family: sweep_failed_recovered ---
+  model top-10% picks: 2,872
+  all-event picks: 28,724
+  random 10% picks: 2,871
+  [A_model_correct   ] n= 1798 cum_R=  -153.1 avg_R=-0.085 win%=0.382 DD=165.3 yrs+=0/6
+  [B_all_correct     ] n=19110 cum_R= -3977.7 avg_R=-0.208 win%=0.356 DD=3988.3 yrs+=0/6
+  [C_model_REVERSED  ] n= 1798 cum_R=   +64.2 avg_R=+0.036 win%=0.419 DD= 65.2 yrs+=4/6
+  [D_random_correct  ] n= 1935 cum_R=  -348.7 avg_R=-0.180 win%=0.364 DD=352.0 yrs+=0/6
+
+--- Family: swing_continuation ---
+  model top-10% picks: 4,173
+  all-event picks: 41,725
+  random 10% picks: 4,173
+  [A_model_correct   ] n= 2868 cum_R= -1633.0 avg_R=-0.569 win%=0.166 DD=1638.0 yrs+=0/6
+  [B_all_correct     ] n=27477 cum_R= -8625.1 avg_R=-0.314 win%=0.266 DD=8637.4 yrs+=0/6
+  [C_model_REVERSED  ] n= 2868 cum_R= +1470.7 avg_R=+0.513 win%=0.635 DD= 13.0 yrs+=6/6
+  [D_random_correct  ] n= 2776 cum_R=  -861.2 avg_R=-0.310 win%=0.269 DD=865.7 yrs+=0/6
+
+--- Family: fvg_tap_failed_1x ---
+  model top-10% picks: 11,649
+  all-event picks: 116,486
+  random 10% picks: 11,649
+  [A_model_correct   ] n= 8087 cum_R= +1229.7 avg_R=+0.152 win%=0.511 DD= 28.6 yrs+=6/6
+  [B_all_correct     ] n=76234 cum_R=+12847.6 avg_R=+0.169 win%=0.498 DD= 93.4 yrs+=6/6
+  [C_model_REVERSED  ] n= 8087 cum_R= -1206.8 avg_R=-0.149 win%=0.374 DD=1212.8 yrs+=0/6
+  [D_random_correct  ] n= 7604 cum_R= +1492.3 avg_R=+0.196 win%=0.504 DD= 26.4 yrs+=6/6
+
+--- Family: ob_continuation ---
+  model top-10% picks: 2,500
+  all-event picks: 25,013
+  random 10% picks: 2,500
+  [A_model_correct   ] n= 1706 cum_R=  +608.7 avg_R=+0.357 win%=0.572 DD= 14.3 yrs+=6/6
+  [B_all_correct     ] n=16597 cum_R= +8389.8 avg_R=+0.505 win%=0.650 DD= 14.3 yrs+=6/6
+  [C_model_REVERSED  ] n= 1706 cum_R=  -680.6 avg_R=-0.399 win%=0.253 DD=679.7 yrs+=0/6
+  [D_random_correct  ] n= 1643 cum_R=  +818.1 avg_R=+0.498 win%=0.649 DD=  6.4 yrs+=6/6
+
+=== Cross-family rollup (cum_R) ===
+variant                 A_model_correct  B_all_correct  C_model_REVERSED  D_random_correct
+family                                                                                    
+fvg_tap_failed_1x               +1229.7       +12847.6           -1206.8           +1492.3
+ob_continuation                  +608.7        +8389.8            -680.6            +818.1
+sweep_failed_recovered           -153.1        -3977.7             +64.2            -348.7
+swing_continuation              -1633.0        -8625.1           +1470.7            -861.2
+
+=== Cross-family rollup (avg_R per trade) ===
+variant                 A_model_correct  B_all_correct  C_model_REVERSED  D_random_correct
+family                                                                                    
+fvg_tap_failed_1x                +0.152         +0.169            -0.149            +0.196
+ob_continuation                  +0.357         +0.505            -0.399            +0.498
+sweep_failed_recovered           -0.085         -0.208            +0.036            -0.180
+swing_continuation               -0.569         -0.314            +0.513            -0.310
+
+=== Cross-family rollup (n_trades) ===
+variant                 A_model_correct  B_all_correct  C_model_REVERSED  D_random_correct
+family                                                                                    
+fvg_tap_failed_1x                  8087          76234              8087              7604
+ob_continuation                    1706          16597              1706              1643
+sweep_failed_recovered             1798          19110              1798              1935
+swing_continuation                 2868          27477              2868              2776
+
+=== Type classification per family ===
+  sweep_failed_recovered        A=+ -153.1R  B=+-3977.7R  D=+ -348.7R  -->  MIXED/UNCLEAR
+  swing_continuation            A=+-1633.0R  B=+-8625.1R  D=+ -861.2R  -->  MIXED/UNCLEAR
+  fvg_tap_failed_1x             A=+ 1229.7R  B=+12847.6R  D=+ 1492.3R  -->  MIXED/UNCLEAR
+  ob_continuation               A=+  608.7R  B=+ 8389.8R  D=+  818.1R  -->  TYPE B (event class)
+
+=== DONE in 35.6 min ===
+{
+  "classifications": {
+    "sweep_failed_recovered": "MIXED/UNCLEAR",
+    "swing_continuation": "MIXED/UNCLEAR",
+    "fvg_tap_failed_1x": "MIXED/UNCLEAR",
+    "ob_continuation": "TYPE B (event class)"
+  },
+  "type_b_families": [
+    "ob_continuation"
+  ],
+  "type_a_families": [],
+  "elapsed_min": 35.6,
+  "generated_at": "2026-05-16T19:39:38.204927+00:00"
+}

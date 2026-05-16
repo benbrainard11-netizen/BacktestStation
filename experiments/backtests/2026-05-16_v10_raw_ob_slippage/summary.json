@@ -1,0 +1,12 @@
+{
+  "no_slippage_cum_r": 8389.764943861535,
+  "1tick_entry_stop_cum_r": 7822.067874696471,
+  "2tick_entry_stop_cum_r": 7267.784278811033,
+  "3tick_entry_stop_cum_r": 6757.179851533837,
+  "survival_rate_1tick": 0.932334568016661,
+  "survival_rate_2tick": 0.8662679261507306,
+  "survival_rate_3tick": 0.8054075289055389,
+  "verdict": "SURVIVES \u2014 raw-OB tradeable even under conservative slippage",
+  "elapsed_min": 14.4,
+  "generated_at": "2026-05-16T19:00:03.510537+00:00"
+}

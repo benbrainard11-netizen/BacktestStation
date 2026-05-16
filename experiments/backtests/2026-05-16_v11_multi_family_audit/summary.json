@@ -1,0 +1,14 @@
+{
+  "classifications": {
+    "sweep_failed_recovered": "MIXED/UNCLEAR",
+    "swing_continuation": "MIXED/UNCLEAR",
+    "fvg_tap_failed_1x": "MIXED/UNCLEAR",
+    "ob_continuation": "TYPE B (event class)"
+  },
+  "type_b_families": [
+    "ob_continuation"
+  ],
+  "type_a_families": [],
+  "elapsed_min": 35.6,
+  "generated_at": "2026-05-16T19:39:38.204927+00:00"
+}

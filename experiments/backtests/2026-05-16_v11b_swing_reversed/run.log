@@ -1,0 +1,23 @@
+=== V11b — verify swing reversed-correct B variant ===
+
+Step 1: gather ALL swing events...
+  all-event picks: 41,725
+Step 2: simulate B with REVERSED direction (= correct direction for swing)...
+
+  swing_all_events_REVERSED: n=27477 cum_R=+6510.4 avg_R=+0.237 win%=0.523 DD=52.9 yrs+=6/6
+
+=== Per-year ===
+  2020: +1051.8
+  2021: +854.8
+  2022: +1063.0
+  2023: +1018.1
+  2024: +1091.0
+  2025: +1431.8
+
+=== Per-symbol ===
+            n    cum_r  avg_r
+symbol                       
+ES.c.0  13453 3689.691  0.274
+NQ.c.0  14024 2820.739  0.201
+
+=== DONE in 4.9 min ===

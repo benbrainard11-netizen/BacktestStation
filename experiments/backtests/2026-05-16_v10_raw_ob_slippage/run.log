@@ -1,0 +1,43 @@
+=== V10 — slippage-realistic raw-OB check ===
+output: C:\Users\benbr\BacktestStation\experiments\backtests\2026-05-16_v10_raw_ob_slippage
+
+Step 1: gather ALL OB events in test years...
+  all-event picks: 25,013
+
+Step 2: simulate with 5 slippage scenarios...
+  [no_slippage              ] n=16597 cum_R= +8389.8 avg_R=+0.505 win%=0.650 DD= 14.3 yrs+=6/6  stop/tgt/time=3096/2543/10958
+  [1tick_entry_only         ] n=16597 cum_R= +8042.2 avg_R=+0.485 win%=0.641 DD= 15.0 yrs+=6/6  stop/tgt/time=3179/2486/10932
+  [1tick_entry_and_stop     ] n=16597 cum_R= +7822.1 avg_R=+0.471 win%=0.635 DD= 15.6 yrs+=6/6  stop/tgt/time=3179/2486/10932
+  [2tick_entry_and_stop     ] n=16597 cum_R= +7267.8 avg_R=+0.438 win%=0.619 DD= 17.5 yrs+=6/6  stop/tgt/time=3273/2437/10887
+  [3tick_entry_and_stop     ] n=16597 cum_R= +6757.2 avg_R=+0.407 win%=0.605 DD= 18.8 yrs+=6/6  stop/tgt/time=3334/2395/10868
+
+=== Rollup ===
+            slippage  n_trades    cum_r  avg_r  win_rate  max_dd_r  years_positive  n_stops  n_targets  n_times  entry_ticks  stop_ticks  target_ticks  time_exit_ticks
+         no_slippage     16597 8389.765  0.505     0.650    14.277               6     3096       2543    10958        0.000       0.000         0.000            0.000
+    1tick_entry_only     16597 8042.158  0.485     0.641    15.018               6     3179       2486    10932        1.000       0.000         0.000            0.000
+1tick_entry_and_stop     16597 7822.068  0.471     0.635    15.623               6     3179       2486    10932        1.000       1.000         0.000            1.000
+2tick_entry_and_stop     16597 7267.784  0.438     0.619    17.491               6     3273       2437    10887        2.000       2.000         0.000            2.000
+3tick_entry_and_stop     16597 6757.180  0.407     0.605    18.839               6     3334       2395    10868        3.000       3.000         0.000            3.000
+
+=== Per-slippage per-year cum_R ===
+test_year              2020   2021   2022   2023   2024   2025  total
+slippage                                                             
+1tick_entry_and_stop 1314.8 1374.4 1266.4 1247.6 1260.8 1358.1 7822.1
+1tick_entry_only     1350.8 1421.6 1292.5 1290.8 1300.3 1386.2 8042.2
+2tick_entry_and_stop 1229.3 1247.0 1204.2 1141.7 1160.1 1285.5 7267.8
+3tick_entry_and_stop 1150.8 1144.9 1132.5 1042.0 1058.3 1228.8 6757.2
+no_slippage          1394.1 1483.1 1336.4 1365.0 1382.5 1428.6 8389.8
+
+=== DONE in 14.4 min ===
+{
+  "no_slippage_cum_r": 8389.764943861535,
+  "1tick_entry_stop_cum_r": 7822.067874696471,
+  "2tick_entry_stop_cum_r": 7267.784278811033,
+  "3tick_entry_stop_cum_r": 6757.179851533837,
+  "survival_rate_1tick": 0.932334568016661,
+  "survival_rate_2tick": 0.8662679261507306,
+  "survival_rate_3tick": 0.8054075289055389,
+  "verdict": "SURVIVES \u2014 raw-OB tradeable even under conservative slippage",
+  "elapsed_min": 14.4,
+  "generated_at": "2026-05-16T19:00:03.510537+00:00"
+}

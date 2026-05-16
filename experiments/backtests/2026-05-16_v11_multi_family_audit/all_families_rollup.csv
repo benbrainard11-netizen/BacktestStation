@@ -1,0 +1,17 @@
+family,variant,n_trades,cum_r,avg_r,win_rate,max_dd_r,years_positive
+sweep_failed_recovered,A_model_correct,1798,-153.1348,-0.0852,0.3815,165.3354,0
+sweep_failed_recovered,B_all_correct,19110,-3977.6514,-0.2081,0.3564,3988.3368,0
+sweep_failed_recovered,C_model_REVERSED,1798,64.2093,0.0357,0.4188,65.1701,4
+sweep_failed_recovered,D_random_correct,1935,-348.6820,-0.1802,0.3638,352.0019,0
+swing_continuation,A_model_correct,2868,-1633.0035,-0.5694,0.1656,1637.9613,0
+swing_continuation,B_all_correct,27477,-8625.1357,-0.3139,0.2664,8637.3772,0
+swing_continuation,C_model_REVERSED,2868,1470.6649,0.5128,0.6349,12.9605,6
+swing_continuation,D_random_correct,2776,-861.1594,-0.3102,0.2695,865.7320,0
+fvg_tap_failed_1x,A_model_correct,8087,1229.7318,0.1521,0.5109,28.5689,6
+fvg_tap_failed_1x,B_all_correct,76234,12847.5501,0.1685,0.4980,93.3649,6
+fvg_tap_failed_1x,C_model_REVERSED,8087,-1206.7639,-0.1492,0.3741,1212.8239,0
+fvg_tap_failed_1x,D_random_correct,7604,1492.2788,0.1962,0.5043,26.4313,6
+ob_continuation,A_model_correct,1706,608.6500,0.3568,0.5721,14.2890,6
+ob_continuation,B_all_correct,16597,8389.7649,0.5055,0.6501,14.2775,6
+ob_continuation,C_model_REVERSED,1706,-680.5727,-0.3989,0.2532,679.6732,0
+ob_continuation,D_random_correct,1643,818.1122,0.4979,0.6488,6.4008,6
