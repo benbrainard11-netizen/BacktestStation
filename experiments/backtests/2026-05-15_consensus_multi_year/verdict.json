@@ -1,0 +1,15 @@
+{
+  "test_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "tier_1_aggregate_precision": 0.83485254691689,
+  "tier_2_aggregate_precision": 0.9251207729468599,
+  "tier_3_plus_aggregate_precision": 0.9245283018867925,
+  "consensus_2_lift_vs_1": 0.09026822602996987,
+  "generated_at": "2026-05-16T00:35:38.855455+00:00"
+}
