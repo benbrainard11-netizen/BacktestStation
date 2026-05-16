@@ -1,0 +1,19 @@
+{
+  "design": {
+    "Q1": "C - YM in everywhere",
+    "Q2": "B - confirmation bar entry",
+    "Q3": "A - fixed-R (1 ATR stop / 2 ATR target)",
+    "Q4": "B - actual close P&L at time exit",
+    "Q5": "A - single-signal, no consensus",
+    "Q6": "moot for v1"
+  },
+  "total_picks": 3973,
+  "total_trades_simulated": 3973,
+  "trades_executed": 3964,
+  "cum_r_all_signals": -880.4393085499648,
+  "avg_r_per_trade": -0.22210880639504663,
+  "win_rate": 0.2832996972754793,
+  "max_dd_r": 929.2835112906162,
+  "elapsed_min": 3.0,
+  "generated_at": "2026-05-16T00:55:27.489685+00:00"
+}

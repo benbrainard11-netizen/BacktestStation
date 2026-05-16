@@ -1,0 +1,6 @@
+signal,n_trades,wins,win_rate,cum_r,avg_r,avg_win_r,avg_loss_r,max_dd_r,sharpe_per_trade
+ogap_gap_down_rejection,231,92,0.3983,30.2493,0.1309,1.7350,-0.9307,26.1306,0.0958
+ogap_gap_up_rejection,286,113,0.3951,-4.9670,-0.0174,1.3709,-0.9242,41.6381,-0.0142
+ogap_strict_partial_touch,515,186,0.3612,-17.6178,-0.0342,1.5593,-0.9351,69.6944,-0.0268
+smt_pd_high_thesis,69,14,0.2029,-30.5146,-0.4422,1.7033,-0.9884,32.5146,-0.3906
+sweep_failed_recovered_all,2863,718,0.2508,-857.5892,-0.2995,1.7314,-0.9794,862.5892,-0.2469
