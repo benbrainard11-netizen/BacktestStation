@@ -1,0 +1,22 @@
+{
+  "n_configs": 75,
+  "n_completed": 75,
+  "train_elapsed_min": 2.4,
+  "total_elapsed_min": 8.5,
+  "best_cum_r": 100.1514447514682,
+  "worst_cum_r": -51.13723705029535,
+  "n_positive": 37,
+  "best_config": {
+    "config": "v4_drop_both_stop1.5_tgt3.0_tw180",
+    "stop_mult": 1.5,
+    "target_mult": 3.0,
+    "trade_window_min": 180,
+    "excluded": "smt_pd_high_thesis,sweep_failed_recovered_all",
+    "n_trades": 629,
+    "cum_r": 100.1514447514682,
+    "win_rate": 0.4356120826709062,
+    "avg_r": 0.15922328259374913,
+    "max_dd": 35.94927536231876
+  },
+  "generated_at": "2026-05-16T01:48:29.329134+00:00"
+}
