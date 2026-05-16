@@ -1,0 +1,18 @@
+{
+  "test_year": 2025,
+  "per_tier": {
+    "1": {
+      "n_combos": 214,
+      "avg_precision": 0.8177570093457944
+    },
+    "2": {
+      "n_combos": 160,
+      "avg_precision": 0.80625
+    },
+    "3": {
+      "n_combos": 6,
+      "avg_precision": 0.9444444444444444
+    }
+  },
+  "generated_at": "2026-05-16T00:24:50.655375+00:00"
+}

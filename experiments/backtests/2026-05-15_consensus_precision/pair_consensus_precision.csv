@@ -1,0 +1,6 @@
+signal_a,signal_b,n_pair_combos,n_trades,n_hits,pair_precision
+sweep_failed_recovered_all,sweep_succeeded_held_rejection_low,126,252,193,0.7659
+ogap_gap_up_rejection,ogap_strict_partial_touch,15,30,30,1.0000
+ogap_gap_down_rejection,ogap_strict_partial_touch,13,26,24,0.9231
+smt_pd_high_thesis,sweep_failed_recovered_all,5,10,9,0.9000
+ogap_gap_down_rejection,sweep_failed_recovered_all,1,2,2,1.0000

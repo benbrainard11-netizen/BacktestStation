@@ -1,0 +1,42 @@
+{
+  "label": "label.strict.next_60m.sweep_failed_recovered",
+  "test_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "per_symbol_top10": {
+    "ES.c.0": {
+      "mean_precision": 0.7647960800365435,
+      "min_precision": 0.69375,
+      "mean_edge": 0.5248644538665043,
+      "min_edge": 0.4470466977290011,
+      "total_signals_over_6yr": 960
+    },
+    "NQ.c.0": {
+      "mean_precision": 0.7513098498681274,
+      "min_precision": 0.68125,
+      "mean_edge": 0.515285599927432,
+      "min_edge": 0.4650506230529595,
+      "total_signals_over_6yr": 954
+    },
+    "YM.c.0": {
+      "mean_precision": 0.7987910936017415,
+      "min_precision": 0.7484662576687117,
+      "mean_edge": 0.5491187971641892,
+      "min_edge": 0.48759669245132037,
+      "total_signals_over_6yr": 957
+    },
+    "pooled": {
+      "mean_precision": 0.7751696746114076,
+      "min_precision": 0.7128099173553719,
+      "mean_edge": 0.5332497427310626,
+      "min_edge": 0.48212011975107616,
+      "total_signals_over_6yr": 2872
+    }
+  },
+  "generated_at": "2026-05-16T00:28:11.802657+00:00"
+}

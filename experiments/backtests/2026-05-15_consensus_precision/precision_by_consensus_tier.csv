@@ -1,0 +1,4 @@
+n_signals_firing,n_unique_combos,n_underlying_trades,n_hits,avg_precision
+1,214,214,175,0.8178
+2,160,320,258,0.8063
+3,6,18,17,0.9444

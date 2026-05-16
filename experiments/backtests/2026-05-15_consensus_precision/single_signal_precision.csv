@@ -1,0 +1,7 @@
+signal,n_solo_combos,n_trades,n_hits,solo_precision
+ogap_gap_down_rejection,7,7,7,1.0000
+ogap_gap_up_rejection,7,7,7,1.0000
+smt_pd_high_thesis,3,3,3,1.0000
+sweep_failed_recovered_all,156,156,136,0.8718
+ogap_strict_partial_touch,14,14,12,0.8571
+sweep_succeeded_held_rejection_low,27,27,10,0.3704
