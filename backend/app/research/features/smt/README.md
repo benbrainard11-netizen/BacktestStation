@@ -38,6 +38,10 @@ These events are only stamped after the current candle closes. The detector reco
 - `event_data.primary_close_confirmed`
 - `event_data.close_confirmed_symbols`
 
+Persisted MTF `event_type` values add `_high` or `_low` to the scan mode, for
+example `15m_prev_candle_smt_high`. This prevents high-side and low-side SMT on
+the same candle from colliding in the research-event id.
+
 The MTF feature matrix short name is `smt_mtf`, so ML output should land at `data/ml/features/smt_mtf.parquet` once the detector is scanned and the feature matrix builder is run.
 
 ## Where the code lives

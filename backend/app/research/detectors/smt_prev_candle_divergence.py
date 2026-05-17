@@ -186,6 +186,7 @@ class SmtPrevCandleDivergenceDetector:
             "schema_version": 1,
             "detector_version": self.detector_version,
             "reference_mode": "previous_candle",
+            "base_event_type": mode,
             "tracking_timeframe": timeframe,
             "timeframe_minutes": _TIMEFRAME_MINUTES[timeframe],
             "side": side,
@@ -215,7 +216,10 @@ class SmtPrevCandleDivergenceDetector:
         }
         return ResearchEventCreate(
             feature_name=self.feature_name,
-            event_type=mode,
+            # ResearchEvent ids do not include `side`; include it in the
+            # persisted event_type so high+low SMT on the same candle do not
+            # collide while the CLI mode remains timeframe-only.
+            event_type=f"{mode}_{side}",
             bar_end_utc=cur_close_ts,
             primary_symbol=primary,
             symbols=list(symbols),

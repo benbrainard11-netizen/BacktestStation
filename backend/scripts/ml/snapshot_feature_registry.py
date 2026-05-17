@@ -29,13 +29,21 @@ class LabelRule:
 
 
 SMT_LAG_MIN = {"previous_day_smt": 60, "weekly_smt": 240}
-SMT_MTF_LAG_MIN = {
+_SMT_MTF_BASE_LAG_MIN = {
     "15m_prev_candle_smt": 0,
     "30m_prev_candle_smt": 0,
     "1h_prev_candle_smt": 0,
     "90m_prev_candle_smt": 0,
     "4h_prev_candle_smt": 0,
     "6h_prev_candle_smt": 0,
+}
+SMT_MTF_LAG_MIN = {
+    **_SMT_MTF_BASE_LAG_MIN,
+    **{
+        f"{event_type}_{side}": lag
+        for event_type, lag in _SMT_MTF_BASE_LAG_MIN.items()
+        for side in ("high", "low")
+    },
 }
 PSP_LAG_MIN = {"1h_psp": 60, "4h_psp": 240, "daily_psp": 24 * 60}
 FVG_LAG_MIN = {"15m_fvg": 15, "1h_fvg": 60, "4h_fvg": 240, "daily_fvg": 24 * 60}

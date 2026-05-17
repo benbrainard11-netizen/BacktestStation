@@ -160,7 +160,8 @@ def test_high_side_prev_candle_smt_records_close_confirmed_event():
     assert len(events) == 1
     event = events[0]
     assert event.feature_name == "smt_prev_candle_divergence"
-    assert event.event_type == "15m_prev_candle_smt"
+    assert event.event_type == "15m_prev_candle_smt_high"
+    assert event.event_data["base_event_type"] == "15m_prev_candle_smt"
     assert event.primary_symbol == NQ
     assert event.side == "high"
     assert event.bar_end_utc == _utc(2026, 5, 4, 12, 30)

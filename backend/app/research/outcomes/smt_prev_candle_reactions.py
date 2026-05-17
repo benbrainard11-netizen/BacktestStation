@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+from collections import OrderedDict
+from datetime import date as date_type
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
@@ -22,6 +24,8 @@ WINDOWS_MIN = {
     "next_1d": 24 * 60,
 }
 MAX_HORIZON_MIN = max(WINDOWS_MIN.values())
+_BAR_CACHE_MAX_ITEMS = 256
+_BAR_CACHE: OrderedDict[tuple[int, str, date_type, date_type], pd.DataFrame] = OrderedDict()
 
 
 class SmtPrevCandleReactionsComputer:
@@ -138,14 +142,26 @@ def _load_bars(
     start: datetime,
     end: datetime,
 ) -> pd.DataFrame | None:
+    start_date = start.date()
+    end_date = end.date() + timedelta(days=1)
+    cache_key = (id(bar_reader), symbol, start_date, end_date)
+    cached = _BAR_CACHE.get(cache_key)
+    if cached is not None:
+        _BAR_CACHE.move_to_end(cache_key)
+        return cached[(cached.index >= start) & (cached.index < end)].copy()
+
     try:
-        df = bar_reader(symbol=symbol, timeframe="1m", start=start.date(), end=end.date() + timedelta(days=1))
+        df = bar_reader(symbol=symbol, timeframe="1m", start=start_date, end=end_date)
     except (FileNotFoundError, ValueError) as exc:
         log.info("smt_prev_candle_reactions: missing bars for %s: %s", symbol, exc)
         return None
     if df is None or len(df) == 0:
         return None
     df = _normalize_index(df).sort_index()
+    _BAR_CACHE[cache_key] = df
+    _BAR_CACHE.move_to_end(cache_key)
+    while len(_BAR_CACHE) > _BAR_CACHE_MAX_ITEMS:
+        _BAR_CACHE.popitem(last=False)
     return df[(df.index >= start) & (df.index < end)].copy()
 
 
