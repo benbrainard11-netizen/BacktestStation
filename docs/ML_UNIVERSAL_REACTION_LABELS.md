@@ -12,6 +12,7 @@ The shared helper lives at `backend/app/research/outcomes/reaction_labels.py`.
 
 | Concept | Status | Outcome version |
 |---|---|---|
+| Universal level table | First artifact for NDOG/NWOG at `data/ml/levels/opening_gap_level_reactions.parquet` | `level_reactions_v1` |
 | Scheduled macro events | Already has equivalent v2 labels | `v2` |
 | Opening gaps / NDOG/NWOG | Uses shared helper | `v2` |
 | Interval true range | Uses shared helper | `v2` |
@@ -21,6 +22,52 @@ The shared helper lives at `backend/app/research/outcomes/reaction_labels.py`.
 | Completed volume profile | Has strict v2 post-touch level labels; not changed in this pass | `v2` |
 
 ## Standard Label Families
+
+The newer wide level-reaction artifacts use:
+
+- `level.*` for what the level was at creation time.
+- `lr.<horizon>.*` for future reaction labels.
+
+Standard horizons:
+
+```text
+next_60m
+next_240m
+next_1d
+next_5d
+next_20d
+full_horizon
+```
+
+Core `lr.*` fields:
+
+```text
+touched
+meaningful_touch
+partial_touch
+midpoint_touched
+full_touch
+closed_inside
+closed_through
+directional_rejection
+directional_break_acceptance
+continuation_acceptance
+through_acceptance
+partial_touch_rejected
+full_touch_rejected_inside
+clean_fill_through
+unfilled_expanded_away
+unfilled_clean_continuation
+time_to_touch_minutes
+time_to_meaningful_touch_minutes
+time_to_full_touch_minutes
+reaction_away_pts
+reaction_through_pts
+reaction_away_x_size
+reaction_through_x_size
+```
+
+The older nested outcome families still exist and are listed below.
 
 | Family | Example | Meaning |
 |---|---|---|
