@@ -498,6 +498,137 @@ def _run_data_migrations(engine: Engine) -> None:
                     )
                 )
 
+        # 2026-05-17: Trial registry tables. These record falsifiable
+        # hypotheses, every candidate config inside each audit/search group,
+        # and lock records proving when candidates/data/code were frozen.
+        if not inspector.has_table("hypotheses"):
+            connection.execute(
+                text(
+                    "CREATE TABLE hypotheses ("
+                    " id INTEGER PRIMARY KEY,"
+                    " title VARCHAR(200) NOT NULL,"
+                    " hypothesis_md TEXT NOT NULL,"
+                    " rationale_md TEXT,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'draft',"
+                    " parent_strategy_version_id INTEGER "
+                    "REFERENCES strategy_versions(id),"
+                    " tags_json JSON,"
+                    " notes TEXT,"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " updated_at DATETIME"
+                    ")"
+                )
+            )
+        if not inspector.has_table("trial_groups"):
+            connection.execute(
+                text(
+                    "CREATE TABLE trial_groups ("
+                    " id INTEGER PRIMARY KEY,"
+                    " hypothesis_id INTEGER NOT NULL REFERENCES hypotheses(id),"
+                    " name VARCHAR(200) NOT NULL,"
+                    " search_space_json JSON,"
+                    " selection_rule TEXT,"
+                    " selected_trial_id INTEGER REFERENCES trials(id),"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " completed_at DATETIME,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'draft',"
+                    " notes TEXT"
+                    ")"
+                )
+            )
+        if not inspector.has_table("trial_lock_records"):
+            connection.execute(
+                text(
+                    "CREATE TABLE trial_lock_records ("
+                    " id INTEGER PRIMARY KEY,"
+                    " trial_group_id INTEGER NOT NULL REFERENCES trial_groups(id),"
+                    " lock_type VARCHAR(20) NOT NULL,"
+                    " locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " candidate_set_yaml TEXT,"
+                    " candidate_set_hash VARCHAR(64) NOT NULL,"
+                    " dataset_snapshot_id VARCHAR(160) NOT NULL,"
+                    " code_commit_sha VARCHAR(40) NOT NULL,"
+                    " pre_registration_md TEXT,"
+                    " window_train VARCHAR(80),"
+                    " window_validation VARCHAR(80),"
+                    " window_test VARCHAR(80),"
+                    " window_final VARCHAR(80),"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'active',"
+                    " bug_exceptions_after_lock_json JSON,"
+                    " superseded_by_lock_id INTEGER "
+                    "REFERENCES trial_lock_records(id),"
+                    " notes TEXT"
+                    ")"
+                )
+            )
+        if not inspector.has_table("trials"):
+            connection.execute(
+                text(
+                    "CREATE TABLE trials ("
+                    " id INTEGER PRIMARY KEY,"
+                    " trial_group_id INTEGER NOT NULL REFERENCES trial_groups(id),"
+                    " trial_lock_record_id INTEGER REFERENCES trial_lock_records(id),"
+                    " backtest_run_id INTEGER REFERENCES backtest_runs(id),"
+                    " candidate_config_id VARCHAR(200),"
+                    " params_json JSON,"
+                    " parent_trial_id INTEGER REFERENCES trials(id),"
+                    " data_snapshot_sha VARCHAR(64),"
+                    " started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " completed_at DATETIME,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'queued',"
+                    " is_selected BOOLEAN NOT NULL DEFAULT 0,"
+                    " selection_reason TEXT,"
+                    " summary_metrics_json JSON"
+                    ")"
+                )
+            )
+        for index_name, table_name, column in [
+            ("ix_hypotheses_title", "hypotheses", "title"),
+            ("ix_hypotheses_status", "hypotheses", "status"),
+            (
+                "ix_hypotheses_parent_strategy_version_id",
+                "hypotheses",
+                "parent_strategy_version_id",
+            ),
+            ("ix_trial_groups_hypothesis_id", "trial_groups", "hypothesis_id"),
+            ("ix_trial_groups_name", "trial_groups", "name"),
+            ("ix_trial_groups_status", "trial_groups", "status"),
+            ("ix_trial_groups_selected_trial_id", "trial_groups", "selected_trial_id"),
+            ("ix_trials_trial_group_id", "trials", "trial_group_id"),
+            ("ix_trials_trial_lock_record_id", "trials", "trial_lock_record_id"),
+            ("ix_trials_backtest_run_id", "trials", "backtest_run_id"),
+            ("ix_trials_candidate_config_id", "trials", "candidate_config_id"),
+            ("ix_trials_parent_trial_id", "trials", "parent_trial_id"),
+            ("ix_trials_data_snapshot_sha", "trials", "data_snapshot_sha"),
+            ("ix_trials_status", "trials", "status"),
+            ("ix_trials_is_selected", "trials", "is_selected"),
+            ("ix_trial_lock_records_trial_group_id", "trial_lock_records", "trial_group_id"),
+            ("ix_trial_lock_records_lock_type", "trial_lock_records", "lock_type"),
+            (
+                "ix_trial_lock_records_candidate_set_hash",
+                "trial_lock_records",
+                "candidate_set_hash",
+            ),
+            (
+                "ix_trial_lock_records_dataset_snapshot_id",
+                "trial_lock_records",
+                "dataset_snapshot_id",
+            ),
+            ("ix_trial_lock_records_code_commit_sha", "trial_lock_records", "code_commit_sha"),
+            ("ix_trial_lock_records_status", "trial_lock_records", "status"),
+            (
+                "ix_trial_lock_records_superseded_by_lock_id",
+                "trial_lock_records",
+                "superseded_by_lock_id",
+            ),
+        ]:
+            connection.execute(
+                text(
+                    f"CREATE INDEX IF NOT EXISTS {index_name} "
+                    f"ON {table_name}({column})"
+                )
+            )
+
 
 def _seed_default_risk_profiles(connection) -> None:
     """Insert Conservative / Live-mirror / Aggressive defaults if missing.
