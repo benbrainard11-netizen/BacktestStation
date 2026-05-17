@@ -32,12 +32,9 @@ Modes (v1):
                             v2 will use anchored Globex day.
   - 4h_psp:     4h bucket  — floors to UTC 00/04/08/12/16/20.
   - 1h_psp:     1h bucket  — floors to UTC clock hours.
+  - 30m_psp:    30m bucket - floors to UTC clock half-hours.
+  - 15m_psp:    15m bucket - floors to UTC quarter-hours.
 
-Modes deferred to v2:
-
-  - 6h_psp / weekly_psp: app.data.reader.read_bars doesn't
-    natively support these timeframes; would need either an
-    extension to read_bars or anchored 1m aggregation.
 
 Composability with SMT:
 
@@ -71,6 +68,8 @@ log = logging.getLogger(__name__)
 
 # Mode → tracking timeframe string for read_bars
 _MODE_TIMEFRAME: dict[str, str] = {
+    "15m_psp": "15m",
+    "30m_psp": "30m",
     "daily_psp": "1d",
     "4h_psp": "4h",
     "1h_psp": "1h",

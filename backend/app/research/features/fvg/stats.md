@@ -1,6 +1,6 @@
 # FVG Formation - Current Stats
 
-_Generated `2026-05-17T19:31:03+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T22:05:12+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 

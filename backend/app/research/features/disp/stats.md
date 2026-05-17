@@ -1,6 +1,6 @@
 # Displacement Candle - Current Stats
 
-_Generated `2026-05-17T19:31:25+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T22:05:48+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,84 +13,89 @@ Large directional candles and later retracement/invalidation behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `disp` / `displacement_candle` |
-| Total feature rows | 187,595 |
+| Total feature rows | 214,599 |
 | Date range | 2015-01-02 -> 2026-05-07 |
-| Outcomes coverage | 38,747 / 38,747 (100.0%) |
+| Outcomes coverage | 214,599 / 214,599 (100.0%) |
 
 ### By Event Type
 
 | Event type | Events | Share |
 |---|---|---|
-| `1h_disp` | 29,664 | 76.6% |
-| `4h_disp` | 7,471 | 19.3% |
-| `daily_disp` | 1,612 | 4.2% |
+| `15m_disp` | 113,396 | 52.8% |
+| `30m_disp` | 62,456 | 29.1% |
+| `1h_disp` | 29,664 | 13.8% |
+| `4h_disp` | 7,471 | 3.5% |
+| `daily_disp` | 1,612 | 0.8% |
 
 ### By Outcome Version
 
 | Outcome version | Events | Share |
 |---|---|---|
-| `v1` | 38,747 | 100.0% |
+| `v1` | 214,482 | 99.9% |
+| `(missing)` | 117 | 0.1% |
 
 ### By Symbol
 
 | Symbol | Events | Share |
 |---|---|---|
-| `NQ.c.0` | 12,953 | 33.4% |
-| `YM.c.0` | 12,942 | 33.4% |
-| `ES.c.0` | 12,852 | 33.2% |
+| `YM.c.0` | 71,706 | 33.4% |
+| `ES.c.0` | 71,645 | 33.4% |
+| `NQ.c.0` | 71,248 | 33.2% |
 
 ### By Side
 
 | Side | Events | Share |
 |---|---|---|
-| `bullish` | 19,391 | 50.0% |
-| `bearish` | 19,356 | 50.0% |
+| `bearish` | 107,538 | 50.1% |
+| `bullish` | 107,061 | 49.9% |
 
 ## Feature Matrix
 
 | Metric | Value |
 |---|---|
-| Rows | 187,595 |
-| Columns | 91 |
+| Rows | 214,599 |
+| Columns | 93 |
 | ed.* event_data | 20 |
 | oc.* outcome labels | 45 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 14 |
-| numeric | 80 |
+| xd.* cross-detector | 16 |
+| numeric | 82 |
 | object/category | 10 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.retracement.tapped_open` | 144,236 / 187,563 | 76.9% |
-| `oc.retracement.tapped_full` | 138,010 / 187,563 | 73.6% |
-| `oc.invalidation.invalidated` | 128,698 / 187,563 | 68.6% |
+| `oc.retracement.tapped_open` | 166,565 / 214,482 | 77.7% |
+| `oc.retracement.tapped_full` | 158,597 / 214,482 | 73.9% |
+| `oc.invalidation.invalidated` | 147,692 / 214,482 | 68.9% |
 
 ### Breakdown - `oc.retracement.tapped_open` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `1h_disp` | 107,465 / 140,575 | 76.4% |
-| `4h_disp` | 30,453 / 38,911 | 78.3% |
-| `daily_disp` | 6,318 / 8,077 | 78.2% |
+| `15m_disp` | 89,289 / 113,282 | 78.8% |
+| `1h_disp` | 21,597 / 29,664 | 72.8% |
+| `30m_disp` | 48,544 / 62,453 | 77.7% |
+| `4h_disp` | 5,845 / 7,471 | 78.2% |
+| `daily_disp` | 1,290 / 1,612 | 80.0% |
 
 ### Breakdown - `oc.retracement.tapped_open` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 73,214 / 94,513 | 77.5% |
-| `bullish` | 71,022 / 93,050 | 76.3% |
+| `bearish` | 85,525 / 107,482 | 79.6% |
+| `bullish` | 81,040 / 107,000 | 75.7% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.retracement.tapped_close` | 185,312 / 187,563 | 98.8% |
-| `oc.retracement.tapped_mid` | 164,493 / 187,563 | 87.7% |
-| `oc.retracement.tapped_open` | 144,236 / 187,563 | 76.9% |
-| `oc.retracement.tapped_full` | 138,010 / 187,563 | 73.6% |
-| `oc.invalidation.invalidated` | 128,698 / 187,563 | 68.6% |
+| `oc.retracement.tapped_close` | 213,929 / 214,482 | 99.7% |
+| `oc.retracement.tapped_mid` | 189,537 / 214,482 | 88.4% |
+| `oc.retracement.tapped_open` | 166,565 / 214,482 | 77.7% |
+| `oc.retracement.tapped_full` | 158,597 / 214,482 | 73.9% |
+| `oc.invalidation.invalidated` | 147,692 / 214,482 | 68.9% |
 
 ## Per-Detector Baseline
 

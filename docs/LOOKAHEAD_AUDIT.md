@@ -1,16 +1,18 @@
 # Look-ahead audit
 
-_Generated `2026-05-17T19:26:59.366027+00:00`._
+_Generated `2026-05-17T22:14:21.409688+00:00`._
 
 Verifies that outcomes were computed only from bars at or after `event.bar_end_utc + bucket_minutes` (the detector confirmation lag).
 
-Sampled up to 200 events per (feature × event_type) class. 200 classes audited.
+Sampled up to 200 events per (feature × event_type) class. 204 classes audited.
 
 ## Per-class summary
 
 | feature | event_type | sampled | violations | pct | event_data_flags | status |
 |---|---|---|---|---|---|---|
+| displacement_candle | 15m_disp | 200 | 0 | 0.0% | 0 | OK |
 | displacement_candle | 1h_disp | 200 | 0 | 0.0% | 0 | OK |
+| displacement_candle | 30m_disp | 200 | 0 | 0.0% | 0 | OK |
 | displacement_candle | 4h_disp | 200 | 0 | 0.0% | 0 | OK |
 | displacement_candle | daily_disp | 200 | 0 | 0.0% | 0 | OK |
 | equal_levels | eq_pivot_3_1h_15pts | 200 | 0 | 0.0% | 0 | OK |
@@ -179,7 +181,9 @@ Sampled up to 200 events per (feature × event_type) class. 200 classes audited.
 | order_block | swept_pwh_daily | 200 | 0 | 0.0% | 0 | OK |
 | order_block | swept_pwl_4h | 200 | 0 | 0.0% | 0 | OK |
 | order_block | swept_pwl_daily | 200 | 0 | 0.0% | 0 | OK |
+| psp_candle_divergence | 15m_psp | 200 | 0 | 0.0% | 0 | OK |
 | psp_candle_divergence | 1h_psp | 200 | 0 | 0.0% | 0 | OK |
+| psp_candle_divergence | 30m_psp | 200 | 0 | 0.0% | 0 | OK |
 | psp_candle_divergence | 4h_psp | 200 | 0 | 0.0% | 0 | OK |
 | psp_candle_divergence | daily_psp | 200 | 0 | 0.0% | 0 | OK |
 | smt_htf_reference_divergence | previous_day_smt | 200 | 0 | 0.0% | 200 | OK |

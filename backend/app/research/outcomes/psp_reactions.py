@@ -51,6 +51,8 @@ log = logging.getLogger(__name__)
 # computer loads bars at the SAME timeframe the detector ran on, so
 # "next candle" means one bucket later at that timeframe.
 _TIMEFRAME_FOR_TYPE: dict[str, tuple[str, int]] = {
+    "15m_psp": ("15m", 15),
+    "30m_psp": ("30m", 30),
     "1h_psp": ("1h", 60),
     "4h_psp": ("4h", 240),
     "daily_psp": ("1d", 24 * 60),

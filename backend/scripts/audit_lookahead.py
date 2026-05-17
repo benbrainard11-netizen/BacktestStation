@@ -56,6 +56,8 @@ _BUCKET_MIN: dict[tuple[str, str], int] = {
     ("smt_prev_candle_divergence", "6h_prev_candle_smt_high"): 0,
     ("smt_prev_candle_divergence", "6h_prev_candle_smt_low"): 0,
     # PSP
+    ("psp_candle_divergence", "15m_psp"): 15,
+    ("psp_candle_divergence", "30m_psp"): 30,
     ("psp_candle_divergence", "1h_psp"): 60,
     ("psp_candle_divergence", "4h_psp"): 240,
     ("psp_candle_divergence", "daily_psp"): 24 * 60,
@@ -84,6 +86,8 @@ _BUCKET_MIN: dict[tuple[str, str], int] = {
         ("ny_low_1h", 60), ("ny_high_1h", 60),
     ]},
     # DISP
+    ("displacement_candle", "15m_disp"): 15,
+    ("displacement_candle", "30m_disp"): 30,
     ("displacement_candle", "1h_disp"): 60,
     ("displacement_candle", "4h_disp"): 240,
     ("displacement_candle", "daily_disp"): 24 * 60,

@@ -1,6 +1,6 @@
 # ITR - Interval True Range - Current Stats
 
-_Generated `2026-05-17T19:32:42+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T22:07:29+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 

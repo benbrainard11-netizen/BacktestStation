@@ -153,6 +153,31 @@ def test_event_data_shape(fake_reader: FakeBarReader):
     assert d["per_symbol_states"][ES]["direction"] == "bearish"
 
 
+def test_15m_psp_mode_fires(fake_reader: FakeBarReader):
+    ts = _utc(2026, 5, 4, 12, 15)
+    fake_reader.set(symbol=NQ, timeframe="15m", df=_ohlc_one_candle(
+        ts, o=21000, h=21020, l=20990, c=21015,
+    ))
+    fake_reader.set(symbol=ES, timeframe="15m", df=_ohlc_one_candle(
+        ts, o=5000, h=5005, l=4985, c=4990,
+    ))
+    fake_reader.set(symbol=YM, timeframe="15m", df=_ohlc_one_candle(
+        ts, o=40000, h=40020, l=39950, c=39960,
+    ))
+
+    detector = detector_registry.get("psp_candle_divergence")
+    events = detector.scan(DetectorContext(
+        symbols=SYMBOLS,
+        start=date(2026, 5, 4),
+        end=date(2026, 5, 5),
+        bar_reader=fake_reader,
+        mode="15m_psp",
+    ))
+    assert len(events) == 1
+    assert events[0].event_type == "15m_psp"
+    assert events[0].timeframe == "15M"
+
+
 def test_no_event_when_all_bullish(
     fake_reader: FakeBarReader,
     session_factory: sessionmaker[Session],
@@ -325,5 +350,7 @@ def test_detector_is_registered():
     assert d.feature_name == "psp_candle_divergence"
     assert d.detector_version == "v1"
     assert "daily_psp" in d.supported_modes
+    assert "15m_psp" in d.supported_modes
+    assert "30m_psp" in d.supported_modes
     assert "4h_psp" in d.supported_modes
     assert "1h_psp" in d.supported_modes

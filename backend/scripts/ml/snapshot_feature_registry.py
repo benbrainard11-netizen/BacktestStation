@@ -45,7 +45,13 @@ SMT_MTF_LAG_MIN = {
         for side in ("high", "low")
     },
 }
-PSP_LAG_MIN = {"1h_psp": 60, "4h_psp": 240, "daily_psp": 24 * 60}
+PSP_LAG_MIN = {
+    "15m_psp": 15,
+    "30m_psp": 30,
+    "1h_psp": 60,
+    "4h_psp": 240,
+    "daily_psp": 24 * 60,
+}
 FVG_LAG_MIN = {"15m_fvg": 15, "1h_fvg": 60, "4h_fvg": 240, "daily_fvg": 24 * 60}
 OB_LAG_MIN = {
     "swept_pdl_1h": 60, "swept_pdl_4h": 240,
@@ -65,7 +71,13 @@ SWEEP_LAG_MIN = {
     "london_low_1h": 60, "london_high_1h": 60,
     "ny_low_1h": 60, "ny_high_1h": 60,
 }
-DISP_LAG_MIN = {"1h_disp": 60, "4h_disp": 240, "daily_disp": 24 * 60}
+DISP_LAG_MIN = {
+    "15m_disp": 15,
+    "30m_disp": 30,
+    "1h_disp": 60,
+    "4h_disp": 240,
+    "daily_disp": 24 * 60,
+}
 SWING_LAG_MIN = {
     "pivot_3_1h": 4 * 60,
     "pivot_5_1h": 6 * 60,

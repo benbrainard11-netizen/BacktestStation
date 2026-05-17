@@ -187,8 +187,41 @@ def test_bearish_displacement_fires(
     assert result.n_inserted == 1
 
 
+def test_15m_displacement_mode_fires(
+    fake_reader: FakeBarReader,
+    session_factory: sessionmaker[Session],
+):
+    rows = []
+    cur = datetime(2026, 4, 30, 18, 0, tzinfo=UTC)
+    for i in range(25):
+        o = 21000 + i * 0.25
+        c = o + 2
+        rows.append((cur, o, c + 0.5, o - 0.5, c))
+        cur += timedelta(minutes=15)
+    rows.append((cur, 21020, 21023, 21019, 21022))
+    cur += timedelta(minutes=15)
+    rows.append((cur, 21022, 21048, 21021, 21047))
+    fake_reader.set(symbol=NQ, timeframe="15m", df=_ohlc_frame(rows))
+
+    with session_factory() as db:
+        result = run_scan(
+            detector_name="displacement_candle",
+            symbols=[NQ],
+            start=date(2026, 5, 1),
+            end=date(2026, 5, 2),
+            bar_reader=fake_reader,
+            db=db,
+            mode="15m_disp",
+        )
+        db.commit()
+    assert result.n_errors == 0, result.error_messages
+    assert result.n_inserted == 1
+
+
 def test_detector_is_registered():
     d = get("displacement_candle")
     assert d.feature_name == "displacement_candle"
+    assert "15m_disp" in d.supported_modes
+    assert "30m_disp" in d.supported_modes
     assert "1h_disp" in d.supported_modes
     assert "daily_disp" in d.supported_modes

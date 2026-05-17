@@ -13,7 +13,7 @@ Detection rule (per-symbol, per-timeframe):
   3. Fire when body_pts >= k × rolling_mean (default k=2.0).
 
 Modes are timeframes:
-  - 1h_disp / 4h_disp / daily_disp
+  - 15m_disp / 30m_disp / 1h_disp / 4h_disp / daily_disp
 
 Wide-reach data: store body_pts, range_pts, body/range ratio, the
 multiplier vs recent average, plus quartile flags so analysis can
@@ -41,6 +41,8 @@ log = logging.getLogger(__name__)
 
 
 _MODE_TIMEFRAME: dict[str, str] = {
+    "15m_disp": "15m",
+    "30m_disp": "30m",
     "1h_disp": "1h",
     "4h_disp": "4h",
     "daily_disp": "1d",
@@ -69,7 +71,7 @@ class DisplacementCandleDetector:
         timeframe = _MODE_TIMEFRAME[ctx.mode]
         # Load extra bars before the start to seed the rolling mean.
         # tf_minutes lookup matches detection timeframe.
-        tf_min = {"1h": 60, "4h": 240, "1d": 24 * 60}[timeframe]
+        tf_min = {"15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 24 * 60}[timeframe]
         # Pad start by LOOKBACK_BARS * tf_minutes plus a generous extra
         # to handle weekends/holidays.
         start_dt = datetime(ctx.start.year, ctx.start.month, ctx.start.day, tzinfo=UTC)

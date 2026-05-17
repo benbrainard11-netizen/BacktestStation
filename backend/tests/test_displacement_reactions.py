@@ -64,8 +64,14 @@ def _build_disp_event(
     bar_end_utc: datetime,
     d_open: float, d_high: float, d_low: float, d_close: float,
 ) -> models.ResearchEvent:
-    timeframe_map = {"1h_disp": "1H", "4h_disp": "4H", "daily_disp": "1D",
-                     "unknown_mode": "1H"}
+    timeframe_map = {
+        "15m_disp": "15M",
+        "30m_disp": "30M",
+        "1h_disp": "1H",
+        "4h_disp": "4H",
+        "daily_disp": "1D",
+        "unknown_mode": "1H",
+    }
     body = abs(d_close - d_open)
     rng = d_high - d_low
     event_data = {
@@ -185,6 +191,24 @@ def test_returns_none_for_unknown_mode(fake_reader: FakeBarReader):
         d_open=21030, d_high=21082, d_low=21028, d_close=21080,
     )
     assert DisplacementReactionsComputer().compute(event, fake_reader) is None
+
+
+def test_15m_disp_reactions_use_next_15m_candles(fake_reader: FakeBarReader):
+    disp_ts = datetime(2026, 5, 4, 12, tzinfo=UTC)
+    bars = _ohlc_frame([
+        (disp_ts + timedelta(minutes=15), 21080, 21100, 21078, 21090),
+        (disp_ts + timedelta(minutes=30), 21090, 21110, 21085, 21105),
+        (disp_ts + timedelta(minutes=45), 21105, 21120, 21095, 21115),
+    ])
+    fake_reader.set(symbol=NQ, timeframe="15m", df=bars)
+    event = _build_disp_event(
+        mode="15m_disp", direction="bullish", primary=NQ, bar_end_utc=disp_ts,
+        d_open=21030, d_high=21082, d_low=21028, d_close=21080,
+    )
+    out = DisplacementReactionsComputer().compute(event, fake_reader)
+    assert out is not None
+    assert out["forward_3_candles"]["n_bars"] == 3
+    assert out["forward_3_candles"]["mfe_pts_in_thesis"] == pytest.approx(40.0)
 
 
 def test_computer_is_registered():

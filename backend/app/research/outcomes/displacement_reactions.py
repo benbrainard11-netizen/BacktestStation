@@ -38,6 +38,8 @@ log = logging.getLogger(__name__)
 
 
 _TIMEFRAME_FOR_MODE: dict[str, tuple[str, int]] = {
+    "15m_disp": ("15m", 15),
+    "30m_disp": ("30m", 30),
     "1h_disp": ("1h", 60),
     "4h_disp": ("4h", 240),
     "daily_disp": ("1d", 24 * 60),

@@ -4,7 +4,7 @@
 
 ## What it is
 
-This detector records bullish and bearish displacement candles on 1H, 4H, and daily timeframes. The event fires when the candle closes, because the body, range, and close location are not knowable until then.
+This detector records bullish and bearish displacement candles on 15m, 30m, 1H, 4H, and daily timeframes. The event fires when the candle closes, because the body, range, and close location are not knowable until then.
 
 Displacement is mainly a context feature. It helps describe momentum, confirmation, and later retracement behavior.
 
@@ -12,6 +12,8 @@ Displacement is mainly a context feature. It helps describe momentum, confirmati
 
 | Mode | Meaning |
 |---|---|
+| `15m_disp` | 15-minute displacement candle |
+| `30m_disp` | 30-minute displacement candle |
 | `1h_disp` | 1-hour displacement candle |
 | `4h_disp` | 4-hour displacement candle |
 | `daily_disp` | daily displacement candle |

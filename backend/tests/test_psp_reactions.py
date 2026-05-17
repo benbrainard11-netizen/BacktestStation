@@ -235,6 +235,31 @@ def test_returns_none_when_event_type_unknown(fake_reader: FakeBarReader):
     assert out is None
 
 
+def test_15m_psp_reactions_use_next_15m_candle(fake_reader: FakeBarReader):
+    psp_ts = _utc(2026, 5, 4, 12, 0)
+    next_ts = _utc(2026, 5, 4, 12, 15)
+    fake_reader.set(symbol=NQ, timeframe="15m", df=_ohlc_frame([
+        (next_ts, 21000, 21030, 20995, 21025),
+        (next_ts + timedelta(minutes=15), 21025, 21040, 21010, 21035),
+        (next_ts + timedelta(minutes=30), 21035, 21050, 21030, 21045),
+    ]))
+    fake_reader.set(symbol=ES, timeframe="15m", df=_ohlc_frame([
+        (next_ts, 5000, 5005, 4990, 4992),
+    ]))
+    fake_reader.set(symbol=YM, timeframe="15m", df=_ohlc_frame([
+        (next_ts, 40000, 40010, 39980, 39985),
+    ]))
+    event = _build_psp_event(
+        event_type="15m_psp", minority_dir="bullish", primary=NQ,
+        bar_end_utc=psp_ts, primary_close=21000.0,
+        majority_symbols=[ES, YM],
+    )
+    out = PspReactionsComputer().compute(event, fake_reader)
+    assert out is not None
+    assert out["next_candle"]["relative_to_minority"] == "continued"
+    assert out["forward_3_candles"]["n_bars"] == 3
+
+
 def test_runner_idempotent(
     fake_reader: FakeBarReader,
     session_factory: sessionmaker[Session],

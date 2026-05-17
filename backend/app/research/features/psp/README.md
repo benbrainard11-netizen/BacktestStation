@@ -4,7 +4,7 @@
 
 ## What it is
 
-This detector compares ES, NQ, and YM candle behavior on 1H, 4H, and daily bars. It records the minority/majority candle relationship and whether the group later rolls or follows through.
+This detector compares ES, NQ, and YM candle behavior on 15m, 30m, 1H, 4H, and daily bars. It records the minority/majority candle relationship and whether the group later rolls or follows through.
 
 PSP is kept because it may become useful as a context feature, but the current binary label is weak in baseline ML.
 
@@ -12,6 +12,8 @@ PSP is kept because it may become useful as a context feature, but the current b
 
 | Mode | Meaning |
 |---|---|
+| `15m_psp` | 15-minute PSP candle divergence |
+| `30m_psp` | 30-minute PSP candle divergence |
 | `1h_psp` | 1-hour PSP candle divergence |
 | `4h_psp` | 4-hour PSP candle divergence |
 | `daily_psp` | daily PSP candle divergence |
