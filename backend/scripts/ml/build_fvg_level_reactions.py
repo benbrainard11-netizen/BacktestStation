@@ -1,10 +1,8 @@
-"""Build a universal level-reaction table for NDOG/NWOG opening gaps.
+"""Build a universal level-reaction table for FVG zones.
 
-Input is the flattened opening-gap feature matrix (`ogap.parquet`). The
-detector creates the level at the gap open; existing opening-gap outcomes
-already use real future 1m bars. This script maps those custom outcomes into a
-common `level.*` + `lr.<horizon>.*` schema that can later be reused for FVG,
-order blocks, sweeps, pivots, and volume-profile levels.
+FVG outcomes are native-candle based, not fixed clock-time windows. This script
+keeps the shared `level.*` columns and writes native `lr.next_3_bars.*`,
+`lr.next_10_bars.*`, `lr.next_50_bars.*`, plus `lr.full_horizon.*`.
 """
 
 from __future__ import annotations
@@ -29,33 +27,38 @@ UTC = timezone.utc
 ROOT = Path(r"C:\Users\benbr\BacktestStation")
 FEATURES_DIR = ROOT / "data" / "ml" / "features"
 LEVELS_DIR = ROOT / "data" / "ml" / "levels"
-OPENING_GAP_HORIZONS = (
-    "next_60m",
-    "next_240m",
-    "next_1d",
-    "next_5d",
-    "next_20d",
-    "full_horizon",
-)
 
-DEFAULT_FEATURES = FEATURES_DIR / "ogap.parquet"
-DEFAULT_OUTPUT = LEVELS_DIR / "opening_gap_level_reactions.parquet"
-DEFAULT_SCHEMA_OUTPUT = LEVELS_DIR / "opening_gap_level_reactions.schema.json"
-DEFAULT_STATS = LEVELS_DIR / "opening_gap_level_reaction_stats.csv"
-DEFAULT_AGE_DECAY = LEVELS_DIR / "opening_gap_level_age_decay.csv"
-DEFAULT_DOC = ROOT / "docs" / "ML_OPENING_GAP_LEVEL_REACTIONS.md"
+DEFAULT_FEATURES = FEATURES_DIR / "fvg.parquet"
+DEFAULT_OUTPUT = LEVELS_DIR / "fvg_level_reactions.parquet"
+DEFAULT_SCHEMA_OUTPUT = LEVELS_DIR / "fvg_level_reactions.schema.json"
+DEFAULT_STATS = LEVELS_DIR / "fvg_level_reaction_stats.csv"
+DEFAULT_AGE_DECAY = LEVELS_DIR / "fvg_level_age_decay.csv"
+DEFAULT_DOC = ROOT / "docs" / "ML_FVG_LEVEL_REACTIONS.md"
 
+FVG_LAG_MIN = {
+    "15m_fvg": 15,
+    "1h_fvg": 60,
+    "4h_fvg": 240,
+    "daily_fvg": 24 * 60,
+}
+NATIVE_HORIZONS = {
+    "next_3_bars": 3,
+    "next_10_bars": 10,
+    "next_50_bars": 50,
+}
+FVG_HORIZONS = (*NATIVE_HORIZONS.keys(), "full_horizon")
+FVG_UNREACHED_BUCKET = "unreached_native_horizon"
 STAT_FIELDS = (
     "touched",
     "meaningful_touch",
     "partial_touch",
+    "midpoint_touched",
     "full_touch",
+    "closed_through",
     "directional_rejection",
     "directional_break_acceptance",
     "partial_touch_rejected",
-    "full_touch_rejected_inside",
     "clean_fill_through",
-    "unfilled_expanded_away",
     "unfilled_clean_continuation",
 )
 
@@ -71,9 +74,9 @@ def _bool_col(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.to_numeric(s, errors="coerce").fillna(0).astype(bool)
 
 
-def _num_col(df: pd.DataFrame, col: str) -> pd.Series:
+def _num_col(df: pd.DataFrame, col: str, default: float = np.nan) -> pd.Series:
     if col not in df.columns:
-        return pd.Series(np.nan, index=df.index, dtype="float64")
+        return pd.Series(default, index=df.index, dtype="float64")
     return pd.to_numeric(df[col], errors="coerce")
 
 
@@ -83,35 +86,53 @@ def _obj_col(df: pd.DataFrame, col: str, default: Any = None) -> pd.Series:
     return df[col]
 
 
+def _str_col(df: pd.DataFrame, col: str) -> pd.Series:
+    if col not in df.columns:
+        return pd.Series("", index=df.index, dtype="object")
+    return df[col].fillna("").astype(str)
+
+
 def _ratio(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     den = denominator.replace(0, np.nan)
     return numerator / den
 
 
+def _within_bars(series: pd.Series, horizon_bars: int) -> pd.Series:
+    value = pd.to_numeric(series, errors="coerce")
+    return value.notna() & value.le(horizon_bars)
+
+
+def _time_to_minutes(series: pd.Series, lag_min: pd.Series, horizon_bars: int | None = None) -> pd.Series:
+    bars = pd.to_numeric(series, errors="coerce")
+    if horizon_bars is not None:
+        bars = bars.where(bars <= horizon_bars)
+    return bars * lag_min
+
+
 def _base_frame(df: pd.DataFrame) -> pd.DataFrame:
-    created_ts = (
-        _obj_col(df, "ed.gap_open_ts_utc")
-        if "ed.gap_open_ts_utc" in df.columns
-        else _obj_col(df, "bar_end_utc")
-    )
+    lag_min = df["event_type"].map(FVG_LAG_MIN).astype("float64")
+    formation_ts = pd.to_datetime(df["bar_end_utc"], utc=True)
+    knowable_ts = formation_ts + pd.to_timedelta(lag_min, unit="m")
     direction = (
-        _obj_col(df, "ed.gap_direction")
-        if "ed.gap_direction" in df.columns
+        _obj_col(df, "ed.direction")
+        if "ed.direction" in df.columns
         else _obj_col(df, "side")
     )
     return pd.DataFrame(
         {
             "level.event_id": _obj_col(df, "event_id"),
-            "level.kind": "opening_gap",
+            "level.kind": "fair_value_gap",
             "level.subtype": _obj_col(df, "event_type"),
             "level.symbol": _obj_col(df, "primary_symbol"),
             "level.side": _obj_col(df, "side"),
-            "level.created_ts_utc": created_ts,
-            "level.price_low": _num_col(df, "ed.gap_low"),
-            "level.price_high": _num_col(df, "ed.gap_high"),
-            "level.price_mid": _num_col(df, "ed.gap_mid"),
-            "level.size_pts": _num_col(df, "ed.gap_size_pts"),
+            "level.created_ts_utc": knowable_ts.dt.strftime("%Y-%m-%dT%H:%M:%S%z"),
+            "level.price_low": _num_col(df, "ed.fvg_low"),
+            "level.price_high": _num_col(df, "ed.fvg_high"),
+            "level.price_mid": _num_col(df, "ed.fvg_mid"),
+            "level.size_pts": _num_col(df, "ed.fvg_width_pts"),
             "level.direction": direction,
+            "level.native_timeframe": _obj_col(df, "ed.tracking_timeframe"),
+            "level.native_minutes": lag_min,
             "source.event_type": _obj_col(df, "event_type"),
             "source.bar_end_utc": _obj_col(df, "bar_end_utc"),
             "source.year": _obj_col(df, "year"),
@@ -121,51 +142,65 @@ def _base_frame(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def _rejected_inside(df: pd.DataFrame, side: pd.Series) -> pd.Series:
+    bullish = side.astype(str).eq("bullish")
+    bearish = side.astype(str).eq("bearish")
+    low_rejected = _bool_col(df, "oc.zone_reaction.took_fvg_low_rejected_inside")
+    high_rejected = _bool_col(df, "oc.zone_reaction.took_fvg_high_rejected_inside")
+    return (bullish & low_rejected) | (bearish & high_rejected)
+
+
 def _horizon_frame(base: pd.DataFrame, df: pd.DataFrame, horizon: str) -> pd.DataFrame:
-    prefix = f"oc.{horizon}."
-    gap_up = base["level.direction"].astype(str).eq("gap_up")
-    gap_down = base["level.direction"].astype(str).eq("gap_down")
+    if horizon == "full_horizon":
+        horizon_bars: int | None = None
+        fwd_prefix = "oc.forward_50_candles."
+        tap_prefix = "oc.post_tap_reaction.forward_50_after_tap."
+    else:
+        horizon_bars = NATIVE_HORIZONS[horizon]
+        fwd_prefix = f"oc.forward_{horizon_bars}_candles."
+        tap_prefix = f"oc.post_tap_reaction.forward_{horizon_bars}_after_tap."
+
+    lag_min = base["level.native_minutes"].astype(float)
     size = base["level.size_pts"].astype(float)
+    side = base["level.side"].astype(str)
+    tap_class = _str_col(df, "oc.mitigation.tap_bar_classification")
+    rejected_inside = _rejected_inside(df, side)
 
-    touched = _bool_col(df, prefix + "touched_gap")
-    full_touch = _bool_col(df, prefix + "fully_filled")
-    midpoint_touched = _bool_col(df, prefix + "touched_midpoint")
-    meaningful_touch = midpoint_touched | full_touch
-    partial_touch = meaningful_touch & ~full_touch
-    closed_inside = _bool_col(df, prefix + "closed_inside")
-    closed_through = _bool_col(df, prefix + "closed_through")
-    accepted_above = _bool_col(df, prefix + "accepted_above_3bar")
-    accepted_below = _bool_col(df, prefix + "accepted_below_3bar")
-    support_rejection = _bool_col(df, prefix + "support_rejection_3bar")
-    resistance_rejection = _bool_col(df, prefix + "resistance_rejection_3bar")
-    support_break = _bool_col(df, prefix + "support_break_acceptance_3bar")
-    resistance_break = _bool_col(df, prefix + "resistance_break_acceptance_3bar")
-    closed_above = _bool_col(df, prefix + "closed_above_gap_high")
-    closed_below = _bool_col(df, prefix + "closed_below_gap_low")
-    low_rejected_inside = _bool_col(df, prefix + "took_gap_low_rejected_inside")
-    high_rejected_inside = _bool_col(df, prefix + "took_gap_high_rejected_inside")
-    unfilled = _bool_col(df, prefix + "unfilled_at_window_end")
+    bars_to_tap = _num_col(df, "oc.mitigation.bars_to_tap")
+    bars_to_mid = _num_col(df, "oc.mitigation.bars_to_mid")
+    bars_to_full = _num_col(df, "oc.mitigation.bars_to_full")
+    bars_to_close_inside = _num_col(df, "oc.mitigation.bars_to_close_inside")
+    bars_to_close_through = _num_col(df, "oc.mitigation.bars_to_close_through")
 
-    directional_rejection = (gap_up & support_rejection) | (gap_down & resistance_rejection)
-    directional_break = (gap_up & support_break) | (gap_down & resistance_break)
-    continuation_acceptance = (gap_up & accepted_above) | (gap_down & accepted_below)
-    through_acceptance = (gap_up & accepted_below) | (gap_down & accepted_above)
-    close_away = (gap_up & closed_above) | (gap_down & closed_below)
-    rejected_inside = (gap_up & low_rejected_inside) | (gap_down & high_rejected_inside)
+    if horizon_bars is None:
+        touched = bars_to_tap.notna()
+        midpoint_touched = bars_to_mid.notna()
+        full_touch = bars_to_full.notna()
+        closed_inside = bars_to_close_inside.notna()
+        closed_through = bars_to_close_through.notna()
+    else:
+        touched = _within_bars(bars_to_tap, horizon_bars)
+        midpoint_touched = _within_bars(bars_to_mid, horizon_bars)
+        full_touch = _within_bars(bars_to_full, horizon_bars)
+        closed_inside = _within_bars(bars_to_close_inside, horizon_bars)
+        closed_through = _within_bars(bars_to_close_through, horizon_bars)
 
-    mfe_up = _num_col(df, prefix + "mfe_up_pts")
-    mfe_down = _num_col(df, prefix + "mfe_down_pts")
-    forward_low = _num_col(df, prefix + "forward_low")
-    forward_high = _num_col(df, prefix + "forward_high")
-    gap_low = base["level.price_low"].astype(float)
-    gap_high = base["level.price_high"].astype(float)
-    reaction_away = pd.Series(np.where(gap_up, mfe_up, mfe_down), index=df.index, dtype="float64")
-    reaction_through = pd.Series(
-        np.where(gap_up, gap_low - forward_low, forward_high - gap_high),
-        index=df.index,
-        dtype="float64",
-    ).clip(lower=0)
-    unfilled_expanded_away = unfilled & (reaction_away >= size)
+    meaningful_touch = touched
+    partial_touch = touched & ~full_touch
+    directional_rejection = touched & tap_class.eq("wick_reject")
+    directional_break = closed_through
+
+    fwd_mfe = _num_col(df, fwd_prefix + "mfe_pts_in_thesis")
+    fwd_mae = _num_col(df, fwd_prefix + "mae_pts_against_thesis")
+    tap_mfe = _num_col(df, tap_prefix + "mfe_pts_in_thesis")
+    tap_mae = _num_col(df, tap_prefix + "mae_pts_against_thesis")
+    continuation_acceptance = fwd_mfe >= size
+    through_acceptance = closed_through
+    partial_touch_rejected = touched & ~midpoint_touched & directional_rejection
+    full_touch_rejected_inside = full_touch & ~closed_through & (closed_inside | rejected_inside)
+    clean_fill_through = full_touch & closed_through
+    unfilled_expanded_away = ~full_touch & (fwd_mfe >= size)
+    unfilled_clean_continuation = ~touched & (fwd_mfe >= 2.0 * size) & (fwd_mae <= size)
 
     values: dict[str, Any] = {
         "touched": touched,
@@ -179,44 +214,49 @@ def _horizon_frame(base: pd.DataFrame, df: pd.DataFrame, horizon: str) -> pd.Dat
         "directional_break_acceptance": directional_break,
         "continuation_acceptance": continuation_acceptance,
         "through_acceptance": through_acceptance,
-        "partial_touch_rejected": partial_touch & directional_rejection,
-        "full_touch_rejected_inside": full_touch & rejected_inside & ~through_acceptance,
-        "clean_fill_through": full_touch & through_acceptance,
+        "partial_touch_rejected": partial_touch_rejected,
+        "full_touch_rejected_inside": full_touch_rejected_inside,
+        "clean_fill_through": clean_fill_through,
         "unfilled_expanded_away": unfilled_expanded_away,
-        "unfilled_clean_continuation": unfilled & continuation_acceptance & close_away,
-        "time_to_touch_minutes": _num_col(df, prefix + "first_touch_minutes"),
-        "time_to_meaningful_touch_minutes": _num_col(df, prefix + "first_midpoint_minutes"),
-        "time_to_full_touch_minutes": _num_col(df, prefix + "first_full_fill_minutes"),
-        "reaction_away_pts": reaction_away,
-        "reaction_through_pts": reaction_through,
-        "reaction_away_x_size": _ratio(reaction_away, size),
-        "reaction_through_x_size": _ratio(reaction_through, size),
+        "unfilled_clean_continuation": unfilled_clean_continuation,
+        "time_to_touch_minutes": _time_to_minutes(bars_to_tap, lag_min, horizon_bars),
+        "time_to_meaningful_touch_minutes": _time_to_minutes(bars_to_tap, lag_min, horizon_bars),
+        "time_to_full_touch_minutes": _time_to_minutes(bars_to_full, lag_min, horizon_bars),
+        "reaction_away_pts": fwd_mfe,
+        "reaction_through_pts": fwd_mae,
+        "reaction_away_x_size": _ratio(fwd_mfe, size),
+        "reaction_through_x_size": _ratio(fwd_mae, size),
     }
-    return pd.DataFrame(
-        {
-            level_reaction_column(horizon, field): values[field]
-            for field in STANDARD_HORIZON_FIELDS
-            if field in values
-        },
-        index=df.index,
-    )
+    # Keep post-tap excursions out of the standard schema but preserve them for
+    # later strategy/label research.
+    values[f"post_tap_mfe_pts_{horizon}"] = tap_mfe
+    values[f"post_tap_mae_pts_{horizon}"] = tap_mae
+
+    standard = {
+        level_reaction_column(horizon, field): values[field]
+        for field in STANDARD_HORIZON_FIELDS
+        if field in values
+    }
+    extra = {
+        f"lr.{horizon}.post_tap_mfe_pts": values[f"post_tap_mfe_pts_{horizon}"],
+        f"lr.{horizon}.post_tap_mae_pts": values[f"post_tap_mae_pts_{horizon}"],
+    }
+    return pd.DataFrame({**standard, **extra}, index=df.index)
 
 
 def build_level_reactions(df: pd.DataFrame) -> pd.DataFrame:
-    """Return one row per NDOG/NWOG level using the shared level schema."""
-    work = df[df["event_type"].isin(("ndog", "nwog"))].copy()
+    work = df[df["event_type"].isin(FVG_LAG_MIN)].copy()
     base = _base_frame(work)
     parts = [base]
-    for horizon in OPENING_GAP_HORIZONS:
+    for horizon in FVG_HORIZONS:
         parts.append(_horizon_frame(base, work, horizon))
-
     out = pd.concat(parts, axis=1)
     out["level.first_meaningful_touch_age_bucket"] = out[
         level_reaction_column("full_horizon", "time_to_meaningful_touch_minutes")
-    ].map(age_bucket_minutes)
+    ].map(age_bucket_minutes).replace({"unreached_20d": FVG_UNREACHED_BUCKET})
     out["level.first_full_touch_age_bucket"] = out[
         level_reaction_column("full_horizon", "time_to_full_touch_minutes")
-    ].map(age_bucket_minutes)
+    ].map(age_bucket_minutes).replace({"unreached_20d": FVG_UNREACHED_BUCKET})
     return out.reset_index(drop=True)
 
 
@@ -236,7 +276,7 @@ def build_stats(levels: pd.DataFrame) -> pd.DataFrame:
         for (subtype, side), g in levels.groupby(["level.subtype", "level.side"], dropna=False)
     )
     for group, sub in groups:
-        for horizon in OPENING_GAP_HORIZONS:
+        for horizon in FVG_HORIZONS:
             row: dict[str, Any] = {
                 "group": group,
                 "horizon": horizon,
@@ -260,21 +300,19 @@ def build_age_decay(levels: pd.DataFrame) -> pd.DataFrame:
         ["level.subtype", "level.side", "level.first_meaningful_touch_age_bucket"],
         dropna=False,
     ):
+        denom = len(
+            levels[
+                levels["level.subtype"].eq(subtype)
+                & levels["level.side"].eq(side)
+            ]
+        )
         rows.append(
             {
                 "level_subtype": str(subtype),
                 "side": str(side),
                 "first_meaningful_touch_age_bucket": str(bucket),
                 "rows": int(len(sub)),
-                "share_of_subtype_side": float(
-                    len(sub)
-                    / len(
-                        levels[
-                            levels["level.subtype"].eq(subtype)
-                            & levels["level.side"].eq(side)
-                        ]
-                    )
-                ),
+                "share_of_subtype_side": float(len(sub) / denom) if denom else np.nan,
                 "full_horizon_directional_rejection_rate": _rate(
                     sub[level_reaction_column("full_horizon", "directional_rejection")]
                 ),
@@ -313,37 +351,47 @@ def _write_schema(path: Path, *, args: argparse.Namespace, levels: pd.DataFrame)
     payload = {
         **schema_payload(),
         "generated_utc": datetime.now(UTC).isoformat(),
-        "builder": "backend/scripts/ml/build_opening_gap_level_reactions.py",
+        "builder": "backend/scripts/ml/build_fvg_level_reactions.py",
         "source_features": str(args.features),
         "output": str(args.output),
         "rows": int(len(levels)),
         "columns": list(levels.columns),
         "concept": {
-            "level_kind": "opening_gap",
-            "subtypes": ["ndog", "nwog"],
-            "source_outcome_version": "opening_gap_reactions_v2",
+            "level_kind": "fair_value_gap",
+            "subtypes": sorted(FVG_LAG_MIN),
+            "source_outcome_version": "fvg_reactions_v3",
+            "native_horizons": NATIVE_HORIZONS,
         },
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def _write_doc(path: Path, *, args: argparse.Namespace, levels: pd.DataFrame, stats: pd.DataFrame, age: pd.DataFrame) -> None:
+def _write_doc(
+    path: Path,
+    *,
+    args: argparse.Namespace,
+    levels: pd.DataFrame,
+    stats: pd.DataFrame,
+    age: pd.DataFrame,
+) -> None:
     counts = levels.groupby(["level.subtype", "level.side"]).size().reset_index(name="rows")
     count_rows = [
         [f"`{r['level.subtype']}`", f"`{r['level.side']}`", f"{int(r['rows']):,}"]
         for _, r in counts.iterrows()
     ]
-    stat_focus = stats[stats["group"].eq("all") & stats["horizon"].isin(("next_60m", "next_240m", "next_1d", "next_20d"))]
+    stat_focus = stats[
+        stats["group"].eq("all")
+        & stats["horizon"].isin(("next_3_bars", "next_10_bars", "next_50_bars", "full_horizon"))
+    ]
     stat_rows = []
     for _, r in stat_focus.iterrows():
         stat_rows.append(
             [
                 f"`{r['horizon']}`",
                 f"{int(r['rows']):,}",
-                _fmt_pct(r["touched_rate"]),
                 _fmt_pct(r["meaningful_touch_rate"]),
-                _fmt_pct(r["partial_touch_rate"]),
+                _fmt_pct(r["midpoint_touched_rate"]),
                 _fmt_pct(r["full_touch_rate"]),
                 _fmt_pct(r["directional_rejection_rate"]),
                 _fmt_pct(r["directional_break_acceptance_rate"]),
@@ -352,7 +400,7 @@ def _write_doc(path: Path, *, args: argparse.Namespace, levels: pd.DataFrame, st
         )
     age_focus = age[age["first_meaningful_touch_age_bucket"].ne("unreached_20d")]
     age_rows = []
-    for _, r in age_focus.head(30).iterrows():
+    for _, r in age_focus.head(40).iterrows():
         age_rows.append(
             [
                 f"`{r['level_subtype']}`",
@@ -366,14 +414,13 @@ def _write_doc(path: Path, *, args: argparse.Namespace, levels: pd.DataFrame, st
             ]
         )
     text = [
-        "# Opening Gap Level Reactions",
+        "# FVG Level Reactions",
         "",
         f"_Generated `{datetime.now(UTC).isoformat()}`._",
         "",
-        "This is the first universal level-reaction artifact. It maps NDOG/NWOG",
-        "opening-gap outcomes into shared `level.*` and `lr.*` columns so gaps can",
-        "later be compared directly against FVGs, order blocks, sweeps, pivots,",
-        "and volume-profile levels.",
+        "This maps fair-value-gap zones into the same `level.*` and `lr.*`",
+        "vocabulary used by opening gaps. FVG horizons are native-candle",
+        "windows because the source outcome computer is native-timeframe based.",
         "",
         f"- Source: `{args.features}`",
         f"- Output: `{args.output}`",
@@ -390,18 +437,17 @@ def _write_doc(path: Path, *, args: argparse.Namespace, levels: pd.DataFrame, st
             [
                 "Horizon",
                 "Rows",
-                "Raw Touch",
-                "Meaningful Touch",
-                "Partial Touch",
+                "Touch",
+                "Mid Fill",
                 "Full Fill",
-                "Directional Reject",
-                "Directional Break",
-                "Avg Away / Size",
+                "Wick Reject",
+                "Close Through",
+                "Avg Thesis / Size",
             ],
             stat_rows,
         ),
         "",
-        "## Meaningful-Touch Age Decay",
+        "## First-Touch Age Decay",
         "",
         _md_table(
             [
@@ -412,25 +458,18 @@ def _write_doc(path: Path, *, args: argparse.Namespace, levels: pd.DataFrame, st
                 "Share",
                 "Reject",
                 "Break",
-                "Avg Away / Size",
+                "Avg Thesis / Size",
             ],
             age_rows,
         ),
         "",
-        "## Columns",
+        "## Notes",
         "",
-        "- `level.*` columns describe the level at creation time.",
-        "- `lr.<horizon>.touched` is raw zone overlap. For opening gaps this is usually trivial at birth.",
-        "- `lr.<horizon>.meaningful_touch` means midpoint/full-fill progress and is the field to use for age decay.",
-        "- `lr.<horizon>.*` columns describe future reaction labels.",
-        "- These are labels/outcomes, not model inputs.",
-        "",
-        "## Why This Matters",
-        "",
-        "This starts the shared level-reaction vocabulary. The next concepts can",
-        "reuse the same fields, which lets the RTX training box compare level",
-        "families apples-to-apples instead of learning separate custom labels for",
-        "every concept.",
+        "- `level.created_ts_utc` is the first knowable timestamp, not the candle-3 start.",
+        "- `lr.next_3_bars.*`, `lr.next_10_bars.*`, and `lr.next_50_bars.*` are native-candle horizons.",
+        "- `lr.full_horizon.*` matches the mitigation horizon from the FVG outcome computer.",
+        f"- `{FVG_UNREACHED_BUCKET}` means no touch/fill inside the 50-native-candle source horizon.",
+        "- `lr.*` columns are labels/outcomes, not model inputs.",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(text) + "\n", encoding="utf-8")
@@ -441,7 +480,6 @@ def build(args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame, pd.Data
     levels = build_level_reactions(df)
     stats = build_stats(levels)
     age = build_age_decay(levels)
-
     args.output.parent.mkdir(parents=True, exist_ok=True)
     levels.to_parquet(args.output, index=False)
     stats.to_csv(args.stats_output, index=False)
@@ -460,7 +498,6 @@ def main() -> int:
     parser.add_argument("--age-decay-output", type=Path, default=DEFAULT_AGE_DECAY)
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC)
     args = parser.parse_args()
-
     levels, stats, age = build(args)
     print(f"wrote {args.output}: {len(levels):,} rows x {len(levels.columns):,} cols")
     print(f"wrote {args.schema_output}")

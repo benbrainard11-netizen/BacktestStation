@@ -1,6 +1,6 @@
 # Universal Reaction Labels
 
-_Generated 2026-05-14._
+_Updated 2026-05-16._
 
 ## Purpose
 
@@ -12,7 +12,8 @@ The shared helper lives at `backend/app/research/outcomes/reaction_labels.py`.
 
 | Concept | Status | Outcome version |
 |---|---|---|
-| Universal level table | First artifact for NDOG/NWOG at `data/ml/levels/opening_gap_level_reactions.parquet` | `level_reactions_v1` |
+| Universal opening-gap level table | NDOG/NWOG at `data/ml/levels/opening_gap_level_reactions.parquet` | `level_reactions_v1` |
+| Universal FVG level table | Fair-value-gap zones at `data/ml/levels/fvg_level_reactions.parquet` | `level_reactions_v1` |
 | Scheduled macro events | Already has equivalent v2 labels | `v2` |
 | Opening gaps / NDOG/NWOG | Uses shared helper | `v2` |
 | Interval true range | Uses shared helper | `v2` |
@@ -28,7 +29,7 @@ The newer wide level-reaction artifacts use:
 - `level.*` for what the level was at creation time.
 - `lr.<horizon>.*` for future reaction labels.
 
-Standard horizons:
+Standard clock-time horizons:
 
 ```text
 next_60m
@@ -37,6 +38,14 @@ next_1d
 next_5d
 next_20d
 full_horizon
+```
+
+Native-bar horizons, used when the source concept is natively candle-based:
+
+```text
+next_3_bars
+next_10_bars
+next_50_bars
 ```
 
 Core `lr.*` fields:

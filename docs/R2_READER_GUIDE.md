@@ -68,6 +68,7 @@ python -m app.ingest.r2_status --required-universe futures_expanded_v1 --strict
 | `data/ml/catalog/ml_dataset_catalog.json` | Feature matrix, anchor artifact, detector/outcome catalog. |
 | `data/ml/catalog/expanded_universe_research_build_report.json` | Expanded-universe build report. |
 | `data/ml/levels/opening_gap_level_reactions.parquet` | Universal NDOG/NWOG level-reaction table. |
+| `data/ml/levels/fvg_level_reactions.parquet` | Universal FVG level-reaction table. |
 
 ## Download A Manifest
 
