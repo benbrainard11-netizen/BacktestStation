@@ -1,10 +1,10 @@
 # Look-ahead audit
 
-_Generated `2026-05-10T23:51:55.412038+00:00`._
+_Generated `2026-05-17T19:46:44.299589+00:00`._
 
 Verifies that outcomes were computed only from bars at or after `event.bar_end_utc + bucket_minutes` (the detector confirmation lag).
 
-Sampled up to 200 events per (feature × event_type) class. 67 classes audited.
+Sampled up to 200 events per (feature × event_type) class. 69 classes audited.
 
 ## Per-class summary
 
@@ -13,19 +13,19 @@ Sampled up to 200 events per (feature × event_type) class. 67 classes audited.
 | displacement_candle | 1h_disp | 200 | 0 | 0.0% | 0 | OK |
 | displacement_candle | 4h_disp | 200 | 0 | 0.0% | 0 | OK |
 | displacement_candle | daily_disp | 200 | 0 | 0.0% | 0 | OK |
-| equal_levels | eq_pivot_3_1h_15pts | 200 | 0 | 0.0% | 0 | OK |
-| equal_levels | eq_pivot_3_1h_5pts | 200 | 0 | 0.0% | 0 | OK |
-| equal_levels | eq_pivot_3_4h_15pts | 200 | 0 | 0.0% | 0 | OK |
-| equal_levels | eq_pivot_5_1h_15pts | 200 | 0 | 0.0% | 0 | OK |
-| equal_levels | eq_pivot_5_1h_5pts | 200 | 0 | 0.0% | 0 | OK |
-| equal_levels | eq_pivot_5_4h_15pts | 200 | 0 | 0.0% | 0 | OK |
-| equal_levels | eq_pivot_5_daily_30pts | 200 | 0 | 0.0% | 0 | OK |
 | first_third_range | first_third_daily | 200 | 0 | 0.0% | 0 | OK |
 | first_third_range | first_third_weekly | 200 | 0 | 0.0% | 0 | OK |
+| forming_volume_profile | daily_vp_asof_1h | 200 | 0 | 0.0% | 0 | OK |
+| forming_volume_profile | daily_vp_asof_4h | 200 | 0 | 0.0% | 0 | OK |
 | fvg_formation | 15m_fvg | 200 | 0 | 0.0% | 0 | OK |
 | fvg_formation | 1h_fvg | 200 | 0 | 0.0% | 0 | OK |
 | fvg_formation | 4h_fvg | 200 | 0 | 0.0% | 0 | OK |
 | fvg_formation | daily_fvg | 200 | 0 | 0.0% | 0 | OK |
+| interval_true_range | asia_itr | 200 | 0 | 0.0% | 0 | OK |
+| interval_true_range | daily_itr | 200 | 0 | 0.0% | 0 | OK |
+| interval_true_range | london_itr | 200 | 0 | 0.0% | 0 | OK |
+| interval_true_range | ny_itr | 200 | 0 | 0.0% | 0 | OK |
+| interval_true_range | weekly_itr | 200 | 0 | 0.0% | 0 | OK |
 | liquidity_sweep | asia_high_1h | 200 | 0 | 0.0% | 0 | OK |
 | liquidity_sweep | asia_low_1h | 200 | 0 | 0.0% | 0 | OK |
 | liquidity_sweep | london_high_1h | 200 | 0 | 0.0% | 0 | OK |
@@ -40,6 +40,8 @@ Sampled up to 200 events per (feature × event_type) class. 67 classes audited.
 | liquidity_sweep | pwh_daily | 200 | 0 | 0.0% | 0 | OK |
 | liquidity_sweep | pwl_4h | 200 | 0 | 0.0% | 0 | OK |
 | liquidity_sweep | pwl_daily | 200 | 0 | 0.0% | 0 | OK |
+| opening_gap_levels | ndog | 200 | 0 | 0.0% | 0 | OK |
+| opening_gap_levels | nwog | 200 | 0 | 0.0% | 0 | OK |
 | opening_range_breakout | asia_60m | 200 | 0 | 0.0% | 0 | OK |
 | opening_range_breakout | ny_15m | 200 | 0 | 0.0% | 0 | OK |
 | opening_range_breakout | ny_30m | 200 | 0 | 0.0% | 0 | OK |

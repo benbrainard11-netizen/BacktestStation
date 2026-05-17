@@ -79,3 +79,7 @@ Thumbs.db
 # The /experiments/gpu_runs/ subtree was an earlier experiments layout that
 # we don't track anymore — keep on disk for reference, don't commit.
 /experiments/gpu_runs/
+
+# Audit bundle artifacts (regenerable via scripts/build_audit_bundle.py)
+BacktestStation_R2_audit_bundle/
+BacktestStation_R2_audit_bundle.zip

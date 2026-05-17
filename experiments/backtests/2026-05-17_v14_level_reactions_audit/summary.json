@@ -1,0 +1,27 @@
+{
+  "total_slices": 50,
+  "audited": 50,
+  "type_b_count": 2,
+  "top_type_b": [
+    {
+      "kind": "fair_value_gap",
+      "subtype": "1h_fvg",
+      "side": "bullish",
+      "dir": "natural",
+      "cum_r": 400.4,
+      "avg_r": 0.051,
+      "yrs": 5
+    },
+    {
+      "kind": "swing_pivot",
+      "subtype": "pivot_3_1h",
+      "side": "low",
+      "dir": "natural",
+      "cum_r": 305.8,
+      "avg_r": 0.05,
+      "yrs": 5
+    }
+  ],
+  "elapsed_min": 50.5,
+  "generated_at": "2026-05-17T15:34:28.809797+00:00"
+}

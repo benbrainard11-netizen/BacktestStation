@@ -1,0 +1,11 @@
+{
+  "n_overlap": 7525,
+  "n_resolved": 7525,
+  "n_skipped": 0,
+  "cum_r_1m": 1237.5108,
+  "cum_r_tbbo": 1092.4147860801745,
+  "discount_factor": 0.8827517190800876,
+  "agree_rate": 0.9375415282392027,
+  "elapsed_min": 1.4,
+  "generated_at": "2026-05-17T19:42:39.108529+00:00"
+}

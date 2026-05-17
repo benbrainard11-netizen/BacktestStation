@@ -1,0 +1,4 @@
+slippage,n_trades,cum_r,avg_r,win_rate,max_dd_r,years_positive
+no_slippage,69244,10404.2763,0.1503,0.4884,90.9709,6
+1tick_entry_and_stop,69244,8421.4162,0.1216,0.4769,112.9591,6
+2tick_entry_and_stop,69244,6388.0171,0.0923,0.4657,145.8390,6

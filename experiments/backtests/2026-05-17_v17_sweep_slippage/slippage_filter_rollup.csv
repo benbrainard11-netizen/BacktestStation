@@ -1,0 +1,7 @@
+slippage,filter,n,cum_r,avg_r,win_rate,max_dd,yrs_pos
+no_slippage,all_hours,14541,4362.0458,0.3000,0.5251,25.9198,6
+no_slippage,hour_filter_drop_22_06,6048,3609.6311,0.5968,0.5645,17.6012,6
+1tick,all_hours,14541,3904.5970,0.2685,0.5128,28.9480,6
+1tick,hour_filter_drop_22_06,6048,3395.3498,0.5614,0.5561,20.0357,6
+2tick,all_hours,14541,3475.9652,0.2390,0.5018,31.8651,6
+2tick,hour_filter_drop_22_06,6048,3200.3103,0.5292,0.5473,22.3591,6

@@ -1,0 +1,36 @@
+{
+  "label": "label.zone_reaction.took_fvg_high",
+  "matrix": "fvg_snapshots_xctx_fvggeom_obgeom",
+  "side": "all (side_aware direction)",
+  "rollup": [
+    {
+      "slippage": "no_slippage",
+      "n_trades": 69244,
+      "cum_r": 10404.276327450189,
+      "avg_r": 0.1502552759437668,
+      "win_rate": 0.48840332736410375,
+      "max_dd_r": 90.97092537688695,
+      "years_positive": 6
+    },
+    {
+      "slippage": "1tick_entry_and_stop",
+      "n_trades": 69244,
+      "cum_r": 8421.416223295917,
+      "avg_r": 0.12161943595540288,
+      "win_rate": 0.4769366298885102,
+      "max_dd_r": 112.9590988934915,
+      "years_positive": 6
+    },
+    {
+      "slippage": "2tick_entry_and_stop",
+      "n_trades": 69244,
+      "cum_r": 6388.017081712775,
+      "avg_r": 0.09225372713466545,
+      "win_rate": 0.4657443244180001,
+      "max_dd_r": 145.83902957712826,
+      "years_positive": 6
+    }
+  ],
+  "elapsed_min": 36.3,
+  "generated_at": "2026-05-17T18:28:16.621340+00:00"
+}

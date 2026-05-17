@@ -1,0 +1,86 @@
+{
+  "rollup": [
+    {
+      "slippage": "no_slippage",
+      "filter": "all_hours",
+      "n": 14541,
+      "cum_r": 4362.045801833841,
+      "avg_r": 0.29998251852237406,
+      "win_rate": 0.525067051784609,
+      "max_dd": 25.919783741542687,
+      "yrs_pos": 6
+    },
+    {
+      "slippage": "no_slippage",
+      "filter": "hour_filter_drop_22_06",
+      "n": 6048,
+      "cum_r": 3609.631078309262,
+      "avg_r": 0.5968305354347325,
+      "win_rate": 0.564484126984127,
+      "max_dd": 17.601186291727117,
+      "yrs_pos": 6
+    },
+    {
+      "slippage": "1tick",
+      "filter": "all_hours",
+      "n": 14541,
+      "cum_r": 3904.5969914200896,
+      "avg_r": 0.26852327841414547,
+      "win_rate": 0.5127570318410013,
+      "max_dd": 28.948007296832657,
+      "yrs_pos": 6
+    },
+    {
+      "slippage": "1tick",
+      "filter": "hour_filter_drop_22_06",
+      "n": 6048,
+      "cum_r": 3395.3498394419635,
+      "avg_r": 0.5614004364156686,
+      "win_rate": 0.5560515873015873,
+      "max_dd": 20.035736077538786,
+      "yrs_pos": 6
+    },
+    {
+      "slippage": "2tick",
+      "filter": "all_hours",
+      "n": 14541,
+      "cum_r": 3475.9652465947634,
+      "avg_r": 0.2390458184853011,
+      "win_rate": 0.5018224331201431,
+      "max_dd": 31.86505350380503,
+      "yrs_pos": 6
+    },
+    {
+      "slippage": "2tick",
+      "filter": "hour_filter_drop_22_06",
+      "n": 6048,
+      "cum_r": 3200.310266417379,
+      "avg_r": 0.5291518297647783,
+      "win_rate": 0.5472883597883598,
+      "max_dd": 22.35910851503013,
+      "yrs_pos": 6
+    }
+  ],
+  "deploy_ready": {
+    "slippage": "2tick",
+    "filter": "hour_filter_drop_22_06",
+    "n": 6048,
+    "cum_r": 3200.310266417379,
+    "avg_r": 0.5291518297647783,
+    "win_rate": 0.5472883597883598,
+    "max_dd": 22.35910851503013,
+    "yrs_pos": 6
+  },
+  "baseline": {
+    "slippage": "no_slippage",
+    "filter": "all_hours",
+    "n": 14541,
+    "cum_r": 4362.045801833841,
+    "avg_r": 0.29998251852237406,
+    "win_rate": 0.525067051784609,
+    "max_dd": 25.919783741542687,
+    "yrs_pos": 6
+  },
+  "elapsed_min": 8.7,
+  "generated_at": "2026-05-17T19:27:56.188195+00:00"
+}

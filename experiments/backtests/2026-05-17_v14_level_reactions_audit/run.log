@@ -1,0 +1,112 @@
+=== V14 level-reactions audit ===
+output: C:\Users\benbr\BacktestStation\experiments\backtests\2026-05-17_v14_level_reactions_audit
+  filtered to NQ+ES, test years [2020, 2021, 2022, 2023, 2024, 2025]: 138,979 rows
+  50 distinct slices; 50 have n >= 100
+
+[1/50] fair_value_gap  15m_fvg              side=bullish  n= 30549
+  B_nat= +1104.9R (+0.036avg)  B_rev=  -869.0R  D= +179.4R  dir=natural
+[2/50] fair_value_gap  15m_fvg              side=bearish  n= 25957
+  B_nat=   +38.8R (+0.002avg)  B_rev=  +269.8R  D=  -62.3R  dir=reversed
+[3/50] fair_value_gap  1h_fvg               side=bullish  n=  8270
+  B_nat=  +400.4R (+0.051avg)  B_rev=  -281.7R  D=  +59.1R  dir=natural *** TYPE B ***
+[4/50] swing_pivot     pivot_3_1h           side=high     n=  6513
+  B_nat=   -43.4R (-0.007avg)  B_rev=   -37.3R  D=   -1.2R  dir=reversed
+[5/50] fair_value_gap  1h_fvg               side=bearish  n=  6506
+  B_nat=   +63.5R (+0.010avg)  B_rev=   +45.9R  D=  +30.3R  dir=natural
+[6/50] swing_pivot     pivot_3_1h           side=low      n=  6458
+  B_nat=  +305.8R (+0.050avg)  B_rev=  -177.6R  D=   +2.8R  dir=natural *** TYPE B ***
+[7/50] swing_pivot     pivot_5_1h           side=low      n=  4065
+  B_nat=   +60.4R (+0.016avg)  B_rev=   +25.3R  D=  +17.7R  dir=natural
+[8/50] swing_pivot     pivot_5_1h           side=high     n=  4005
+  B_nat=   -54.2R (-0.015avg)  B_rev=   +36.4R  D=  -11.7R  dir=reversed
+[9/50] fair_value_gap  4h_fvg               side=bullish  n=  2599
+  B_nat=   +96.7R (+0.039avg)  B_rev=   -91.6R  D=   +1.0R  dir=natural
+[10/50] swing_pivot     pivot_3_4h           side=high     n=  1948
+  B_nat=   -19.1R (-0.012avg)  B_rev=    +6.5R  D=   +5.7R  dir=reversed
+[11/50] swing_pivot     pivot_3_4h           side=low      n=  1884
+  B_nat=  +118.9R (+0.077avg)  B_rev=   -29.2R  D=   -3.0R  dir=natural
+[12/50] fair_value_gap  4h_fvg               side=bearish  n=  1874
+  B_nat=   +63.5R (+0.036avg)  B_rev=   -13.2R  D=  +10.4R  dir=natural
+[13/50] liquidity_sweep london_high_1h       side=high     n=  1781
+  B_nat=   +52.1R (+0.029avg)  B_rev=   -55.3R  D=  -15.2R  dir=natural
+[14/50] liquidity_sweep pdh_4h               side=high     n=  1743
+  B_nat=   -29.1R (-0.017avg)  B_rev=    +3.0R  D=  +14.0R  dir=reversed
+[15/50] liquidity_sweep pdh_1h               side=high     n=  1733
+  B_nat=    +9.5R (+0.005avg)  B_rev=   +71.3R  D=  +14.0R  dir=reversed
+[16/50] liquidity_sweep asia_high_1h         side=high     n=  1682
+  B_nat=    -4.2R (-0.003avg)  B_rev=   +29.5R  D=   -9.9R  dir=reversed
+[17/50] order_block     swept_london_high_1h side=bearish  n=  1623
+  B_nat=    +6.4R (+0.004avg)  B_rev=    +9.9R  D=   -9.2R  dir=reversed
+[18/50] liquidity_sweep ny_high_1h           side=high     n=  1589
+  B_nat=   -55.3R (-0.035avg)  B_rev=   +66.9R  D=  +36.3R  dir=reversed
+[19/50] opening_gap     ndog                 side=gap_up   n=  1562
+  B_nat=   +16.5R (+0.011avg)  B_rev=    +5.0R  D=   +9.3R  dir=natural
+[20/50] order_block     swept_pdh_4h         side=bearish  n=  1481
+  B_nat=   +12.2R (+0.008avg)  B_rev=    -9.9R  D=   +7.5R  dir=natural
+[21/50] order_block     swept_pdh_1h         side=bearish  n=  1475
+  B_nat=   +17.8R (+0.012avg)  B_rev=   -24.1R  D=   -1.7R  dir=natural
+[22/50] order_block     swept_asia_high_1h   side=bearish  n=  1462
+  B_nat=   -11.6R (-0.008avg)  B_rev=    +2.9R  D=   +8.3R  dir=reversed
+[23/50] liquidity_sweep london_low_1h        side=low      n=  1461
+  B_nat=   +40.2R (+0.028avg)  B_rev=   -99.5R  D=   +5.6R  dir=natural
+[24/50] liquidity_sweep asia_low_1h          side=low      n=  1370
+  B_nat=    +7.6R (+0.006avg)  B_rev=    -0.7R  D=   -2.2R  dir=natural
+[25/50] order_block     swept_london_low_1h  side=bullish  n=  1358
+  B_nat=   -20.9R (-0.015avg)  B_rev=   +64.4R  D=  -20.3R  dir=reversed
+[26/50] liquidity_sweep pdl_1h               side=low      n=  1348
+  B_nat=   +84.2R (+0.063avg)  B_rev=   -66.5R  D=  +15.7R  dir=natural
+[27/50] liquidity_sweep pdl_4h               side=low      n=  1341
+  B_nat=   -50.0R (-0.038avg)  B_rev=   +36.5R  D=   +2.7R  dir=reversed
+[28/50] order_block     swept_ny_high_1h     side=bearish  n=  1337
+  B_nat=   -41.8R (-0.032avg)  B_rev=   +74.0R  D=   -7.0R  dir=reversed
+[29/50] opening_gap     ndog                 side=gap_down n=  1286
+  B_nat=   -15.2R (-0.012avg)  B_rev=   +10.3R  D=  +13.5R  dir=reversed
+[30/50] liquidity_sweep ny_low_1h            side=low      n=  1230
+  B_nat=   +12.1R (+0.010avg)  B_rev=    +5.3R  D=   -7.5R  dir=natural
+[31/50] swing_pivot     pivot_5_4h           side=high     n=  1211
+  B_nat=    +2.3R (+0.002avg)  B_rev=   -33.5R  D=   -0.7R  dir=natural
+[32/50] order_block     swept_pdl_4h         side=bullish  n=  1207
+  B_nat=    +7.3R (+0.006avg)  B_rev=   -34.2R  D=   -2.4R  dir=natural
+[33/50] order_block     swept_pdl_1h         side=bullish  n=  1191
+  B_nat=    -4.4R (-0.004avg)  B_rev=   -12.5R  D=   +8.8R  dir=natural
+[34/50] order_block     swept_asia_low_1h    side=bullish  n=  1180
+  B_nat=   -11.4R (-0.010avg)  B_rev=    -2.0R  D=  -12.0R  dir=reversed
+[35/50] swing_pivot     pivot_5_4h           side=low      n=  1176
+  B_nat=   +70.1R (+0.075avg)  B_rev=   +22.2R  D=  +18.0R  dir=natural
+[36/50] order_block     swept_ny_low_1h      side=bullish  n=  1110
+  B_nat=   -40.4R (-0.037avg)  B_rev=   +25.8R  D=   -6.0R  dir=reversed
+[37/50] fair_value_gap  daily_fvg            side=bullish  n=   628
+  B_nat=   +22.5R (+0.042avg)  B_rev=   -18.8R  D=   +1.0R  dir=natural
+[38/50] liquidity_sweep pwh_4h               side=high     n=   393
+  B_nat=   -21.2R (-0.054avg)  B_rev=   +28.4R  D=  +12.5R  dir=reversed
+[39/50] liquidity_sweep pwh_daily            side=high     n=   393
+  B_nat=    -9.3R (-0.025avg)  B_rev=   +15.7R  D=   -2.4R  dir=reversed
+[40/50] fair_value_gap  daily_fvg            side=bearish  n=   384
+  B_nat=    -8.3R (-0.027avg)  B_rev=    +1.5R  D=   +2.3R  dir=reversed
+[41/50] opening_gap     nwog                 side=gap_up   n=   358
+  B_nat=   +15.9R (+0.044avg)  B_rev=    -8.2R  D=   +8.7R  dir=natural
+[42/50] order_block     swept_pwh_4h         side=bearish  n=   334
+  B_nat=    +5.9R (+0.018avg)  B_rev=    -0.0R  D=   +4.3R  dir=natural
+[43/50] order_block     swept_pwh_daily      side=bearish  n=   302
+  B_nat=   -20.3R (-0.081avg)  B_rev=   +13.3R  D=   -2.4R  dir=reversed
+[44/50] liquidity_sweep pwl_4h               side=low      n=   255
+  B_nat=    -9.1R (-0.037avg)  B_rev=    +5.7R  D=  -10.2R  dir=reversed
+[45/50] liquidity_sweep pwl_daily            side=low      n=   254
+  B_nat=    -6.0R (-0.026avg)  B_rev=    -2.4R  D=   -3.1R  dir=reversed
+[46/50] order_block     swept_pwl_4h         side=bullish  n=   234
+  B_nat=   -24.5R (-0.107avg)  B_rev=   +10.8R  D=   -7.7R  dir=reversed
+[47/50] opening_gap     nwog                 side=gap_down n=   231
+  B_nat=   -14.1R (-0.061avg)  B_rev=    +0.2R  D=   -2.3R  dir=reversed
+[48/50] order_block     swept_pwl_daily      side=bullish  n=   223
+  B_nat=    +4.7R (+0.025avg)  B_rev=    -4.2R  D=   +7.4R  dir=natural
+[49/50] swing_pivot     pivot_5_daily        side=low      n=   215
+  B_nat=    +5.8R (+0.035avg)  B_rev=    -2.2R  D=   +5.2R  dir=natural
+[50/50] swing_pivot     pivot_5_daily        side=high     n=   210
+  B_nat=    +3.8R (+0.022avg)  B_rev=    -7.3R  D=   -0.8R  dir=natural
+
+=== DONE in 50.5 min ===
+  Type B slices: 2 / 50
+
+Top 10:
+  fair_value_gap  1h_fvg               side=bullish  dir=natural  cum_R=  +400.4  yrs=5/6
+  swing_pivot     pivot_3_1h           side=low      dir=natural  cum_R=  +305.8  yrs=5/6

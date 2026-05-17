@@ -1,0 +1,532 @@
+=== V13 registry audit ===
+output: C:\Users\benbr\BacktestStation\experiments\backtests\2026-05-16_v13_registry_audit
+  candidates: 171 labels (AUC>=0.65, side not in {'balanced', 'medium'})
+
+[1/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/gap_up/label.next_240m.range_expanded_1x_gap  auc=0.974
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[2/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_240m.range_expanded_2x_gap  auc=0.973
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[3/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/high/label.n1_close_moved_with_thesis  auc=0.969
+  n_ev=  699  B_nat=  -174.8R (-0.349avg)  B_rev=  +166.0R  D=  -18.2R  win_dir=reversed
+
+[4/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/high/label.n1_primary_took_period_n_high  auc=0.967
+  n_ev=  699  B_nat=  -174.8R (-0.349avg)  B_rev=  +166.0R  D=  -18.2R  win_dir=reversed
+
+[5/171] macro_event_type_breakdown/at_fire/high/label.next_5m.range_expanded_2x_pre_15m  auc=0.966
+  ERROR FileNotFoundError: [Errno 2] No such file or directory: 'D:\\BacktestStationData\\strategy_lab_core_2026_05_16_strict_order_block\\data\\ml\\anchors\\macro_event_type_breakdown.schema.json'
+
+[6/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/high/label.n1_thesis_confirmed_strict  auc=0.964
+  n_ev=  699  B_nat=  -174.8R (-0.349avg)  B_rev=  +166.0R  D=  -18.2R  win_dir=reversed
+
+[7/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_1d.range_expanded_2x_gap  auc=0.961
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[8/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/high/label.n1_primary_took_period_n_low  auc=0.961
+  n_ev=  699  B_nat=  -174.8R (-0.349avg)  B_rev=  +166.0R  D=  -18.2R  win_dir=reversed
+
+[9/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/high/label.n1_thesis_confirmed_strict  auc=0.961
+  n_ev=  699  B_nat=  -174.8R (-0.349avg)  B_rev=  +166.0R  D=  -18.2R  win_dir=reversed
+
+[10/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/all/label.n1_primary_took_period_n_low  auc=0.960
+  n_ev= 1349  B_nat=  -279.5R (-0.291avg)  B_rev=  +344.4R  D=  -37.6R  win_dir=reversed *** TYPE B ***
+
+[11/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/low/label.n1_thesis_confirmed_strict  auc=0.959
+  n_ev=  650  B_nat=  -104.7R (-0.228avg)  B_rev=  +178.4R  D=  -10.6R  win_dir=reversed
+
+[12/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/all/label.n1_primary_took_period_n_high  auc=0.958
+  n_ev= 1349  B_nat=  -279.5R (-0.291avg)  B_rev=  +344.4R  D=  -37.6R  win_dir=reversed *** TYPE B ***
+
+[13/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/low/label.n1_primary_took_period_n_low  auc=0.958
+  n_ev=  650  B_nat=  -104.7R (-0.228avg)  B_rev=  +178.4R  D=  -10.6R  win_dir=reversed
+
+[14/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/all/label.n1_thesis_confirmed_strict  auc=0.955
+  n_ev= 1349  B_nat=  -279.5R (-0.291avg)  B_rev=  +344.4R  D=  -37.6R  win_dir=reversed *** TYPE B ***
+
+[15/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_60m.range_expanded_2x_gap  auc=0.952
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[16/171] forming_vp_snapshots_xctx_gapctx/at_fire/all/label.rest_of_day.range_expanded_1x_profile_so_far  auc=0.950
+  n_ev=22922  B_nat=  -414.0R (-0.027avg)  B_rev=  +593.5R  D=  -19.0R  win_dir=reversed
+
+[17/171] forming_vp_snapshots_xctx/at_fire/all/label.rest_of_day.range_expanded_1x_profile_so_far  auc=0.949
+  n_ev=22922  B_nat=  -414.0R (-0.027avg)  B_rev=  +593.5R  D=  -19.0R  win_dir=reversed
+
+[18/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_60m.resistance_rejection_3bar  auc=0.947
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[19/171] smt_previous_day_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_period_close/all/label.n1_close_moved_with_thesis  auc=0.946
+  n_ev= 1349  B_nat=  -279.5R (-0.291avg)  B_rev=  +344.4R  D=  -37.6R  win_dir=reversed *** TYPE B ***
+
+[20/171] forming_vp_snapshots_xctx_gapctx/at_fire/buying/label.rest_of_day.range_expanded_1x_profile_so_far  auc=0.944
+  n_ev= 5814  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=   +8.4R  win_dir=natural
+
+[21/171] forming_vp_snapshots_xctx/at_fire/buying/label.rest_of_day.range_expanded_1x_profile_so_far  auc=0.943
+  n_ev= 5814  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=   +8.4R  win_dir=natural
+
+[22/171] forming_vp_snapshots_xctx/at_fire/selling/label.rest_of_day.range_expanded_1x_profile_so_far  auc=0.943
+  n_ev= 4192  B_nat=    -4.3R (-0.002avg)  B_rev=   +30.0R  D=  +10.2R  win_dir=reversed
+
+[23/171] forming_vp_snapshots_xctx_gapctx/at_fire/selling/label.rest_of_day.range_expanded_1x_profile_so_far  auc=0.942
+  n_ev= 4192  B_nat=    -4.3R (-0.002avg)  B_rev=   +30.0R  D=  +10.2R  win_dir=reversed
+
+[24/171] macro_event_type_breakdown/at_fire/high/label.next_15m.range_expanded_2x_pre_60m  auc=0.925
+  ERROR FileNotFoundError: [Errno 2] No such file or directory: 'D:\\BacktestStationData\\strategy_lab_core_2026_05_16_strict_order_block\\data\\ml\\anchors\\macro_event_type_breakdown.schema.json'
+
+[25/171] forming_vp_snapshots_xctx_gapctx/at_fire/selling/label.next_60m.took_profile_so_far_high  auc=0.918
+  n_ev= 4192  B_nat=    -4.3R (-0.002avg)  B_rev=   +30.0R  D=  +10.2R  win_dir=reversed
+
+[26/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_60m.support_rejection_3bar  auc=0.918
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[27/171] vp_snapshots_xctx/at_fire/buying/label.vah_touch.resistance_break_acceptance_3bar  auc=0.917
+  n_ev= 4463  B_nat= +1013.3R (+0.334avg)  B_rev=  -900.0R  D= +112.7R  win_dir=natural *** TYPE B ***
+
+[28/171] vp_snapshots_xctx/at_fire/selling/label.vah_touch.resistance_break_acceptance_3bar  auc=0.916
+  n_ev= 3226  B_nat=  +638.3R (+0.295avg)  B_rev=  -598.1R  D=  +71.4R  win_dir=natural *** TYPE B ***
+
+[29/171] forming_vp_snapshots_xctx/at_fire/selling/label.next_60m.took_profile_so_far_high  auc=0.915
+  n_ev= 4192  B_nat=    -4.3R (-0.002avg)  B_rev=   +30.0R  D=  +10.2R  win_dir=reversed
+
+[30/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/low/label.manipulation_range_reaction.range_expanded_2x_manipulation  auc=0.914
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[31/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/all/label.manipulation_range_reaction.range_expanded_2x_manipulation  auc=0.913
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[32/171] vp_snapshots_xctx/at_fire/all/label.vah_touch.resistance_rejection_3bar  auc=0.908
+  n_ev=15978  B_nat=  -254.6R (-0.024avg)  B_rev=  +330.1R  D=  -52.1R  win_dir=reversed
+
+[33/171] forming_vp_snapshots_xctx_gapctx/at_fire/buying/label.next_60m.took_profile_so_far_low  auc=0.904
+  n_ev= 5811  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=  -11.4R  win_dir=natural
+
+[34/171] vp_snapshots_xctx/at_fire/buying/label.vah_touch.resistance_rejection_3bar  auc=0.904
+  n_ev= 4463  B_nat= +1013.3R (+0.334avg)  B_rev=  -900.0R  D= +112.7R  win_dir=natural *** TYPE B ***
+
+[35/171] macro_event_type_breakdown/at_fire/all/label.next_15m.range_expanded_2x_pre_60m  auc=0.903
+  ERROR FileNotFoundError: [Errno 2] No such file or directory: 'D:\\BacktestStationData\\strategy_lab_core_2026_05_16_strict_order_block\\data\\ml\\anchors\\macro_event_type_breakdown.schema.json'
+
+[36/171] vp_snapshots_xctx/at_fire/all/label.vah_touch.resistance_break_acceptance_3bar  auc=0.903
+  n_ev=15978  B_nat=  -254.6R (-0.024avg)  B_rev=  +330.1R  D=  -52.1R  win_dir=reversed
+
+[37/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/high/label.ob_confirmation.did_confirm  auc=0.901
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[38/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/high/label.manipulation_range_reaction.range_expanded_2x_manipulation  auc=0.900
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[39/171] forming_vp_snapshots_xctx/at_fire/buying/label.next_60m.took_profile_so_far_low  auc=0.899
+  n_ev= 5811  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=  -11.4R  win_dir=natural
+
+[40/171] sweep_snapshots_xctx_fvggeom/at_fire/high/label.ob_confirmation.did_confirm  auc=0.899
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[41/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/high/label.ob_confirmation.did_confirm  auc=0.898
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[42/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.ob_confirmation.did_confirm  auc=0.897
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[43/171] sweep_snapshots_xctx_fvggeom/at_fire/all/label.ob_confirmation.did_confirm  auc=0.896
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[44/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/all/label.ob_confirmation.did_confirm  auc=0.895
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[45/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.zone_reaction.took_fvg_high  auc=0.891
+  n_ev=106036  B_nat=+10404.3R (+0.150avg)  B_rev= -9419.0R  D= +982.9R  win_dir=natural *** TYPE B ***
+
+[46/171] forming_vp_snapshots_xctx_gapctx/at_fire/all/label.next_60m.took_profile_so_far_high  auc=0.888
+  n_ev=22912  B_nat=  -414.0R (-0.027avg)  B_rev=  +593.5R  D=  -42.1R  win_dir=reversed
+
+[47/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/high/label.n1_or_n2_thesis_confirmed_strict  auc=0.887
+  n_ev=  699  B_nat=  -174.8R (-0.349avg)  B_rev=  +166.0R  D=  -18.2R  win_dir=reversed
+
+[48/171] forming_vp_snapshots_xctx/at_fire/all/label.next_60m.took_profile_so_far_high  auc=0.887
+  n_ev=22912  B_nat=  -414.0R (-0.027avg)  B_rev=  +593.5R  D=  -42.1R  win_dir=reversed
+
+[49/171] macro_event_snapshots_xctx/at_fire/all/label.next_15m.range_expanded_2x_pre_60m  auc=0.887
+  n_ev= 7041  B_nat=  -161.8R (-0.035avg)  B_rev=  +234.1R  D=   +5.0R  win_dir=reversed
+
+[50/171] vp_snapshots_xctx/at_fire/buying/label.vwap_touch.resistance_break_acceptance_3bar  auc=0.887
+  n_ev= 4463  B_nat= +1013.3R (+0.334avg)  B_rev=  -900.0R  D= +112.7R  win_dir=natural *** TYPE B ***
+
+[51/171] vp_snapshots_xctx/at_fire/buying/label.vwap_touch.resistance_rejection_3bar  auc=0.886
+  n_ev= 4463  B_nat= +1013.3R (+0.334avg)  B_rev=  -900.0R  D= +112.7R  win_dir=natural *** TYPE B ***
+
+[52/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/all/label.n1_or_n2_thesis_confirmed_strict  auc=0.885
+  n_ev= 1349  B_nat=  -279.5R (-0.291avg)  B_rev=  +344.4R  D=  -37.6R  win_dir=reversed *** TYPE B ***
+
+[53/171] forming_vp_snapshots_xctx_gapctx/at_fire/buying/label.next_60m.took_profile_so_far_low_rejected_inside  auc=0.883
+  n_ev= 5811  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=  -11.4R  win_dir=natural
+
+[54/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/low/label.ob_confirmation.did_confirm  auc=0.880
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[55/171] forming_vp_snapshots_xctx/at_fire/buying/label.next_60m.took_profile_so_far_low_rejected_inside  auc=0.878
+  n_ev= 5811  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=  -11.4R  win_dir=natural
+
+[56/171] vp_snapshots_xctx/at_fire/selling/label.vwap_touch.support_break_acceptance_3bar  auc=0.877
+  n_ev= 3226  B_nat=  +638.3R (+0.295avg)  B_rev=  -598.1R  D=  +71.4R  win_dir=natural *** TYPE B ***
+
+[57/171] forming_vp_snapshots_xctx_gapctx/at_fire/all/label.next_60m.took_profile_so_far_low  auc=0.877
+  n_ev=22912  B_nat=  -414.0R (-0.027avg)  B_rev=  +593.5R  D=  -42.1R  win_dir=reversed
+
+[58/171] forming_vp_snapshots_xctx/at_fire/all/label.next_60m.took_profile_so_far_low  auc=0.876
+  n_ev=22912  B_nat=  -414.0R (-0.027avg)  B_rev=  +593.5R  D=  -42.1R  win_dir=reversed
+
+[59/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/low/label.n1_or_n2_thesis_confirmed_strict  auc=0.875
+  n_ev=  650  B_nat=  -104.7R (-0.228avg)  B_rev=  +178.4R  D=  -10.6R  win_dir=reversed
+
+[60/171] vp_snapshots_xctx/at_fire/selling/label.val_touch.support_break_acceptance_3bar  auc=0.874
+  n_ev= 3226  B_nat=  +638.3R (+0.295avg)  B_rev=  -598.1R  D=  +71.4R  win_dir=natural *** TYPE B ***
+
+[61/171] forming_vp_snapshots_xctx_gapctx/at_fire/selling/label.next_60m.took_profile_so_far_high_rejected_inside  auc=0.873
+  n_ev= 4192  B_nat=    -4.3R (-0.002avg)  B_rev=   +30.0R  D=  +10.2R  win_dir=reversed
+
+[62/171] vp_snapshots_xctx/at_fire/all/label.val_touch.support_break_acceptance_3bar  auc=0.873
+  n_ev=15978  B_nat=  -254.6R (-0.024avg)  B_rev=  +330.1R  D=  -52.1R  win_dir=reversed
+
+[63/171] macro_event_snapshots_xctx/at_fire/high/label.next_15m.range_expanded_2x_pre_60m  auc=0.867
+  n_ev= 3447  B_nat=  -104.5R (-0.046avg)  B_rev=  +170.3R  D=  -35.4R  win_dir=reversed
+
+[64/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/low/label.ob_confirmation.did_confirm  auc=0.864
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[65/171] macro_event_snapshots_xctx/at_fire/high/label.next_5m.range_expanded_2x_pre_15m  auc=0.864
+  n_ev= 3431  B_nat=  -103.6R (-0.045avg)  B_rev=  +169.9R  D=  -12.1R  win_dir=reversed
+
+[66/171] sweep_snapshots_xctx_fvggeom/at_fire/low/label.ob_confirmation.did_confirm  auc=0.864
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[67/171] macro_event_snapshots_xctx/at_fire/all/label.next_5m.range_expanded_2x_pre_15m  auc=0.864
+  n_ev= 7024  B_nat=  -160.9R (-0.034avg)  B_rev=  +233.7R  D=  -49.8R  win_dir=reversed
+
+[68/171] forming_vp_snapshots_xctx/at_fire/selling/label.next_60m.took_profile_so_far_high_rejected_inside  auc=0.863
+  n_ev= 4192  B_nat=    -4.3R (-0.002avg)  B_rev=   +30.0R  D=  +10.2R  win_dir=reversed
+
+[69/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.zone_reaction.took_fvg_low  auc=0.863
+  n_ev=106036  B_nat=+10404.3R (+0.150avg)  B_rev= -9419.0R  D= +982.9R  win_dir=natural *** TYPE B ***
+
+[70/171] forming_vp_snapshots_xctx_gapctx/at_fire/buying/label.next_60m.took_profile_so_far_high  auc=0.861
+  n_ev= 5811  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=  -11.4R  win_dir=natural
+
+[71/171] forming_vp_snapshots_xctx/at_fire/buying/label.next_60m.took_profile_so_far_high  auc=0.861
+  n_ev= 5811  B_nat=  +154.5R (+0.040avg)  B_rev=   -71.0R  D=  -11.4R  win_dir=natural
+
+[72/171] 2026-05-15_strict_opening_gap/at_fire/all/label.strict.next_240m.partial_touch_rejected  auc=0.845
+  skip: no anchors dir for 2026-05-15_strict_opening_gap or undirected side=all
+
+[73/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/all/label.strict.next_240m.partial_touch_rejected  auc=0.845
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[74/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_240m.unfilled_at_window_end  auc=0.845
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[75/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_240m.fully_filled  auc=0.845
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[76/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/all/label.strict.next_1d.partial_touch_rejected  auc=0.844
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[77/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/all/label.strict.next_1d.unfilled_clean_continuation  auc=0.839
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[78/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/gap_up/label.next_240m.fully_filled  auc=0.834
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[79/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/gap_up/label.next_240m.unfilled_at_window_end  auc=0.834
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[80/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_up/label.strict.next_240m.partial_touch_rejected  auc=0.834
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[81/171] opening_gap_snapshots_xctx_gapctx/at_fire/all/label.next_240m.unfilled_at_window_end  auc=0.834
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[82/171] opening_gap_snapshots_xctx_gapctx/at_fire/all/label.next_240m.fully_filled  auc=0.834
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[83/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/gap_down/label.next_240m.unfilled_at_window_end  auc=0.832
+  n_ev= 1958  B_nat=   -13.6R (-0.011avg)  B_rev=    +9.3R  D=   -5.3R  win_dir=reversed
+
+[84/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_down/label.strict.next_240m.partial_touch_rejected  auc=0.832
+  n_ev= 1958  B_nat=   -13.6R (-0.011avg)  B_rev=    +9.3R  D=   -5.3R  win_dir=reversed
+
+[85/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/gap_down/label.next_240m.fully_filled  auc=0.832
+  n_ev= 1958  B_nat=   -13.6R (-0.011avg)  B_rev=    +9.3R  D=   -5.3R  win_dir=reversed
+
+[86/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_up/label.strict.next_60m.partial_touch_rejected  auc=0.832
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[87/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/all/label.strict.next_240m.unfilled_clean_continuation  auc=0.831
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[88/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/all/label.strict.next_60m.partial_touch_rejected  auc=0.831
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[89/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_60m.fully_filled  auc=0.830
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[90/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/all/label.next_60m.unfilled_at_window_end  auc=0.830
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[91/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/gap_up/label.next_60m.unfilled_at_window_end  auc=0.829
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[92/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime/at_fire/gap_up/label.next_60m.fully_filled  auc=0.829
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[93/171] opening_gap_snapshots_xctx_gapctx/at_fire/gap_down/label.next_240m.fully_filled  auc=0.829
+  n_ev= 1958  B_nat=   -13.6R (-0.011avg)  B_rev=    +9.3R  D=   -5.3R  win_dir=reversed
+
+[94/171] opening_gap_snapshots_xctx_gapctx/at_fire/gap_down/label.next_240m.unfilled_at_window_end  auc=0.829
+  n_ev= 1958  B_nat=   -13.6R (-0.011avg)  B_rev=    +9.3R  D=   -5.3R  win_dir=reversed
+
+[95/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_down/label.strict.next_60m.partial_touch_rejected  auc=0.829
+  n_ev= 1958  B_nat=   -13.6R (-0.011avg)  B_rev=    +9.3R  D=   -5.3R  win_dir=reversed
+
+[96/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_down/label.strict.next_240m.unfilled_clean_continuation  auc=0.828
+  n_ev= 1958  B_nat=   -13.6R (-0.011avg)  B_rev=    +9.3R  D=   -5.3R  win_dir=reversed
+
+[97/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/high/label.swept_reference_reaction.first_bar_down_then_final_up  auc=0.826
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[98/171] macro_event_snapshots_xctx/at_fire/all/label.next_15m.one_sided_took_pre_60m_high  auc=0.823
+  n_ev= 7041  B_nat=  -161.8R (-0.035avg)  B_rev=  +234.1R  D=   +5.0R  win_dir=reversed
+
+[99/171] opening_gap_snapshots_xctx_gapctx/at_fire/all/label.next_1d.fully_filled  auc=0.823
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[100/171] opening_gap_snapshots_xctx_gapctx/at_fire/all/label.next_60m.fully_filled  auc=0.822
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[101/171] opening_gap_snapshots_xctx_gapctx/at_fire/all/label.next_60m.unfilled_at_window_end  auc=0.822
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[102/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_up/label.strict.next_240m.unfilled_clean_continuation  auc=0.822
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[103/171] opening_gap_snapshots_xctx_gapctx/at_fire/gap_up/label.next_60m.unfilled_at_window_end  auc=0.817
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[104/171] opening_gap_snapshots_xctx_gapctx/at_fire/gap_up/label.next_60m.fully_filled  auc=0.817
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[105/171] opening_gap_snapshots_xctx_gapctx/at_fire/gap_up/label.next_240m.unfilled_at_window_end  auc=0.817
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[106/171] opening_gap_snapshots_xctx_gapctx/at_fire/gap_up/label.next_240m.fully_filled  auc=0.817
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[107/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_up/label.strict.next_1d.partial_touch_rejected  auc=0.813
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[108/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_up/label.strict.next_1d.unfilled_clean_continuation  auc=0.812
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[109/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.next_period.took_parent_high  auc=0.808
+  n_ev= 5151  B_nat=  +301.8R (+0.089avg)  B_rev=  -274.0R  D=  +30.8R  win_dir=natural *** TYPE B ***
+
+[110/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/all/label.strict.next_1d.failed_fill_expanded_away  auc=0.797
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[111/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/low/label.swept_level_recovery.level_recovered  auc=0.797
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[112/171] sweep_snapshots_xctx_fvggeom/at_fire/low/label.swept_level_recovery.level_recovered  auc=0.797
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[113/171] itr_snapshots_xctx/at_fire/bearish/label.next_interval.range_expanded_2x_interval  auc=0.795
+  n_ev= 6903  B_nat=  -132.9R (-0.047avg)  B_rev=  +143.7R  D=  -50.1R  win_dir=reversed
+
+[114/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.swept_level_recovery.level_recovered  auc=0.795
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[115/171] itr_snapshots_xctx/at_fire/bullish/label.next_interval.compressed_range_0_75x  auc=0.794
+  n_ev= 7792  B_nat=  +148.3R (+0.046avg)  B_rev=   -92.5R  D=  +32.9R  win_dir=natural
+
+[116/171] itr_snapshots_xctx/at_fire/all/label.next_interval.range_expanded_2x_interval  auc=0.794
+  n_ev=14768  B_nat=   +30.2R (+0.005avg)  B_rev=   +62.3R  D=  +24.2R  win_dir=reversed
+
+[117/171] sweep_snapshots_xctx_fvggeom_obgeom_liqgeom_regime/at_fire/high/label.swept_level_recovery.level_recovered  auc=0.794
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[118/171] sweep_snapshots_xctx_fvggeom/at_fire/all/label.swept_level_recovery.level_recovered  auc=0.793
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[119/171] itr_snapshots_xctx/at_fire/bullish/label.next_interval.range_expanded_2x_interval  auc=0.791
+  n_ev= 7792  B_nat=  +148.3R (+0.046avg)  B_rev=   -92.5R  D=  +32.9R  win_dir=natural
+
+[120/171] itr_snapshots_xctx/at_fire/all/label.next_interval.compressed_range_0_75x  auc=0.790
+  n_ev=14768  B_nat=   +30.2R (+0.005avg)  B_rev=   +62.3R  D=  +24.2R  win_dir=reversed
+
+[121/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.next_period.took_parent_low  auc=0.785
+  n_ev= 5151  B_nat=  +301.8R (+0.089avg)  B_rev=  -274.0R  D=  +30.8R  win_dir=natural *** TYPE B ***
+
+[122/171] opening_gap_snapshots_xctx_gapctx/at_fire/gap_up/label.next_1d.fully_filled  auc=0.783
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[123/171] itr_snapshots_xctx/at_fire/bearish/label.next_interval.compressed_range_0_75x  auc=0.781
+  n_ev= 6903  B_nat=  -132.9R (-0.047avg)  B_rev=  +143.7R  D=  -50.1R  win_dir=reversed
+
+[124/171] macro_event_type_breakdown/at_fire/all/label.next_5m.range_expanded_2x_pre_15m  auc=0.777
+  ERROR FileNotFoundError: [Errno 2] No such file or directory: 'D:\\BacktestStationData\\strategy_lab_core_2026_05_16_strict_order_block\\data\\ml\\anchors\\macro_event_type_breakdown.schema.json'
+
+[125/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/high/label.swept_level_recovery.level_recovered  auc=0.775
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[126/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/all/label.strict.next_1d.filled_then_continued_through  auc=0.773
+  n_ev= 4277  B_nat=    +3.2R (+0.001avg)  B_rev=   +14.4R  D=   +0.4R  win_dir=reversed
+
+[127/171] sweep_snapshots_xctx_fvggeom/at_fire/high/label.swept_level_recovery.level_recovered  auc=0.772
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[128/171] macro_event_snapshots_xctx/at_fire/high/label.next_15m.swept_both_pre_60m_sides  auc=0.771
+  n_ev= 3447  B_nat=  -104.5R (-0.046avg)  B_rev=  +170.3R  D=  -35.4R  win_dir=reversed
+
+[129/171] itr_snapshots_xctx/at_fire/bullish/label.next_interval.range_expanded_1x_interval  auc=0.771
+  n_ev= 7792  B_nat=  +148.3R (+0.046avg)  B_rev=   -92.5R  D=  +32.9R  win_dir=natural
+
+[130/171] itr_snapshots_xctx/at_fire/all/label.next_interval.expanded_range_1_25x  auc=0.770
+  n_ev=14768  B_nat=   +30.2R (+0.005avg)  B_rev=   +62.3R  D=  +24.2R  win_dir=reversed
+
+[131/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/high/label.n2_thesis_confirmed_strict  auc=0.770
+  n_ev=  691  B_nat=  -173.9R (-0.351avg)  B_rev=  +165.4R  D=  -22.9R  win_dir=reversed
+
+[132/171] itr_snapshots_xctx/at_fire/all/label.next_interval.range_expanded_1x_interval  auc=0.769
+  n_ev=14768  B_nat=   +30.2R (+0.005avg)  B_rev=   +62.3R  D=  +24.2R  win_dir=reversed
+
+[133/171] itr_snapshots_xctx/at_fire/bullish/label.next_interval.expanded_range_1_25x  auc=0.767
+  n_ev= 7792  B_nat=  +148.3R (+0.046avg)  B_rev=   -92.5R  D=  +32.9R  win_dir=natural
+
+[134/171] itr_snapshots_xctx/at_fire/bearish/label.next_interval.expanded_range_1_25x  auc=0.762
+  n_ev= 6903  B_nat=  -132.9R (-0.047avg)  B_rev=  +143.7R  D=  -50.1R  win_dir=reversed
+
+[135/171] itr_snapshots_xctx/at_fire/bearish/label.next_interval.range_expanded_1x_interval  auc=0.760
+  n_ev= 6903  B_nat=  -132.9R (-0.047avg)  B_rev=  +143.7R  D=  -50.1R  win_dir=reversed
+
+[136/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/all/label.n2_thesis_confirmed_strict  auc=0.753
+  n_ev= 1331  B_nat=  -275.2R (-0.290avg)  B_rev=  +337.4R  D=  -29.9R  win_dir=reversed *** TYPE B ***
+
+[137/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.zone_reaction.closed_inside_fvg_range  auc=0.749
+  n_ev=106036  B_nat=+10404.3R (+0.150avg)  B_rev= -9419.0R  D= +982.9R  win_dir=natural *** TYPE B ***
+
+[138/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.zone_reaction.closed_outside_fvg_range  auc=0.749
+  n_ev=106036  B_nat=+10404.3R (+0.150avg)  B_rev= -9419.0R  D= +982.9R  win_dir=natural *** TYPE B ***
+
+[139/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_up/label.strict.next_1d.filled_then_continued_through  auc=0.749
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[140/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/bullish/label.next_period.took_parent_low  auc=0.749
+  n_ev= 2758  B_nat=  +151.6R (+0.083avg)  B_rev=  -147.5R  D=   +8.7R  win_dir=natural
+
+[141/171] smt_previous_day_snapshots_xctx_fvggeom/at_period_close/low/label.n2_thesis_confirmed_strict  auc=0.748
+  n_ev=  640  B_nat=  -101.4R (-0.224avg)  B_rev=  +172.0R  D=  -11.7R  win_dir=reversed
+
+[142/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/bearish/label.zone_reaction.took_fvg_low_rejected_inside  auc=0.747
+  n_ev=48708  B_nat= +4372.5R (+0.139avg)  B_rev= -3880.9R  D= +447.1R  win_dir=natural *** TYPE B ***
+
+[143/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/bearish/label.zone_reaction.closed_inside_fvg_range  auc=0.747
+  n_ev=48708  B_nat= +4372.5R (+0.139avg)  B_rev= -3880.9R  D= +447.1R  win_dir=natural *** TYPE B ***
+
+[144/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/bearish/label.zone_reaction.closed_outside_fvg_range  auc=0.747
+  n_ev=48708  B_nat= +4372.5R (+0.139avg)  B_rev= -3880.9R  D= +447.1R  win_dir=natural *** TYPE B ***
+
+[145/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.mitigation.fully_filled  auc=0.737
+  n_ev=106036  B_nat=+10404.3R (+0.150avg)  B_rev= -9419.0R  D= +982.9R  win_dir=natural *** TYPE B ***
+
+[146/171] opening_gap_snapshots_xctx_gapctx_obgeom_liqgeom_regime_strict/at_fire/gap_up/label.strict.next_240m.filled_then_continued_through  auc=0.737
+  n_ev= 2319  B_nat=   +16.8R (+0.011avg)  B_rev=    +5.2R  D=   -4.6R  win_dir=natural
+
+[147/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.zone_reaction.took_fvg_low_rejected_inside  auc=0.736
+  n_ev=106036  B_nat=+10404.3R (+0.150avg)  B_rev= -9419.0R  D= +982.9R  win_dir=natural *** TYPE B ***
+
+[148/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/bullish/label.zone_reaction.closed_inside_fvg_range  auc=0.735
+  n_ev=57328  B_nat= +6031.8R (+0.160avg)  B_rev= -5538.1R  D= +550.5R  win_dir=natural *** TYPE B ***
+
+[149/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/bullish/label.zone_reaction.closed_outside_fvg_range  auc=0.735
+  n_ev=57328  B_nat= +6031.8R (+0.160avg)  B_rev= -5538.1R  D= +550.5R  win_dir=natural *** TYPE B ***
+
+[150/171] fvg_snapshots_xctx_fvggeom_obgeom/at_fire/bullish/label.zone_reaction.took_fvg_high_rejected_inside  auc=0.734
+  n_ev=57328  B_nat= +6031.8R (+0.160avg)  B_rev= -5538.1R  D= +550.5R  win_dir=natural *** TYPE B ***
+
+[151/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/bearish/label.next_period.took_parent_high  auc=0.734
+  n_ev= 2381  B_nat=  +149.8R (+0.097avg)  B_rev=  -125.9R  D=   +6.0R  win_dir=natural
+
+[152/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/bullish/label.next_period.thesis_confirmed  auc=0.733
+  n_ev= 2758  B_nat=  +151.6R (+0.083avg)  B_rev=  -147.5R  D=   +8.7R  win_dir=natural
+
+[153/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/bullish/label.next_period.took_parent_high  auc=0.733
+  n_ev= 2758  B_nat=  +151.6R (+0.083avg)  B_rev=  -147.5R  D=   +8.7R  win_dir=natural
+
+[154/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/high/label.manipulation_range_reaction.one_sided_took_manipulation_high  auc=0.724
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[155/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/high/label.manipulation_range_reaction.took_manipulation_low  auc=0.724
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[156/171] sweep_snapshots_xctx_fvggeom/at_fire/high/label.manipulation_range_reaction.one_sided_took_manipulation_high  auc=0.723
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[157/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/low/label.manipulation_range_reaction.took_manipulation_high  auc=0.722
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[158/171] sweep_snapshots_xctx_fvggeom/at_fire/high/label.manipulation_range_reaction.took_manipulation_low  auc=0.721
+  n_ev=11830  B_nat= -1619.0R (-0.203avg)  B_rev= +2170.0R  D= -128.7R  win_dir=reversed *** TYPE B ***
+
+[159/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/low/label.manipulation_range_reaction.one_sided_took_manipulation_low  auc=0.721
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[160/171] fvg_snapshots_xctx_fvggeom_obgeom_strict/at_fire/all/label.strict.no_touch_continuation  auc=0.719
+  n_ev=106156  B_nat=+10420.5R (+0.150avg)  B_rev= -9430.5R  D=+1188.6R  win_dir=natural *** TYPE B ***
+
+[161/171] fvg_snapshots_xctx_fvggeom_obgeom_strict/at_fire/all/label.strict.forward_10c.after_tap_failed_1x_against  auc=0.719
+  n_ev=106156  B_nat=+10420.5R (+0.150avg)  B_rev= -9430.5R  D=+1188.6R  win_dir=natural *** TYPE B ***
+
+[162/171] sweep_snapshots_xctx_fvggeom/at_fire/low/label.manipulation_range_reaction.took_manipulation_high  auc=0.718
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[163/171] sweep_snapshots_xctx_fvggeom/at_fire/low/label.manipulation_range_reaction.one_sided_took_manipulation_low  auc=0.714
+  n_ev=10006  B_nat= -1568.4R (-0.239avg)  B_rev= +2192.1R  D= -187.5R  win_dir=reversed *** TYPE B ***
+
+[164/171] sweep_snapshots_xctx_fvggeom/at_fire/all/label.manipulation_range_reaction.took_manipulation_high  auc=0.704
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[165/171] sweep_snapshots_xctx_fvggeom/at_fire/all/label.manipulation_range_reaction.one_sided_took_manipulation_low  auc=0.703
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[166/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.manipulation_range_reaction.took_manipulation_high  auc=0.701
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[167/171] sweep_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.manipulation_range_reaction.one_sided_took_manipulation_low  auc=0.699
+  n_ev=21836  B_nat= -3187.3R (-0.219avg)  B_rev= +4362.0R  D= -309.7R  win_dir=reversed *** TYPE B ***
+
+[168/171] fvg_snapshots_xctx_fvggeom_obgeom_strict/at_fire/all/label.strict.forward_10c.after_tap_1x_clean  auc=0.695
+  n_ev=106156  B_nat=+10420.5R (+0.150avg)  B_rev= -9430.5R  D=+1188.6R  win_dir=natural *** TYPE B ***
+
+[169/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/all/label.next_period.thesis_confirmed  auc=0.694
+  n_ev= 5151  B_nat=  +301.8R (+0.089avg)  B_rev=  -274.0R  D=  +30.8R  win_dir=natural *** TYPE B ***
+
+[170/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/bearish/label.next_period.thesis_confirmed  auc=0.680
+  n_ev= 2381  B_nat=  +149.8R (+0.097avg)  B_rev=  -125.9R  D=   +6.0R  win_dir=natural
+
+[171/171] tp_snapshots_xctx_fvggeom_obgeom/at_fire/bearish/label.next_period.took_parent_low  auc=0.680
+  n_ev= 2381  B_nat=  +149.8R (+0.097avg)  B_rev=  -125.9R  D=   +6.0R  win_dir=natural
+
+=== DONE in 559.8 min ===
+  audited: 166 / 171
+  Type B candidates: 63
+
+  Top 10 Type B candidates by cum_R:
+    fvg_snapshots_xctx_fvggeom_obgeom_strict                label.strict.no_touch_continuation                      side=all        dir=natural   cum_R=+10420.5
+    fvg_snapshots_xctx_fvggeom_obgeom_strict                label.strict.forward_10c.after_tap_1x_clean             side=all        dir=natural   cum_R=+10420.5
+    fvg_snapshots_xctx_fvggeom_obgeom_strict                label.strict.forward_10c.after_tap_failed_1x_against    side=all        dir=natural   cum_R=+10420.5
+    fvg_snapshots_xctx_fvggeom_obgeom                       label.zone_reaction.closed_inside_fvg_range             side=all        dir=natural   cum_R=+10404.3
+    fvg_snapshots_xctx_fvggeom_obgeom                       label.zone_reaction.took_fvg_high                       side=all        dir=natural   cum_R=+10404.3
+    fvg_snapshots_xctx_fvggeom_obgeom                       label.zone_reaction.took_fvg_low                        side=all        dir=natural   cum_R=+10404.3
+    fvg_snapshots_xctx_fvggeom_obgeom                       label.zone_reaction.took_fvg_low_rejected_inside        side=all        dir=natural   cum_R=+10404.3
+    fvg_snapshots_xctx_fvggeom_obgeom                       label.zone_reaction.closed_outside_fvg_range            side=all        dir=natural   cum_R=+10404.3
+    fvg_snapshots_xctx_fvggeom_obgeom                       label.mitigation.fully_filled                           side=all        dir=natural   cum_R=+10404.3
+    fvg_snapshots_xctx_fvggeom_obgeom                       label.zone_reaction.closed_outside_fvg_range            side=bullish    dir=natural   cum_R= +6031.8
