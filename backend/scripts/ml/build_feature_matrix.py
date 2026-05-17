@@ -39,6 +39,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 DETECTORS: list[str] = [
     "smt_htf_reference_divergence",
+    "smt_prev_candle_divergence",
     "psp_candle_divergence",
     "fvg_formation",
     "order_block",
@@ -194,6 +195,7 @@ def _short_name(detector: str) -> str:
     """Short, parquet-friendly column abbreviation."""
     return {
         "smt_htf_reference_divergence": "smt",
+        "smt_prev_candle_divergence": "smt_mtf",
         "psp_candle_divergence": "psp",
         "fvg_formation": "fvg",
         "order_block": "ob",

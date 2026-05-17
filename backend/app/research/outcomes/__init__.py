@@ -116,6 +116,7 @@ from app.research.outcomes import (  # noqa: E402,F401
     order_block_reactions,
     psp_reactions,
     smt_htf_reactions,
+    smt_prev_candle_reactions,
     swing_pivot_reactions,
     time_profile_reactions,
     volume_profile_reactions,

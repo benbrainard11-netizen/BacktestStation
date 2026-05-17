@@ -37,6 +37,12 @@ _BUCKET_MIN: dict[tuple[str, str], int] = {
     # SMT
     ("smt_htf_reference_divergence", "previous_day_smt"): 60,
     ("smt_htf_reference_divergence", "weekly_smt"): 240,
+    ("smt_prev_candle_divergence", "15m_prev_candle_smt"): 0,
+    ("smt_prev_candle_divergence", "30m_prev_candle_smt"): 0,
+    ("smt_prev_candle_divergence", "1h_prev_candle_smt"): 0,
+    ("smt_prev_candle_divergence", "90m_prev_candle_smt"): 0,
+    ("smt_prev_candle_divergence", "4h_prev_candle_smt"): 0,
+    ("smt_prev_candle_divergence", "6h_prev_candle_smt"): 0,
     # PSP
     ("psp_candle_divergence", "1h_psp"): 60,
     ("psp_candle_divergence", "4h_psp"): 240,
@@ -221,10 +227,17 @@ def main() -> int:
             for k in ("next_period", "n_plus_2", "forward_window"):
                 if k in outcomes and isinstance(outcomes[k], dict):
                     forward_blocks.append((k, outcomes[k]))
+            for k, value in outcomes.items():
+                if (
+                    k not in {"next_period", "n_plus_2", "forward_window"}
+                    and k.startswith("next_")
+                    and isinstance(value, dict)
+                ):
+                    forward_blocks.append((k, value))
 
             for block_name, block in forward_blocks:
                 # Find start timestamp candidates.
-                for ts_key in ("ts_utc_start", "ts_utc", "start_utc"):
+                for ts_key in ("ts_utc_start", "ts_utc", "start_utc", "window_start_utc"):
                     if ts_key in block and block[ts_key]:
                         try:
                             block_start = parse_dt(block[ts_key])

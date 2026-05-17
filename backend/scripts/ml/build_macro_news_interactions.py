@@ -33,7 +33,12 @@ for path in (BACKEND, THIS_DIR):
         sys.path.insert(0, str(path))
 
 from app.research.macro_taxonomy import classify_macro_event  # noqa: E402
-from snapshot_feature_registry import FVG_LAG_MIN, PSP_LAG_MIN, SMT_LAG_MIN  # noqa: E402
+from snapshot_feature_registry import (  # noqa: E402
+    FVG_LAG_MIN,
+    PSP_LAG_MIN,
+    SMT_LAG_MIN,
+    SMT_MTF_LAG_MIN,
+)
 
 UTC = timezone.utc
 NS_PER_MIN = 60 * 1_000_000_000
@@ -80,6 +85,7 @@ class ConceptConfig:
 
 CONCEPTS: tuple[ConceptConfig, ...] = (
     ConceptConfig("smt", FEATURES_DIR / "smt.parquet", SMT_LAG_MIN, "ed.first_break_time_utc"),
+    ConceptConfig("smt_mtf", FEATURES_DIR / "smt_mtf.parquet", SMT_MTF_LAG_MIN),
     ConceptConfig("psp", FEATURES_DIR / "psp.parquet", PSP_LAG_MIN),
     ConceptConfig("fvg", FEATURES_DIR / "fvg.parquet", FVG_LAG_MIN),
 )

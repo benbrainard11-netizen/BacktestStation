@@ -29,6 +29,14 @@ class LabelRule:
 
 
 SMT_LAG_MIN = {"previous_day_smt": 60, "weekly_smt": 240}
+SMT_MTF_LAG_MIN = {
+    "15m_prev_candle_smt": 0,
+    "30m_prev_candle_smt": 0,
+    "1h_prev_candle_smt": 0,
+    "90m_prev_candle_smt": 0,
+    "4h_prev_candle_smt": 0,
+    "6h_prev_candle_smt": 0,
+}
 PSP_LAG_MIN = {"1h_psp": 60, "4h_psp": 240, "daily_psp": 24 * 60}
 FVG_LAG_MIN = {"15m_fvg": 15, "1h_fvg": 60, "4h_fvg": 240, "daily_fvg": 24 * 60}
 OB_LAG_MIN = {
@@ -247,6 +255,7 @@ def registry_as_dict() -> dict:
         "label_rules": [asdict(rule) for rule in LABEL_RULES],
         "detector_lags_min": {
             "smt": SMT_LAG_MIN,
+            "smt_mtf": SMT_MTF_LAG_MIN,
             "psp": PSP_LAG_MIN,
             "fvg": FVG_LAG_MIN,
             "ob": OB_LAG_MIN,

@@ -28,6 +28,7 @@ DEFAULT_DOC = ROOT / "docs" / "ML_DATASET_CATALOG.md"
 
 DETECTOR_TO_SHORT = {
     "smt_htf_reference_divergence": "smt",
+    "smt_prev_candle_divergence": "smt_mtf",
     "psp_candle_divergence": "psp",
     "fvg_formation": "fvg",
     "order_block": "ob",

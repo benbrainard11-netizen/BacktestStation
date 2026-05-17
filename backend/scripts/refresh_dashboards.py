@@ -57,6 +57,22 @@ FEATURES: dict[str, FeatureDashboard] = {
             "smt_weekly_snapshot_leaderboard.parquet",
         ),
     ),
+    "smt_mtf": FeatureDashboard(
+        short_name="smt_mtf",
+        feature_name="smt_prev_candle_divergence",
+        title="SMT - Previous-Candle MTF Divergence",
+        description=(
+            "One symbol sweeps its own previous candle high/low while peers do not, "
+            "tracked from 15m through 6h."
+        ),
+        primary_labels=(
+            "oc.next_15m.thesis_confirmed",
+            "oc.next_30m.thesis_confirmed",
+            "oc.next_60m.thesis_confirmed",
+            "oc.next_240m.thesis_confirmed",
+            "oc.next_1d.thesis_confirmed",
+        ),
+    ),
     "fvg": FeatureDashboard(
         short_name="fvg",
         feature_name="fvg_formation",

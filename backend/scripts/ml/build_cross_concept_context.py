@@ -35,6 +35,7 @@ from snapshot_feature_registry import (  # noqa: E402
     OB_LAG_MIN,
     PSP_LAG_MIN,
     SMT_LAG_MIN,
+    SMT_MTF_LAG_MIN,
     SWEEP_LAG_MIN,
     SWING_LAG_MIN,
     registry_as_dict,
@@ -61,6 +62,7 @@ WINDOWS_MIN = {
 
 DETECTOR_TO_SHORT = {
     "smt_htf_reference_divergence": "smt",
+    "smt_prev_candle_divergence": "smt_mtf",
     "psp_candle_divergence": "psp",
     "fvg_formation": "fvg",
     "order_block": "ob",
@@ -81,6 +83,7 @@ SHORT_TO_DETECTOR = {v: k for k, v in DETECTOR_TO_SHORT.items()}
 
 LAG_BY_SHORT = {
     "smt": SMT_LAG_MIN,
+    "smt_mtf": SMT_MTF_LAG_MIN,
     "psp": PSP_LAG_MIN,
     "fvg": FVG_LAG_MIN,
     "ob": OB_LAG_MIN,

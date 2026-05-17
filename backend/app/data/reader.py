@@ -44,8 +44,10 @@ _BAR_TIMEFRAMES = {
     "15m": dt.timedelta(minutes=15),
     "30m": dt.timedelta(minutes=30),
     "1h": dt.timedelta(hours=1),
+    "90m": dt.timedelta(minutes=90),
     "2h": dt.timedelta(hours=2),
     "4h": dt.timedelta(hours=4),
+    "6h": dt.timedelta(hours=6),
     "1d": dt.timedelta(days=1),
 }
 
@@ -184,7 +186,7 @@ def read_bars(
     are derived at query time by grouping the 1m bars on the
     timeframe-floored timestamp. Cheap (~10ms per day per symbol).
 
-    Supported timeframes: 1m, 2m, 3m, 5m, 10m, 15m, 30m, 1h, 2h, 4h, 1d.
+    Supported timeframes: 1m, 2m, 3m, 5m, 10m, 15m, 30m, 1h, 90m, 2h, 4h, 6h, 1d.
     """
     if timeframe not in _BAR_TIMEFRAMES:
         known = ", ".join(_BAR_TIMEFRAMES.keys())
@@ -298,8 +300,10 @@ _PANDAS_RULES = {
     dt.timedelta(minutes=15): "15min",
     dt.timedelta(minutes=30): "30min",
     dt.timedelta(hours=1): "1h",
+    dt.timedelta(minutes=90): "90min",
     dt.timedelta(hours=2): "2h",
     dt.timedelta(hours=4): "4h",
+    dt.timedelta(hours=6): "6h",
     dt.timedelta(days=1): "1D",
 }
 

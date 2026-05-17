@@ -131,6 +131,7 @@ from app.research.detectors import (  # noqa: E402,F401
     order_block,
     psp_candle_divergence,
     smt_htf_reference_divergence,
+    smt_prev_candle_divergence,
     swing_pivot,
     time_profile,
     volume_profile,
