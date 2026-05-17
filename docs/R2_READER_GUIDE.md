@@ -70,6 +70,7 @@ python -m app.ingest.r2_status --required-universe futures_expanded_v1 --strict
 | `data/ml/levels/opening_gap_level_reactions.parquet` | Universal NDOG/NWOG level-reaction table. |
 | `data/ml/levels/fvg_level_reactions.parquet` | Universal FVG level-reaction table. |
 | `data/ml/levels/ob_level_reactions.parquet` | Universal order-block level-reaction table. |
+| `data/ml/levels/sweep_level_reactions.parquet` | Universal liquidity-sweep level-reaction table. |
 
 ## Download A Manifest
 
