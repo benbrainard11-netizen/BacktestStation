@@ -95,6 +95,18 @@ DEFAULT_SOURCES: tuple[LevelSource, ...] = (
         horizon_style="native_bars",
         note="Sweep native-candle recovery/continuation windows.",
     ),
+    LevelSource(
+        name="swing_pivot",
+        path=LEVELS_DIR / "swing_level_reactions.parquet",
+        horizon_style="native_bars",
+        note="Swing-pivot native-candle hold/break windows.",
+    ),
+    LevelSource(
+        name="equal_levels",
+        path=LEVELS_DIR / "equal_level_reactions.parquet",
+        horizon_style="native_bars_1h",
+        note="Equal-high/low 1h take/reaction windows.",
+    ),
 )
 
 
@@ -323,6 +335,8 @@ def _stats_row(stats: pd.DataFrame, group: str, horizon: str) -> pd.Series | Non
 
 
 def _best_short_horizon(kind: str) -> str:
+    if kind == "equal_levels":
+        return "next_5_bars"
     return "next_60m" if kind == "opening_gap" else "next_3_bars"
 
 
@@ -445,7 +459,8 @@ def _write_doc(
         "",
         "## Interpretation Notes",
         "",
-        "- Opening gaps use clock-time horizons; FVG, OB, and sweep use native-bar horizons.",
+        "- Opening gaps use clock-time horizons; FVG, OB, sweep, and swing use native-bar horizons.",
+        "- Equal levels use 1h native-bar take/reaction horizons.",
         "- `full_horizon` is comparable as a broad outcome bucket, but each concept's source horizon differs.",
         "- Sweep `touched` is always true by definition because a sweep event only exists after the level was swept.",
         "- `level.source_*` columns preserve where each row came from.",

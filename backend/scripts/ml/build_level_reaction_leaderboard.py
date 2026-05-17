@@ -46,6 +46,8 @@ SHORT_HORIZON_BY_KIND = {
     "fair_value_gap": "next_3_bars",
     "order_block": "next_3_bars",
     "liquidity_sweep": "next_3_bars",
+    "swing_pivot": "next_3_bars",
+    "equal_levels": "next_5_bars",
 }
 
 
@@ -387,7 +389,8 @@ def _write_doc(path: Path, *, args: argparse.Namespace, leaderboard: pd.DataFram
         "- The markdown report hides `kind_subtype_side` duplicates; the CSV/parquet keep every segment.",
         "- `rejection_bias` means rejection dominates break behavior for that segment/horizon.",
         "- `break_continuation_bias` means break/continuation dominates rejection behavior.",
-        "- Opening gaps use clock-time horizons; FVG, OB, and sweep use native-bar horizons.",
+        "- Opening gaps use clock-time horizons; FVG, OB, sweep, and swing use native-bar horizons.",
+        "- Equal levels use 1h native-bar take/reaction horizons.",
         "- Use short-horizon rows for cleaner behavior comparisons; full horizon can become too broad.",
         "- `lr.*` columns remain future outcomes and must not be used as model inputs unless selecting targets.",
     ]

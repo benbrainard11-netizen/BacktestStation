@@ -16,7 +16,9 @@ The shared helper lives at `backend/app/research/outcomes/reaction_labels.py`.
 | Universal FVG level table | Fair-value-gap zones at `data/ml/levels/fvg_level_reactions.parquet` | `level_reactions_v1` |
 | Universal order-block level table | Order-block body zones at `data/ml/levels/ob_level_reactions.parquet` | `level_reactions_v1` |
 | Universal liquidity-sweep level table | Swept reference levels at `data/ml/levels/sweep_level_reactions.parquet` | `level_reactions_v1` |
-| Combined universal level table | Stacked opening gap, FVG, OB, and sweep rows at `data/ml/levels/all_level_reactions.parquet` | `level_reactions_v1` |
+| Universal swing-pivot level table | Confirmed swing high/low point levels at `data/ml/levels/swing_level_reactions.parquet` | `level_reactions_v1` |
+| Universal equal-level table | Equal high/low liquidity levels at `data/ml/levels/equal_level_reactions.parquet` | `level_reactions_v1` |
+| Combined universal level table | Stacked opening gap, FVG, OB, sweep, swing, and equal-level rows at `data/ml/levels/all_level_reactions.parquet` | `level_reactions_v1` |
 | Level reaction leaderboard | Ranked level-family/subtype behavior at `data/ml/levels/level_reaction_leaderboard.csv` | derived |
 | Scheduled macro events | Already has equivalent v2 labels | `v2` |
 | Opening gaps / NDOG/NWOG | Uses shared helper | `v2` |
@@ -48,8 +50,19 @@ Native-bar horizons, used when the source concept is natively candle-based:
 
 ```text
 next_3_bars
+next_5_bars
 next_10_bars
+next_25_bars
 next_50_bars
+next_100_bars
+next_250_bars
+```
+
+Current usage:
+
+```text
+FVG / order block / liquidity sweep / swing pivot: next_3_bars, next_10_bars, next_50_bars
+Equal highs/lows: next_5_bars, next_25_bars, next_100_bars, next_250_bars on 1h bars
 ```
 
 Core `lr.*` fields:

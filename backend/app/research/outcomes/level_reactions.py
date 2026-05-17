@@ -15,8 +15,12 @@ LEVEL_REACTION_SCHEMA_VERSION = 1
 
 LEVEL_HORIZONS = (
     "next_3_bars",
+    "next_5_bars",
     "next_10_bars",
+    "next_25_bars",
     "next_50_bars",
+    "next_100_bars",
+    "next_250_bars",
     "next_60m",
     "next_240m",
     "next_1d",
