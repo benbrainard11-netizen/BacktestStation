@@ -72,6 +72,8 @@ python -m app.ingest.r2_status --required-universe futures_expanded_v1 --strict
 | `data/ml/levels/ob_level_reactions.parquet` | Universal order-block level-reaction table. |
 | `data/ml/levels/sweep_level_reactions.parquet` | Universal liquidity-sweep level-reaction table. |
 | `data/ml/levels/all_level_reactions.parquet` | Combined universal level-reaction table for cross-concept analysis. |
+| `data/ml/levels/level_reaction_leaderboard.csv` | Ranked level-family/subtype behavior summary. |
+| `data/ml/levels/level_reaction_leaderboard.parquet` | Machine-readable leaderboard equivalent. |
 
 ## Download A Manifest
 
