@@ -1,6 +1,6 @@
 # Equal Levels - Current Stats
 
-_Generated `2026-05-14T13:41:16+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:32:01+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Clustered equal highs/lows and later take/reversal behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `eql` / `equal_levels` |
-| Total feature rows | 60,338 |
+| Total feature rows | 61,185 |
 | Date range | 2015-01-02 -> 2026-05-07 |
 | Outcomes coverage | 60,338 / 60,338 (100.0%) |
 
@@ -54,49 +54,47 @@ Clustered equal highs/lows and later take/reversal behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 60,338 |
-| Columns | 81 |
+| Rows | 61,185 |
+| Columns | 83 |
 | ed.* event_data | 13 |
 | oc.* outcome labels | 41 |
-| ctx.* context | 4 |
-| xd.* cross-detector | 14 |
-| numeric | 70 |
-| object/category | 10 |
+| ctx.* context | 5 |
+| xd.* cross-detector | 15 |
+| numeric | 69 |
+| object/category | 13 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.take.wick_taken` | 48,051 / 60,338 | 79.6% |
-| `oc.take.close_past` | 45,422 / 60,338 | 75.3% |
-| `oc.take.first_take_was_reversal` | 22,530 / 48,051 | 46.9% |
+| `oc.take.wick_taken` | 50,255 / 61,185 | 82.1% |
+| `oc.take.close_past` | 48,035 / 61,185 | 78.5% |
 
 ### Breakdown - `oc.take.wick_taken` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `eq_pivot_3_1h_15pts` | 17,270 / 21,077 | 81.9% |
-| `eq_pivot_3_1h_5pts` | 11,063 / 12,975 | 85.3% |
-| `eq_pivot_3_4h_15pts` | 3,261 / 4,681 | 69.7% |
-| `eq_pivot_5_1h_15pts` | 9,225 / 11,850 | 77.8% |
-| `eq_pivot_5_1h_5pts` | 5,576 / 6,876 | 81.1% |
-| `eq_pivot_5_4h_15pts` | 1,583 / 2,504 | 63.2% |
-| `eq_pivot_5_daily_30pts` | 73 / 375 | 19.5% |
+| `eq_pivot_3_1h_15pts` | 17,722 / 21,051 | 84.2% |
+| `eq_pivot_3_1h_5pts` | 11,583 / 13,268 | 87.3% |
+| `eq_pivot_3_4h_15pts` | 3,503 / 4,762 | 73.6% |
+| `eq_pivot_5_1h_15pts` | 9,654 / 11,999 | 80.5% |
+| `eq_pivot_5_1h_5pts` | 5,919 / 7,115 | 83.2% |
+| `eq_pivot_5_4h_15pts` | 1,764 / 2,589 | 68.1% |
+| `eq_pivot_5_daily_30pts` | 110 / 401 | 27.4% |
 
 ### Breakdown - `oc.take.wick_taken` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `high` | 26,702 / 31,471 | 84.8% |
-| `low` | 21,349 / 28,867 | 74.0% |
+| `high` | 27,266 / 31,735 | 85.9% |
+| `low` | 22,989 / 29,450 | 78.1% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.take.wick_taken` | 48,051 / 60,338 | 79.6% |
-| `oc.take.close_past` | 45,422 / 60,338 | 75.3% |
-| `oc.take.first_take_was_reversal` | 22,530 / 48,051 | 46.9% |
+| `oc.take.wick_taken` | 50,255 / 61,185 | 82.1% |
+| `oc.take.close_past` | 48,035 / 61,185 | 78.5% |
 
 ## Per-Detector Baseline
 

@@ -1,6 +1,6 @@
 # Opening Gap Levels - Current Stats
 
-_Generated `2026-05-14T13:41:30+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:32:33+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ NDOG/NWOG gap zones, fill state, and support/resistance reaction behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `ogap` / `opening_gap_levels` |
-| Total feature rows | 9,438 |
+| Total feature rows | 36,944 |
 | Date range | 2015-01-04 -> 2026-05-07 |
 | Outcomes coverage | 9,438 / 9,438 (100.0%) |
 
@@ -49,58 +49,53 @@ NDOG/NWOG gap zones, fill state, and support/resistance reaction behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 9,438 |
-| Columns | 487 |
+| Rows | 36,944 |
+| Columns | 210 |
 | ed.* event_data | 18 |
-| oc.* outcome labels | 442 |
+| oc.* outcome labels | 166 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 15 |
-| numeric | 416 |
-| object/category | 70 |
+| xd.* cross-detector | 14 |
+| numeric | 151 |
+| object/category | 58 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.next_60m.fully_filled` | 6,279 / 9,438 | 66.5% |
-| `oc.next_240m.fully_filled` | 7,258 / 9,438 | 76.9% |
-| `oc.next_1d.fully_filled` | 8,565 / 9,438 | 90.8% |
-| `oc.next_60m.unfilled_at_window_end` | 3,159 / 9,438 | 33.5% |
-| `oc.next_240m.unfilled_at_window_end` | 2,180 / 9,438 | 23.1% |
-| `oc.next_240m.closed_inside_gap_range` | 1,080 / 9,438 | 11.4% |
-| `oc.next_60m.took_gap_high_rejected_inside` | 1,254 / 9,438 | 13.3% |
-| `oc.next_60m.took_gap_low_rejected_inside` | 1,385 / 9,438 | 14.7% |
+| `oc.next_60m.fully_filled` | 22,300 / 36,944 | 60.4% |
+| `oc.next_240m.fully_filled` | 27,563 / 36,944 | 74.6% |
+| `oc.next_1d.fully_filled` | 33,121 / 36,944 | 89.7% |
 
 ### Breakdown - `oc.next_60m.fully_filled` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `ndog` | 5,559 / 7,815 | 71.1% |
-| `nwog` | 720 / 1,623 | 44.4% |
+| `ndog` | 19,389 / 30,257 | 64.1% |
+| `nwog` | 2,911 / 6,687 | 43.5% |
 
 ### Breakdown - `oc.next_60m.fully_filled` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `gap_down` | 3,222 / 4,873 | 66.1% |
-| `gap_up` | 3,057 / 4,565 | 67.0% |
+| `gap_down` | 10,920 / 18,074 | 60.4% |
+| `gap_up` | 11,380 / 18,870 | 60.3% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.full_horizon.touched_gap` | 9,438 / 9,438 | 100.0% |
-| `oc.full_horizon.touched_midpoint` | 9,311 / 9,438 | 98.7% |
-| `oc.full_horizon.fully_filled` | 9,192 / 9,438 | 97.4% |
-| `oc.full_horizon.unfilled_at_window_end` | 246 / 9,438 | 2.6% |
-| `oc.full_horizon.closed_inside` | 9,294 / 9,438 | 98.5% |
-| `oc.full_horizon.closed_through` | 9,164 / 9,438 | 97.1% |
-| `oc.full_horizon.accepted_above_3bar` | 9,320 / 9,438 | 98.7% |
-| `oc.full_horizon.accepted_below_3bar` | 9,080 / 9,438 | 96.2% |
-| `oc.full_horizon.support_rejection_3bar` | 2,953 / 9,438 | 31.3% |
-| `oc.full_horizon.resistance_rejection_3bar` | 3,283 / 9,438 | 34.8% |
-| `oc.full_horizon.support_break_acceptance_3bar` | 717 / 9,438 | 7.6% |
-| `oc.full_horizon.resistance_break_acceptance_3bar` | 732 / 9,438 | 7.8% |
+| `oc.full_horizon.touched_gap` | 36,944 / 36,944 | 100.0% |
+| `oc.full_horizon.touched_midpoint` | 34,484 / 36,944 | 93.3% |
+| `oc.full_horizon.fully_filled` | 35,925 / 36,944 | 97.2% |
+| `oc.full_horizon.closed_inside` | 36,489 / 36,944 | 98.8% |
+| `oc.full_horizon.closed_through` | 35,805 / 36,944 | 96.9% |
+| `oc.full_horizon.accepted_above_3bar` | 35,803 / 36,944 | 96.9% |
+| `oc.full_horizon.accepted_below_3bar` | 35,624 / 36,944 | 96.4% |
+| `oc.full_horizon.support_rejection_3bar` | 12,209 / 36,944 | 33.0% |
+| `oc.full_horizon.resistance_rejection_3bar` | 11,487 / 36,944 | 31.1% |
+| `oc.full_horizon.support_break_acceptance_3bar` | 1,947 / 36,944 | 5.3% |
+| `oc.full_horizon.resistance_break_acceptance_3bar` | 1,888 / 36,944 | 5.1% |
+| `oc.full_horizon.first_touch_minutes` | 0 / 36,944 | 0.0% |
 
 ## Per-Detector Baseline
 

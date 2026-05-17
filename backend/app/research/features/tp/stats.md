@@ -1,6 +1,6 @@
 # Time Profile - Current Stats
 
-_Generated `2026-05-14T13:41:20+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:32:08+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Parent-period shape and next-period high/low/thesis outcomes.
 | Metric | Value |
 |---|---|
 | Feature key | `tp` / `time_profile` |
-| Total feature rows | 19,414 |
+| Total feature rows | 105,819 |
 | Date range | 2014-12-28 -> 2026-05-07 |
 | Outcomes coverage | 19,414 / 19,414 (100.0%) |
 
@@ -53,7 +53,7 @@ Parent-period shape and next-period high/low/thesis outcomes.
 
 | Metric | Value |
 |---|---|
-| Rows | 19,414 |
+| Rows | 105,819 |
 | Columns | 84 |
 | ed.* event_data | 26 |
 | oc.* outcome labels | 32 |
@@ -66,37 +66,37 @@ Parent-period shape and next-period high/low/thesis outcomes.
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.next_period.took_parent_high` | 10,744 / 19,205 | 55.9% |
-| `oc.next_period.took_parent_low` | 8,306 / 19,205 | 43.2% |
-| `oc.next_period.thesis_confirmed` | 13,169 / 19,205 | 68.6% |
+| `oc.next_period.took_parent_high` | 51,465 / 104,018 | 49.5% |
+| `oc.next_period.took_parent_low` | 49,341 / 104,018 | 47.4% |
+| `oc.next_period.thesis_confirmed` | 69,627 / 104,018 | 66.9% |
 
 ### Breakdown - `oc.next_period.took_parent_high` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `daily_3session` | 4,693 / 8,536 | 55.0% |
-| `daily_4session` | 4,693 / 8,536 | 55.0% |
-| `monthly` | 290 / 393 | 73.8% |
-| `weekly` | 1,068 / 1,740 | 61.4% |
+| `daily_3session` | 22,738 / 46,140 | 49.3% |
+| `daily_4session` | 22,738 / 46,140 | 49.3% |
+| `monthly` | 1,129 / 2,166 | 52.1% |
+| `weekly` | 4,860 / 9,572 | 50.8% |
 
 ### Breakdown - `oc.next_period.took_parent_high` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 2,915 / 8,531 | 34.2% |
-| `bullish` | 7,781 / 10,591 | 73.5% |
-| `doji` | 48 / 83 | 57.8% |
+| `bearish` | 15,281 / 50,819 | 30.1% |
+| `bullish` | 35,476 / 51,984 | 68.2% |
+| `doji` | 708 / 1,215 | 58.3% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.next_period.took_parent_high` | 10,744 / 19,205 | 55.9% |
-| `oc.next_period.took_parent_low` | 8,306 / 19,205 | 43.2% |
-| `oc.next_period.thesis_confirmed` | 13,169 / 19,205 | 68.6% |
-| `oc.n_plus_2.took_parent_high` | 1,419 / 2,121 | 66.9% |
-| `oc.n_plus_2.took_parent_low` | 781 / 2,121 | 36.8% |
-| `oc.n_plus_2.thesis_confirmed` | 1,335 / 2,121 | 62.9% |
+| `oc.next_period.took_parent_high` | 51,465 / 104,018 | 49.5% |
+| `oc.next_period.took_parent_low` | 49,341 / 104,018 | 47.4% |
+| `oc.next_period.thesis_confirmed` | 69,627 / 104,018 | 66.9% |
+| `oc.n_plus_2.took_parent_high` | 6,064 / 11,673 | 51.9% |
+| `oc.n_plus_2.took_parent_low` | 5,517 / 11,673 | 47.3% |
+| `oc.n_plus_2.thesis_confirmed` | 7,082 / 11,673 | 60.7% |
 
 ## Per-Detector Baseline
 

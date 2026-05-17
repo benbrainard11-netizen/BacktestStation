@@ -1,6 +1,6 @@
 # ML Timeframe Stack Context
 
-_Generated 2026-05-17T18:21:02+00:00 by `backend/scripts/ml/build_timeframe_stack_context.py`._
+_Generated 2026-05-17T19:28:33+00:00 by `backend/scripts/ml/build_timeframe_stack_context.py`._
 
 ## What This Tests
 
@@ -15,10 +15,10 @@ Example: weekly SMT with daily/4H/1H OB/FVG/sweep/PSP context, or 4H SMT with 1H
 
 ## Inputs
 
-- Parents requested: `all`
+- Parents requested: `smt_mtf`
 - Children requested: `all`
 - Minimum bucket size: `25`
-- Missing/skipped parent matrices: `smt_mtf`
+- Missing/skipped parent matrices: `none`
 
 Child rows loaded:
 
@@ -36,71 +36,71 @@ Child rows loaded:
 
 | parent | side | child | child_tf | relation | window | label | n | base | with_child | lift | coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| weekly_smt | high | ob | 1h | opposed | 1h | n_plus_2.thesis_confirmed_strict | 28 | 44.7% | 64.3% | +19.6% | 1.8% |
-| weekly_smt | high | psp | 1d | aligned | 3d | next_period.close_moved_with_thesis | 52 | 50.1% | 69.2% | +19.2% | 3.4% |
-| weekly_smt | low | eql | 1d | any | 3d | n_plus_2.thesis_confirmed_strict | 31 | 47.8% | 64.5% | +16.7% | 2.1% |
-| weekly_smt | low | eql | 1d | opposed | 3d | n_plus_2.thesis_confirmed_strict | 28 | 47.8% | 64.3% | +16.5% | 1.9% |
-| weekly_smt | low | eql | 1h | opposed | 4h | n_plus_2.thesis_confirmed_strict | 55 | 47.8% | 61.8% | +14.0% | 3.8% |
-| previous_day_smt | low | psp | 4h | aligned | 1h | next_period.close_moved_with_thesis | 81 | 50.6% | 64.2% | +13.6% | 2.1% |
-| weekly_smt | low | disp | 4h | aligned | 4h | n_plus_2.thesis_confirmed_strict | 49 | 47.8% | 61.2% | +13.4% | 3.4% |
-| weekly_smt | low | disp | 4h | aligned | 1h | n_plus_2.thesis_confirmed_strict | 36 | 47.8% | 61.1% | +13.3% | 2.5% |
-| weekly_smt | low | eql | 4h | opposed | 4h | n_plus_2.thesis_confirmed_strict | 35 | 47.8% | 60.0% | +12.2% | 2.4% |
-| weekly_smt | low | psp | 1d | any | 1h | next_period.thesis_confirmed_strict | 31 | 45.9% | 58.1% | +12.2% | 2.1% |
-| weekly_smt | low | eql | 1d | any | 3d | next_period.thesis_confirmed_strict | 31 | 45.9% | 58.1% | +12.2% | 2.1% |
-| weekly_smt | low | psp | 1h | opposed | 1h | next_period.close_moved_with_thesis | 74 | 52.8% | 64.9% | +12.0% | 5.1% |
-| weekly_smt | low | eql | 1h | any | 4h | n_plus_2.thesis_confirmed_strict | 77 | 47.8% | 59.7% | +11.9% | 5.3% |
-| previous_day_smt | low | sweep | 4h | aligned | 1h | next_period.close_moved_with_thesis | 61 | 50.6% | 62.3% | +11.7% | 1.6% |
-| weekly_smt | low | eql | 1d | any | 3d | next_period.close_moved_with_thesis | 31 | 52.8% | 64.5% | +11.7% | 2.1% |
-| weekly_smt | low | eql | 1d | opposed | 3d | next_period.thesis_confirmed_strict | 28 | 45.9% | 57.1% | +11.3% | 1.9% |
-| weekly_smt | low | eql | 1h | any | 1d | n_plus_2.thesis_confirmed_strict | 109 | 47.8% | 58.7% | +10.9% | 7.5% |
-| weekly_smt | low | psp | 1h | aligned | 4h | next_period.thesis_confirmed_strict | 127 | 45.9% | 56.7% | +10.8% | 8.7% |
-| weekly_smt | high | ob | 1h | opposed | 1h | next_period.close_moved_with_thesis | 28 | 50.1% | 60.7% | +10.6% | 1.8% |
-| weekly_smt | low | eql | 1h | opposed | 1d | n_plus_2.thesis_confirmed_strict | 101 | 47.8% | 58.4% | +10.6% | 7.0% |
-| weekly_smt | high | swing | 1d | opposed | 4h | next_period.thesis_confirmed_strict | 84 | 43.4% | 53.6% | +10.2% | 5.5% |
-| weekly_smt | high | fvg | 1d | aligned | 1d | next_period.close_moved_with_thesis | 25 | 50.1% | 60.0% | +9.9% | 1.6% |
-| weekly_smt | low | eql | 1h | opposed | 7d | n_plus_2.thesis_confirmed_strict | 201 | 47.8% | 57.7% | +9.9% | 13.9% |
-| previous_day_smt | low | eql | 4h | opposed | 4h | next_period.close_moved_with_thesis | 43 | 50.6% | 60.5% | +9.9% | 1.1% |
-| weekly_smt | low | eql | 1h | any | 7d | n_plus_2.thesis_confirmed_strict | 203 | 47.8% | 57.6% | +9.8% | 14.0% |
-| weekly_smt | low | eql | 1h | aligned | 7d | n_plus_2.thesis_confirmed_strict | 200 | 47.8% | 57.5% | +9.7% | 13.8% |
-| weekly_smt | low | disp | 4h | aligned | 1h | next_period.thesis_confirmed_strict | 36 | 45.9% | 55.6% | +9.7% | 2.5% |
-| weekly_smt | high | swing | 1d | any | 4h | next_period.thesis_confirmed_strict | 85 | 43.4% | 52.9% | +9.5% | 5.6% |
-| weekly_smt | low | eql | 1d | opposed | 7d | n_plus_2.thesis_confirmed_strict | 49 | 47.8% | 57.1% | +9.3% | 3.4% |
-| weekly_smt | low | disp | 4h | aligned | 4h | next_period.thesis_confirmed_strict | 49 | 45.9% | 55.1% | +9.2% | 3.4% |
+| 6h_prev_candle_smt_high | high | disp | 4h | aligned | 1h | next_30m.thesis_confirmed | 32 | 14.6% | 46.9% | +32.2% | 1.3% |
+| 6h_prev_candle_smt_high | high | disp | 4h | aligned | 1h | next_15m.thesis_confirmed | 32 | 10.6% | 40.6% | +30.0% | 1.3% |
+| 6h_prev_candle_smt_high | high | disp | 4h | aligned | 1h | next_60m.thesis_confirmed | 32 | 20.4% | 50.0% | +29.6% | 1.3% |
+| 6h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 175 | 20.4% | 49.1% | +28.7% | 7.1% |
+| 6h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_30m.thesis_confirmed | 175 | 14.6% | 40.0% | +25.4% | 7.1% |
+| 6h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_60m.thesis_confirmed | 255 | 23.4% | 48.6% | +25.3% | 11.2% |
+| 6h_prev_candle_smt_high | high | disp | 4h | aligned | 1h | next_240m.thesis_confirmed | 32 | 40.7% | 65.6% | +25.0% | 1.3% |
+| 6h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_240m.thesis_confirmed | 229 | 40.7% | 65.5% | +24.8% | 9.2% |
+| 6h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_240m.thesis_confirmed | 255 | 48.1% | 72.9% | +24.8% | 11.2% |
+| 6h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_60m.thesis_confirmed | 229 | 20.4% | 43.2% | +22.8% | 9.2% |
+| 6h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_15m.thesis_confirmed | 175 | 10.6% | 33.1% | +22.6% | 7.1% |
+| 6h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_240m.thesis_confirmed | 175 | 40.7% | 62.3% | +21.6% | 7.1% |
+| 4h_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 427 | 28.3% | 49.6% | +21.3% | 12.1% |
+| 6h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_30m.thesis_confirmed | 255 | 16.7% | 37.6% | +21.0% | 11.2% |
+| 4h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 419 | 23.9% | 44.2% | +20.3% | 11.0% |
+| 4h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_60m.thesis_confirmed | 384 | 28.3% | 48.4% | +20.1% | 10.9% |
+| 4h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_30m.thesis_confirmed | 384 | 21.3% | 41.1% | +19.8% | 10.9% |
+| 4h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_30m.thesis_confirmed | 419 | 17.5% | 37.0% | +19.5% | 11.0% |
+| 4h_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_30m.thesis_confirmed | 427 | 21.3% | 40.7% | +19.4% | 12.1% |
+| 4h_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_15m.thesis_confirmed | 427 | 16.3% | 35.1% | +18.8% | 12.1% |
+| 6h_prev_candle_smt_high | high | psp | 4h | aligned | 4h | next_1d.thesis_confirmed | 29 | 67.5% | 86.2% | +18.8% | 1.2% |
+| 4h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_240m.thesis_confirmed | 384 | 51.1% | 69.8% | +18.6% | 10.8% |
+| 4h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_15m.thesis_confirmed | 419 | 13.9% | 32.2% | +18.3% | 11.0% |
+| 90m_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_30m.thesis_confirmed | 534 | 36.9% | 54.9% | +17.9% | 6.0% |
+| 6h_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 202 | 23.4% | 41.1% | +17.7% | 8.9% |
+| 4h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_240m.thesis_confirmed | 363 | 43.9% | 61.4% | +17.5% | 9.4% |
+| 90m_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_15m.thesis_confirmed | 534 | 28.2% | 45.5% | +17.3% | 6.0% |
+| 6h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_30m.thesis_confirmed | 229 | 14.6% | 31.9% | +17.2% | 9.2% |
+| 6h_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_30m.thesis_confirmed | 202 | 16.7% | 33.7% | +17.0% | 8.9% |
+| 6h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_15m.thesis_confirmed | 255 | 12.5% | 29.4% | +16.9% | 11.2% |
 
 ## Best Post-Formation Buckets
 
 | parent | side | child | child_tf | relation | window | label | n | base | with_child | lift |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| weekly_smt | high | sweep | 1d | opposed | 7d | next_period.thesis_confirmed_strict | 321 | 43.4% | 73.8% | +30.4% |
-| weekly_smt | low | sweep | 1d | opposed | 7d | next_period.thesis_confirmed_strict | 325 | 45.9% | 72.6% | +26.7% |
-| weekly_smt | low | eql | 1d | aligned | 7d | n_plus_2.thesis_confirmed_strict | 28 | 47.8% | 71.4% | +23.6% |
-| weekly_smt | high | eql | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 30 | 43.4% | 66.7% | +23.3% |
-| weekly_smt | low | eql | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 28 | 45.9% | 67.9% | +22.0% |
-| weekly_smt | low | swing | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 606 | 45.9% | 66.3% | +20.5% |
-| weekly_smt | low | fvg | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 608 | 45.9% | 66.1% | +20.3% |
-| weekly_smt | low | sweep | 1d | opposed | 7d | n_plus_2.thesis_confirmed_strict | 325 | 47.8% | 67.7% | +19.9% |
-| weekly_smt | high | swing | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 588 | 43.4% | 63.3% | +19.9% |
-| weekly_smt | high | sweep | 4h | opposed | 4h | n_plus_2.thesis_confirmed_strict | 28 | 44.7% | 64.3% | +19.6% |
-| weekly_smt | high | psp | 1h | aligned | 1h | n_plus_2.thesis_confirmed_strict | 39 | 44.7% | 64.1% | +19.4% |
-| weekly_smt | high | fvg | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 622 | 43.4% | 62.2% | +18.8% |
-| weekly_smt | high | sweep | 1d | opposed | 7d | n_plus_2.thesis_confirmed_strict | 321 | 44.7% | 63.2% | +18.5% |
-| weekly_smt | high | disp | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 501 | 43.4% | 61.3% | +17.9% |
-| weekly_smt | low | disp | 1d | aligned | 7d | next_period.thesis_confirmed_strict | 512 | 45.9% | 63.1% | +17.2% |
-| weekly_smt | low | disp | 1d | aligned | 3d | next_period.thesis_confirmed_strict | 316 | 45.9% | 63.0% | +17.1% |
-| previous_day_smt | low | disp | 4h | aligned | 1d | next_period.thesis_confirmed_strict | 1,292 | 49.1% | 65.9% | +16.9% |
-| previous_day_smt | high | fvg | 4h | opposed | 1h | next_period.close_moved_with_thesis | 39 | 47.4% | 64.1% | +16.7% |
-| weekly_smt | low | psp | 1h | opposed | 1h | n_plus_2.thesis_confirmed_strict | 31 | 47.8% | 64.5% | +16.7% |
-| previous_day_smt | high | disp | 4h | aligned | 1d | next_period.thesis_confirmed_strict | 1,406 | 45.3% | 61.9% | +16.6% |
-| weekly_smt | low | eql | 1h | aligned | 4h | n_plus_2.thesis_confirmed_strict | 56 | 47.8% | 64.3% | +16.5% |
-| previous_day_smt | high | fvg | 4h | aligned | 1d | next_period.thesis_confirmed_strict | 1,577 | 45.3% | 61.5% | +16.2% |
-| weekly_smt | low | eql | 1h | opposed | 4h | n_plus_2.thesis_confirmed_strict | 36 | 47.8% | 63.9% | +16.1% |
-| weekly_smt | low | sweep | 1d | opposed | 3d | next_period.thesis_confirmed_strict | 157 | 45.9% | 61.8% | +15.9% |
-| weekly_smt | low | eql | 1h | any | 4h | n_plus_2.thesis_confirmed_strict | 77 | 47.8% | 63.6% | +15.8% |
-| weekly_smt | low | fvg | 1d | aligned | 3d | next_period.thesis_confirmed_strict | 253 | 45.9% | 61.7% | +15.8% |
-| previous_day_smt | high | fvg | 4h | any | 1h | next_period.close_moved_with_thesis | 62 | 47.4% | 62.9% | +15.5% |
-| weekly_smt | low | swing | 1d | aligned | 7d | n_plus_2.thesis_confirmed_strict | 605 | 47.8% | 63.3% | +15.5% |
-| weekly_smt | low | sweep | 1d | opposed | 3d | n_plus_2.thesis_confirmed_strict | 157 | 47.8% | 63.1% | +15.3% |
-| weekly_smt | low | eql | 4h | any | 1d | n_plus_2.thesis_confirmed_strict | 81 | 47.8% | 63.0% | +15.2% |
+| 4h_prev_candle_smt_high | high | sweep | 1h | opposed | 1h | next_60m.thesis_confirmed | 56 | 23.9% | 89.3% | +65.4% |
+| 4h_prev_candle_smt_low | low | sweep | 1h | opposed | 1h | next_60m.thesis_confirmed | 68 | 28.3% | 89.7% | +61.4% |
+| 6h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_60m.thesis_confirmed | 122 | 20.4% | 80.3% | +59.9% |
+| 6h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_30m.thesis_confirmed | 122 | 14.6% | 71.3% | +56.7% |
+| 6h_prev_candle_smt_high | high | disp | 4h | aligned | 4h | next_240m.thesis_confirmed | 163 | 40.7% | 95.7% | +55.0% |
+| 6h_prev_candle_smt_high | high | sweep | 4h | opposed | 4h | next_240m.thesis_confirmed | 148 | 40.7% | 93.2% | +52.6% |
+| 4h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_60m.thesis_confirmed | 252 | 23.9% | 74.6% | +50.7% |
+| 6h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 149 | 20.4% | 71.1% | +50.7% |
+| 90m_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 567 | 40.7% | 90.8% | +50.1% |
+| 4h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_30m.thesis_confirmed | 295 | 21.3% | 70.2% | +48.8% |
+| 4h_prev_candle_smt_high | high | sweep | 1h | opposed | 1h | next_30m.thesis_confirmed | 56 | 17.5% | 66.1% | +48.6% |
+| 4h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_60m.thesis_confirmed | 295 | 28.3% | 76.6% | +48.3% |
+| 4h_prev_candle_smt_low | low | sweep | 1h | opposed | 1h | next_30m.thesis_confirmed | 68 | 21.3% | 69.1% | +47.8% |
+| 6h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_15m.thesis_confirmed | 122 | 10.6% | 58.2% | +47.6% |
+| 4h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_30m.thesis_confirmed | 252 | 17.5% | 65.1% | +47.6% |
+| 4h_prev_candle_smt_high | high | sweep | 1h | opposed | 1h | next_240m.thesis_confirmed | 56 | 43.9% | 91.1% | +47.2% |
+| 6h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_240m.thesis_confirmed | 122 | 40.7% | 87.7% | +47.0% |
+| 6h_prev_candle_smt_low | low | sweep | 4h | opposed | 4h | next_240m.thesis_confirmed | 151 | 48.1% | 94.7% | +46.6% |
+| 6h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_240m.thesis_confirmed | 149 | 40.7% | 86.6% | +45.9% |
+| 4h_prev_candle_smt_high | high | fvg | 1h | aligned | 1h | next_15m.thesis_confirmed | 251 | 13.9% | 59.0% | +45.0% |
+| 4h_prev_candle_smt_high | high | sweep | 1h | opposed | 1h | next_15m.thesis_confirmed | 56 | 13.9% | 58.9% | +45.0% |
+| 4h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_15m.thesis_confirmed | 295 | 16.3% | 60.7% | +44.3% |
+| 90m_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_30m.thesis_confirmed | 567 | 31.2% | 75.5% | +44.3% |
+| 6h_prev_candle_smt_low | low | disp | 4h | aligned | 4h | next_240m.thesis_confirmed | 160 | 48.1% | 91.2% | +43.1% |
+| 90m_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_30m.thesis_confirmed | 361 | 36.9% | 78.9% | +42.0% |
+| 4h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_240m.thesis_confirmed | 214 | 43.9% | 85.5% | +41.6% |
+| 4h_prev_candle_smt_high | high | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 214 | 23.9% | 65.4% | +41.6% |
+| 4h_prev_candle_smt_low | low | sweep | 1h | opposed | 1h | next_240m.thesis_confirmed | 68 | 51.1% | 92.6% | +41.5% |
+| 6h_prev_candle_smt_low | low | fvg | 1h | aligned | 1h | next_60m.thesis_confirmed | 165 | 23.4% | 63.6% | +40.3% |
+| 90m_prev_candle_smt_low | low | disp | 1h | aligned | 1h | next_60m.thesis_confirmed | 591 | 46.8% | 87.0% | +40.2% |
 
 ## Files
 
@@ -108,6 +108,6 @@ Child rows loaded:
 - Summary parquet: `C:\Users\benbr\BacktestStation\data\ml\context\timeframe_stack_context_summary.parquet`
 - Manifest: `C:\Users\benbr\BacktestStation\data\ml\context\timeframe_stack_context_manifest.json`
 
-## Current Gap
+## Status
 
-`smt_mtf.parquet` will stay missing until the new previous-candle SMT detector is scanned, outcomes are computed, and `build_feature_matrix.py --detectors smt_prev_candle_divergence` is run. After that, rerun this script to rank 4H/6H/1H/90m/30m/15m SMT stacks directly.
+All requested parent matrices were available. `phase=pre` rows are the legal context candidates for parent-signal ML; `phase=post` rows are descriptive only.

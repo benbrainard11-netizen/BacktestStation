@@ -87,6 +87,9 @@ _BUCKET_MIN: dict[tuple[str, str], int] = {
     ("displacement_candle", "1h_disp"): 60,
     ("displacement_candle", "4h_disp"): 240,
     ("displacement_candle", "daily_disp"): 24 * 60,
+    # FORMING VP is an as-of snapshot; event.bar_end_utc is the snapshot cutoff.
+    ("forming_volume_profile", "daily_vp_asof_1h"): 0,
+    ("forming_volume_profile", "daily_vp_asof_4h"): 0,
     # SWING — knowable at bar_end + (n+1)*tf_minutes
     # (recorded in event_data.knowable_ts_utc; check that separately)
     # FT, ORB, EQL, TIME_PROFILE, VOLUME_PROFILE handled via event_data.parent_period_end_utc

@@ -1,6 +1,6 @@
 # SMT - HTF Reference Divergence - Current Stats
 
-_Generated `2026-05-14T13:40:22+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:28:53+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ One index takes a higher-timeframe reference high/low while peers do not.
 | Metric | Value |
 |---|---|
 | Feature key | `smt` / `smt_htf_reference_divergence` |
-| Total feature rows | 2,891 |
+| Total feature rows | 10,889 |
 | Date range | 2015-01-08 -> 2026-05-05 |
 | Outcomes coverage | 2,891 / 2,891 (100.0%) |
 
@@ -49,51 +49,51 @@ One index takes a higher-timeframe reference high/low while peers do not.
 
 | Metric | Value |
 |---|---|
-| Rows | 2,891 |
-| Columns | 121 |
-| ed.* event_data | 44 |
+| Rows | 10,889 |
+| Columns | 301 |
+| ed.* event_data | 224 |
 | oc.* outcome labels | 49 |
 | ctx.* context | 5 |
 | xd.* cross-detector | 14 |
-| numeric | 85 |
-| object/category | 35 |
+| numeric | 193 |
+| object/category | 107 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.next_period.thesis_confirmed_strict` | 1,287 / 2,868 | 44.9% |
-| `oc.n_plus_2.thesis_confirmed_strict` | 1,345 / 2,849 | 47.2% |
-| `oc.period_close.smt_active_for_side_at_close` | 989 / 2,891 | 34.2% |
+| `oc.next_period.thesis_confirmed_strict` | 5,025 / 10,827 | 46.4% |
+| `oc.n_plus_2.thesis_confirmed_strict` | 5,154 / 10,815 | 47.7% |
+| `oc.period_close.smt_active_for_side_at_close` | 4,422 / 10,889 | 40.6% |
 
 ### Breakdown - `oc.next_period.thesis_confirmed_strict` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `previous_day_smt` | 1,058 / 2,338 | 45.3% |
-| `weekly_smt` | 229 / 530 | 43.2% |
+| `previous_day_smt` | 3,695 / 7,845 | 47.1% |
+| `weekly_smt` | 1,330 / 2,982 | 44.6% |
 
 ### Breakdown - `oc.next_period.thesis_confirmed_strict` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `high` | 622 / 1,512 | 41.1% |
-| `low` | 665 / 1,356 | 49.0% |
+| `high` | 2,506 / 5,598 | 44.8% |
+| `low` | 2,519 / 5,229 | 48.2% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.period_close.primary_still_swept_at_close` | 420 / 2,891 | 14.5% |
-| `oc.period_close.smt_active_for_side_at_close` | 989 / 2,891 | 34.2% |
-| `oc.next_period.primary_took_period_n_high` | 1,523 / 2,868 | 53.1% |
-| `oc.next_period.primary_took_period_n_low` | 1,262 / 2,868 | 44.0% |
-| `oc.next_period.thesis_confirmed_strict` | 1,287 / 2,868 | 44.9% |
-| `oc.next_period.close_moved_with_thesis` | 1,346 / 2,868 | 46.9% |
-| `oc.n_plus_2.primary_took_period_n_high` | 1,625 / 2,849 | 57.0% |
-| `oc.n_plus_2.primary_took_period_n_low` | 1,210 / 2,849 | 42.5% |
-| `oc.n_plus_2.thesis_confirmed_strict` | 1,345 / 2,849 | 47.2% |
-| `oc.n_plus_2.close_moved_with_thesis` | 1,358 / 2,849 | 47.7% |
+| `oc.period_close.primary_still_swept_at_close` | 5,593 / 10,889 | 51.4% |
+| `oc.period_close.smt_active_for_side_at_close` | 4,422 / 10,889 | 40.6% |
+| `oc.next_period.primary_took_period_n_high` | 5,539 / 10,827 | 51.2% |
+| `oc.next_period.primary_took_period_n_low` | 5,122 / 10,827 | 47.3% |
+| `oc.next_period.thesis_confirmed_strict` | 5,025 / 10,827 | 46.4% |
+| `oc.next_period.close_moved_with_thesis` | 5,371 / 10,827 | 49.6% |
+| `oc.n_plus_2.primary_took_period_n_high` | 5,599 / 10,815 | 51.8% |
+| `oc.n_plus_2.primary_took_period_n_low` | 5,143 / 10,815 | 47.6% |
+| `oc.n_plus_2.thesis_confirmed_strict` | 5,154 / 10,815 | 47.7% |
+| `oc.n_plus_2.close_moved_with_thesis` | 5,348 / 10,815 | 49.4% |
 
 ## Per-Detector Baseline
 

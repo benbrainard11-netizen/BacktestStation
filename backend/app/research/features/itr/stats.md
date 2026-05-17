@@ -1,6 +1,6 @@
 # ITR - Interval True Range - Current Stats
 
-_Generated `2026-05-14T13:41:33+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:32:42+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Completed daily, weekly, and session range memory for next-interval behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `itr` / `interval_true_range` |
-| Total feature rows | 36,095 |
+| Total feature rows | 190,192 |
 | Date range | 2015-01-02 -> 2026-05-08 |
 | Outcomes coverage | 36,095 / 36,095 (100.0%) |
 
@@ -54,65 +54,60 @@ Completed daily, weekly, and session range memory for next-interval behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 36,095 |
-| Columns | 172 |
+| Rows | 190,192 |
+| Columns | 143 |
 | ed.* event_data | 78 |
-| oc.* outcome labels | 66 |
+| oc.* outcome labels | 38 |
 | ctx.* context | 4 |
-| xd.* cross-detector | 15 |
-| numeric | 151 |
-| object/category | 20 |
+| xd.* cross-detector | 14 |
+| numeric | 124 |
+| object/category | 18 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.next_interval.compressed_range_0_75x` | 10,689 / 35,572 | 30.0% |
-| `oc.next_interval.expanded_range_1_25x` | 11,695 / 35,572 | 32.9% |
-| `oc.next_interval.range_expanded_1x_interval` | 17,523 / 35,572 | 49.3% |
-| `oc.next_interval.range_expanded_2x_interval` | 3,597 / 35,572 | 10.1% |
-| `oc.next_interval.touched_interval_mid` | 15,241 / 35,572 | 42.8% |
-| `oc.next_interval.took_interval_high` | 19,543 / 35,572 | 54.9% |
-| `oc.next_interval.took_interval_low` | 15,658 / 35,572 | 44.0% |
-| `oc.next_interval.swept_both_sides` | 2,876 / 35,572 | 8.1% |
-| `oc.next_interval.took_interval_high_rejected_inside` | 5,237 / 35,572 | 14.7% |
-| `oc.next_interval.took_interval_low_rejected_inside` | 5,341 / 35,572 | 15.0% |
-| `oc.next_interval.closed_inside_interval_range` | 12,638 / 35,572 | 35.5% |
+| `oc.next_interval.compressed_range_0_75x` | 58,107 / 185,769 | 31.3% |
+| `oc.next_interval.expanded_range_1_25x` | 60,433 / 185,769 | 32.5% |
+| `oc.next_interval.touched_interval_mid` | 67,487 / 185,769 | 36.3% |
+| `oc.next_interval.took_interval_high` | 91,867 / 185,769 | 49.5% |
+| `oc.next_interval.took_interval_low` | 88,730 / 185,769 | 47.8% |
+| `oc.next_interval.swept_both_sides` | 13,682 / 185,769 | 7.4% |
 
 ### Breakdown - `oc.next_interval.compressed_range_0_75x` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `asia_itr` | 2,575 / 8,539 | 30.2% |
-| `daily_itr` | 2,573 / 8,539 | 30.1% |
-| `london_itr` | 2,590 / 8,521 | 30.4% |
-| `ny_itr` | 2,470 / 8,230 | 30.0% |
-| `weekly_itr` | 481 / 1,743 | 27.6% |
+| `asia_itr` | 13,626 / 41,955 | 32.5% |
+| `daily_itr` | 14,011 / 45,908 | 30.5% |
+| `london_itr` | 13,642 / 43,894 | 31.1% |
+| `ny_itr` | 14,172 / 44,442 | 31.9% |
+| `weekly_itr` | 2,656 / 9,570 | 27.8% |
 
 ### Breakdown - `oc.next_interval.compressed_range_0_75x` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 4,551 / 16,129 | 28.2% |
-| `bullish` | 6,107 / 19,216 | 31.8% |
-| `doji` | 31 / 227 | 13.7% |
+| `bearish` | 28,812 / 90,670 | 31.8% |
+| `bullish` | 28,856 / 92,451 | 31.2% |
+| `doji` | 439 / 2,648 | 16.6% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.next_interval.expanded_range_1_25x` | 11,695 / 35,572 | 32.9% |
-| `oc.next_interval.compressed_range_0_75x` | 10,689 / 35,572 | 30.0% |
-| `oc.next_interval.took_interval_high` | 19,543 / 35,572 | 54.9% |
-| `oc.next_interval.took_interval_low` | 15,658 / 35,572 | 44.0% |
-| `oc.next_interval.touched_interval_mid` | 15,241 / 35,572 | 42.8% |
-| `oc.next_interval.closed_above_interval_high` | 13,440 / 35,572 | 37.8% |
-| `oc.next_interval.closed_below_interval_low` | 9,494 / 35,572 | 26.7% |
-| `oc.next_interval.closed_inside_interval` | 12,638 / 35,572 | 35.5% |
-| `oc.next_interval.outside_continuation_up` | 12,617 / 35,572 | 35.5% |
-| `oc.next_interval.outside_continuation_down` | 8,628 / 35,572 | 24.3% |
-| `oc.next_interval.swept_both_sides` | 2,876 / 35,572 | 8.1% |
-| `oc.next_interval.same_direction_close` | 17,355 / 35,572 | 48.8% |
+| `oc.next_interval.expanded_range_1_25x` | 60,433 / 185,769 | 32.5% |
+| `oc.next_interval.compressed_range_0_75x` | 58,107 / 185,769 | 31.3% |
+| `oc.next_interval.took_interval_high` | 91,867 / 185,769 | 49.5% |
+| `oc.next_interval.took_interval_low` | 88,730 / 185,769 | 47.8% |
+| `oc.next_interval.touched_interval_mid` | 67,487 / 185,769 | 36.3% |
+| `oc.next_interval.closed_above_interval_high` | 61,201 / 185,769 | 32.9% |
+| `oc.next_interval.closed_below_interval_low` | 58,420 / 185,769 | 31.4% |
+| `oc.next_interval.closed_inside_interval` | 66,148 / 185,769 | 35.6% |
+| `oc.next_interval.outside_continuation_up` | 57,148 / 185,769 | 30.8% |
+| `oc.next_interval.outside_continuation_down` | 54,101 / 185,769 | 29.1% |
+| `oc.next_interval.swept_both_sides` | 13,682 / 185,769 | 7.4% |
+| `oc.next_interval.same_direction_close` | 88,750 / 185,769 | 47.8% |
 
 ## Per-Detector Baseline
 

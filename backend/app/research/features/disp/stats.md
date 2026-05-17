@@ -1,6 +1,6 @@
 # Displacement Candle - Current Stats
 
-_Generated `2026-05-14T13:41:00+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:31:25+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Large directional candles and later retracement/invalidation behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `disp` / `displacement_candle` |
-| Total feature rows | 38,747 |
+| Total feature rows | 187,595 |
 | Date range | 2015-01-02 -> 2026-05-07 |
 | Outcomes coverage | 38,747 / 38,747 (100.0%) |
 
@@ -50,7 +50,7 @@ Large directional candles and later retracement/invalidation behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 38,747 |
+| Rows | 187,595 |
 | Columns | 91 |
 | ed.* event_data | 20 |
 | oc.* outcome labels | 45 |
@@ -63,34 +63,34 @@ Large directional candles and later retracement/invalidation behavior.
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.retracement.tapped_open` | 28,732 / 38,747 | 74.2% |
-| `oc.retracement.tapped_full` | 26,990 / 38,747 | 69.7% |
-| `oc.invalidation.invalidated` | 25,238 / 38,747 | 65.1% |
+| `oc.retracement.tapped_open` | 144,236 / 187,563 | 76.9% |
+| `oc.retracement.tapped_full` | 138,010 / 187,563 | 73.6% |
+| `oc.invalidation.invalidated` | 128,698 / 187,563 | 68.6% |
 
 ### Breakdown - `oc.retracement.tapped_open` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `1h_disp` | 21,597 / 29,664 | 72.8% |
-| `4h_disp` | 5,845 / 7,471 | 78.2% |
-| `daily_disp` | 1,290 / 1,612 | 80.0% |
+| `1h_disp` | 107,465 / 140,575 | 76.4% |
+| `4h_disp` | 30,453 / 38,911 | 78.3% |
+| `daily_disp` | 6,318 / 8,077 | 78.2% |
 
 ### Breakdown - `oc.retracement.tapped_open` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 15,083 / 19,356 | 77.9% |
-| `bullish` | 13,649 / 19,391 | 70.4% |
+| `bearish` | 73,214 / 94,513 | 77.5% |
+| `bullish` | 71,022 / 93,050 | 76.3% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.retracement.tapped_close` | 38,655 / 38,747 | 99.8% |
-| `oc.retracement.tapped_mid` | 33,550 / 38,747 | 86.6% |
-| `oc.retracement.tapped_open` | 28,732 / 38,747 | 74.2% |
-| `oc.retracement.tapped_full` | 26,990 / 38,747 | 69.7% |
-| `oc.invalidation.invalidated` | 25,238 / 38,747 | 65.1% |
+| `oc.retracement.tapped_close` | 185,312 / 187,563 | 98.8% |
+| `oc.retracement.tapped_mid` | 164,493 / 187,563 | 87.7% |
+| `oc.retracement.tapped_open` | 144,236 / 187,563 | 76.9% |
+| `oc.retracement.tapped_full` | 138,010 / 187,563 | 73.6% |
+| `oc.invalidation.invalidated` | 128,698 / 187,563 | 68.6% |
 
 ## Per-Detector Baseline
 

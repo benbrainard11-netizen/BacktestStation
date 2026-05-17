@@ -1,6 +1,6 @@
 # Opening Range Breakout - Current Stats
 
-_Generated `2026-05-14T13:41:20+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:32:06+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Session opening ranges and later one-sided/two-sided breaks.
 | Metric | Value |
 |---|---|
 | Feature key | `orb` / `opening_range_breakout` |
-| Total feature rows | 34,040 |
+| Total feature rows | 158,941 |
 | Date range | 2015-01-02 -> 2026-05-08 |
 | Outcomes coverage | 34,040 / 34,040 (100.0%) |
 
@@ -53,7 +53,7 @@ Session opening ranges and later one-sided/two-sided breaks.
 
 | Metric | Value |
 |---|---|
-| Rows | 34,040 |
+| Rows | 158,941 |
 | Columns | 99 |
 | ed.* event_data | 21 |
 | oc.* outcome labels | 53 |
@@ -66,43 +66,43 @@ Session opening ranges and later one-sided/two-sided breaks.
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.broke_only_high` | 7,964 / 34,021 | 23.4% |
-| `oc.broke_only_low` | 6,575 / 34,021 | 19.3% |
-| `oc.broke_both_sides` | 19,364 / 34,021 | 56.9% |
+| `oc.broke_only_high` | 32,604 / 151,336 | 21.5% |
+| `oc.broke_only_low` | 32,105 / 151,336 | 21.2% |
+| `oc.broke_both_sides` | 85,869 / 151,336 | 56.7% |
 
 ### Breakdown - `oc.broke_only_high` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `asia_60m` | 1,993 / 8,614 | 23.1% |
-| `ny_15m` | 2,010 / 8,468 | 23.7% |
-| `ny_30m` | 2,607 / 8,471 | 30.8% |
-| `ny_5m` | 1,354 / 8,468 | 16.0% |
+| `asia_60m` | 6,157 / 32,471 | 19.0% |
+| `ny_15m` | 8,948 / 39,725 | 22.5% |
+| `ny_30m` | 11,854 / 41,323 | 28.7% |
+| `ny_5m` | 5,645 / 37,817 | 14.9% |
 
 ### Breakdown - `oc.broke_only_high` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 2,100 / 16,262 | 12.9% |
-| `bullish` | 5,769 / 17,250 | 33.4% |
-| `doji` | 95 / 509 | 18.7% |
+| `bearish` | 9,134 / 71,432 | 12.8% |
+| `bullish` | 22,159 / 72,629 | 30.5% |
+| `doji` | 1,311 / 7,275 | 18.0% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.break_high.wick_breached` | 27,328 / 34,021 | 80.3% |
-| `oc.break_high.close_past` | 26,494 / 34,021 | 77.9% |
-| `oc.break_high_05ext.wick_breached` | 21,236 / 34,021 | 62.4% |
-| `oc.break_high_05ext.close_past` | 20,438 / 34,021 | 60.1% |
-| `oc.break_high_1ext.wick_breached` | 15,558 / 34,021 | 45.7% |
-| `oc.break_high_1ext.close_past` | 14,881 / 34,021 | 43.7% |
-| `oc.break_low.wick_breached` | 25,939 / 34,021 | 76.2% |
-| `oc.break_low.close_past` | 24,936 / 34,021 | 73.3% |
-| `oc.break_low_05ext.wick_breached` | 19,938 / 34,021 | 58.6% |
-| `oc.break_low_05ext.close_past` | 18,968 / 34,021 | 55.8% |
-| `oc.break_low_1ext.wick_breached` | 15,103 / 34,021 | 44.4% |
-| `oc.break_low_1ext.close_past` | 14,329 / 34,021 | 42.1% |
+| `oc.break_high.wick_breached` | 118,473 / 151,336 | 78.3% |
+| `oc.break_high.close_past` | 114,847 / 151,336 | 75.9% |
+| `oc.break_high_05ext.wick_breached` | 95,494 / 151,336 | 63.1% |
+| `oc.break_high_05ext.close_past` | 92,273 / 151,336 | 61.0% |
+| `oc.break_high_1ext.wick_breached` | 74,783 / 151,336 | 49.4% |
+| `oc.break_high_1ext.close_past` | 72,030 / 151,336 | 47.6% |
+| `oc.break_low.wick_breached` | 117,974 / 151,336 | 78.0% |
+| `oc.break_low.close_past` | 114,421 / 151,336 | 75.6% |
+| `oc.break_low_05ext.wick_breached` | 95,032 / 151,336 | 62.8% |
+| `oc.break_low_05ext.close_past` | 91,690 / 151,336 | 60.6% |
+| `oc.break_low_1ext.wick_breached` | 75,044 / 151,336 | 49.6% |
+| `oc.break_low_1ext.close_past` | 72,031 / 151,336 | 47.6% |
 
 ## Per-Detector Baseline
 

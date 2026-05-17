@@ -1,6 +1,6 @@
 # FVG Formation - Current Stats
 
-_Generated `2026-05-14T13:40:50+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:31:03+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Fair-value-gap formation and later mitigation behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `fvg` / `fvg_formation` |
-| Total feature rows | 209,339 |
+| Total feature rows | 1,243,757 |
 | Date range | 2015-01-01 -> 2026-05-08 |
 | Outcomes coverage | 209,339 / 209,339 (100.0%) |
 
@@ -52,61 +52,48 @@ Fair-value-gap formation and later mitigation behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 209,339 |
-| Columns | 169 |
+| Rows | 1,243,757 |
+| Columns | 124 |
 | ed.* event_data | 23 |
-| oc.* outcome labels | 119 |
+| oc.* outcome labels | 75 |
 | ctx.* context | 3 |
-| xd.* cross-detector | 15 |
-| numeric | 150 |
-| object/category | 18 |
+| xd.* cross-detector | 14 |
+| numeric | 109 |
+| object/category | 14 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.mitigation.fully_filled` | 171,251 / 209,103 | 81.9% |
-| `oc.mitigation.closed_through` | 153,911 / 209,103 | 73.6% |
-| `oc.mitigation.tapped` | 186,840 / 209,103 | 89.4% |
-| `oc.zone_reaction.took_fvg_high` | 192,590 / 209,103 | 92.1% |
-| `oc.zone_reaction.took_fvg_low` | 186,196 / 209,103 | 89.0% |
-| `oc.zone_reaction.closed_inside_fvg_range` | 8,432 / 209,103 | 4.0% |
-| `oc.zone_reaction.closed_outside_fvg_range` | 200,671 / 209,103 | 96.0% |
-| `oc.zone_reaction.took_fvg_high_rejected_inside` | 7,811 / 209,103 | 3.7% |
-| `oc.zone_reaction.took_fvg_low_rejected_inside` | 7,968 / 209,103 | 3.8% |
+| `oc.mitigation.fully_filled` | 1,007,051 / 1,240,341 | 81.2% |
+| `oc.mitigation.closed_through` | 920,368 / 1,240,341 | 74.2% |
+| `oc.mitigation.tapped` | 1,121,810 / 1,240,341 | 90.4% |
 
 ### Breakdown - `oc.mitigation.fully_filled` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `15m_fvg` | 126,130 / 154,228 | 81.8% |
-| `1h_fvg` | 32,981 / 40,207 | 82.0% |
-| `4h_fvg` | 9,820 / 11,880 | 82.7% |
-| `daily_fvg` | 2,320 / 2,788 | 83.2% |
+| `15m_fvg` | 725,438 / 895,394 | 81.0% |
+| `1h_fvg` | 205,954 / 253,191 | 81.3% |
+| `4h_fvg` | 62,535 / 76,007 | 82.3% |
+| `daily_fvg` | 13,124 / 15,749 | 83.3% |
 
 ### Breakdown - `oc.mitigation.fully_filled` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 80,022 / 95,917 | 83.4% |
-| `bullish` | 91,229 / 113,186 | 80.6% |
+| `bearish` | 496,369 / 611,432 | 81.2% |
+| `bullish` | 510,682 / 628,909 | 81.2% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.mitigation.tapped` | 186,840 / 209,103 | 89.4% |
-| `oc.mitigation.mid_filled` | 178,409 / 209,103 | 85.3% |
-| `oc.mitigation.fully_filled` | 171,251 / 209,103 | 81.9% |
-| `oc.mitigation.closed_inside` | 132,639 / 209,103 | 63.4% |
-| `oc.mitigation.closed_through` | 153,911 / 209,103 | 73.6% |
-| `oc.zone_reaction.close_above_reference` | 115,331 / 209,103 | 55.2% |
-| `oc.zone_reaction.close_below_reference` | 92,973 / 209,103 | 44.5% |
-| `oc.zone_reaction.wicked_above_ref_closed_below_ref` | 91,727 / 209,103 | 43.9% |
-| `oc.zone_reaction.wicked_below_ref_closed_above_ref` | 113,619 / 209,103 | 54.3% |
-| `oc.zone_reaction.first_bar_up_then_final_down` | 41,317 / 209,103 | 19.8% |
-| `oc.zone_reaction.first_bar_down_then_final_up` | 49,443 / 209,103 | 23.6% |
-| `oc.zone_reaction.direction_reversed_from_first_bar` | 90,760 / 209,103 | 43.4% |
+| `oc.mitigation.tapped` | 1,121,810 / 1,240,341 | 90.4% |
+| `oc.mitigation.mid_filled` | 1,057,500 / 1,240,341 | 85.3% |
+| `oc.mitigation.fully_filled` | 1,007,051 / 1,240,341 | 81.2% |
+| `oc.mitigation.closed_inside` | 875,392 / 1,240,341 | 70.6% |
+| `oc.mitigation.closed_through` | 920,368 / 1,240,341 | 74.2% |
 
 ## Per-Detector Baseline
 

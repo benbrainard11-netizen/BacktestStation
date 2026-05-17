@@ -1,6 +1,6 @@
 # Volume Profile - Current Stats
 
-_Generated `2026-05-14T13:41:26+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:32:25+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Profile levels, VWAP bands, and forward touch/close behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `vp` / `volume_profile` |
-| Total feature rows | 36,095 |
+| Total feature rows | 183,662 |
 | Date range | 2014-12-28 -> 2026-05-08 |
 | Outcomes coverage | 36,095 / 36,095 (100.0%) |
 
@@ -54,7 +54,7 @@ Profile levels, VWAP bands, and forward touch/close behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 36,095 |
+| Rows | 183,662 |
 | Columns | 212 |
 | ed.* event_data | 42 |
 | oc.* outcome labels | 144 |
@@ -67,46 +67,46 @@ Profile levels, VWAP bands, and forward touch/close behavior.
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.took_period_high` | 23,127 / 34,356 | 67.3% |
-| `oc.took_period_low` | 20,162 / 34,356 | 58.7% |
-| `oc.forward_close_in_value_area` | 0 / 34,356 | 0.0% |
-| `oc.forward_close_above_vah` | 22,092 / 34,356 | 64.3% |
-| `oc.forward_close_below_val` | 18,288 / 34,356 | 53.2% |
+| `oc.took_period_high` | 106,419 / 173,798 | 61.2% |
+| `oc.took_period_low` | 103,729 / 173,798 | 59.7% |
+| `oc.forward_close_in_value_area` | 24 / 173,798 | 0.0% |
+| `oc.forward_close_above_vah` | 102,914 / 173,798 | 59.2% |
+| `oc.forward_close_below_val` | 102,344 / 173,798 | 58.9% |
 
 ### Breakdown - `oc.took_period_high` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `asia_volume_profile` | 7,047 / 8,624 | 81.7% |
-| `daily_volume_profile` | 4,695 / 8,539 | 55.0% |
-| `london_volume_profile` | 6,133 / 8,474 | 72.4% |
-| `ny_volume_profile` | 4,182 / 6,976 | 59.9% |
-| `weekly_volume_profile` | 1,070 / 1,743 | 61.4% |
+| `asia_volume_profile` | 31,228 / 40,940 | 76.3% |
+| `daily_volume_profile` | 22,211 / 45,228 | 49.1% |
+| `london_volume_profile` | 26,813 / 43,013 | 62.3% |
+| `ny_volume_profile` | 21,318 / 35,057 | 60.8% |
+| `weekly_volume_profile` | 4,849 / 9,560 | 50.7% |
 
 ### Breakdown - `oc.took_period_high` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `balanced` | 12,840 / 18,637 | 68.9% |
-| `buying` | 6,760 / 9,222 | 73.3% |
-| `selling` | 3,527 / 6,497 | 54.3% |
+| `balanced` | 53,476 / 84,969 | 62.9% |
+| `buying` | 31,081 / 45,344 | 68.5% |
+| `selling` | 21,862 / 43,485 | 50.3% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.poc_touch.wicked_into` | 27,674 / 34,356 | 80.6% |
-| `oc.poc_touch.wicked_above` | 31,735 / 34,356 | 92.4% |
-| `oc.poc_touch.wicked_below` | 30,295 / 34,356 | 88.2% |
-| `oc.poc_touch.closed_above` | 31,312 / 34,356 | 91.1% |
-| `oc.poc_touch.closed_below` | 29,757 / 34,356 | 86.6% |
-| `oc.poc_touch.first_touch_from_above` | 14,774 / 34,356 | 43.0% |
-| `oc.poc_touch.first_touch_from_below` | 12,862 / 34,356 | 37.4% |
-| `oc.poc_touch.held_above_3bar_after_touch` | 8,204 / 34,356 | 23.9% |
-| `oc.poc_touch.held_below_3bar_after_touch` | 8,133 / 34,356 | 23.7% |
-| `oc.poc_touch.accepted_above_3bar` | 30,821 / 34,356 | 89.7% |
-| `oc.poc_touch.accepted_below_3bar` | 29,037 / 34,356 | 84.5% |
-| `oc.poc_touch.support_rejection_3bar` | 4,462 / 34,356 | 13.0% |
+| `oc.poc_touch.wicked_into` | 133,422 / 173,798 | 76.8% |
+| `oc.poc_touch.wicked_above` | 154,195 / 173,798 | 88.7% |
+| `oc.poc_touch.wicked_below` | 153,025 / 173,798 | 88.0% |
+| `oc.poc_touch.closed_above` | 152,439 / 173,798 | 87.7% |
+| `oc.poc_touch.closed_below` | 151,275 / 173,798 | 87.0% |
+| `oc.poc_touch.first_touch_from_above` | 59,899 / 173,798 | 34.5% |
+| `oc.poc_touch.first_touch_from_below` | 58,630 / 173,798 | 33.7% |
+| `oc.poc_touch.held_above_3bar_after_touch` | 34,039 / 173,798 | 19.6% |
+| `oc.poc_touch.held_below_3bar_after_touch` | 33,855 / 173,798 | 19.5% |
+| `oc.poc_touch.accepted_above_3bar` | 147,170 / 173,798 | 84.7% |
+| `oc.poc_touch.accepted_below_3bar` | 145,849 / 173,798 | 83.9% |
+| `oc.poc_touch.support_rejection_3bar` | 15,866 / 173,798 | 9.1% |
 
 ## Per-Detector Baseline
 

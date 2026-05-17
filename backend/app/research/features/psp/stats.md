@@ -1,6 +1,6 @@
 # PSP Candle Divergence - Current Stats
 
-_Generated `2026-05-14T13:41:09+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:31:46+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Paired-symbol candle divergence and majority reaction behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `psp` / `psp_candle_divergence` |
-| Total feature rows | 15,827 |
+| Total feature rows | 73,278 |
 | Date range | 2015-01-02 -> 2026-05-07 |
 | Outcomes coverage | 15,827 / 15,827 (100.0%) |
 
@@ -51,41 +51,41 @@ Paired-symbol candle divergence and majority reaction behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 15,827 |
-| Columns | 88 |
-| ed.* event_data | 26 |
-| oc.* outcome labels | 36 |
+| Rows | 73,278 |
+| Columns | 232 |
+| ed.* event_data | 134 |
+| oc.* outcome labels | 72 |
 | ctx.* context | 3 |
 | xd.* cross-detector | 14 |
-| numeric | 66 |
-| object/category | 21 |
+| numeric | 156 |
+| object/category | 75 |
 
 ## Primary Labels
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.majority_reaction.all_rolled` | 6,694 / 15,694 | 42.7% |
+| `oc.majority_reaction.all_rolled` | 24,929 / 72,592 | 34.3% |
 
 ### Breakdown - `oc.majority_reaction.all_rolled` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `1h_psp` | 4,885 / 11,513 | 42.4% |
-| `4h_psp` | 1,453 / 3,368 | 43.1% |
-| `daily_psp` | 356 / 813 | 43.8% |
+| `1h_psp` | 17,177 / 50,257 | 34.2% |
+| `4h_psp` | 6,111 / 17,719 | 34.5% |
+| `daily_psp` | 1,641 / 4,616 | 35.6% |
 
 ### Breakdown - `oc.majority_reaction.all_rolled` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 3,160 / 8,053 | 39.2% |
-| `bullish` | 3,534 / 7,641 | 46.3% |
+| `bearish` | 10,346 / 31,545 | 32.8% |
+| `bullish` | 14,583 / 41,047 | 35.5% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.majority_reaction.all_rolled` | 6,694 / 15,694 | 42.7% |
+| `oc.majority_reaction.all_rolled` | 24,929 / 72,592 | 34.3% |
 
 ## Per-Detector Baseline
 

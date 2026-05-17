@@ -1,6 +1,6 @@
 # First-Third Range - Current Stats
 
-_Generated `2026-05-14T13:41:17+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:32:03+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ First-third parent-period range and later break/extension behavior.
 | Metric | Value |
 |---|---|
 | Feature key | `ft` / `first_third_range` |
-| Total feature rows | 10,373 |
+| Total feature rows | 52,791 |
 | Date range | 2015-01-02 -> 2026-05-08 |
 | Outcomes coverage | 10,373 / 10,373 (100.0%) |
 
@@ -51,7 +51,7 @@ First-third parent-period range and later break/extension behavior.
 
 | Metric | Value |
 |---|---|
-| Rows | 10,373 |
+| Rows | 52,791 |
 | Columns | 97 |
 | ed.* event_data | 20 |
 | oc.* outcome labels | 52 |
@@ -64,42 +64,42 @@ First-third parent-period range and later break/extension behavior.
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.rest_confirms_first_third` | 5,058 / 10,364 | 48.8% |
-| `oc.rest_reverses_first_third` | 5,191 / 10,364 | 50.1% |
-| `oc.break_high.wick_breached` | 8,215 / 10,364 | 79.3% |
-| `oc.break_low.wick_breached` | 7,468 / 10,364 | 72.1% |
+| `oc.rest_confirms_first_third` | 25,560 / 52,603 | 48.6% |
+| `oc.rest_reverses_first_third` | 25,594 / 52,603 | 48.7% |
+| `oc.break_high.wick_breached` | 38,430 / 52,603 | 73.1% |
+| `oc.break_low.wick_breached` | 38,031 / 52,603 | 72.3% |
 
 ### Breakdown - `oc.rest_confirms_first_third` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `first_third_daily` | 4,183 / 8,621 | 48.5% |
-| `first_third_weekly` | 875 / 1,743 | 50.2% |
+| `first_third_daily` | 20,841 / 43,073 | 48.4% |
+| `first_third_weekly` | 4,719 / 9,530 | 49.5% |
 
 ### Breakdown - `oc.rest_confirms_first_third` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `bearish` | 2,067 / 4,717 | 43.8% |
-| `bullish` | 2,991 / 5,563 | 53.8% |
-| `doji` | 0 / 84 | 0.0% |
+| `bearish` | 12,438 / 25,268 | 49.2% |
+| `bullish` | 13,122 / 26,235 | 50.0% |
+| `doji` | 0 / 1,100 | 0.0% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.rest_confirms_first_third` | 5,058 / 10,364 | 48.8% |
-| `oc.rest_reverses_first_third` | 5,191 / 10,364 | 50.1% |
-| `oc.break_high.wick_breached` | 8,215 / 10,364 | 79.3% |
-| `oc.break_high.close_past` | 8,076 / 10,364 | 77.9% |
-| `oc.break_high_05ext.wick_breached` | 5,999 / 10,364 | 57.9% |
-| `oc.break_high_05ext.close_past` | 5,808 / 10,364 | 56.0% |
-| `oc.break_high_1ext.wick_breached` | 4,175 / 10,364 | 40.3% |
-| `oc.break_high_1ext.close_past` | 4,034 / 10,364 | 38.9% |
-| `oc.break_low.wick_breached` | 7,468 / 10,364 | 72.1% |
-| `oc.break_low.close_past` | 7,265 / 10,364 | 70.1% |
-| `oc.break_low_05ext.wick_breached` | 5,591 / 10,364 | 53.9% |
-| `oc.break_low_05ext.close_past` | 5,350 / 10,364 | 51.6% |
+| `oc.rest_confirms_first_third` | 25,560 / 52,603 | 48.6% |
+| `oc.rest_reverses_first_third` | 25,594 / 52,603 | 48.7% |
+| `oc.break_high.wick_breached` | 38,430 / 52,603 | 73.1% |
+| `oc.break_high.close_past` | 37,795 / 52,603 | 71.8% |
+| `oc.break_high_05ext.wick_breached` | 28,032 / 52,603 | 53.3% |
+| `oc.break_high_05ext.close_past` | 27,290 / 52,603 | 51.9% |
+| `oc.break_high_1ext.wick_breached` | 19,856 / 52,603 | 37.7% |
+| `oc.break_high_1ext.close_past` | 19,276 / 52,603 | 36.6% |
+| `oc.break_low.wick_breached` | 38,031 / 52,603 | 72.3% |
+| `oc.break_low.close_past` | 37,356 / 52,603 | 71.0% |
+| `oc.break_low_05ext.wick_breached` | 27,861 / 52,603 | 53.0% |
+| `oc.break_low_05ext.close_past` | 27,055 / 52,603 | 51.4% |
 
 ## Per-Detector Baseline
 

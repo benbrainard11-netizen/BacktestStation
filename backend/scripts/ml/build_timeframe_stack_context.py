@@ -605,12 +605,21 @@ def write_doc(
             f"- Summary parquet: `{SUMMARY_PARQUET}`",
             f"- Manifest: `{MANIFEST_JSON}`",
             "",
-            "## Current Gap",
-            "",
-            "`smt_mtf.parquet` will stay missing until the new previous-candle SMT detector is scanned, outcomes are computed, and `build_feature_matrix.py --detectors smt_prev_candle_divergence` is run. After that, rerun this script to rank 4H/6H/1H/90m/30m/15m SMT stacks directly.",
+            "## Status",
             "",
         ]
     )
+    if missing_parents:
+        lines.append(
+            "Some requested parent matrices were missing, so this report is partial. "
+            "Build the missing feature matrices and rerun this script."
+        )
+    else:
+        lines.append(
+            "All requested parent matrices were available. `phase=pre` rows are the legal "
+            "context candidates for parent-signal ML; `phase=post` rows are descriptive only."
+        )
+    lines.append("")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")
 

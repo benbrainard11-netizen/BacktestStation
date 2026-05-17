@@ -1,6 +1,6 @@
 # Swing Pivot - Current Stats
 
-_Generated `2026-05-16T01:10:50+00:00` by `backend/scripts/refresh_dashboards.py`._
+_Generated `2026-05-17T19:31:57+00:00` by `backend/scripts/refresh_dashboards.py`._
 
 > Generated file. Edit the stable concept explanation in `README.md`; rerun the script for numbers.
 
@@ -13,7 +13,7 @@ Confirmed swing highs/lows used as liquidity-map levels.
 | Metric | Value |
 |---|---|
 | Feature key | `swing` / `swing_pivot` |
-| Total feature rows | 76,786 |
+| Total feature rows | 345,702 |
 | Date range | 2015-01-02 -> 2026-05-07 |
 | Outcomes coverage | 76,786 / 76,786 (100.0%) |
 
@@ -53,7 +53,7 @@ Confirmed swing highs/lows used as liquidity-map levels.
 
 | Metric | Value |
 |---|---|
-| Rows | 76,786 |
+| Rows | 345,702 |
 | Columns | 73 |
 | ed.* event_data | 14 |
 | oc.* outcome labels | 33 |
@@ -66,32 +66,32 @@ Confirmed swing highs/lows used as liquidity-map levels.
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.breakout.wick_taken` | 53,560 / 76,779 | 69.8% |
-| `oc.breakout.close_taken` | 47,754 / 76,779 | 62.2% |
+| `oc.breakout.wick_taken` | 245,527 / 345,672 | 71.0% |
+| `oc.breakout.close_taken` | 222,864 / 345,672 | 64.5% |
 
 ### Breakdown - `oc.breakout.wick_taken` by event type
 
 | event_type | Wins / Total | Hit rate |
 |---|---|---|
-| `pivot_3_1h` | 25,640 / 35,919 | 71.4% |
-| `pivot_3_4h` | 8,124 / 10,689 | 76.0% |
-| `pivot_5_1h` | 14,378 / 22,424 | 64.1% |
-| `pivot_5_4h` | 4,631 / 6,581 | 70.4% |
-| `pivot_5_daily` | 787 / 1,166 | 67.5% |
+| `pivot_3_1h` | 114,974 / 156,794 | 73.3% |
+| `pivot_3_4h` | 38,474 / 51,370 | 74.9% |
+| `pivot_5_1h` | 66,078 / 99,487 | 66.4% |
+| `pivot_5_4h` | 21,691 / 31,622 | 68.6% |
+| `pivot_5_daily` | 4,310 / 6,399 | 67.4% |
 
 ### Breakdown - `oc.breakout.wick_taken` by side
 
 | side | Wins / Total | Hit rate |
 |---|---|---|
-| `high` | 28,748 / 38,653 | 74.4% |
-| `low` | 24,812 / 38,126 | 65.1% |
+| `high` | 125,849 / 174,562 | 72.1% |
+| `low` | 119,678 / 171,110 | 69.9% |
 
 ## Binary Label Hit Rates
 
 | Label | Wins / Total | Hit rate |
 |---|---|---|
-| `oc.breakout.wick_taken` | 53,560 / 76,779 | 69.8% |
-| `oc.breakout.close_taken` | 47,754 / 76,779 | 62.2% |
+| `oc.breakout.wick_taken` | 245,527 / 345,672 | 71.0% |
+| `oc.breakout.close_taken` | 222,864 / 345,672 | 64.5% |
 
 ## Per-Detector Baseline
 
