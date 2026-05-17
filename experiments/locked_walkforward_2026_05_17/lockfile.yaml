@@ -1,0 +1,340 @@
+# Locked Walk-Forward Protocol — v13-v19 Type B deploy candidate
+# Test on untouched out-of-sample windows: 2018-2019 + 2026 YTD
+#
+# Per GPT-5 Pro Research protocol. This file is BINDING from the moment it's
+# committed. Bug-fix policy at bottom is the only mechanism for changes after.
+
+protocol_id: locked_walkforward_v13_v19_2026_05_17
+created_at_utc: "2026-05-17T22:30:00Z"
+created_by: benpc
+purpose: |
+  Test the existing v13-v19 deploy candidate (frozen exactly as-is) against
+  data windows it has never seen during research. The candidate was developed
+  through exploration on 2020-2025; this protocol locks the candidate and
+  evaluates it on 2018-2019 + 2026 YTD as genuine out-of-sample data.
+
+  This is NOT a fresh train/validate/test split. The candidate is pre-existing.
+  These are HOLDOUT TESTS, not validation.
+
+# =============================================================================
+# WINDOWS
+# =============================================================================
+
+windows:
+  # Exploratory / contaminated — already used for v13-v19 research
+  exploratory:
+    start: "2020-01-01"
+    end: "2026-01-01"
+    description: "Contaminated by 6 months of audit/research; results NOT counted toward validation"
+
+  # Locked holdout 1 — primary test window (large, statistically meaningful)
+  locked_holdout_1:
+    start: "2018-01-01"
+    end: "2020-01-01"
+    description: "Pre-2020 untouched. 2 years, ~865K events across 4 families. Primary test."
+
+  # Locked holdout 2 — secondary test window (small, weak signal)
+  locked_holdout_2:
+    start: "2026-01-01"
+    end: "2026-05-15"  # bars available through this date
+    description: "2026 YTD, ~95 trading days, untouched. Weak signal but additional evidence."
+
+# Boundary purge: exclude any event whose trade window (60m confirmation +
+# 240m trade window + buffer) would cross into the exploratory window.
+purge_boundary_minutes: 305
+purge_rule: |
+  For locked_holdout_1 events: exclude any fire_ts > 2019-12-31 19:55 UTC
+    (305 min before 2020-01-01 00:00 UTC).
+  For locked_holdout_2 events: end window is fixed; no forward leak possible.
+
+# =============================================================================
+# DATA / CODE STATE
+# =============================================================================
+
+data:
+  research_events_manifest_sha256: "5ad286d2f9caa37168f3eec4e31c3ffa665a774ee26ff3c1ecaa44fb767b4459"
+  research_events_path: "data/research_events"
+  bar_data_path: "D:/data/processed/bars/timeframe=1m"
+  bar_data_coverage: "2015-01-01 to 2026-05-15"
+  symbols: ["NQ.c.0", "ES.c.0"]
+
+  anchor_matrices:
+    ob_strict: "D:/BacktestStationData/strategy_lab_core_2026_05_16_strict_order_block/data/ml/anchors/ob_snapshots_xctx_strict.parquet"
+    fvg_strict: "D:/BacktestStationData/strategy_lab_core_2026_05_15_strict_reactions/data/ml/anchors/fvg_snapshots_xctx_fvggeom_obgeom_strict.parquet"
+    swing: "D:/BacktestStationData/strategy_lab_core_2026_05_15_strict_swing_pivot/data/ml/anchors/swing_snapshots_strict.parquet"
+    sweep: "D:/BacktestStationData/strategy_lab_core_2026_05_15_strict_sweep/data/ml/anchors/sweep_snapshots_xctx_fvggeom.parquet"
+
+  contract_roll_handling: "continuous_symbol_NQ.c.0_ES.c.0_AS_IS"
+  contract_roll_warning: |
+    Roll integrity NOT verified at this lock. Continuous-symbol back-adjustment
+    risk is open. If lock_holdout_1 result diverges significantly from
+    exploratory window per-trade R, roll-mechanic distortion is a candidate
+    cause. Separate Lane 1 work to verify.
+
+code:
+  repo_commit_sha: "e2368d0c7f74e7655adf6dcb553bba3e223f299f"
+  repo_url: "https://github.com/benbrainard11-netizen/BacktestStation"
+  repo_branch: "assets/expanded-universe-v1"
+  simulator: "backend/scripts/ml/rigorous_backtest_v7_stops.py simulate_v7"
+  simulator_variant: "V8A_STOP (defined in backend/scripts/ml/rigorous_backtest_v9_ob.py)"
+  audit_dispatcher: "backend/scripts/ml/v13_registry_audit.py (mode: B_natural simulation only, no model training)"
+
+# =============================================================================
+# THE LOCKED CANDIDATE (frozen exactly as in v13-v19 deploy candidate)
+# =============================================================================
+
+candidate:
+  name: "v13_v19_4family_type_b"
+  source_writeup: "docs/TYPE_B_DEPLOY_CANDIDATE_2026_05_17.md"
+
+  families:
+    - family: "FVG strict"
+      matrix: "fvg_snapshots_xctx_fvggeom_obgeom_strict"
+      snapshot: "at_fire"
+      side: "all"
+      label: "label.strict.forward_10c.after_tap_failed_1x_against"
+      direction_rule: "side_aware"
+      direction_reversed: false
+      hour_filter: null
+      expected_avg_r_2020_2025: 0.150
+      expected_yrs_positive_2020_2025: 6
+
+    - family: "OB strict"
+      matrix: "ob_snapshots_xctx_strict"
+      snapshot: "at_fire"
+      side: "all"
+      label: "label.strict.next_60m.ob_broken_through_continuation"
+      direction_rule: "side_aware"
+      direction_reversed: false
+      hour_filter: null
+      expected_avg_r_2020_2025: 0.440
+      expected_yrs_positive_2020_2025: 6
+
+    - family: "Swing reversed"
+      matrix: "swing_snapshots_strict"
+      snapshot: "at_fire"
+      side: "all"
+      label: "label.strict.next_60m.pivot_broken_through_continuation"
+      direction_rule: "side_aware"
+      direction_reversed: true   # !! REVERSED — May 16 finding: label name is misleading
+      hour_filter: null
+      expected_avg_r_2020_2025: 0.200
+      expected_yrs_positive_2020_2025: 6
+
+    - family: "Sweep reversed (filtered)"
+      matrix: "sweep_snapshots_xctx_fvggeom"
+      snapshot: "at_fire"
+      side: "all"
+      label: "label.ob_confirmation.did_confirm"
+      direction_rule: "side_aware"
+      direction_reversed: true   # !! REVERSED — v13 finding
+      hour_filter:
+        type: "drop_utc_hours"
+        hours: [22, 23, 0, 1, 2, 3, 4, 5, 6]
+      expected_avg_r_2020_2025: 0.529   # filtered version (v17)
+      expected_yrs_positive_2020_2025: 6
+
+# =============================================================================
+# TRADE RULE (v8a)
+# =============================================================================
+
+trade_rule:
+  name: "v8a"
+  stop:
+    primary_timeframe_min: 5
+    primary_atr_periods: 14
+    primary_atr_mult: 2.0
+    floor_timeframe_min: 30
+    floor_atr_periods: 14
+    floor_atr_mult: 1.5
+    formula: "max(2.0 * ATR(14, 5m), 1.5 * ATR(14, 30m))"
+  target:
+    atr_mult: 5.0
+    formula: "5.0 * ATR(14, 5m)"
+    note: "R:R = 5:2 = 2.5:1 (target_dist / stop_dist = 5*ATR / (2*ATR or 1.5*ATR_30m) ≈ 2.5)"
+  trade_window_min: 240
+  confirmation_window_min: 60
+  confirmation_rule: "first bar with close in trade direction"
+  entry_rule: "open of bar AFTER confirmation bar"
+  ambiguity_rule: "stop wins (CLAUDE.md rule #8)"
+  entry_bar_exit_check: false  # entry bar skipped for exit detection (TBBO 89% retention reason)
+  dedup_rule: "deduplicate by (anchor.primary_symbol, anchor.bar_end_utc, anchor.side)"
+
+# =============================================================================
+# FILL MODELS
+# =============================================================================
+
+fill_models:
+  primary:
+    name: "2tick_adverse"
+    entry_ticks: 2.0
+    stop_ticks: 2.0
+    target_ticks: 0.0
+    time_exit_ticks: 2.0
+    target_fill_rule: "limit fills at exact target_price if any print at-or-past target occurred"
+
+  stress_tests:
+    - name: "1tick_adverse"
+      entry_ticks: 1.0
+      stop_ticks: 1.0
+      target_ticks: 0.0
+      time_exit_ticks: 1.0
+    - name: "no_slippage"
+      entry_ticks: 0.0
+      stop_ticks: 0.0
+      target_ticks: 0.0
+      time_exit_ticks: 0.0
+
+# =============================================================================
+# PORTFOLIO
+# =============================================================================
+
+portfolio:
+  # For this locked walk-forward, run families INDEPENDENTLY (not concurrency-capped).
+  # Full single-account portfolio sim with priority queue is item 6 of the validation
+  # list, deferred to after the locked walk-forward to keep this run interpretable.
+  mode: "independent_family"
+  max_contracts_per_family: 1
+  cap_concurrent_across_families: null   # not enforced in this run
+  symbols: ["NQ.c.0", "ES.c.0"]
+  rationale: |
+    Per-family independent simulation gives us the cleanest signal on whether
+    each family's edge generalizes to untouched data. Portfolio concurrency
+    haircut is applied as a known factor in post-analysis. Mixing per-family
+    survival with concurrency effects in one run would confound the signal.
+
+# =============================================================================
+# REPORTING (the ONLY allowed metrics for the locked windows)
+# =============================================================================
+
+allowed_metrics:
+  per_family:
+    - n_trades
+    - cum_r
+    - avg_r
+    - win_rate
+    - max_dd_r
+    - years_positive
+    - per_year_cum_r
+    - per_symbol_split  # NQ vs ES
+    - per_session_split  # asia_overnight / eu_pre_ny / us_rth
+
+  per_window_summary:
+    - total_cum_r_across_families
+    - n_trades_total
+    - worst_day_r
+    - worst_week_r
+    - top_20_days_contribution_pct
+    - daily_r_bootstrap_ci_95
+
+  comparison_to_exploratory:
+    - avg_r_ratio_per_family  # locked_holdout / exploratory_window
+    - per_year_consistency_check
+    - direction_consistency  # does the winning direction match?
+
+forbidden_during_locked_run:
+  - "any new hour-filter exploration"
+  - "any new symbol-filter exploration"
+  - "any new slippage-mult exploration"
+  - "any new family-selection exploration"
+  - "any new direction-flip exploration"
+  - "any individual losing-trade inspection BEFORE pass/fail recorded"
+  - "any change to candidate config based on locked-window results"
+
+# =============================================================================
+# PASS/FAIL THRESHOLDS (pre-registered)
+# =============================================================================
+
+pass_thresholds_locked_holdout_1:
+  description: "2018-2019 — primary test"
+
+  per_family_must_pass:
+    - condition: "cum_r > 0"
+      rationale: "Each family individually positive on untouched data"
+    - condition: "yrs_positive >= 1 of 2"   # loose for 2-year window
+      rationale: "At least one of 2018/2019 positive per family"
+    - condition: "avg_r_ratio >= 0.4"
+      rationale: "Per-trade R within ~40% of 2020-2025 (allows regime variance)"
+
+  combined_must_pass:
+    - condition: "total cum_r > 0 across all 4 families"
+    - condition: "no single family contributes > 75% of total cum_r"
+    - condition: "both NQ and ES contribute positive cum_r in aggregate"
+    - condition: "top 20 days contribute < 60% of total cum_r"
+    - condition: "result survives 2-tick slippage stress (primary fill model)"
+
+  overall: |
+    PASS if ALL per-family conditions pass for at least 3 of 4 families
+    AND ALL combined conditions pass.
+
+    FAIL if any combined condition fails OR more than 1 family fails per-family.
+
+    PARTIAL if 2 of 4 families fail per-family. Investigation required;
+    not a clean pass.
+
+pass_thresholds_locked_holdout_2:
+  description: "2026 YTD — secondary, weak signal"
+
+  combined_must_pass:
+    - condition: "total cum_r > 0 across all 4 families"
+    - condition: "pro-rated annual rate within ±70% of expected"
+      rationale: "Small sample, loose threshold"
+
+  overall: |
+    PASS if combined conditions met.
+    FAIL is informative but not fatal (small sample).
+    Result is supplementary evidence, not the gate.
+
+deploy_decision:
+  if_both_holdouts_pass: "candidate is a Type B deploy candidate (still needs portfolio sim + live paper test)"
+  if_holdout_1_pass_holdout_2_fail: "weak. Re-examine 2026 YTD specifically. Possible regime issue."
+  if_holdout_1_fail_holdout_2_pass: "concerning. Possible overfitting to 2020-2025 regime."
+  if_both_fail: "candidate fails locked walk-forward. Edge is research-only or non-existent."
+  if_partial_holdout_1: "investigate which families fail. Possible per-family validity claim."
+
+# =============================================================================
+# BUG-FIX POLICY (the only allowed modifications after this lock)
+# =============================================================================
+
+bug_policy:
+  allowed_only_if: "implementation contradicts this lockfile or its referenced spec"
+  forbidden_changes:
+    - "outcome-driven threshold adjustments"
+    - "post-hoc filter additions"
+    - "post-hoc family selection changes"
+    - "slippage assumption tightening to make result look better"
+    - "symbol removal to remove bad performers"
+
+  required_for_any_bug_fix:
+    - "Write bug_exception_<date>.md documenting: what bug, how discovered, why it violates spec, code diff, expected impact direction before rerun, whether locked-window results were already viewed"
+    - "Archive prior locked-window results"
+    - "Rerun ALL windows after fix"
+    - "Append entry to trial_lock_records.bug_exceptions_after_lock_json"
+
+# =============================================================================
+# PRE-REGISTRATION REFERENCE
+# =============================================================================
+
+pre_registration_md: "experiments/locked_walkforward_2026_05_17/pre_registration.md"
+expected_results_summary: |
+  See pre_registration.md for the full falsifiable claims.
+  Headline expectation: candidate is bar-level real (TBBO check confirmed 89%
+  simulator honesty), so it should remain Type-B positive on 2018-2019 with
+  per-trade R within ~40% of 2020-2025 values. Outsized failure to generalize
+  would indicate selection bias on 2020-2025 regime.
+
+# =============================================================================
+# LOCK SIGNATURE
+# =============================================================================
+
+lock_status: "active"
+locked_by: "benpc operator + Claude Opus 4.7 (assist)"
+lock_acknowledgment: |
+  By executing this lockfile, the operator acknowledges:
+  - The candidate above is exactly the v13-v19 deploy candidate, no modifications.
+  - No changes to candidate, trade rule, fill model, or portfolio rule are allowed
+    until locked-window results are committed to results files and pass/fail
+    status is recorded.
+  - The bug-fix policy is the ONLY exception, and even then requires the documented
+    exception process.
+  - Failure to honor the lock invalidates the test.
