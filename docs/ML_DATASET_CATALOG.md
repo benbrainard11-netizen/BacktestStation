@@ -1,6 +1,6 @@
 # ML dataset catalog
 
-_Generated `2026-05-17T22:23:33.218554+00:00`._
+_Generated `2026-05-17T23:08:47.283850+00:00`._
 
 ## Summary
 
@@ -51,6 +51,8 @@ _Generated `2026-05-17T22:23:33.218554+00:00`._
 | disp_snapshot_leaderboard.parquet | parquet | 15 | 30 | - | {"ok": 12, "skip_train_imbalance": 2, "skip_test_imbalance": 1} |
 | disp_snapshots.parquet | parquet | 214,599 | 94 | at_fire | - |
 | disp_snapshots.schema.json | json | 214,599 | - | at_fire | - |
+| disp_snapshots_smtstate.parquet | parquet | 214,599 | 179 | at_fire | - |
+| disp_snapshots_smtstate.schema.json | json | 214,599 | - | at_fire | - |
 | eql_snapshot_leaderboard.csv | csv | 9 | 30 | - | {"ok": 9} |
 | eql_snapshot_leaderboard.parquet | parquet | 9 | 30 | - | {"ok": 9} |
 | eql_snapshots.parquet | parquet | 60,338 | 89 | at_fire | - |
@@ -89,6 +91,8 @@ _Generated `2026-05-17T22:23:33.218554+00:00`._
 | fvg_snapshot_leaderboard_xctx_fvggeom.parquet | parquet | 42 | 30 | - | {"ok": 41, "skip_test_imbalance": 1} |
 | fvg_snapshots.parquet | parquet | 1,243,757 | 123 | at_fire | - |
 | fvg_snapshots.schema.json | json | 1,243,757 | - | at_fire | - |
+| fvg_snapshots_smtstate.parquet | parquet | 1,243,757 | 208 | at_fire | - |
+| fvg_snapshots_smtstate.schema.json | json | 1,243,757 | - | at_fire | - |
 | fvg_snapshots_xctx.parquet | parquet | 1,243,757 | 835 | at_fire | - |
 | fvg_snapshots_xctx.schema.json | json | 1,243,757 | - | at_fire | - |
 | fvg_snapshots_xctx_fvggeom.parquet | parquet | 1,243,757 | 1,286 | at_fire | - |
@@ -158,6 +162,8 @@ _Generated `2026-05-17T22:23:33.218554+00:00`._
 | ob_snapshot_leaderboard_xctx.parquet | parquet | 39 | 30 | - | {"ok": 39} |
 | ob_snapshots.parquet | parquet | 198,069 | 291 | at_fire | - |
 | ob_snapshots.schema.json | json | 198,069 | - | at_fire | - |
+| ob_snapshots_smtstate.parquet | parquet | 198,069 | 376 | at_fire | - |
+| ob_snapshots_smtstate.schema.json | json | 198,069 | - | at_fire | - |
 | ob_snapshots_xctx.parquet | parquet | 46,331 | 888 | at_fire | - |
 | ob_snapshots_xctx.schema.json | json | 46,331 | - | at_fire | - |
 | ob_snapshots_xctx_strict.parquet | parquet | 46,331 | 898 | at_fire | - |
@@ -215,6 +221,8 @@ _Generated `2026-05-17T22:23:33.218554+00:00`._
 | psp_snapshot_leaderboard.parquet | parquet | 3 | 30 | - | {"ok": 3} |
 | psp_snapshots.parquet | parquet | 77,933 | 101 | at_fire | - |
 | psp_snapshots.schema.json | json | 77,933 | - | at_fire | - |
+| psp_snapshots_smtstate.parquet | parquet | 77,933 | 186 | at_fire | - |
+| psp_snapshots_smtstate.schema.json | json | 77,933 | - | at_fire | - |
 | smt_previous_day_snapshot_leaderboard_xctx.csv | csv | 60 | 30 | - | {"ok": 60} |
 | smt_previous_day_snapshot_leaderboard_xctx.parquet | parquet | 60 | 30 | - | {"ok": 60} |
 | smt_previous_day_snapshot_leaderboard_xctx_fvggeom.csv | csv | 60 | 30 | - | {"ok": 60} |
@@ -279,6 +287,8 @@ _Generated `2026-05-17T22:23:33.218554+00:00`._
 | sweep_snapshot_leaderboard_xctx_fvggeom_obgeom_liqgeom_regime.parquet | parquet | 105 | 30 | - | {"ok": 103, "skip_train_imbalance": 2} |
 | sweep_snapshots.parquet | parquet | 237,569 | 73 | at_fire | - |
 | sweep_snapshots.schema.json | json | 237,569 | - | at_fire | - |
+| sweep_snapshots_smtstate.parquet | parquet | 237,569 | 158 | at_fire | - |
+| sweep_snapshots_smtstate.schema.json | json | 237,569 | - | at_fire | - |
 | sweep_snapshots_xctx.parquet | parquet | 237,569 | 785 | at_fire | - |
 | sweep_snapshots_xctx.schema.json | json | 237,569 | - | at_fire | - |
 | sweep_snapshots_xctx_fvggeom.parquet | parquet | 237,569 | 1,236 | at_fire | - |

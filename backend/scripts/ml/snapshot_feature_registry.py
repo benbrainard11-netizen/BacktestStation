@@ -254,6 +254,12 @@ FEATURE_RULES: tuple[FeatureRule, ...] = (
         description="Completed session/day/week true-range regime features known before the snapshot cutoff.",
     ),
     FeatureRule(
+        prefix="smtstate.",
+        family="active_smt_state_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="Active forming/confirmed SMT state joined as-of the snapshot cutoff.",
+    ),
+    FeatureRule(
         prefix="pc.",
         family="period_close",
         valid_snapshots=("at_period_close",),
