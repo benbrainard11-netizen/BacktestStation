@@ -118,6 +118,24 @@ GROUP BY feature_name
 ORDER BY rows DESC;
 ```
 
+## Download Current Research Artifacts
+
+Use this when a machine needs the latest private R2 research lake locally:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+$env:BS_R2_BUCKET=[Environment]::GetEnvironmentVariable('BS_R2_BUCKET','User')
+$env:BS_R2_ENDPOINT=[Environment]::GetEnvironmentVariable('BS_R2_ENDPOINT','User')
+$env:BS_R2_ACCESS_KEY=[Environment]::GetEnvironmentVariable('BS_R2_ACCESS_KEY','User')
+$env:BS_R2_SECRET=[Environment]::GetEnvironmentVariable('BS_R2_SECRET','User')
+python -m app.ingest.r2_artifacts_download --groups ml,research_events --dry-run
+python -m app.ingest.r2_artifacts_download --groups ml,research_events
+```
+
+The downloader only writes files listed in `_research_inventory.json`. It does
+not delete local-only files, so old local artifacts may remain until removed
+intentionally.
+
 ## Safety Rules
 
 - Reader tokens cannot upload, overwrite, or delete.
