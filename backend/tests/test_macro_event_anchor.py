@@ -18,11 +18,13 @@ from app.research.scan import run_scan
 
 UTC = timezone.utc
 NQ = "NQ.c.0"
+ROOT = Path(__file__).resolve().parents[2]
+TEST_TMP = ROOT / "data" / "tmp" / "tests"
 
 
 @pytest.fixture
-def session_factory(tmp_path: Path) -> sessionmaker[Session]:
-    engine = make_engine(f"sqlite:///{tmp_path / 'macro_event.sqlite'}")
+def session_factory() -> sessionmaker[Session]:
+    engine = make_engine("sqlite:///:memory:")
     create_all(engine)
     return make_session_factory(engine)
 
@@ -53,11 +55,27 @@ class FakeBarReader:
 
 
 def _write_macro_csv(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         "\n".join(
             [
                 "event_id,event_name,event_group,country,currency,impact,release_ts_et,actual,forecast,previous,source,notes",
                 "2026_05_06_usd_cpi,CPI y/y,cpi,US,USD,high,2026-05-06 08:30:00,3.4%,3.2%,3.1%,forexfactory,test row",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _write_macro_cluster_csv(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(
+            [
+                "event_id,event_name,event_group,country,currency,impact,release_ts_et,actual,forecast,previous,source,notes",
+                "2026_05_06_usd_core_cpi,Core CPI m/m,core_cpi_m_m,US,USD,high,2026-05-06 08:30:00,0.3%,0.2%,0.2%,forexfactory,test row",
+                "2026_05_06_usd_cpi,CPI m/m,cpi_m_m,US,USD,high,2026-05-06 08:30:00,0.4%,0.3%,0.2%,forexfactory,test row",
             ]
         ),
         encoding="utf-8",
@@ -88,9 +106,8 @@ def _news_reaction_bars() -> pd.DataFrame:
 
 def test_macro_detector_fires_pre_release_anchor_without_actual_leakage(
     session_factory: sessionmaker[Session],
-    tmp_path: Path,
 ):
-    csv_path = _write_macro_csv(tmp_path / "macro_events.csv")
+    csv_path = _write_macro_csv(TEST_TMP / "macro_events.csv")
     reader = FakeBarReader()
     reader.set(symbol=NQ, timeframe="1m", df=_news_reaction_bars())
 
@@ -116,17 +133,55 @@ def test_macro_detector_fires_pre_release_anchor_without_actual_leakage(
     assert row.bar_end_utc.replace(tzinfo=UTC).isoformat() == "2026-05-06T12:29:00+00:00"
     assert row.event_data["release_ts_utc"] == "2026-05-06T12:30:00+00:00"
     assert row.event_data["forecast_value"] == 3.2
+    assert row.event_data["macro_family"] == "inflation"
+    assert row.event_data["macro_theme"] == "inflation"
+    assert row.event_data["macro_importance_tier"] == 1
+    assert row.event_data["macro_expected_horizon"] == "intraday_impulse_to_session"
+    assert row.event_data["macro_release_time_bucket"] == "pre_market_0830"
+    assert row.event_data["macro_same_ts_event_count"] == 1
     assert "actual" not in row.event_data
     assert "actual_raw" not in row.event_data
     assert "actual_value" not in row.event_data
     assert row.event_data["pre_15m_range_pts"] > 0
 
 
+def test_macro_detector_records_same_timestamp_release_cluster(
+    session_factory: sessionmaker[Session],
+):
+    csv_path = _write_macro_cluster_csv(TEST_TMP / "macro_events_cluster.csv")
+    reader = FakeBarReader()
+    reader.set(symbol=NQ, timeframe="1m", df=_news_reaction_bars())
+
+    with session_factory() as db:
+        result = run_scan(
+            detector_name="macro_event_anchor",
+            symbols=[NQ],
+            start=date(2026, 5, 6),
+            end=date(2026, 5, 7),
+            bar_reader=reader,
+            db=db,
+            mode="pre_release",
+            params={"events_path": str(csv_path), "currencies": "USD", "impacts": "high"},
+        )
+        db.commit()
+        rows = db.scalars(
+            select(ResearchEvent)
+            .where(ResearchEvent.feature_name == "macro_event_anchor")
+            .order_by(ResearchEvent.event_type)
+        ).all()
+
+    assert result.n_errors == 0, result.error_messages
+    assert result.n_inserted == 2
+    assert [row.event_type for row in rows] == ["pre_core_cpi_m_m", "pre_cpi_m_m"]
+    assert {row.event_data["macro_same_ts_event_count"] for row in rows} == {2}
+    assert {row.event_data["macro_same_ts_high_impact_count"] for row in rows} == {2}
+    assert rows[0].event_data["macro_same_ts_event_groups"] == "core_cpi_m_m,cpi_m_m"
+
+
 def test_macro_outcome_labels_post_release_reaction(
     session_factory: sessionmaker[Session],
-    tmp_path: Path,
 ):
-    csv_path = _write_macro_csv(tmp_path / "macro_events.csv")
+    csv_path = _write_macro_csv(TEST_TMP / "macro_events.csv")
     reader = FakeBarReader()
     reader.set(symbol=NQ, timeframe="1m", df=_news_reaction_bars())
 
@@ -163,8 +218,9 @@ def test_macro_outcome_labels_post_release_reaction(
     assert row.outcomes["next_5m"]["range_expanded_2x_pre_15m"] is True
 
 
-def test_macro_csv_rejects_duplicate_natural_keys(tmp_path: Path):
-    path = tmp_path / "macro_events.csv"
+def test_macro_csv_rejects_duplicate_natural_keys():
+    path = TEST_TMP / "macro_events_duplicate.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         "\n".join(
             [

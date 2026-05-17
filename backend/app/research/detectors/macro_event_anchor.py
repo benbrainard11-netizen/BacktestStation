@@ -8,6 +8,7 @@ to event_data. Those belong in post-release outcomes or offline analysis.
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ from app.research.macro_events import (
     filter_macro_events,
     parse_macro_events_csv,
 )
+from app.research.macro_taxonomy import classify_macro_event
 from app.schemas.research_events import ResearchEventCreate
 
 UTC = timezone.utc
@@ -58,6 +60,7 @@ class MacroEventAnchorDetector:
             impacts=impacts or None,
             event_groups=event_groups or None,
         )
+        schedule_context = _schedule_context(macro_events)
 
         out: list[ResearchEventCreate] = []
         for event in macro_events:
@@ -69,6 +72,7 @@ class MacroEventAnchorDetector:
                     known_buffer_min=known_buffer_min,
                     pre_context_min=pre_context_min,
                     require_bars=require_bars,
+                    schedule_context=schedule_context.get(event.event_id, {}),
                 )
                 if payload is not None:
                     out.append(payload)
@@ -83,6 +87,7 @@ class MacroEventAnchorDetector:
         known_buffer_min: int,
         pre_context_min: int,
         require_bars: bool,
+        schedule_context: dict[str, Any],
     ) -> ResearchEventCreate | None:
         release_ts = event.release_ts_utc.astimezone(UTC)
         known_ts = release_ts - timedelta(minutes=known_buffer_min)
@@ -107,6 +112,12 @@ class MacroEventAnchorDetector:
 
         event_type = f"pre_{event.event_group}"
         release_et = release_ts.astimezone(ET)
+        taxonomy = classify_macro_event(
+            event_group=event.event_group,
+            event_name=event.event_name,
+            impact=event.impact,
+            release_ts_et=release_et,
+        )
         event_data: dict[str, Any] = {
             "schema_version": 1,
             "detector_version": self.detector_version,
@@ -130,10 +141,15 @@ class MacroEventAnchorDetector:
             "previous_raw": event.previous_raw,
             "forecast_value": event.forecast_value,
             "previous_value": event.previous_value,
+            **taxonomy.as_event_data(),
+            **schedule_context,
             **pre_context,
         }
         context = {
             "macro_event_group": event.event_group,
+            "macro_family": taxonomy.family,
+            "macro_theme": taxonomy.theme,
+            "macro_importance_tier": taxonomy.importance_tier,
             "macro_currency": event.currency,
             "macro_impact": event.impact,
             "known_ts_utc": known_ts.isoformat(),
@@ -173,6 +189,37 @@ def _csv_set(value: Any, *, upper: bool) -> set[str]:
         if not item:
             continue
         out.add(item.upper() if upper else item.lower())
+    return out
+
+
+def _schedule_context(events: list[MacroEvent]) -> dict[str, dict[str, Any]]:
+    by_currency: dict[str, dict[datetime, list[MacroEvent]]] = defaultdict(lambda: defaultdict(list))
+    for event in events:
+        by_currency[event.currency.upper()][event.release_ts_utc].append(event)
+
+    out: dict[str, dict[str, Any]] = {}
+    for _currency, clusters in by_currency.items():
+        release_times = sorted(clusters)
+        for idx, release_ts in enumerate(release_times):
+            cluster = sorted(clusters[release_ts], key=lambda item: item.event_group)
+            groups = [event.event_group for event in cluster]
+            impacts = [event.impact for event in cluster]
+            previous_ts = release_times[idx - 1] if idx > 0 else None
+            next_ts = release_times[idx + 1] if idx + 1 < len(release_times) else None
+            payload = {
+                "macro_same_ts_event_count": len(cluster),
+                "macro_same_ts_high_impact_count": sum(1 for impact in impacts if impact == "high"),
+                "macro_same_ts_medium_impact_count": sum(1 for impact in impacts if impact == "medium"),
+                "macro_same_ts_event_groups": ",".join(groups),
+                "macro_minutes_since_previous_release": (
+                    (release_ts - previous_ts).total_seconds() / 60.0 if previous_ts else None
+                ),
+                "macro_minutes_until_next_release": (
+                    (next_ts - release_ts).total_seconds() / 60.0 if next_ts else None
+                ),
+            }
+            for event in cluster:
+                out[event.event_id] = dict(payload)
     return out
 
 

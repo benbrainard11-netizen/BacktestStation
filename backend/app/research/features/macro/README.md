@@ -61,6 +61,8 @@ Safe pre-release fields include:
 - Event name, group, country, currency, impact, source, release timestamp, and known timestamp.
 - Forecast and previous values when available.
 - Scheduled release hour/minute/day-of-week in Eastern Time.
+- Leak-safe taxonomy: macro family/theme, event role, importance tier, expected horizon, and release-time bucket.
+- Same-timestamp cluster context: how many scheduled reports fire together and whether nearby scheduled releases exist.
 - Pre-release market context from bars before the known timestamp: 5m, 15m, and 60m range, return, close location, and reference close.
 
 ## What The Outcomes Record
@@ -80,6 +82,21 @@ The pre-release detector must not write `actual`, `actual_raw`, `actual_value`, 
 Allowed in `event_data`: schedule metadata, forecast, previous, and market bars strictly before `known_ts_utc`.
 
 Forward reaction values belong only in `outcomes` / `oc.*` / `label.*`. Use snapshot matrices for ML so the feature cutoff is `ed.known_ts_utc`.
+
+## Implementation Direction
+
+The macro feature is scheduled-news only. It should model:
+
+- Pre-release context: compression, 5/15/60m ranges, location, and clustered events.
+- Event identity: CPI, NFP, FOMC, PPI, GDP, claims, PMI, retail sales, auctions, speeches, and related families.
+- First reaction: immediate expansion, first-bar direction, pre-range high/low take, and one-sided versus two-sided sweep.
+- Follow-through: whether the first move holds, reverses, closes back inside, or keeps trending over 15m/60m/240m/1d.
+
+Your discretionary rules should go into the taxonomy first. The current taxonomy lives in:
+
+```powershell
+backend\app\research\macro_taxonomy.py
+```
 
 ## How To Refresh
 
