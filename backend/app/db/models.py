@@ -86,6 +86,10 @@ class StrategyVersion(Base):
         cascade="all, delete-orphan",
         foreign_keys="BacktestRun.strategy_version_id",
     )
+    hypotheses: Mapped[list["Hypothesis"]] = relationship(
+        back_populates="parent_strategy_version",
+        foreign_keys="Hypothesis.parent_strategy_version_id",
+    )
 
 
 class BacktestRun(Base):
@@ -127,6 +131,10 @@ class BacktestRun(Base):
     )
     config_snapshot: Mapped["ConfigSnapshot | None"] = relationship(
         back_populates="run", cascade="all, delete-orphan", uselist=False
+    )
+    trials: Mapped[list["Trial"]] = relationship(
+        back_populates="backtest_run",
+        foreign_keys="Trial.backtest_run_id",
     )
 
 
@@ -302,6 +310,190 @@ class Experiment(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+
+
+class Hypothesis(Base):
+    """A falsifiable research claim that can own one or more trial groups."""
+
+    __tablename__ = "hypotheses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200), index=True)
+    hypothesis_md: Mapped[str] = mapped_column(Text)
+    rationale_md: Mapped[str | None] = mapped_column(Text)
+    # draft | active | validated | rejected | archived
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft", server_default="draft", index=True
+    )
+    parent_strategy_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("strategy_versions.id"), index=True, default=None
+    )
+    tags_json: Mapped[list[str] | None] = mapped_column(JSON)
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+
+    parent_strategy_version: Mapped["StrategyVersion | None"] = relationship(
+        back_populates="hypotheses",
+        foreign_keys=[parent_strategy_version_id],
+    )
+    trial_groups: Mapped[list["TrialGroup"]] = relationship(
+        back_populates="hypothesis",
+        cascade="all, delete-orphan",
+        foreign_keys="TrialGroup.hypothesis_id",
+    )
+
+
+class TrialGroup(Base):
+    """A bounded strategy/search batch under one hypothesis."""
+
+    __tablename__ = "trial_groups"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    hypothesis_id: Mapped[int] = mapped_column(ForeignKey("hypotheses.id"), index=True)
+    name: Mapped[str] = mapped_column(String(200), index=True)
+    search_space_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
+    selection_rule: Mapped[str | None] = mapped_column(Text)
+    selected_trial_id: Mapped[int | None] = mapped_column(
+        ForeignKey("trials.id"), index=True, default=None
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    # draft | running | completed | abandoned | archived
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft", server_default="draft", index=True
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    hypothesis: Mapped[Hypothesis] = relationship(
+        back_populates="trial_groups",
+        foreign_keys=[hypothesis_id],
+    )
+    trials: Mapped[list["Trial"]] = relationship(
+        back_populates="trial_group",
+        cascade="all, delete-orphan",
+        foreign_keys="Trial.trial_group_id",
+    )
+    lock_records: Mapped[list["TrialLockRecord"]] = relationship(
+        back_populates="trial_group",
+        cascade="all, delete-orphan",
+        foreign_keys="TrialLockRecord.trial_group_id",
+    )
+    selected_trial: Mapped["Trial | None"] = relationship(
+        foreign_keys=[selected_trial_id],
+        post_update=True,
+    )
+
+
+class Trial(Base):
+    """One attempted candidate inside a TrialGroup."""
+
+    __tablename__ = "trials"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    trial_group_id: Mapped[int] = mapped_column(
+        ForeignKey("trial_groups.id"), index=True
+    )
+    trial_lock_record_id: Mapped[int | None] = mapped_column(
+        ForeignKey("trial_lock_records.id"), index=True, default=None
+    )
+    backtest_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("backtest_runs.id"), index=True, default=None
+    )
+    candidate_config_id: Mapped[str | None] = mapped_column(String(200), index=True)
+    params_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
+    parent_trial_id: Mapped[int | None] = mapped_column(
+        ForeignKey("trials.id"), index=True, default=None
+    )
+    data_snapshot_sha: Mapped[str | None] = mapped_column(String(64), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    # queued | running | completed | failed | killed | promoted | ignored
+    status: Mapped[str] = mapped_column(
+        String(20), default="queued", server_default="queued", index=True
+    )
+    is_selected: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0", index=True
+    )
+    selection_reason: Mapped[str | None] = mapped_column(Text)
+    summary_metrics_json: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, default=None
+    )
+
+    trial_group: Mapped[TrialGroup] = relationship(
+        back_populates="trials",
+        foreign_keys=[trial_group_id],
+    )
+    lock_record: Mapped["TrialLockRecord | None"] = relationship(
+        back_populates="trials",
+        foreign_keys=[trial_lock_record_id],
+    )
+    backtest_run: Mapped["BacktestRun | None"] = relationship(
+        back_populates="trials",
+        foreign_keys=[backtest_run_id],
+    )
+    parent_trial: Mapped["Trial | None"] = relationship(
+        remote_side=[id],
+        back_populates="child_trials",
+        foreign_keys=[parent_trial_id],
+    )
+    child_trials: Mapped[list["Trial"]] = relationship(
+        back_populates="parent_trial",
+        foreign_keys=[parent_trial_id],
+    )
+
+
+class TrialLockRecord(Base):
+    """A protocol lock proving when candidates, data, and code were frozen."""
+
+    __tablename__ = "trial_lock_records"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    trial_group_id: Mapped[int] = mapped_column(
+        ForeignKey("trial_groups.id"), index=True
+    )
+    # pre_validation | pre_test | final
+    lock_type: Mapped[str] = mapped_column(String(20), index=True)
+    locked_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    candidate_set_yaml: Mapped[str | None] = mapped_column(Text)
+    candidate_set_hash: Mapped[str] = mapped_column(String(64), index=True)
+    # Free-form v1 string/hash; no dataset_snapshots table until needed.
+    dataset_snapshot_id: Mapped[str] = mapped_column(String(160), index=True)
+    code_commit_sha: Mapped[str] = mapped_column(String(40), index=True)
+    pre_registration_md: Mapped[str | None] = mapped_column(Text)
+    window_train: Mapped[str | None] = mapped_column(String(80))
+    window_validation: Mapped[str | None] = mapped_column(String(80))
+    window_test: Mapped[str | None] = mapped_column(String(80))
+    window_final: Mapped[str | None] = mapped_column(String(80))
+    # active | superseded | abandoned | completed
+    status: Mapped[str] = mapped_column(
+        String(20), default="active", server_default="active", index=True
+    )
+    bug_exceptions_after_lock_json: Mapped[list[dict[str, Any]] | None] = (
+        mapped_column(JSON)
+    )
+    superseded_by_lock_id: Mapped[int | None] = mapped_column(
+        ForeignKey("trial_lock_records.id"), index=True, default=None
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    trial_group: Mapped[TrialGroup] = relationship(
+        back_populates="lock_records",
+        foreign_keys=[trial_group_id],
+    )
+    trials: Mapped[list[Trial]] = relationship(
+        back_populates="lock_record",
+        foreign_keys="Trial.trial_lock_record_id",
+    )
+    superseded_by: Mapped["TrialLockRecord | None"] = relationship(
+        remote_side=[id],
+        back_populates="superseded_locks",
+        foreign_keys=[superseded_by_lock_id],
+    )
+    superseded_locks: Mapped[list["TrialLockRecord"]] = relationship(
+        back_populates="superseded_by",
+        foreign_keys=[superseded_by_lock_id],
+    )
 
 
 class PropFirmSimulation(Base):

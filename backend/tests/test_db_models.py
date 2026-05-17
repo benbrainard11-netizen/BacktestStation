@@ -20,6 +20,10 @@ EXPECTED_TABLES = {
     "live_heartbeats",
     "notes",
     "knowledge_cards",
+    "hypotheses",
+    "trial_groups",
+    "trials",
+    "trial_lock_records",
 }
 
 

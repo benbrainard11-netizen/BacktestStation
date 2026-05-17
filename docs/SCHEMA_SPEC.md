@@ -155,6 +155,105 @@ For the strategy layer (Fractal AMD, etc.) we always work in **America/New_York*
 
 Strategies use ET via `zoneinfo.ZoneInfo("America/New_York")` — see `app/strategies/fractal_amd/signals.py:ET`. Don't hardcode UTC offsets; they shift with daylight saving.
 
+## Metadata DB: Trial Registry
+
+The SQLite metadata DB tracks strategy research lineage separately from parquet
+market/research data. The trial registry is the selection-bias ledger: every
+candidate tested inside an audit/search group gets a row, not only the winner.
+It also stores lock records for the two-lock walk-forward protocol.
+
+`dataset_snapshot_id` is intentionally a free-form string/hash in v1. There is
+no `dataset_snapshots` table yet; promote it later when multiple consumers need
+structured dataset metadata.
+
+### Table: `hypotheses`
+
+One falsifiable research claim.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `title` | string | yes | Short human-readable name |
+| `hypothesis_md` | text | yes | Falsifiable claim being tested |
+| `rationale_md` | text | no | Why the test matters |
+| `status` | string | yes | `draft`, `active`, `validated`, `rejected`, or `archived` |
+| `parent_strategy_version_id` | integer FK | no | Parent `strategy_versions.id`, if the hypothesis mutates an existing version |
+| `tags_json` | JSON array | no | Queryable tags |
+| `notes` | text | no | Human context or caveats |
+| `created_at` | datetime | yes | Creation timestamp |
+| `updated_at` | datetime | no | Last edit timestamp |
+
+### Table: `trial_groups`
+
+One bounded hypothesis/search batch.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `hypothesis_id` | integer FK | yes | Owning `hypotheses.id` |
+| `name` | string | yes | Search/audit group name |
+| `search_space_json` | JSON | no | Declared parameter/config space before the search ran |
+| `selection_rule` | text | no | Rule used to pick a winner, written before or during the test |
+| `selected_trial_id` | integer FK | no | Winning `trials.id`, if any |
+| `created_at` | datetime | yes | Group creation timestamp |
+| `completed_at` | datetime | no | When the group finished |
+| `status` | string | yes | `draft`, `running`, `completed`, `abandoned`, or `archived` |
+| `notes` | text | no | Human context, caveats, or links to result docs |
+
+### Table: `trials`
+
+One attempted candidate config within a `trial_group`.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `trial_group_id` | integer FK | yes | Owning `trial_groups.id` |
+| `trial_lock_record_id` | integer FK | no | Lock record that governed this result, if this was a locked validation run |
+| `backtest_run_id` | integer FK | no | Linked `backtest_runs.id`, if this trial produced/imported a run |
+| `candidate_config_id` | string | no | Stable human/hash id for the candidate config |
+| `params_json` | JSON | no | Concrete parameters used by this trial |
+| `parent_trial_id` | integer FK | no | Prior trial this one mutated/refined |
+| `data_snapshot_sha` | string | no | Dataset/catalog snapshot hash used for reproducibility |
+| `started_at` | datetime | yes | Trial start timestamp |
+| `completed_at` | datetime | no | Trial completion timestamp |
+| `status` | string | yes | `queued`, `running`, `completed`, `failed`, `killed`, `promoted`, or `ignored` |
+| `is_selected` | boolean | yes | True when this trial was selected as the group winner |
+| `selection_reason` | text | no | Why this candidate won or was kept |
+| `summary_metrics_json` | JSON | no | Compact comparable metrics such as net R, win rate, drawdown, AUC, lift |
+
+### Table: `trial_lock_records`
+
+One immutable protocol lock for a trial group. The stricter walk-forward flow is:
+Lock 1 freezes the candidate set before primary holdout validation, Lock 2
+freezes the final candidate before the next holdout, then the final window runs
+exactly once. Given the current data history, `2020-2025` is exploratory,
+`2018-2019` is the primary untouched holdout, and `2026 YTD` is the secondary
+untouched holdout.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `trial_group_id` | integer FK | yes | Owning `trial_groups.id` |
+| `lock_type` | string | yes | `pre_validation`, `pre_test`, or `final` |
+| `locked_at` | datetime | yes | Timestamp when candidates/code/data were frozen |
+| `candidate_set_yaml` | text | no | Inline YAML or file reference for the locked candidate set |
+| `candidate_set_hash` | string | yes | SHA-256/hash of the locked candidate config |
+| `dataset_snapshot_id` | string | yes | Free-form dataset/catalog snapshot id or hash |
+| `code_commit_sha` | string | yes | Git SHA at lock time |
+| `pre_registration_md` | text | no | Expected result and falsifiable pass/fail claims |
+| `window_train` | string | no | Training/exploratory window, e.g. `2020-01-01:2025-12-31` |
+| `window_validation` | string | no | Validation/primary holdout window |
+| `window_test` | string | no | Test/secondary holdout window |
+| `window_final` | string | no | Final one-time run window |
+| `status` | string | yes | `active`, `superseded`, `abandoned`, or `completed` |
+| `bug_exceptions_after_lock_json` | JSON array | no | Bug-fix exception records allowed after the lock |
+| `superseded_by_lock_id` | integer FK | no | Replacement `trial_lock_records.id`, if superseded |
+| `notes` | text | no | Human context or caveats |
+
+Indexes are maintained on group/status/selection/run/config fields so the UI can
+answer "what did we try, what won, and what did we kill?" without scanning every
+backtest result file.
+
 ## Migration discipline
 
 Schema changes:
@@ -169,3 +268,4 @@ Schema changes:
 | Date | From → To | Schemas affected | What changed |
 |---|---|---|---|
 | 2026-04-25 | n/a → `1` | tbbo, mbp-1, ohlcv-1m | Initial spec doc; pins existing v1 schemas |
+| 2026-05-17 | metadata DB | hypotheses, trial_groups, trials, trial_lock_records | Added trial registry and lock records for selection-bias visibility and two-lock walk-forward proof |
