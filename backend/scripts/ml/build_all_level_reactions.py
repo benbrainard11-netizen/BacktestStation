@@ -60,6 +60,14 @@ NUMERIC_STAT_FIELDS = (
     "time_to_meaningful_touch_minutes",
     "time_to_full_touch_minutes",
 )
+TEXT_LEVEL_COLUMNS = (
+    "level.event_id",
+    "level.kind",
+    "level.subtype",
+    "level.symbol",
+    "level.side",
+    "level.direction",
+)
 
 
 @dataclass(frozen=True)
@@ -131,6 +139,9 @@ def normalize_frame(
         raise KeyError(f"{source_name} missing required columns: {', '.join(missing)}")
 
     out = df.copy()
+    for col in TEXT_LEVEL_COLUMNS:
+        if col in out.columns:
+            out[col] = out[col].astype("string")
     out.insert(0, "level.source_name", source_name)
     out.insert(1, "level.source_artifact", source_path.name)
     out.insert(2, "level.source_row", np.arange(len(out), dtype="int64"))
@@ -138,7 +149,9 @@ def normalize_frame(
     out.insert(
         4,
         "level.event_key",
-        out["level.kind"].astype(str) + ":" + out["level.event_id"].astype(str),
+        out["level.kind"].fillna("unknown").astype(str)
+        + ":"
+        + out["level.event_id"].fillna("").astype(str),
     )
     return out
 

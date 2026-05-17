@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import pyarrow as pa
 
 from app.research.outcomes.level_reactions import level_reaction_column
 from scripts.ml.build_all_level_reactions import (
@@ -93,6 +94,23 @@ def test_combine_level_frames_preserves_sources_and_extras() -> None:
     assert "lr.full_horizon.post_tap_mfe_pts" in combined.columns
     assert pd.isna(combined.loc[0, "lr.full_horizon.post_tap_mfe_pts"])
     assert combined.loc[1, "lr.full_horizon.post_tap_mfe_pts"] == 15.0
+
+
+def test_combine_level_frames_casts_mixed_event_ids_for_parquet() -> None:
+    gap = _gap_frame()
+    gap["level.event_id"] = [1]
+    fvg = _fvg_frame()
+    fvg["level.event_id"] = ["equal_levels-abc"]
+
+    combined = combine_level_frames(
+        [
+            ("opening_gap", Path("opening_gap_level_reactions.parquet"), "clock_time", gap),
+            ("fair_value_gap", Path("fvg_level_reactions.parquet"), "native_bars", fvg),
+        ]
+    )
+    assert combined["level.event_id"].tolist() == ["1", "equal_levels-abc"]
+    table = pa.Table.from_pandas(combined, preserve_index=False)
+    assert table.schema.field("level.event_id").type == pa.string()
 
 
 def test_combined_stats_skip_unsupported_horizons() -> None:

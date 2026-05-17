@@ -1,108 +1,108 @@
 # Equal Levels Level Reactions
 
-_Generated `2026-05-17T04:01:56.505460+00:00`._
+_Generated `2026-05-17T15:59:50.322481+00:00`._
 
 This maps equal-high/equal-low liquidity levels into the same `level.*`
 and `lr.*` vocabulary used by the other level families.
 
 - Source: `C:\Users\benbr\BacktestStation\data\ml\features\eql.parquet`
 - Output: `C:\Users\benbr\BacktestStation\data\ml\levels\equal_level_reactions.parquet`
-- Rows: `60,338`
+- Rows: `61,185`
 - Columns: `171`
 
 ## Counts
 
 | Subtype | Side | Rows |
 |---|---|---|
-| `eq_pivot_3_1h_15pts` | `high` | 10,851 |
-| `eq_pivot_3_1h_15pts` | `low` | 10,226 |
-| `eq_pivot_3_1h_5pts` | `high` | 6,835 |
-| `eq_pivot_3_1h_5pts` | `low` | 6,140 |
-| `eq_pivot_3_4h_15pts` | `high` | 2,524 |
-| `eq_pivot_3_4h_15pts` | `low` | 2,157 |
-| `eq_pivot_5_1h_15pts` | `high` | 6,113 |
-| `eq_pivot_5_1h_15pts` | `low` | 5,737 |
-| `eq_pivot_5_1h_5pts` | `high` | 3,610 |
-| `eq_pivot_5_1h_5pts` | `low` | 3,266 |
-| `eq_pivot_5_4h_15pts` | `high` | 1,342 |
-| `eq_pivot_5_4h_15pts` | `low` | 1,162 |
-| `eq_pivot_5_daily_30pts` | `high` | 196 |
-| `eq_pivot_5_daily_30pts` | `low` | 179 |
+| `eq_pivot_3_1h_15pts` | `high` | 10,821 |
+| `eq_pivot_3_1h_15pts` | `low` | 10,230 |
+| `eq_pivot_3_1h_5pts` | `high` | 6,944 |
+| `eq_pivot_3_1h_5pts` | `low` | 6,324 |
+| `eq_pivot_3_4h_15pts` | `high` | 2,584 |
+| `eq_pivot_3_4h_15pts` | `low` | 2,178 |
+| `eq_pivot_5_1h_15pts` | `high` | 6,126 |
+| `eq_pivot_5_1h_15pts` | `low` | 5,873 |
+| `eq_pivot_5_1h_5pts` | `high` | 3,684 |
+| `eq_pivot_5_1h_5pts` | `low` | 3,431 |
+| `eq_pivot_5_4h_15pts` | `high` | 1,372 |
+| `eq_pivot_5_4h_15pts` | `low` | 1,217 |
+| `eq_pivot_5_daily_30pts` | `high` | 204 |
+| `eq_pivot_5_daily_30pts` | `low` | 197 |
 
 ## Overall Reaction Rates
 
 | Horizon | Rows | Wick Took Level | Close Past Level | Rejected | Break | Avg Thesis / Size |
 |---|---|---|---|---|---|---|
-| `next_5_bars` | 60,338 | 8.1% | 4.8% | 2.3% | 3.8% | 3.58x |
-| `next_25_bars` | 60,338 | 48.5% | 40.2% | 7.6% | 34.5% | 7.46x |
-| `next_100_bars` | 60,338 | 73.0% | 67.3% | 5.5% | 61.6% | 14.76x |
-| `next_250_bars` | 60,338 | 79.6% | 75.3% | 4.3% | 69.2% | 18.36x |
-| `full_horizon` | 60,338 | 79.6% | 75.3% | 4.3% | 69.2% | 18.36x |
+| `next_5_bars` | 61,185 | 7.6% | 4.6% | 2.0% | 3.5% | 3.24x |
+| `next_25_bars` | 61,185 | 48.4% | 40.0% | 7.5% | 33.8% | 6.72x |
+| `next_100_bars` | 61,185 | 72.3% | 67.0% | 5.3% | 61.4% | 13.49x |
+| `next_250_bars` | 61,185 | 82.1% | 78.5% | 3.5% | 73.5% | 20.06x |
+| `full_horizon` | 61,185 | 82.1% | 78.5% | 3.5% | 73.5% | 20.06x |
 
 ## First-Touch Age Decay
 
 | Subtype | Side | Age | Rows | Share | Reject | Break | Avg Thesis / Size |
 |---|---|---|---|---|---|---|---|
-| `eq_pivot_3_1h_15pts` | `high` | `1-3d` | 2,263 | 20.9% | 3.7% | 83.8% | 9.88x |
-| `eq_pivot_3_1h_15pts` | `high` | `3-7d` | 1,019 | 9.4% | 5.7% | 75.0% | 6.19x |
-| `eq_pivot_3_1h_15pts` | `high` | `4h-1d` | 6,074 | 56.0% | 2.9% | 90.1% | 14.50x |
-| `eq_pivot_3_1h_15pts` | `high` | `7-20d` | 93 | 0.9% | 4.3% | 48.4% | 2.62x |
-| `eq_pivot_3_1h_15pts` | `high` | `unreached_native_horizon` | 1,402 | 12.9% | 0.0% | 0.0% | nanx |
-| `eq_pivot_3_1h_15pts` | `low` | `1-3d` | 1,887 | 18.5% | 9.2% | 80.0% | 11.08x |
-| `eq_pivot_3_1h_15pts` | `low` | `3-7d` | 918 | 9.0% | 9.9% | 75.2% | 6.41x |
-| `eq_pivot_3_1h_15pts` | `low` | `4h-1d` | 4,935 | 48.3% | 6.2% | 86.8% | 16.22x |
-| `eq_pivot_3_1h_15pts` | `low` | `7-20d` | 81 | 0.8% | 21.0% | 58.0% | 4.45x |
-| `eq_pivot_3_1h_15pts` | `low` | `unreached_native_horizon` | 2,405 | 23.5% | 0.0% | 0.0% | nanx |
-| `eq_pivot_3_1h_5pts` | `high` | `1-3d` | 1,279 | 18.7% | 4.1% | 92.3% | 25.70x |
-| `eq_pivot_3_1h_5pts` | `high` | `3-7d` | 522 | 7.6% | 5.2% | 88.1% | 17.32x |
-| `eq_pivot_3_1h_5pts` | `high` | `4h-1d` | 4,263 | 62.4% | 2.7% | 95.3% | 33.13x |
-| `eq_pivot_3_1h_5pts` | `high` | `7-20d` | 39 | 0.6% | 2.6% | 89.7% | 6.30x |
-| `eq_pivot_3_1h_5pts` | `high` | `unreached_native_horizon` | 732 | 10.7% | 0.0% | 0.0% | nanx |
-| `eq_pivot_3_1h_5pts` | `low` | `1-3d` | 1,056 | 17.2% | 9.4% | 88.3% | 26.39x |
-| `eq_pivot_3_1h_5pts` | `low` | `3-7d` | 511 | 8.3% | 10.4% | 86.9% | 16.89x |
-| `eq_pivot_3_1h_5pts` | `low` | `4h-1d` | 3,356 | 54.7% | 6.2% | 92.0% | 35.55x |
-| `eq_pivot_3_1h_5pts` | `low` | `7-20d` | 37 | 0.6% | 24.3% | 67.6% | 17.17x |
-| `eq_pivot_3_1h_5pts` | `low` | `unreached_native_horizon` | 1,180 | 19.2% | 0.0% | 0.0% | nanx |
-| `eq_pivot_3_4h_15pts` | `high` | `1-3d` | 948 | 37.6% | 4.1% | 84.5% | 9.47x |
-| `eq_pivot_3_4h_15pts` | `high` | `3-7d` | 449 | 17.8% | 5.6% | 73.9% | 5.35x |
-| `eq_pivot_3_4h_15pts` | `high` | `4h-1d` | 493 | 19.5% | 3.0% | 88.2% | 13.41x |
-| `eq_pivot_3_4h_15pts` | `high` | `7-20d` | 42 | 1.7% | 4.8% | 47.6% | 2.31x |
-| `eq_pivot_3_4h_15pts` | `high` | `unreached_native_horizon` | 592 | 23.5% | 0.0% | 0.0% | nanx |
-| `eq_pivot_3_4h_15pts` | `low` | `1-3d` | 660 | 30.6% | 7.0% | 84.5% | 11.93x |
-| `eq_pivot_3_4h_15pts` | `low` | `3-7d` | 322 | 14.9% | 10.6% | 71.1% | 6.41x |
-| `eq_pivot_3_4h_15pts` | `low` | `4h-1d` | 327 | 15.2% | 6.7% | 87.5% | 12.93x |
-| `eq_pivot_3_4h_15pts` | `low` | `7-20d` | 20 | 0.9% | 10.0% | 65.0% | 1.42x |
-| `eq_pivot_3_4h_15pts` | `low` | `unreached_native_horizon` | 828 | 38.4% | 0.0% | 0.0% | nanx |
-| `eq_pivot_5_1h_15pts` | `high` | `1-3d` | 1,555 | 25.4% | 3.7% | 83.9% | 9.47x |
-| `eq_pivot_5_1h_15pts` | `high` | `3-7d` | 699 | 11.4% | 4.6% | 77.4% | 5.96x |
-| `eq_pivot_5_1h_15pts` | `high` | `4h-1d` | 2,804 | 45.9% | 2.9% | 89.6% | 14.41x |
-| `eq_pivot_5_1h_15pts` | `high` | `7-20d` | 60 | 1.0% | 3.3% | 53.3% | 2.36x |
-| `eq_pivot_5_1h_15pts` | `high` | `unreached_native_horizon` | 995 | 16.3% | 0.0% | 0.0% | nanx |
-| `eq_pivot_5_1h_15pts` | `low` | `1-3d` | 1,251 | 21.8% | 9.3% | 79.6% | 10.68x |
-| `eq_pivot_5_1h_15pts` | `low` | `3-7d` | 639 | 11.1% | 8.5% | 73.9% | 6.65x |
-| `eq_pivot_5_1h_15pts` | `low` | `4h-1d` | 2,170 | 37.8% | 7.3% | 85.1% | 16.08x |
-| `eq_pivot_5_1h_15pts` | `low` | `7-20d` | 47 | 0.8% | 19.1% | 55.3% | 3.20x |
-| `eq_pivot_5_1h_15pts` | `low` | `unreached_native_horizon` | 1,630 | 28.4% | 0.0% | 0.0% | nanx |
-| `eq_pivot_5_1h_5pts` | `high` | `1-3d` | 880 | 24.4% | 3.4% | 91.9% | 24.45x |
-| `eq_pivot_5_1h_5pts` | `high` | `3-7d` | 363 | 10.1% | 5.2% | 87.3% | 17.30x |
-| `eq_pivot_5_1h_5pts` | `high` | `4h-1d` | 1,835 | 50.8% | 2.8% | 94.6% | 32.81x |
-| `eq_pivot_5_1h_5pts` | `high` | `7-20d` | 27 | 0.7% | 0.0% | 88.9% | 5.45x |
-| `eq_pivot_5_1h_5pts` | `high` | `unreached_native_horizon` | 505 | 14.0% | 0.0% | 0.0% | nanx |
-| `eq_pivot_5_1h_5pts` | `low` | `1-3d` | 695 | 21.3% | 9.4% | 88.1% | 24.23x |
-| `eq_pivot_5_1h_5pts` | `low` | `3-7d` | 358 | 11.0% | 11.2% | 86.0% | 17.92x |
-| `eq_pivot_5_1h_5pts` | `low` | `4h-1d` | 1,399 | 42.8% | 7.4% | 90.7% | 33.88x |
-| `eq_pivot_5_1h_5pts` | `low` | `7-20d` | 19 | 0.6% | 21.1% | 68.4% | 13.85x |
-| `eq_pivot_5_1h_5pts` | `low` | `unreached_native_horizon` | 795 | 24.3% | 0.0% | 0.0% | nanx |
-| `eq_pivot_5_4h_15pts` | `high` | `1-3d` | 580 | 43.2% | 4.3% | 84.8% | 9.08x |
-| `eq_pivot_5_4h_15pts` | `high` | `3-7d` | 279 | 20.8% | 5.7% | 71.7% | 5.38x |
-| `eq_pivot_5_4h_15pts` | `high` | `4h-1d` | 55 | 4.1% | 7.3% | 80.0% | 13.59x |
-| `eq_pivot_5_4h_15pts` | `high` | `7-20d` | 33 | 2.5% | 9.1% | 48.5% | 1.92x |
-| `eq_pivot_5_4h_15pts` | `high` | `unreached_native_horizon` | 395 | 29.4% | 0.0% | 0.0% | nanx |
-| `eq_pivot_5_4h_15pts` | `low` | `1-3d` | 403 | 34.7% | 6.2% | 86.4% | 12.65x |
-| `eq_pivot_5_4h_15pts` | `low` | `3-7d` | 199 | 17.1% | 9.5% | 74.9% | 6.54x |
-| `eq_pivot_5_4h_15pts` | `low` | `4h-1d` | 26 | 2.2% | 7.7% | 88.5% | 13.77x |
-| `eq_pivot_5_4h_15pts` | `low` | `7-20d` | 8 | 0.7% | 0.0% | 62.5% | 0.47x |
-| `eq_pivot_5_4h_15pts` | `low` | `unreached_native_horizon` | 526 | 45.3% | 0.0% | 0.0% | nanx |
+| `eq_pivot_3_1h_15pts` | `high` | `1-3d` | 2,217 | 20.5% | 3.3% | 88.2% | 11.14x |
+| `eq_pivot_3_1h_15pts` | `high` | `3-7d` | 1,064 | 9.8% | 2.7% | 87.2% | 8.56x |
+| `eq_pivot_3_1h_15pts` | `high` | `4h-1d` | 5,883 | 54.4% | 2.8% | 91.5% | 16.35x |
+| `eq_pivot_3_1h_15pts` | `high` | `7-20d` | 360 | 3.3% | 8.6% | 63.9% | 4.28x |
+| `eq_pivot_3_1h_15pts` | `high` | `unreached_native_horizon` | 1,297 | 12.0% | 0.0% | 0.0% | nanx |
+| `eq_pivot_3_1h_15pts` | `low` | `1-3d` | 1,906 | 18.6% | 5.9% | 84.1% | 12.31x |
+| `eq_pivot_3_1h_15pts` | `low` | `3-7d` | 946 | 9.2% | 6.3% | 82.9% | 9.22x |
+| `eq_pivot_3_1h_15pts` | `low` | `4h-1d` | 4,969 | 48.6% | 4.8% | 88.0% | 17.67x |
+| `eq_pivot_3_1h_15pts` | `low` | `7-20d` | 377 | 3.7% | 10.9% | 66.0% | 4.60x |
+| `eq_pivot_3_1h_15pts` | `low` | `unreached_native_horizon` | 2,032 | 19.9% | 0.0% | 0.0% | nanx |
+| `eq_pivot_3_1h_5pts` | `high` | `1-3d` | 1,216 | 17.5% | 2.4% | 95.7% | 30.72x |
+| `eq_pivot_3_1h_5pts` | `high` | `3-7d` | 554 | 8.0% | 1.8% | 96.9% | 21.66x |
+| `eq_pivot_3_1h_5pts` | `high` | `4h-1d` | 4,321 | 62.2% | 2.8% | 95.8% | 34.94x |
+| `eq_pivot_3_1h_5pts` | `high` | `7-20d` | 167 | 2.4% | 12.0% | 82.6% | 9.29x |
+| `eq_pivot_3_1h_5pts` | `high` | `unreached_native_horizon` | 686 | 9.9% | 0.0% | 0.0% | nanx |
+| `eq_pivot_3_1h_5pts` | `low` | `1-3d` | 1,061 | 16.8% | 5.7% | 92.2% | 30.12x |
+| `eq_pivot_3_1h_5pts` | `low` | `3-7d` | 515 | 8.1% | 4.3% | 94.6% | 25.48x |
+| `eq_pivot_3_1h_5pts` | `low` | `4h-1d` | 3,558 | 56.3% | 5.5% | 93.2% | 38.02x |
+| `eq_pivot_3_1h_5pts` | `low` | `7-20d` | 191 | 3.0% | 14.1% | 81.2% | 12.98x |
+| `eq_pivot_3_1h_5pts` | `low` | `unreached_native_horizon` | 999 | 15.8% | 0.0% | 0.0% | nanx |
+| `eq_pivot_3_4h_15pts` | `high` | `1-3d` | 946 | 36.6% | 3.2% | 89.2% | 10.92x |
+| `eq_pivot_3_4h_15pts` | `high` | `3-7d` | 443 | 17.1% | 4.1% | 85.1% | 6.28x |
+| `eq_pivot_3_4h_15pts` | `high` | `4h-1d` | 504 | 19.5% | 3.0% | 91.3% | 14.60x |
+| `eq_pivot_3_4h_15pts` | `high` | `7-20d` | 144 | 5.6% | 6.2% | 63.9% | 3.71x |
+| `eq_pivot_3_4h_15pts` | `high` | `unreached_native_horizon` | 547 | 21.2% | 0.0% | 0.0% | nanx |
+| `eq_pivot_3_4h_15pts` | `low` | `1-3d` | 676 | 31.0% | 5.0% | 84.9% | 12.95x |
+| `eq_pivot_3_4h_15pts` | `low` | `3-7d` | 319 | 14.6% | 8.5% | 81.8% | 9.71x |
+| `eq_pivot_3_4h_15pts` | `low` | `4h-1d` | 348 | 16.0% | 5.7% | 87.6% | 13.09x |
+| `eq_pivot_3_4h_15pts` | `low` | `7-20d` | 123 | 5.6% | 9.8% | 69.1% | 4.53x |
+| `eq_pivot_3_4h_15pts` | `low` | `unreached_native_horizon` | 712 | 32.7% | 0.0% | 0.0% | nanx |
+| `eq_pivot_5_1h_15pts` | `high` | `1-3d` | 1,501 | 24.5% | 2.9% | 89.7% | 10.91x |
+| `eq_pivot_5_1h_15pts` | `high` | `3-7d` | 696 | 11.4% | 3.2% | 87.9% | 7.68x |
+| `eq_pivot_5_1h_15pts` | `high` | `4h-1d` | 2,730 | 44.6% | 2.6% | 91.6% | 16.23x |
+| `eq_pivot_5_1h_15pts` | `high` | `7-20d` | 239 | 3.9% | 7.1% | 64.4% | 3.68x |
+| `eq_pivot_5_1h_15pts` | `high` | `unreached_native_horizon` | 960 | 15.7% | 0.0% | 0.0% | nanx |
+| `eq_pivot_5_1h_15pts` | `low` | `1-3d` | 1,295 | 22.1% | 5.3% | 84.9% | 11.85x |
+| `eq_pivot_5_1h_15pts` | `low` | `3-7d` | 676 | 11.5% | 5.9% | 83.7% | 9.30x |
+| `eq_pivot_5_1h_15pts` | `low` | `4h-1d` | 2,245 | 38.2% | 5.7% | 87.1% | 17.26x |
+| `eq_pivot_5_1h_15pts` | `low` | `7-20d` | 272 | 4.6% | 9.2% | 68.4% | 4.80x |
+| `eq_pivot_5_1h_15pts` | `low` | `unreached_native_horizon` | 1,385 | 23.6% | 0.0% | 0.0% | nanx |
+| `eq_pivot_5_1h_5pts` | `high` | `1-3d` | 826 | 22.4% | 2.3% | 95.8% | 29.05x |
+| `eq_pivot_5_1h_5pts` | `high` | `3-7d` | 360 | 9.8% | 1.7% | 96.7% | 20.55x |
+| `eq_pivot_5_1h_5pts` | `high` | `4h-1d` | 1,881 | 51.1% | 2.7% | 95.6% | 36.15x |
+| `eq_pivot_5_1h_5pts` | `high` | `7-20d` | 121 | 3.3% | 11.6% | 83.5% | 8.13x |
+| `eq_pivot_5_1h_5pts` | `high` | `unreached_native_horizon` | 496 | 13.5% | 0.0% | 0.0% | nanx |
+| `eq_pivot_5_1h_5pts` | `low` | `1-3d` | 728 | 21.2% | 4.4% | 93.4% | 28.08x |
+| `eq_pivot_5_1h_5pts` | `low` | `3-7d` | 355 | 10.3% | 4.8% | 94.4% | 25.46x |
+| `eq_pivot_5_1h_5pts` | `low` | `4h-1d` | 1,505 | 43.9% | 6.4% | 92.6% | 35.50x |
+| `eq_pivot_5_1h_5pts` | `low` | `7-20d` | 143 | 4.2% | 14.0% | 83.9% | 13.52x |
+| `eq_pivot_5_1h_5pts` | `low` | `unreached_native_horizon` | 700 | 20.4% | 0.0% | 0.0% | nanx |
+| `eq_pivot_5_4h_15pts` | `high` | `1-3d` | 583 | 42.5% | 3.6% | 89.0% | 10.48x |
+| `eq_pivot_5_4h_15pts` | `high` | `3-7d` | 274 | 20.0% | 4.4% | 84.3% | 6.82x |
+| `eq_pivot_5_4h_15pts` | `high` | `4h-1d` | 59 | 4.3% | 5.1% | 86.4% | 13.31x |
+| `eq_pivot_5_4h_15pts` | `high` | `7-20d` | 103 | 7.5% | 3.9% | 68.0% | 3.52x |
+| `eq_pivot_5_4h_15pts` | `high` | `unreached_native_horizon` | 353 | 25.7% | 0.0% | 0.0% | nanx |
+| `eq_pivot_5_4h_15pts` | `low` | `1-3d` | 430 | 35.3% | 5.3% | 87.0% | 13.25x |
+| `eq_pivot_5_4h_15pts` | `low` | `3-7d` | 202 | 16.6% | 8.9% | 83.2% | 10.15x |
+| `eq_pivot_5_4h_15pts` | `low` | `4h-1d` | 42 | 3.5% | 7.1% | 85.7% | 11.65x |
+| `eq_pivot_5_4h_15pts` | `low` | `7-20d` | 71 | 5.8% | 14.1% | 67.6% | 4.03x |
+| `eq_pivot_5_4h_15pts` | `low` | `unreached_native_horizon` | 472 | 38.8% | 0.0% | 0.0% | nanx |
 
 ## Notes
 
