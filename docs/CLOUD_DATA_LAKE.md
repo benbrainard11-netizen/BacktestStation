@@ -16,7 +16,7 @@ One private bucket, currently documented as `bsdata-prod`.
 | `processed/bars/` | `python -m app.ingest.r2_upload` | Normalized OHLCV bars used by readers. |
 | `data/research_events/` | `backend/scripts/ml/export_research_events_parquet.py` then `r2_artifacts` | Shareable parquet snapshot of the `research_events` table. |
 | `data/ml/features/` | `python -m app.ingest.r2_artifacts` | Per-feature ML matrices. |
-| `data/ml/levels/` | `python -m app.ingest.r2_artifacts` | Universal level-reaction tables, currently NDOG/NWOG, FVG, OB, and sweeps. |
+| `data/ml/levels/` | `python -m app.ingest.r2_artifacts` | Universal level-reaction tables and the combined all-level table. |
 | `data/ml/anchors/` | `python -m app.ingest.r2_artifacts` | Anchor/snapshot matrices, labels, leaderboards, walk-forward outputs. |
 | `data/ml/catalog/` | `python -m app.ingest.r2_artifacts` | Dataset catalogs and asset manifests. |
 | `data/research/` | `python -m app.ingest.r2_artifacts` | Curated source datasets, such as macro calendars. |

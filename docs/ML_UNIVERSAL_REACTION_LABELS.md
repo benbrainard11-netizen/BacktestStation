@@ -16,6 +16,7 @@ The shared helper lives at `backend/app/research/outcomes/reaction_labels.py`.
 | Universal FVG level table | Fair-value-gap zones at `data/ml/levels/fvg_level_reactions.parquet` | `level_reactions_v1` |
 | Universal order-block level table | Order-block body zones at `data/ml/levels/ob_level_reactions.parquet` | `level_reactions_v1` |
 | Universal liquidity-sweep level table | Swept reference levels at `data/ml/levels/sweep_level_reactions.parquet` | `level_reactions_v1` |
+| Combined universal level table | Stacked opening gap, FVG, OB, and sweep rows at `data/ml/levels/all_level_reactions.parquet` | `level_reactions_v1` |
 | Scheduled macro events | Already has equivalent v2 labels | `v2` |
 | Opening gaps / NDOG/NWOG | Uses shared helper | `v2` |
 | Interval true range | Uses shared helper | `v2` |
