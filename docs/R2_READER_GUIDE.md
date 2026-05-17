@@ -1,0 +1,118 @@
+# R2 Reader Guide
+
+This is the read-only setup for friends or secondary PCs that need to inspect
+the private BacktestStation data lake.
+
+## Credentials
+
+Use an R2 token with:
+
+- Permission: `Object Read only`
+- Bucket: `bsdata-prod`
+- No write/admin permissions
+
+Set these environment variables in PowerShell:
+
+```powershell
+[Environment]::SetEnvironmentVariable("BS_R2_BUCKET", "bsdata-prod", "User")
+[Environment]::SetEnvironmentVariable("BS_R2_ENDPOINT", "https://<ACCOUNT_ID>.r2.cloudflarestorage.com", "User")
+[Environment]::SetEnvironmentVariable("BS_R2_ACCESS_KEY", "<read-only access key id>", "User")
+[Environment]::SetEnvironmentVariable("BS_R2_SECRET", "<read-only secret access key>", "User")
+```
+
+Restart PowerShell after setting them.
+
+## Verify Access
+
+From the repo backend directory:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+$env:BS_R2_BUCKET=[Environment]::GetEnvironmentVariable('BS_R2_BUCKET','User')
+$env:BS_R2_ENDPOINT=[Environment]::GetEnvironmentVariable('BS_R2_ENDPOINT','User')
+$env:BS_R2_ACCESS_KEY=[Environment]::GetEnvironmentVariable('BS_R2_ACCESS_KEY','User')
+$env:BS_R2_SECRET=[Environment]::GetEnvironmentVariable('BS_R2_SECRET','User')
+python -m app.ingest.r2_status --required-universe futures_expanded_v1
+```
+
+Good output should show:
+
+- `universe_id: futures_expanded_v1`
+- `data/research_events/manifest.json` object check is `OK`
+- `data/ml/catalog/ml_dataset_catalog.json` object check is `OK`
+- `data/ml/catalog/asset_universe_manifest.json` object check is `OK`
+- `Warnings: none`
+
+Machine-readable form:
+
+```powershell
+python -m app.ingest.r2_status --required-universe futures_expanded_v1 --json
+```
+
+Strict CI-style form:
+
+```powershell
+python -m app.ingest.r2_status --required-universe futures_expanded_v1 --strict
+```
+
+`--strict` exits non-zero if the lake has stale/missing metadata.
+
+## Current Important Objects
+
+| Key | Purpose |
+|---|---|
+| `_research_inventory.json` | Current research/ML artifact index. |
+| `_inventory.json` | Raw/bar partition index. |
+| `data/research_events/manifest.json` | Row counts, feature counts, parquet file list for research events. |
+| `data/ml/catalog/asset_universe_manifest.json` | Dataset identity and universe id. |
+| `data/ml/catalog/ml_dataset_catalog.json` | Feature matrix, anchor artifact, detector/outcome catalog. |
+| `data/ml/catalog/expanded_universe_research_build_report.json` | Expanded-universe build report. |
+
+## Download A Manifest
+
+Use this for a quick local copy without exposing secrets:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+@'
+from pathlib import Path
+from app.ingest.r2_client import make_s3_client
+
+s3, bucket = make_s3_client()
+key = "data/research_events/manifest.json"
+body = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+Path("research_events_manifest.json").write_bytes(body)
+print(f"downloaded {key} -> research_events_manifest.json")
+'@ | python -
+```
+
+## Load Research Events
+
+Research events are partitioned like this:
+
+```text
+data/research_events/
+  feature_name=<feature>/
+    event_year=<year>/
+      part-000000.parquet
+```
+
+For large analysis, download only the feature/year partitions you need, then
+query locally with DuckDB, Polars, or pandas.
+
+Example local DuckDB query after downloading parquet files:
+
+```sql
+SELECT feature_name, count(*) AS rows
+FROM read_parquet('data/research_events/**/*.parquet')
+GROUP BY feature_name
+ORDER BY rows DESC;
+```
+
+## Safety Rules
+
+- Reader tokens cannot upload, overwrite, or delete.
+- Never send write/admin tokens to friends.
+- If `r2_status` warns about stale manifests, do not trust row counts until the
+  publisher reruns `python -m app.ingest.r2_artifacts --profile core` from the
+  latest R2 tooling.

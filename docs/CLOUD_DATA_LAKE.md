@@ -105,6 +105,21 @@ Collaborator machines use read-only credentials:
 
 Restart PowerShell after setting env vars.
 
+## Verify The Live Lake
+
+Run the read-only status command from `backend/`:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.r2_status --required-universe futures_expanded_v1
+```
+
+This checks the R2 inventory, research event manifest, ML catalog, asset
+universe manifest, and a sample parquet file. Use `--strict` when a script
+should fail on stale/missing metadata.
+
+Friend/collaborator instructions live in `docs/R2_READER_GUIDE.md`.
+
 ## What Not To Do
 
 - Do not put R2 secrets in GitHub, Discord, ChatGPT, or screenshots.

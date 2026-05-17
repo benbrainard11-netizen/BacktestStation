@@ -132,6 +132,15 @@ python -m app.ingest.r2_artifacts --profile experiments
 
 See `docs/CLOUD_DATA_LAKE.md` for the full bucket layout and machine roles.
 
+Read-only verification from any configured machine:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.r2_status --required-universe futures_expanded_v1
+```
+
+See `docs/R2_READER_GUIDE.md` for collaborator setup and query notes.
+
 ## What to send Husky later (after Phase 4 lands)
 
 Send via **Signal** (not chat history, not email):
