@@ -1,6 +1,6 @@
 # Asset Universe Manifest
 
-_Generated `2026-05-16T17:17:51+00:00`._
+_Generated `2026-05-17T06:28:48+00:00`._
 
 This pins the data identity behind the current ML/research build.
 
@@ -8,9 +8,9 @@ This pins the data identity behind the current ML/research build.
 
 | Field | Value |
 |---|---|
-| Universe id | `futures_core_v1` |
-| Dataset fingerprint | `5dc94d3b12dccb4f928d99d83bbf8fd9610e79d107475aad063045973f9566e1` |
-| Git commit | `25382988be9d3655d05a37f3f8f6503c50d34cfb` |
+| Universe id | `futures_expanded_v1` |
+| Dataset fingerprint | `bcbd688d4cb9a9330b42962c5a69929ac02f72e0be9cb23cefaea6a067582257` |
+| Git commit | `165262e1029b304604beed35528bc60471d5022f` |
 | Git dirty when generated | `True` |
 | Warehouse root | `D:\data` |
 | Active symbols | `ES.c.0`, `NQ.c.0`, `YM.c.0` |
@@ -23,9 +23,9 @@ This pins the data identity behind the current ML/research build.
 
 | Symbol | Name | Kind | Bars start | Bars end | 1m partitions | 1m rows | Research events |
 |---|---|---|---|---|---|---|---|
-| `ES.c.0` | E-mini S&P 500 | continuous_front_month | 2015-01-01 | 2026-05-15 | 3,468 | 3,880,839 | 237,320 |
-| `NQ.c.0` | E-mini Nasdaq-100 | continuous_front_month | 2015-01-01 | 2026-05-15 | 3,468 | 3,823,953 | 240,593 |
-| `YM.c.0` | E-mini Dow | continuous_front_month | 2015-01-01 | 2026-05-15 | 3,467 | 3,779,252 | 232,311 |
+| `ES.c.0` | E-mini S&P 500 | continuous_front_month | 2015-01-01 | 2026-05-15 | 3,468 | - | 237,320 |
+| `NQ.c.0` | E-mini Nasdaq-100 | continuous_front_month | 2015-01-01 | 2026-05-15 | 3,468 | - | 240,593 |
+| `YM.c.0` | E-mini Dow | continuous_front_month | 2015-01-01 | 2026-05-15 | 3,467 | - | 232,311 |
 
 ## Warehouse-Only Symbols
 
@@ -33,11 +33,11 @@ These exist on disk but are not yet part of the current research/ML matrices.
 
 | Symbol | Kind | Bars start | Bars end | 1m partitions | 1m rows |
 |---|---|---|---|---|---|
-| `ESM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | 17,710 |
-| `NQM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | 17,711 |
-| `RTY.c.0` | continuous_front_month | 2026-03-01 | 2026-05-15 | 45 | 49,749 |
-| `RTYM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | 17,494 |
-| `YMM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | 17,485 |
+| `ESM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | - |
+| `NQM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | - |
+| `RTY.c.0` | continuous_front_month | 2026-03-01 | 2026-05-15 | 45 | - |
+| `RTYM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | - |
+| `YMM6` | specific_contract | 2026-04-27 | 2026-05-15 | 14 | - |
 
 ## Research Events By Feature
 
