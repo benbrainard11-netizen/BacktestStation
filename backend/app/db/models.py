@@ -13,6 +13,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     DateTime,
     Float,
@@ -107,6 +108,11 @@ class BacktestRun(Base):
     end_ts: Mapped[datetime | None] = mapped_column(DateTime)
     # File path or short tag describing where the run was imported from.
     import_source: Mapped[str | None] = mapped_column(Text)
+    dataset_snapshot_id: Mapped[str | None] = mapped_column(
+        ForeignKey("dataset_snapshots.snapshot_id"), index=True, default=None
+    )
+    code_commit_sha: Mapped[str | None] = mapped_column(String(40))
+    seed: Mapped[int | None] = mapped_column(Integer)
     # "imported" — trades.csv/equity.csv/metrics.json bundle from another tool.
     # "engine"   — produced by the in-app backtest engine.
     source: Mapped[str] = mapped_column(
@@ -135,6 +141,10 @@ class BacktestRun(Base):
     trials: Mapped[list["Trial"]] = relationship(
         back_populates="backtest_run",
         foreign_keys="Trial.backtest_run_id",
+    )
+    dataset_snapshot: Mapped["DatasetSnapshot | None"] = relationship(
+        back_populates="backtest_runs",
+        foreign_keys=[dataset_snapshot_id],
     )
 
 
@@ -274,6 +284,63 @@ class Dataset(Base):
         DateTime, server_default=func.now()
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class DatasetSnapshot(Base):
+    """A durable data-scope and integrity proof for reproducible runs."""
+
+    __tablename__ = "dataset_snapshots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    name: Mapped[str | None] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_by: Mapped[str | None] = mapped_column(String(80))
+    symbols_json: Mapped[list[str]] = mapped_column(JSON)
+    date_start: Mapped[datetime] = mapped_column(DateTime)
+    date_end: Mapped[datetime] = mapped_column(DateTime)
+    schemas_json: Mapped[list[str]] = mapped_column(JSON)
+    r2_inventory_hash: Mapped[str | None] = mapped_column(String(64))
+    research_events_manifest_sha256: Mapped[str | None] = mapped_column(String(64))
+    partition_count: Mapped[int] = mapped_column(Integer)
+    total_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    roll_map_version: Mapped[str | None] = mapped_column(String(40))
+    known_exclusions_json: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON)
+    # draft | active | archived
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft", server_default="draft", index=True
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    validation_report_id: Mapped[int | None] = mapped_column(Integer)
+
+    partitions: Mapped[list["DatasetSnapshotPartition"]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+        foreign_keys="DatasetSnapshotPartition.snapshot_id",
+    )
+    backtest_runs: Mapped[list["BacktestRun"]] = relationship(
+        back_populates="dataset_snapshot",
+        foreign_keys="BacktestRun.dataset_snapshot_id",
+    )
+
+
+class DatasetSnapshotPartition(Base):
+    """One hashed storage object included in a dataset snapshot."""
+
+    __tablename__ = "dataset_snapshot_partitions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_id: Mapped[str] = mapped_column(
+        ForeignKey("dataset_snapshots.snapshot_id"), index=True
+    )
+    r2_key: Mapped[str] = mapped_column(String(500), index=True)
+    size: Mapped[int] = mapped_column(BigInteger)
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+
+    snapshot: Mapped[DatasetSnapshot] = relationship(
+        back_populates="partitions",
+        foreign_keys=[snapshot_id],
+    )
 
 
 class Experiment(Base):
@@ -457,7 +524,7 @@ class TrialLockRecord(Base):
     locked_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     candidate_set_yaml: Mapped[str | None] = mapped_column(Text)
     candidate_set_hash: Mapped[str] = mapped_column(String(64), index=True)
-    # Free-form v1 string/hash; no dataset_snapshots table until needed.
+    # Soft v1 reference to dataset_snapshots.snapshot_id; no hard FK yet.
     dataset_snapshot_id: Mapped[str] = mapped_column(String(160), index=True)
     code_commit_sha: Mapped[str] = mapped_column(String(40), index=True)
     pre_registration_md: Mapped[str | None] = mapped_column(Text)

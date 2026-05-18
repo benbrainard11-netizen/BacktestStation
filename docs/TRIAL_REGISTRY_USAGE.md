@@ -15,8 +15,8 @@ Use this for the 2026-05-17 Type-B validation run:
 | `TrialLockRecord` | The lock proving candidates, data, and code were frozen first |
 | `Trial` | The actual run/result, linked back to the lock that governed it |
 
-`dataset_snapshot_id` is a free-form v1 string/hash. There is no
-`dataset_snapshots` table yet.
+`dataset_snapshot_id` is a soft string reference in `trial_lock_records`. Set it
+to a real `dataset_snapshots.snapshot_id` value when one exists.
 
 ## Example: Frozen Type-B Holdout
 
@@ -63,7 +63,7 @@ pre_validation_lock = models.TrialLockRecord(
     locked_at=datetime.utcnow(),
     candidate_set_yaml="- type_b_deploy_candidate_v13_v19\n",
     candidate_set_hash="<sha256-of-candidate-yaml-or-config>",
-    dataset_snapshot_id="expanded-universe-v1:2015-2026",
+    dataset_snapshot_id="<dataset_snapshots.snapshot_id>",
     code_commit_sha="<git-sha-at-lock-time>",
     pre_registration_md=(
         "Pass if 2018-2019 remains positive with comparable avg_R and no "
@@ -125,7 +125,7 @@ pre_test_lock = models.TrialLockRecord(
     locked_at=datetime.utcnow(),
     candidate_set_yaml="- type_b_deploy_candidate_v13_v19\n",
     candidate_set_hash="<sha256-of-final-candidate-config>",
-    dataset_snapshot_id="expanded-universe-v1:2015-2026",
+    dataset_snapshot_id="<dataset_snapshots.snapshot_id>",
     code_commit_sha="<git-sha-at-lock-time>",
     pre_registration_md="Pass if 2026 YTD is pro-rated positive.",
     window_test="2026-01-01:2026-05-17",

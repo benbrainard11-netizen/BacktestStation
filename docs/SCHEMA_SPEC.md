@@ -155,6 +155,61 @@ For the strategy layer (Fractal AMD, etc.) we always work in **America/New_York*
 
 Strategies use ET via `zoneinfo.ZoneInfo("America/New_York")` — see `app/strategies/fractal_amd/signals.py:ET`. Don't hardcode UTC offsets; they shift with daylight saving.
 
+## Metadata DB: Dataset Snapshots
+
+Dataset snapshots prove what data scope and integrity hashes produced a run.
+The creation utility that walks partitions and computes hashes is outside this
+schema; the DB owns the durable record.
+
+### Table: `dataset_snapshots`
+
+One hash-addressable data snapshot.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string | yes | Stable hash-derived identifier, unique across PCs |
+| `name` | string | no | Optional human label |
+| `created_at` | datetime | yes | Snapshot creation timestamp |
+| `created_by` | string | no | Machine/operator label, e.g. `benpc` |
+| `symbols_json` | JSON array | yes | Canonical symbols included |
+| `date_start` | datetime | yes | Inclusive data start |
+| `date_end` | datetime | yes | Inclusive data end or snapshot cutoff |
+| `schemas_json` | JSON array | yes | Included data schemas, e.g. `ohlcv-1m`, `tbbo`, `research_events` |
+| `r2_inventory_hash` | string | no | SHA-256 of `_research_inventory.json` at snapshot time |
+| `research_events_manifest_sha256` | string | no | SHA-256 of `data/research_events/manifest.json` |
+| `partition_count` | integer | yes | Number of included partitions |
+| `total_bytes` | bigint | no | Sum of included partition bytes |
+| `roll_map_version` | string | no | Continuous-contract roll map version, if applicable |
+| `known_exclusions_json` | JSON array | no | `{date, symbol, reason}` exclusions |
+| `status` | string | yes | `draft`, `active`, or `archived` |
+| `notes` | text | no | Human context |
+| `validation_report_id` | integer | no | Reserved pointer to future validation report table |
+
+### Table: `dataset_snapshot_partitions`
+
+One hashed storage object inside a snapshot. Kept separate from the parent row
+so consumers can query "which snapshots used this R2 key/hash?"
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string FK | yes | Owning `dataset_snapshots.snapshot_id` |
+| `r2_key` | string | yes | R2 object key or repo-relative artifact path |
+| `size` | bigint | yes | Object size in bytes |
+| `sha256` | string | yes | Partition/object SHA-256 |
+
+### `backtest_runs` Provenance Columns
+
+These columns are nullable for historical backfill compatibility. Going
+forward, locked walk-forward and production-grade runs should set all three.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `dataset_snapshot_id` | string FK | no | Snapshot used by the run, matching `dataset_snapshots.snapshot_id` |
+| `code_commit_sha` | string | no | Git commit that produced the run |
+| `seed` | integer | no | Deterministic seed for stochastic components |
+
 ## Metadata DB: Trial Registry
 
 The SQLite metadata DB tracks strategy research lineage separately from parquet
@@ -162,9 +217,9 @@ market/research data. The trial registry is the selection-bias ledger: every
 candidate tested inside an audit/search group gets a row, not only the winner.
 It also stores lock records for the two-lock walk-forward protocol.
 
-`dataset_snapshot_id` is intentionally a free-form string/hash in v1. There is
-no `dataset_snapshots` table yet; promote it later when multiple consumers need
-structured dataset metadata.
+`trial_lock_records.dataset_snapshot_id` remains a soft string reference in v1:
+by convention it stores a value matching `dataset_snapshots.snapshot_id`, but
+there is no hard FK constraint on the lock table.
 
 ### Table: `hypotheses`
 
@@ -238,7 +293,7 @@ untouched holdout.
 | `locked_at` | datetime | yes | Timestamp when candidates/code/data were frozen |
 | `candidate_set_yaml` | text | no | Inline YAML or file reference for the locked candidate set |
 | `candidate_set_hash` | string | yes | SHA-256/hash of the locked candidate config |
-| `dataset_snapshot_id` | string | yes | Free-form dataset/catalog snapshot id or hash |
+| `dataset_snapshot_id` | string | yes | Soft reference to `dataset_snapshots.snapshot_id` |
 | `code_commit_sha` | string | yes | Git SHA at lock time |
 | `pre_registration_md` | text | no | Expected result and falsifiable pass/fail claims |
 | `window_train` | string | no | Training/exploratory window, e.g. `2020-01-01:2025-12-31` |
@@ -269,3 +324,4 @@ Schema changes:
 |---|---|---|---|
 | 2026-04-25 | n/a → `1` | tbbo, mbp-1, ohlcv-1m | Initial spec doc; pins existing v1 schemas |
 | 2026-05-17 | metadata DB | hypotheses, trial_groups, trials, trial_lock_records | Added trial registry and lock records for selection-bias visibility and two-lock walk-forward proof |
+| 2026-05-17 | metadata DB | dataset_snapshots, dataset_snapshot_partitions, backtest_runs | Added structured dataset snapshots and run provenance fields |

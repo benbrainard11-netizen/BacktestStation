@@ -20,6 +20,8 @@ EXPECTED_TABLES = {
     "live_heartbeats",
     "notes",
     "knowledge_cards",
+    "dataset_snapshots",
+    "dataset_snapshot_partitions",
     "hypotheses",
     "trial_groups",
     "trials",
