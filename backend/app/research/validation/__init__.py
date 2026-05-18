@@ -28,6 +28,7 @@ from app.research.validation.schema_gates import (  # noqa: F401
     GATES_BY_SCHEMA,
     Gate,
     GateResult,
+    PartitionContext,
     Severity,
     register_gate,
     run_gates_on_partition,
