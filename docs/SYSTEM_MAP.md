@@ -30,6 +30,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/app/engine/` | **core** | Pure backtest engine. No imports from api/db/storage/ingest per CLAUDE.md rule #1. |
 | `backend/app/research/detectors/` | **core** | The 14+ event detectors (FVG, OB, sweep, swing, etc.). Code-reviewed FVG + 22 tests pass. |
 | `backend/app/research/outcomes/` | **core** | Outcome computers (reaction labels). Includes the level-reactions schema from 247. |
+| `backend/app/research/validation/` | **active** | Semantic gate framework + 48 gates across 4 schemas (ohlcv-1m: 14, tbbo: 12, mbp-1: 15, research_events: 7). 58 unit tests pass. Runner + CLI script pending 247's Q2 (`partition_validation_reports` table). See `docs/VALIDATION_DESIGN.md`. |
 | `backend/app/ingest/` | **active** | R2 + Databento ingestion. Has known inventory-overwrite bug (prompt sent to 247). |
 | `backend/scripts/ml/rigorous_backtest_v1.py` ... `v9_ob.py` | **core** | The v8a simulator stack. **FROZEN per validation-lockdown until v21 protocol completes.** |
 | `backend/scripts/ml/v13_registry_audit.py` | **reference** | The audit that found Type B clusters. Already executed; results in archive. |
@@ -151,7 +152,11 @@ Next gates required before paper trade:
 
 | Item | Owner | Status |
 |---|---|---|
-| Dataset snapshots schema build | 247 | Prompt sent (`BEN_247_PROMPT_2026_05_17_DATASET_SNAPSHOTS.md`) |
+| 247 execution queue (Q1-Q8) | 247 | Prompt sent (`BEN_247_PROMPT_2026_05_17_EXECUTION_QUEUE.md`); 247 confirmed started |
+| Dataset snapshots schema (Q1) | 247 | In flight on `dataset-snapshots-v1` |
+| `partition_validation_reports` + findings tables (Q2) | 247 | Queued; unblocks validation runner |
+| `bs` CLI scaffold (Q3) | 247 | Queued per `CLI_DESIGN.md` |
+| Validation library (`backend/app/research/validation/`) | benpc | Done (`16e86d9`) — 48 gates, 58 tests pass. Runner waits on Q2. |
 | Trial registry merged to active branch | benpc | Done (`d910324`) |
 | `reaction.fire_ts` on level-reactions | 247 | Prompt sent (older) |
 | R2 inventory-overwrite bug fix | 247 | Prompt sent (older, has ready-to-apply Python) |
