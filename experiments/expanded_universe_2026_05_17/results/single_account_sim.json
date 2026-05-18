@@ -1,0 +1,142 @@
+{
+  "cap_total_1": {
+    "cap_total": 1,
+    "per_symbol_cap": 1,
+    "n_trades_candidate": 9589,
+    "n_trades_taken": 2575,
+    "blocked_per_symbol": 1564,
+    "blocked_total_cap": 5450,
+    "cum_r_independent_baseline": 4063.49,
+    "cum_r_single_account": 903.28,
+    "retention": 0.2223,
+    "per_family": {
+      "OB strict": {
+        "cum_r": 646.9817589205242,
+        "n": 1834.0
+      },
+      "Sweep reversed (filtered)": {
+        "cum_r": 256.29473114131696,
+        "n": 741.0
+      }
+    },
+    "per_symbol": {
+      "ES.c.0": {
+        "cum_r": 393.9773266768815,
+        "n": 1252.0
+      },
+      "NQ.c.0": {
+        "cum_r": 308.91589500024133,
+        "n": 779.0
+      },
+      "YM.c.0": {
+        "cum_r": 200.38326838471835,
+        "n": 544.0
+      }
+    }
+  },
+  "cap_total_3": {
+    "cap_total": 3,
+    "per_symbol_cap": 1,
+    "n_trades_candidate": 9589,
+    "n_trades_taken": 5945,
+    "blocked_per_symbol": 3644,
+    "blocked_total_cap": 0,
+    "cum_r_independent_baseline": 4063.49,
+    "cum_r_single_account": 2169.48,
+    "retention": 0.5339,
+    "per_family": {
+      "OB strict": {
+        "cum_r": 1401.9685907252554,
+        "n": 3967.0
+      },
+      "Sweep reversed (filtered)": {
+        "cum_r": 767.5075543994087,
+        "n": 1978.0
+      }
+    },
+    "per_symbol": {
+      "ES.c.0": {
+        "cum_r": 544.4793770873392,
+        "n": 1970.0
+      },
+      "NQ.c.0": {
+        "cum_r": 820.6950654965151,
+        "n": 1991.0
+      },
+      "YM.c.0": {
+        "cum_r": 804.3017025408097,
+        "n": 1984.0
+      }
+    }
+  },
+  "cap_total_5": {
+    "cap_total": 5,
+    "per_symbol_cap": 1,
+    "n_trades_candidate": 9589,
+    "n_trades_taken": 5945,
+    "blocked_per_symbol": 3644,
+    "blocked_total_cap": 0,
+    "cum_r_independent_baseline": 4063.49,
+    "cum_r_single_account": 2169.48,
+    "retention": 0.5339,
+    "per_family": {
+      "OB strict": {
+        "cum_r": 1401.9685907252554,
+        "n": 3967.0
+      },
+      "Sweep reversed (filtered)": {
+        "cum_r": 767.5075543994087,
+        "n": 1978.0
+      }
+    },
+    "per_symbol": {
+      "ES.c.0": {
+        "cum_r": 544.4793770873392,
+        "n": 1970.0
+      },
+      "NQ.c.0": {
+        "cum_r": 820.6950654965151,
+        "n": 1991.0
+      },
+      "YM.c.0": {
+        "cum_r": 804.3017025408097,
+        "n": 1984.0
+      }
+    }
+  },
+  "cap_total_10": {
+    "cap_total": 10,
+    "per_symbol_cap": 1,
+    "n_trades_candidate": 9589,
+    "n_trades_taken": 5945,
+    "blocked_per_symbol": 3644,
+    "blocked_total_cap": 0,
+    "cum_r_independent_baseline": 4063.49,
+    "cum_r_single_account": 2169.48,
+    "retention": 0.5339,
+    "per_family": {
+      "OB strict": {
+        "cum_r": 1401.9685907252554,
+        "n": 3967.0
+      },
+      "Sweep reversed (filtered)": {
+        "cum_r": 767.5075543994087,
+        "n": 1978.0
+      }
+    },
+    "per_symbol": {
+      "ES.c.0": {
+        "cum_r": 544.4793770873392,
+        "n": 1970.0
+      },
+      "NQ.c.0": {
+        "cum_r": 820.6950654965151,
+        "n": 1991.0
+      },
+      "YM.c.0": {
+        "cum_r": 804.3017025408097,
+        "n": 1984.0
+      }
+    }
+  }
+}
