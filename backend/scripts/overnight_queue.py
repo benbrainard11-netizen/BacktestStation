@@ -114,6 +114,26 @@ def build_tasks() -> list[Task]:
     ))
 
     # -----------------------------------------------------------------------
+    # PHASE 1.5 — feature profile INITIAL baseline
+    # Uses ALL events + outcomes that already exist in data/research_events/
+    # (mostly 2018-2026 across 14 features × 23 symbols). Fast (~5-15 min).
+    # This is THE main deliverable per the user's ask: "test all features
+    # on all assets and gauge how features behave for each asset/class".
+    # -----------------------------------------------------------------------
+
+    tasks.append(Task(
+        id="03_feature_profiles_baseline",
+        description=(
+            "BASELINE feature profile: per-feature × per-asset behavior using "
+            "ALL events on disk (~4.18M events, 14 features × 23 symbols). "
+            "Produces per_feature_per_symbol.csv, per_asset_class.csv, "
+            "SUMMARY.md. PRIMARY DELIVERABLE."
+        ),
+        cmd=[py, "backend/scripts/ml/v30_feature_profiles.py"],
+        timeout_sec=1800,
+    ))
+
+    # -----------------------------------------------------------------------
     # PHASE 2 — extend other detectors to 2015-2017 (NQ/ES/YM only —
     # other 20 symbols don't have pre-2018 bars)
     # -----------------------------------------------------------------------
@@ -155,77 +175,56 @@ def build_tasks() -> list[Task]:
             ))
 
     # -----------------------------------------------------------------------
-    # PHASE 3 — full-universe (23-symbol) slim anchors 2018-2026 + sim
+    # PHASE 3 — feature profiles (THE main deliverable)
+    # -----------------------------------------------------------------------
+
+    # -----------------------------------------------------------------------
+    # PHASE 3 — outcomes for newly-added 2015-2017 events
+    # The extensions wrote events to the DB but not outcomes. Run each
+    # outcome computer; existing 2018-2026 rows skip (version match);
+    # only new rows compute.
+    # -----------------------------------------------------------------------
+
+    outcome_computers = [
+        "fvg_reactions_v1",
+        "swing_pivot_reactions_v1",
+        "displacement_reactions_v1",
+        "opening_gap_reactions_v1",
+        "orb_reactions_v1",
+        "first_third_reactions_v1",
+        "interval_true_range_reactions_v1",
+        "volume_profile_reactions_v2",
+        "forming_volume_profile_reactions_v1",
+        "time_profile_reactions_v1",
+        "psp_reactions_v1",
+        "smt_htf_reactions_v1",
+        "equal_levels_reactions_v1",
+    ]
+    for i, computer in enumerate(outcome_computers, start=80):
+        tasks.append(Task(
+            id=f"{i:02d}_outcomes_{computer}",
+            description=f"Run outcome computer {computer} (idempotent — skips already-current rows)",
+            cmd=[py, "-m", "app.cli.compute_research_outcomes", "--computer", computer],
+            timeout_sec=1800,
+            cwd=REPO_ROOT / "backend",
+        ))
+
+    # -----------------------------------------------------------------------
+    # PHASE 4 — re-run feature profiles after extensions + outcomes
     # -----------------------------------------------------------------------
 
     tasks.append(Task(
-        id="91_slim_anchors_23sym_2018_2026",
+        id="93_feature_profiles_final",
         description=(
-            "Build slim anchor matrices for 23-symbol universe × full available "
-            "window (2018-2026). Largest single dataset we can build."
+            "FINAL feature profile after extensions + outcomes: captures the "
+            "new 2015-2017 events for the 13 detectors on NQ/ES/YM."
         ),
-        cmd=[
-            py,
-            "backend/scripts/build_slim_anchors_2015_2017.py",
-            "--start", "2018-01-01",
-            "--end", "2026-05-15",
-            "--out-dir",
-            "D:/BacktestStationData/slim_anchors_2018_2026_universe/data/ml/anchors",
-            "--symbols",
-            "6A.c.0,6B.c.0,6C.c.0,6E.c.0,6J.c.0,6N.c.0,6S.c.0,BZ.c.0,CL.c.0,"
-            "ES.c.0,HO.c.0,NG.c.0,NQ.c.0,RB.c.0,RTY.c.0,YM.c.0,ZB.c.0,ZC.c.0,"
-            "ZF.c.0,ZN.c.0,ZS.c.0,ZT.c.0,ZW.c.0",
-        ],
-        timeout_sec=5400,  # 90 min
-        skip_if_exists=Path(
-            "D:/BacktestStationData/slim_anchors_2018_2026_universe/data/ml/anchors/"
-            "ob_snapshots_xctx_strict_slim.parquet"
-        ),
-    ))
-
-    tasks.append(Task(
-        id="92_v28_23sym_2018_2026",
-        description=(
-            "Walk-forward against full-window 23-symbol slim anchors. The "
-            "headline multi-year multi-symbol result."
-        ),
-        cmd=[
-            py,
-            "backend/scripts/ml/v28_slim_anchor_walkforward.py",
-            "--anchor-base", "D:/BacktestStationData/slim_anchors_2018_2026_universe/data/ml/anchors",
-            "--window-start", "2018-01-01",
-            "--window-end", "2026-05-15",
-            "--symbols",
-            "6A.c.0,6B.c.0,6C.c.0,6E.c.0,6J.c.0,6N.c.0,6S.c.0,BZ.c.0,CL.c.0,"
-            "ES.c.0,HO.c.0,NG.c.0,NQ.c.0,RB.c.0,RTY.c.0,YM.c.0,ZB.c.0,ZC.c.0,"
-            "ZF.c.0,ZN.c.0,ZS.c.0,ZT.c.0,ZW.c.0",
-        ],
-        timeout_sec=3600,
-        skip_if_exists=Path(
-            "D:/BacktestStationData/slim_anchors_2018_2026_universe/"
-            "v28_simulation_results/rollup.csv"
-        ),
-    ))
-
-    tasks.append(Task(
-        id="93_v29_per_symbol_2018_2026",
-        description="Per-symbol analysis on the full-window 23-symbol trades.",
-        cmd=[
-            py,
-            "backend/scripts/ml/v29_per_symbol_analysis.py",
-            "--trades-dir", "D:/BacktestStationData/slim_anchors_2018_2026_universe/v28_simulation_results",
-            "--bars-window-start", "2018-01-01",
-            "--bars-window-end", "2026-05-15",
-        ],
+        cmd=[py, "backend/scripts/ml/v30_feature_profiles.py"],
         timeout_sec=1800,
-        skip_if_exists=Path(
-            "D:/BacktestStationData/slim_anchors_2018_2026_universe/"
-            "v28_simulation_results/v29_summary.json"
-        ),
     ))
 
     # -----------------------------------------------------------------------
-    # PHASE 4 — database hygiene
+    # PHASE 5 — database hygiene
     # -----------------------------------------------------------------------
 
     backup_dir = REPO_ROOT / "experiments" / "db_backups"
