@@ -36,6 +36,13 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/scripts/ml/v13_registry_audit.py` | **reference** | The audit that found Type B clusters. Already executed; results in archive. |
 | `backend/scripts/ml/v15-v19_*.py` | **reference** | Slippage / sanity / TBBO / strict-label checks from this weekend's validation chain. Executed. |
 | `backend/scripts/ml/v20_locked_walkforward.py` | **reference** | The locked walk-forward executor. Completed; result is PARTIAL FAIL. |
+| `backend/scripts/ml/v22-v25_*.py` | **reference** | 4 paper-trade gates (roll-anomaly, block bootstrap, fill-model torture, single-account portfolio). 3 PASS, 1 FAIL (gate 4 retention 53.5% < 70%). |
+| `backend/scripts/ml/v26_concurrency_diagnosis.py` | **reference** | Decomposed gate-4 fail: half blocks same-direction (correlated, OK), half opposite-direction (would net out IRL). |
+| `backend/scripts/ml/v27_expanded_universe.py` | **reference** | NQ+ES+YM walk-forward (YM was unused in v20). +60% absolute R, retention still 53%. |
+| `backend/scripts/ml/v28_slim_anchor_walkforward.py` | **active** | Walk-forward against slim anchor matrices (v19-style label). Validated on 2018-2019 (within 15% of v27 baseline). Used for 2015-2017 fresh holdout. |
+| `backend/scripts/ml/v29_per_symbol_analysis.py` | **active** | Per-symbol cum_R + liquidity profile + 4-universe single-account retention. |
+| `backend/scripts/generate_events_2015_2017.py` | **active** | Generates OB+Sweep events 2015-2017 via run_scan (idempotent). 23,021 events / 11.8 min runtime. |
+| `backend/scripts/build_slim_anchors_2015_2017.py` | **active** | Builds slim anchor parquet from research events + recomputed strict label. Symbol-configurable. |
 | `backend/scripts/ml/tbbo_resolver.py` | **active** | Reusable TBBO honest-fill resolver. Should be kept for v21. |
 | `backend/scripts/ml/v14_*.py` | **deprecated** | level-reactions audit attempt — null result, waiting on `reaction.fire_ts` schema from 247. |
 | `backend/tests/test_trial_registry.py` | **core** | Trial registry tests (3, all pass). |
