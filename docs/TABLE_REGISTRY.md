@@ -42,6 +42,8 @@ These tables exist in `backend/app/db/models.py` and `_run_data_migrations`, but
 | `dataset_snapshots` | core | Immutable record of data state at a snapshot time | `dataset-snapshots-v2` (Q1) |
 | `dataset_snapshot_partitions` | core | One row per hashed object included in a snapshot | `dataset-snapshots-v2` (Q1) |
 | `dataset_snapshot_inputs` | core | Source manifests/inventories/data roots used to derive a snapshot | `dataset-snapshots-v2` (Q1) |
+| `partition_validation_reports` | core | Aggregate validation report for a dataset snapshot | `validation-reports-v1` (Q2) |
+| `partition_validation_findings` | core | Per-partition gate findings attached to a validation report | `validation-reports-v1` (Q2) |
 
 ## Columns shipped but not yet migrated into this DB
 
@@ -54,6 +56,7 @@ next backend startup.
 | `backtest_runs.dataset_snapshot_id` | core | Run-level data provenance | `dataset-snapshots-v2` (Q1) |
 | `backtest_runs.code_commit_sha` | core | Run-level code identity | `dataset-snapshots-v2` (Q1) |
 | `backtest_runs.seed` | active | Reproducibility for randomized strategies | `dataset-snapshots-v2` (Q1) |
+| `dataset_snapshots.validation_report_id` | core | Latest/report pointer for snapshot validation | `validation-reports-v1` (Q2) |
 
 ## Tables on the wishlist (not yet asked for)
 
@@ -61,7 +64,6 @@ These would fit the operating spine but no prompt has been sent:
 
 | Table (proposed) | Status (would be) | Purpose | Owner |
 |---|---|---|---|
-| `partition_validation_reports` | core | Partition-level integrity proofs (row count, hashes, gap counts, etc.) | 247 (future ask) |
 | `strategy_status_transitions` | active | Audit log of candidate lifecycle changes | 247 (future ask) |
 | `bug_exceptions` | active | Records bug-fix exceptions during locked tests | 247 (future ask) — currently JSON in `trial_lock_records.bug_exceptions_after_lock_json` |
 

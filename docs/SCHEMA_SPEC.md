@@ -226,6 +226,47 @@ forward, locked walk-forward and production-grade runs should set all three.
 | `code_commit_sha` | string | no | Git commit that produced the run |
 | `seed` | integer | no | Deterministic seed for stochastic components |
 
+## Metadata DB: Partition Validation Reports
+
+Partition validation reports store semantic/integrity gate results for a
+dataset snapshot. The validation runner is owned outside this schema work; the
+DB stores the durable report and findings it emits.
+
+### Table: `partition_validation_reports`
+
+One aggregate validation report for a snapshot.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string | yes | Snapshot being validated, matching `dataset_snapshots.snapshot_id` by convention |
+| `generated_at` | datetime | yes | Report generation timestamp |
+| `generator_version` | string | no | Validator/version identifier |
+| `total_partitions` | integer | yes | Number of partitions checked |
+| `partitions_pass` | integer | yes | Count of partitions without warn/fail findings |
+| `partitions_warn` | integer | yes | Count of partitions with warning findings |
+| `partitions_fail` | integer | yes | Count of partitions with failure findings |
+| `summary_json` | text | no | Serialized compact summary |
+| `status` | string | yes | `completed`, `failed`, or other runner status |
+| `notes` | text | no | Human context |
+
+### Table: `partition_validation_findings`
+
+One gate result attached to a validation report.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `report_id` | integer FK | yes | Owning `partition_validation_reports.id` |
+| `partition_r2_key` | string | yes | R2 object key for the checked partition |
+| `schema` | string | yes | Data schema, e.g. `ohlcv-1m`, `tbbo`, `mbp1` |
+| `symbol` | string | no | Symbol if partition is symbol-scoped |
+| `date` | string | no | YYYY-MM-DD partition date if applicable |
+| `gate_name` | string | yes | Validation gate name |
+| `severity` | string | yes | `pass`, `warn`, or `fail` |
+| `message` | text | no | Human-readable finding |
+| `details_json` | text | no | Serialized structured details |
+
 ## Metadata DB: Trial Registry
 
 The SQLite metadata DB tracks strategy research lineage separately from parquet
@@ -341,3 +382,4 @@ Schema changes:
 | 2026-04-25 | n/a → `1` | tbbo, mbp-1, ohlcv-1m | Initial spec doc; pins existing v1 schemas |
 | 2026-05-17 | metadata DB | hypotheses, trial_groups, trials, trial_lock_records | Added trial registry and lock records for selection-bias visibility and two-lock walk-forward proof |
 | 2026-05-17 | metadata DB | dataset_snapshots, dataset_snapshot_partitions, dataset_snapshot_inputs, backtest_runs | Added structured dataset snapshots and run provenance fields |
+| 2026-05-17 | metadata DB | partition_validation_reports, partition_validation_findings, dataset_snapshots | Added partition validation report storage and latest-report pointer |

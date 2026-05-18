@@ -465,6 +465,53 @@ def _run_data_migrations(engine: Engine) -> None:
                     ")"
                 )
             )
+        if inspector.has_table("dataset_snapshots"):
+            snapshot_columns = {
+                c["name"] for c in inspector.get_columns("dataset_snapshots")
+            }
+            if "validation_report_id" not in snapshot_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE dataset_snapshots "
+                        "ADD COLUMN validation_report_id INTEGER"
+                    )
+                )
+        if not inspector.has_table("partition_validation_reports"):
+            connection.execute(
+                text(
+                    "CREATE TABLE partition_validation_reports ("
+                    " id INTEGER PRIMARY KEY,"
+                    " snapshot_id VARCHAR(64) NOT NULL,"
+                    " generated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " generator_version VARCHAR(40),"
+                    " total_partitions INTEGER NOT NULL,"
+                    " partitions_pass INTEGER NOT NULL,"
+                    " partitions_warn INTEGER NOT NULL,"
+                    " partitions_fail INTEGER NOT NULL,"
+                    " summary_json TEXT,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'completed',"
+                    " notes TEXT"
+                    ")"
+                )
+            )
+        if not inspector.has_table("partition_validation_findings"):
+            connection.execute(
+                text(
+                    "CREATE TABLE partition_validation_findings ("
+                    " id INTEGER PRIMARY KEY,"
+                    " report_id INTEGER NOT NULL "
+                    "REFERENCES partition_validation_reports(id),"
+                    " partition_r2_key VARCHAR(400) NOT NULL,"
+                    " schema VARCHAR(40) NOT NULL,"
+                    " symbol VARCHAR(20),"
+                    " date VARCHAR(10),"
+                    " gate_name VARCHAR(60) NOT NULL,"
+                    " severity VARCHAR(10) NOT NULL,"
+                    " message TEXT,"
+                    " details_json TEXT"
+                    ")"
+                )
+            )
         for index_name, table_name, column in [
             ("ix_dataset_snapshots_snapshot_id", "dataset_snapshots", "snapshot_id"),
             ("ix_dataset_snapshots_status", "dataset_snapshots", "status"),
@@ -503,6 +550,21 @@ def _run_data_migrations(engine: Engine) -> None:
                 "ix_dataset_snapshot_inputs_sha256",
                 "dataset_snapshot_inputs",
                 "sha256",
+            ),
+            (
+                "idx_pvr_snapshot",
+                "partition_validation_reports",
+                "snapshot_id",
+            ),
+            (
+                "idx_pvf_report",
+                "partition_validation_findings",
+                "report_id",
+            ),
+            (
+                "idx_pvf_severity",
+                "partition_validation_findings",
+                "severity",
             ),
         ]:
             connection.execute(

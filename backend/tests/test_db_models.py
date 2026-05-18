@@ -23,6 +23,8 @@ EXPECTED_TABLES = {
     "dataset_snapshots",
     "dataset_snapshot_partitions",
     "dataset_snapshot_inputs",
+    "partition_validation_reports",
+    "partition_validation_findings",
     "hypotheses",
     "trial_groups",
     "trials",

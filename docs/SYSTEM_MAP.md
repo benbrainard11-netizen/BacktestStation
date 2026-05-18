@@ -25,7 +25,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 
 | Path | Status | What |
 |---|---|---|
-| `backend/app/db/models.py` | **core** | SQLAlchemy models. Recently added trial registry plus dataset snapshot provenance tables. |
+| `backend/app/db/models.py` | **core** | SQLAlchemy models. Recently added trial registry, dataset snapshots, and validation report tables. |
 | `backend/app/db/session.py` | **core** | DB engine + `_run_data_migrations()`. ALL migrations go here for now (Alembic deferred). |
 | `backend/app/engine/` | **core** | Pure backtest engine. No imports from api/db/storage/ingest per CLAUDE.md rule #1. |
 | `backend/app/research/detectors/` | **core** | The 14+ event detectors (FVG, OB, sweep, swing, etc.). Code-reviewed FVG + 22 tests pass. |
@@ -39,6 +39,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/scripts/ml/v14_*.py` | **deprecated** | level-reactions audit attempt — null result, waiting on `reaction.fire_ts` schema from 247. |
 | `backend/tests/test_trial_registry.py` | **core** | Trial registry tests (3, all pass). |
 | `backend/tests/test_dataset_snapshots.py` | **core** | Dataset snapshot schema/provenance tests. |
+| `backend/tests/test_validation_reports.py` | **core** | Partition validation report schema tests. |
 | `backend/tests/test_liquidity_sweep_reactions.py::test_ob_confirmation_join` | **unknown** | KNOWN pre-existing failure in full suite. Needs investigation (247 lane). |
 
 ### `data/` — local data (gitignored)

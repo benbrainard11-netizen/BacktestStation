@@ -371,6 +371,59 @@ class DatasetSnapshotInput(Base):
     )
 
 
+class PartitionValidationReport(Base):
+    """Summary of semantic/integrity validation for one dataset snapshot."""
+
+    __tablename__ = "partition_validation_reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_id: Mapped[str] = mapped_column(String(64), index=True)
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    generator_version: Mapped[str | None] = mapped_column(String(40))
+    total_partitions: Mapped[int] = mapped_column(Integer)
+    partitions_pass: Mapped[int] = mapped_column(Integer)
+    partitions_warn: Mapped[int] = mapped_column(Integer)
+    partitions_fail: Mapped[int] = mapped_column(Integer)
+    summary_json: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(
+        String(20), default="completed", server_default="completed"
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    findings: Mapped[list["PartitionValidationFinding"]] = relationship(
+        back_populates="report",
+        cascade="all, delete-orphan",
+        foreign_keys="PartitionValidationFinding.report_id",
+        order_by="PartitionValidationFinding.id",
+    )
+
+
+class PartitionValidationFinding(Base):
+    """One gate finding emitted by a partition validation report."""
+
+    __tablename__ = "partition_validation_findings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_id: Mapped[int] = mapped_column(
+        ForeignKey("partition_validation_reports.id"), index=True
+    )
+    partition_r2_key: Mapped[str] = mapped_column(String(400))
+    schema: Mapped[str] = mapped_column(String(40))
+    symbol: Mapped[str | None] = mapped_column(String(20))
+    date: Mapped[str | None] = mapped_column(String(10))
+    gate_name: Mapped[str] = mapped_column(String(60))
+    severity: Mapped[str] = mapped_column(String(10), index=True)
+    message: Mapped[str | None] = mapped_column(Text)
+    details_json: Mapped[str | None] = mapped_column(Text)
+
+    report: Mapped[PartitionValidationReport] = relationship(
+        back_populates="findings",
+        foreign_keys=[report_id],
+    )
+
+
 class Experiment(Base):
     """A unit of structured research: hypothesis + baseline + variant + decision.
 
