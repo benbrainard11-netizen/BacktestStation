@@ -16,6 +16,17 @@
 # should be shared intentionally, not committed.
 /exports/
 
+# Database backups (multi-GB sqlite snapshots). Local-only.
+/experiments/db_backups/
+
+# Overnight queue per-task logs (verbose). Keep MASTER_LOG.md only.
+/experiments/overnight_runs/*/[0-9]*.log
+/experiments/overnight_runs/*/0[0-9]_*.log
+/experiments/overnight_runs/*/[0-9][0-9]_*.log
+
+# Detector-run logs from generate_events_* scripts.
+/backend/scripts/logs/
+
 # Python
 __pycache__/
 *.py[cod]
