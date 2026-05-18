@@ -1,0 +1,83 @@
+{
+  "generator": "v22_roll_anomaly_check",
+  "generated_at_utc": "2026-05-18T01:27:09.409437Z",
+  "thresholds": {
+    "inflation_ratio_max": 2.0,
+    "avg_r_ratio_min": 0.5,
+    "avg_r_ratio_max": 2.0
+  },
+  "n_windows": 40,
+  "windows_sample": [
+    [
+      "2017-03-12",
+      "2017-03-18"
+    ],
+    [
+      "2017-06-11",
+      "2017-06-17"
+    ],
+    [
+      "2017-09-10",
+      "2017-09-16"
+    ],
+    [
+      "2017-12-10",
+      "2017-12-16"
+    ],
+    [
+      "2018-03-11",
+      "2018-03-17"
+    ]
+  ],
+  "results": [
+    {
+      "family": "OB strict",
+      "trade_span_start": "2018-01-02",
+      "trade_span_end": "2026-05-08",
+      "span_days": 3049,
+      "roll_days": 231,
+      "expected_roll_share": 0.0758,
+      "n_trades_total": 4359,
+      "n_trades_roll_adjacent": 354,
+      "n_trades_non_adjacent": 4005,
+      "cum_r_total": 1509.26,
+      "cum_r_roll_adjacent": 145.23,
+      "cum_r_non_adjacent": 1364.02,
+      "roll_cum_r_share": 0.0962,
+      "inflation_ratio": 1.27,
+      "avg_r_roll_adjacent": 0.4103,
+      "avg_r_non_adjacent": 0.3406,
+      "avg_r_ratio": 1.205,
+      "checks": {
+        "inflation_ok_le_2x": true,
+        "avg_r_ratio_within_0.5_to_2": true
+      },
+      "passed": true
+    },
+    {
+      "family": "Sweep reversed (filtered)",
+      "trade_span_start": "2018-01-02",
+      "trade_span_end": "2026-05-08",
+      "span_days": 3049,
+      "roll_days": 231,
+      "expected_roll_share": 0.0758,
+      "n_trades_total": 2022,
+      "n_trades_roll_adjacent": 147,
+      "n_trades_non_adjacent": 1875,
+      "cum_r_total": 1042.72,
+      "cum_r_roll_adjacent": 79.25,
+      "cum_r_non_adjacent": 963.47,
+      "roll_cum_r_share": 0.076,
+      "inflation_ratio": 1.003,
+      "avg_r_roll_adjacent": 0.5391,
+      "avg_r_non_adjacent": 0.5139,
+      "avg_r_ratio": 1.049,
+      "checks": {
+        "inflation_ok_le_2x": true,
+        "avg_r_ratio_within_0.5_to_2": true
+      },
+      "passed": true
+    }
+  ],
+  "overall_pass": true
+}

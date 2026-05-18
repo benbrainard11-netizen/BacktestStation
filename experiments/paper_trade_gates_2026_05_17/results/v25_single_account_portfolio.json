@@ -1,0 +1,114 @@
+{
+  "generator": "v25_single_account_portfolio",
+  "generated_at_utc": "2026-05-18T01:33:49.622402Z",
+  "independent_baseline_cum_r": 2551.98,
+  "cum_r_per_family_independent": {
+    "OB strict": 1509.26,
+    "Sweep reversed (filtered)": 1042.72
+  },
+  "configurations": [
+    {
+      "cfg": {
+        "name": "cap_total_1",
+        "cap_total": 1,
+        "per_symbol_cap": 1
+      },
+      "sim": {
+        "cap_total": 1,
+        "per_symbol_cap": 1,
+        "n_trades_candidate": 6381,
+        "n_trades_taken": 2370,
+        "n_trades_blocked_by_per_symbol": 1408,
+        "n_trades_blocked_by_total_cap": 2603,
+        "cum_r": 827.26,
+        "worst_day_r": -5.56,
+        "max_drawdown_r": -9.23,
+        "breakdown_family": {
+          "OB strict": {
+            "trades_taken": 1628,
+            "cum_r": 553.33
+          },
+          "Sweep reversed (filtered)": {
+            "trades_taken": 742,
+            "cum_r": 273.93
+          }
+        },
+        "breakdown_holdout": {
+          "holdout_1_2018_2019": {
+            "trades_taken": 2239,
+            "cum_r": 770.62
+          },
+          "holdout_2_2026": {
+            "trades_taken": 131,
+            "cum_r": 56.64
+          }
+        },
+        "concurrency_seconds": {
+          "0": 253309500.0,
+          "1": 10091700.0,
+          "2": 0.0,
+          "3": 0.0
+        }
+      },
+      "retention": 0.3242,
+      "threshold": 0.4,
+      "checks": {
+        "retention_ok": false,
+        "both_holdouts_positive": true
+      },
+      "passed": false
+    },
+    {
+      "cfg": {
+        "name": "cap_total_2",
+        "cap_total": 2,
+        "per_symbol_cap": 1
+      },
+      "sim": {
+        "cap_total": 2,
+        "per_symbol_cap": 1,
+        "n_trades_candidate": 6381,
+        "n_trades_taken": 3961,
+        "n_trades_blocked_by_per_symbol": 2420,
+        "n_trades_blocked_by_total_cap": 0,
+        "cum_r": 1365.17,
+        "worst_day_r": -8.93,
+        "max_drawdown_r": -10.7,
+        "breakdown_family": {
+          "OB strict": {
+            "trades_taken": 2633,
+            "cum_r": 870.02
+          },
+          "Sweep reversed (filtered)": {
+            "trades_taken": 1328,
+            "cum_r": 495.16
+          }
+        },
+        "breakdown_holdout": {
+          "holdout_1_2018_2019": {
+            "trades_taken": 3737,
+            "cum_r": 1251.32
+          },
+          "holdout_2_2026": {
+            "trades_taken": 224,
+            "cum_r": 113.85
+          }
+        },
+        "concurrency_seconds": {
+          "0": 251206860.0,
+          "1": 7346640.0,
+          "2": 4847700.0,
+          "3": 0.0
+        }
+      },
+      "retention": 0.5349,
+      "threshold": 0.7,
+      "checks": {
+        "retention_ok": false,
+        "both_holdouts_positive": true
+      },
+      "passed": false
+    }
+  ],
+  "overall_pass": false
+}

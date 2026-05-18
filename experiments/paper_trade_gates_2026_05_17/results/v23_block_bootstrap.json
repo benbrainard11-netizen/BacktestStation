@@ -1,0 +1,90 @@
+{
+  "generator": "v23_block_bootstrap",
+  "generated_at_utc": "2026-05-18T01:28:13.740456Z",
+  "n_resamples_per_block": 10000,
+  "block_sizes_days": [
+    1,
+    5,
+    20
+  ],
+  "trading_days_per_year": 252,
+  "results": [
+    {
+      "family": "OB strict",
+      "n_trade_days": 548,
+      "observed_cum_r": 1509.26,
+      "observed_annual_r": 694.04,
+      "by_block": {
+        "block_1d": {
+          "n_resamples": 10000,
+          "annual_r_mean": 693.438,
+          "annual_r_median": 694.1498,
+          "annual_r_5th": 617.6267,
+          "annual_r_95th": 768.5964,
+          "p_negative_annual_r": 0.0
+        },
+        "block_5d": {
+          "n_resamples": 10000,
+          "annual_r_mean": 694.7223,
+          "annual_r_median": 694.3168,
+          "annual_r_5th": 620.735,
+          "annual_r_95th": 771.6522,
+          "p_negative_annual_r": 0.0
+        },
+        "block_20d": {
+          "n_resamples": 10000,
+          "annual_r_mean": 690.4728,
+          "annual_r_median": 690.0112,
+          "annual_r_5th": 623.6519,
+          "annual_r_95th": 757.5896,
+          "p_negative_annual_r": 0.0
+        }
+      },
+      "checks": {
+        "p_negative_le_5pct_all_blocks": true,
+        "5th_percentile_positive_any_block": true,
+        "median_within_0.5_to_2x_observed": true
+      },
+      "passed": true
+    },
+    {
+      "family": "Sweep reversed (filtered)",
+      "n_trade_days": 526,
+      "observed_cum_r": 1042.72,
+      "observed_annual_r": 499.55,
+      "by_block": {
+        "block_1d": {
+          "n_resamples": 10000,
+          "annual_r_mean": 499.7167,
+          "annual_r_median": 499.804,
+          "annual_r_5th": 431.4913,
+          "annual_r_95th": 569.1937,
+          "p_negative_annual_r": 0.0
+        },
+        "block_5d": {
+          "n_resamples": 10000,
+          "annual_r_mean": 496.2107,
+          "annual_r_median": 496.2492,
+          "annual_r_5th": 433.0909,
+          "annual_r_95th": 560.1915,
+          "p_negative_annual_r": 0.0
+        },
+        "block_20d": {
+          "n_resamples": 10000,
+          "annual_r_mean": 490.8708,
+          "annual_r_median": 490.6679,
+          "annual_r_5th": 430.1531,
+          "annual_r_95th": 550.628,
+          "p_negative_annual_r": 0.0
+        }
+      },
+      "checks": {
+        "p_negative_le_5pct_all_blocks": true,
+        "5th_percentile_positive_any_block": true,
+        "median_within_0.5_to_2x_observed": true
+      },
+      "passed": true
+    }
+  ],
+  "overall_pass": true
+}

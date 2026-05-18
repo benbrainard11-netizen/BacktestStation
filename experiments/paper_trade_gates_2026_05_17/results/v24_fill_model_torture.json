@@ -1,0 +1,84 @@
+{
+  "generator": "v24_fill_model_torture",
+  "generated_at_utc": "2026-05-18T01:32:21.914621Z",
+  "volume_thresholds": [
+    10,
+    25,
+    100
+  ],
+  "results": [
+    {
+      "family": "OB strict",
+      "n_trades": 4359,
+      "cum_r_total": 1509.26,
+      "n_bars_with_data": 4359,
+      "pct_out_of_range_INFORMATIONAL": 63.8449,
+      "missing_bar_dates": {},
+      "by_threshold": {
+        "vol_gate_ge_10": {
+          "threshold_contracts": 10,
+          "n_trades_kept": 4086,
+          "n_trades_dropped": 273,
+          "cum_r_kept": 1431.9,
+          "cum_r_retention": 0.9487
+        },
+        "vol_gate_ge_25": {
+          "threshold_contracts": 25,
+          "n_trades_kept": 3713,
+          "n_trades_dropped": 646,
+          "cum_r_kept": 1355.98,
+          "cum_r_retention": 0.8984
+        },
+        "vol_gate_ge_100": {
+          "threshold_contracts": 100,
+          "n_trades_kept": 2618,
+          "n_trades_dropped": 1741,
+          "cum_r_kept": 1043.26,
+          "cum_r_retention": 0.6912
+        }
+      },
+      "checks": {
+        "retention_ge_80pct_at_vol25": true,
+        "retention_ge_90pct_at_vol10": true
+      },
+      "passed": true
+    },
+    {
+      "family": "Sweep reversed (filtered)",
+      "n_trades": 2022,
+      "cum_r_total": 1042.72,
+      "n_bars_with_data": 2022,
+      "pct_out_of_range_INFORMATIONAL": 49.1592,
+      "missing_bar_dates": {},
+      "by_threshold": {
+        "vol_gate_ge_10": {
+          "threshold_contracts": 10,
+          "n_trades_kept": 1997,
+          "n_trades_dropped": 25,
+          "cum_r_kept": 1023.9,
+          "cum_r_retention": 0.982
+        },
+        "vol_gate_ge_25": {
+          "threshold_contracts": 25,
+          "n_trades_kept": 1961,
+          "n_trades_dropped": 61,
+          "cum_r_kept": 998.58,
+          "cum_r_retention": 0.9577
+        },
+        "vol_gate_ge_100": {
+          "threshold_contracts": 100,
+          "n_trades_kept": 1687,
+          "n_trades_dropped": 335,
+          "cum_r_kept": 826.66,
+          "cum_r_retention": 0.7928
+        }
+      },
+      "checks": {
+        "retention_ge_80pct_at_vol25": true,
+        "retention_ge_90pct_at_vol10": true
+      },
+      "passed": true
+    }
+  ],
+  "overall_pass": true
+}
