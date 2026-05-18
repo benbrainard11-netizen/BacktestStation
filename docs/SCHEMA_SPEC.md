@@ -155,6 +155,118 @@ For the strategy layer (Fractal AMD, etc.) we always work in **America/New_York*
 
 Strategies use ET via `zoneinfo.ZoneInfo("America/New_York")` — see `app/strategies/fractal_amd/signals.py:ET`. Don't hardcode UTC offsets; they shift with daylight saving.
 
+## Metadata DB: Dataset Snapshots
+
+Dataset snapshots prove what data scope and integrity hashes produced a run.
+The creation utility that walks partitions and computes hashes is outside this
+schema; the DB owns the durable record.
+
+### Table: `dataset_snapshots`
+
+One hash-addressable data snapshot.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string | yes | Stable hash-derived identifier, unique across PCs |
+| `name` | string | no | Optional human label |
+| `created_at` | datetime | yes | Snapshot creation timestamp |
+| `created_by` | string | no | Machine/operator label, e.g. `benpc` |
+| `symbols_json` | JSON array | yes | Canonical symbols included |
+| `date_start` | datetime | yes | Inclusive data start |
+| `date_end` | datetime | yes | Inclusive data end or snapshot cutoff |
+| `schemas_json` | JSON array | yes | Included data schemas, e.g. `ohlcv-1m`, `tbbo`, `research_events` |
+| `r2_inventory_hash` | string | no | SHA-256 of `_research_inventory.json` at snapshot time |
+| `research_events_manifest_sha256` | string | no | SHA-256 of `data/research_events/manifest.json` |
+| `partition_count` | integer | yes | Number of included partitions |
+| `total_bytes` | bigint | no | Sum of included partition bytes |
+| `roll_map_version` | string | no | Continuous-contract roll map version, if applicable |
+| `known_exclusions_json` | JSON array | no | `{date, symbol, reason}` exclusions |
+| `status` | string | yes | `draft`, `active`, or `archived` |
+| `notes` | text | no | Human context |
+| `validation_report_id` | integer | no | Reserved pointer to future validation report table |
+
+### Table: `dataset_snapshot_partitions`
+
+One hashed storage object inside a snapshot. Kept separate from the parent row
+so consumers can query "which snapshots used this R2 key/hash?"
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string FK | yes | Owning `dataset_snapshots.snapshot_id` |
+| `r2_key` | string | yes | R2 object key or repo-relative artifact path |
+| `size` | bigint | yes | Object size in bytes |
+| `sha256` | string | yes | Partition/object SHA-256 |
+
+### Table: `dataset_snapshot_inputs`
+
+One source manifest, inventory, or data root used to derive a snapshot. This
+captures snapshot-level provenance; individual hashed objects stay in
+`dataset_snapshot_partitions`.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string FK | yes | Owning `dataset_snapshots.snapshot_id` |
+| `input_kind` | string | yes | Source category, e.g. `r2_inventory`, `research_events_manifest`, `local_root` |
+| `input_uri` | string | yes | R2 URI, repo-relative path, or local root used by the snapshot utility |
+| `sha256` | string | no | Hash of the manifest/input when available |
+| `size` | bigint | no | Input size in bytes when available |
+| `metadata_json` | JSON object | no | Extra source metadata such as generator version or root schema |
+
+### `backtest_runs` Provenance Columns
+
+These columns are nullable for historical backfill compatibility. Going
+forward, locked walk-forward and production-grade runs should set all three.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `dataset_snapshot_id` | string FK | no | Snapshot used by the run, matching `dataset_snapshots.snapshot_id` |
+| `code_commit_sha` | string | no | Git commit that produced the run |
+| `seed` | integer | no | Deterministic seed for stochastic components |
+
+## Metadata DB: Partition Validation Reports
+
+Partition validation reports store semantic/integrity gate results for a
+dataset snapshot. The validation runner is owned outside this schema work; the
+DB stores the durable report and findings it emits.
+
+### Table: `partition_validation_reports`
+
+One aggregate validation report for a snapshot.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string | yes | Snapshot being validated, matching `dataset_snapshots.snapshot_id` by convention |
+| `generated_at` | datetime | yes | Report generation timestamp |
+| `generator_version` | string | no | Validator/version identifier |
+| `total_partitions` | integer | yes | Number of partitions checked |
+| `partitions_pass` | integer | yes | Count of partitions without warn/fail findings |
+| `partitions_warn` | integer | yes | Count of partitions with warning findings |
+| `partitions_fail` | integer | yes | Count of partitions with failure findings |
+| `summary_json` | text | no | Serialized compact summary |
+| `status` | string | yes | `completed`, `failed`, or other runner status |
+| `notes` | text | no | Human context |
+
+### Table: `partition_validation_findings`
+
+One gate result attached to a validation report.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `report_id` | integer FK | yes | Owning `partition_validation_reports.id` |
+| `partition_r2_key` | string | yes | R2 object key for the checked partition |
+| `schema` | string | yes | Data schema, e.g. `ohlcv-1m`, `tbbo`, `mbp1` |
+| `symbol` | string | no | Symbol if partition is symbol-scoped |
+| `date` | string | no | YYYY-MM-DD partition date if applicable |
+| `gate_name` | string | yes | Validation gate name |
+| `severity` | string | yes | `pass`, `warn`, or `fail` |
+| `message` | text | no | Human-readable finding |
+| `details_json` | text | no | Serialized structured details |
+
 ## Metadata DB: Trial Registry
 
 The SQLite metadata DB tracks strategy research lineage separately from parquet
@@ -162,9 +274,9 @@ market/research data. The trial registry is the selection-bias ledger: every
 candidate tested inside an audit/search group gets a row, not only the winner.
 It also stores lock records for the two-lock walk-forward protocol.
 
-`dataset_snapshot_id` is intentionally a free-form string/hash in v1. There is
-no `dataset_snapshots` table yet; promote it later when multiple consumers need
-structured dataset metadata.
+`trial_lock_records.dataset_snapshot_id` remains a soft string reference in v1:
+by convention it stores a value matching `dataset_snapshots.snapshot_id`, but
+there is no hard FK constraint on the lock table.
 
 ### Table: `hypotheses`
 
@@ -238,7 +350,7 @@ untouched holdout.
 | `locked_at` | datetime | yes | Timestamp when candidates/code/data were frozen |
 | `candidate_set_yaml` | text | no | Inline YAML or file reference for the locked candidate set |
 | `candidate_set_hash` | string | yes | SHA-256/hash of the locked candidate config |
-| `dataset_snapshot_id` | string | yes | Free-form dataset/catalog snapshot id or hash |
+| `dataset_snapshot_id` | string | yes | Soft reference to `dataset_snapshots.snapshot_id` |
 | `code_commit_sha` | string | yes | Git SHA at lock time |
 | `pre_registration_md` | text | no | Expected result and falsifiable pass/fail claims |
 | `window_train` | string | no | Training/exploratory window, e.g. `2020-01-01:2025-12-31` |
@@ -269,3 +381,5 @@ Schema changes:
 |---|---|---|---|
 | 2026-04-25 | n/a → `1` | tbbo, mbp-1, ohlcv-1m | Initial spec doc; pins existing v1 schemas |
 | 2026-05-17 | metadata DB | hypotheses, trial_groups, trials, trial_lock_records | Added trial registry and lock records for selection-bias visibility and two-lock walk-forward proof |
+| 2026-05-17 | metadata DB | dataset_snapshots, dataset_snapshot_partitions, dataset_snapshot_inputs, backtest_runs | Added structured dataset snapshots and run provenance fields |
+| 2026-05-17 | metadata DB | partition_validation_reports, partition_validation_findings, dataset_snapshots | Added partition validation report storage and latest-report pointer |

@@ -13,7 +13,8 @@ Usage (when schema lands):
         --schemas ohlcv-1m,tbbo --name "v21_paper_ready_holdout"
 
 Output:
-    Creates rows in dataset_snapshots + dataset_snapshot_partitions.
+    Creates rows in dataset_snapshots + dataset_snapshot_partitions +
+    dataset_snapshot_inputs once DB writing is wired.
     Returns snapshot_id (sha256-derived stable identifier).
 
 What this does:
@@ -21,7 +22,8 @@ What this does:
     2. Computes per-partition: size, sha256 hash, row count (parquet metadata)
     3. Computes snapshot-level: r2_inventory_hash, manifest hash
     4. Generates a snapshot_id from the union of partition hashes
-    5. Inserts dataset_snapshots row + dataset_snapshot_partitions rows
+    5. Inserts dataset_snapshots, dataset_snapshot_partitions, and
+       dataset_snapshot_inputs rows
     6. Prints snapshot_id for downstream use
 """
 
@@ -160,7 +162,7 @@ def main() -> int:
     print(f"\nDerived snapshot_id: {snapshot_id}")
 
     if args.dry_run:
-        print("\n[dry-run] Would insert into dataset_snapshots + dataset_snapshot_partitions.")
+        print("\n[dry-run] Would insert into dataset_snapshots + partitions + inputs.")
         print("[dry-run] Re-run without --dry-run to commit.")
         return 0
 
@@ -168,7 +170,9 @@ def main() -> int:
     # When 247's dataset_snapshots schema lands, this block becomes:
     #
     # from app.db.session import get_session
-    # from app.db.models import DatasetSnapshot, DatasetSnapshotPartition
+    # from app.db.models import (
+    #     DatasetSnapshot, DatasetSnapshotInput, DatasetSnapshotPartition
+    # )
     # with get_session() as session:
     #     snap = DatasetSnapshot(
     #         snapshot_id=snapshot_id,
@@ -190,6 +194,12 @@ def main() -> int:
     #             schema=p["schema"], symbol=p["symbol"], date=p["date"],
     #             r2_key=p["r2_key"], size_bytes=p["size_bytes"], sha256=p["sha256"],
     #         ))
+    #     session.add(DatasetSnapshotInput(
+    #         snapshot_id=snapshot_id,
+    #         input_kind="research_events_manifest",
+    #         input_uri=str(RESEARCH_EVENTS_MANIFEST.relative_to(ROOT)),
+    #         sha256=manifest_sha,
+    #     ))
     #     session.commit()
     # print(f"Wrote snapshot {snapshot_id} ({len(partitions)} partitions)")
     print()

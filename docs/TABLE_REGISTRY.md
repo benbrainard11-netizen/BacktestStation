@@ -11,12 +11,12 @@ The metadata DB has accumulated tables over many sessions. This registry classif
 | `strategies` | core | 0 | Strategy catalog (parent for versions/runs) |
 | `strategy_versions` | core | 0 | Versioned strategy logic + status (per CANDIDATE_LIFECYCLE) |
 | `strategy_promotion_checks` | active | 0 | Recorded promotion checks per version |
-| `backtest_runs` | core | 0 | Run header (one per backtest execution); needs `dataset_snapshot_id`, `code_commit_sha`, `seed` (247 in flight) |
+| `backtest_runs` | core | 0 | Run header (one per backtest execution); Q1 adds nullable `dataset_snapshot_id`, `code_commit_sha`, `seed` provenance columns |
 | `trades` | core | 0 | Per-trade results from runs |
 | `equity_points` | core | 0 | Equity curve samples |
 | `run_metrics` | core | 0 | One-to-one summary metrics per run |
 | `config_snapshots` | core | 0 | Run config payloads |
-| `datasets` | core | 130,191 | File-inventory cache (R2 partitions, parquets). Not a "dataset snapshot" — that's coming separately. |
+| `datasets` | core | 130,191 | File-inventory cache (R2 partitions, parquets). Separate from immutable `dataset_snapshots`. |
 | `research_events` | core | 4,158,076 | The detector event surface — the most populated table by far |
 | `experiments` | active | 0 | Hypothesis/baseline/variant ledger; partly redundant with new trial registry, will reconcile |
 | `notes` | active | 0 | Research notes attachable to strategy/version/run/trade |
@@ -39,18 +39,24 @@ These tables exist in `backend/app/db/models.py` and `_run_data_migrations`, but
 | `trial_groups` | active | Bounded search/audit groups under a hypothesis | `d910324` |
 | `trials` | active | Individual trial runs with results | `d910324` |
 | `trial_lock_records` | active | Multi-window lock chain (pre_validation / pre_test / final) | `d910324` |
+| `dataset_snapshots` | core | Immutable record of data state at a snapshot time | `dataset-snapshots-v2` (Q1) |
+| `dataset_snapshot_partitions` | core | One row per hashed object included in a snapshot | `dataset-snapshots-v2` (Q1) |
+| `dataset_snapshot_inputs` | core | Source manifests/inventories/data roots used to derive a snapshot | `dataset-snapshots-v2` (Q1) |
+| `partition_validation_reports` | core | Aggregate validation report for a dataset snapshot | `validation-reports-v1` (Q2) |
+| `partition_validation_findings` | core | Per-partition gate findings attached to a validation report | `validation-reports-v1` (Q2) |
 
-## Tables coming soon (247 build in flight)
+## Columns shipped but not yet migrated into this DB
 
-Per `docs/BEN_247_PROMPT_2026_05_17_DATASET_SNAPSHOTS.md`:
+These columns exist in `backend/app/db/models.py` and `_run_data_migrations`,
+but `data/meta.sqlite` was last touched before they landed. They'll appear on
+next backend startup.
 
-| Table | Status (planned) | Purpose |
-|---|---|---|
-| `dataset_snapshots` | core (after merge) | Immutable record of data state at a snapshot time |
-| `dataset_snapshot_partitions` | core (after merge) | One row per partition included in a snapshot |
-| `backtest_runs.dataset_snapshot_id` (NEW COLUMN) | core | Run-level provenance |
-| `backtest_runs.code_commit_sha` (NEW COLUMN) | core | Run-level code identity |
-| `backtest_runs.seed` (NEW COLUMN) | active | Reproducibility for randomized strategies |
+| Column | Status | Purpose | Source branch |
+|---|---|---|---|
+| `backtest_runs.dataset_snapshot_id` | core | Run-level data provenance | `dataset-snapshots-v2` (Q1) |
+| `backtest_runs.code_commit_sha` | core | Run-level code identity | `dataset-snapshots-v2` (Q1) |
+| `backtest_runs.seed` | active | Reproducibility for randomized strategies | `dataset-snapshots-v2` (Q1) |
+| `dataset_snapshots.validation_report_id` | core | Latest/report pointer for snapshot validation | `validation-reports-v1` (Q2) |
 
 ## Tables on the wishlist (not yet asked for)
 
@@ -58,7 +64,6 @@ These would fit the operating spine but no prompt has been sent:
 
 | Table (proposed) | Status (would be) | Purpose | Owner |
 |---|---|---|---|
-| `partition_validation_reports` | core | Partition-level integrity proofs (row count, hashes, gap counts, etc.) | 247 (future ask) |
 | `strategy_status_transitions` | active | Audit log of candidate lifecycle changes | 247 (future ask) |
 | `bug_exceptions` | active | Records bug-fix exceptions during locked tests | 247 (future ask) — currently JSON in `trial_lock_records.bug_exceptions_after_lock_json` |
 
