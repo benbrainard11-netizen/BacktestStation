@@ -89,8 +89,11 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 - `docs/ARCHITECTURE.md` — system design
 - `docs/ROADMAP.md` — direction
 - `docs/SCHEMA_SPEC.md` — warehouse schemas
-- `docs/STATUS_TAXONOMY.md` — this taxonomy
+- `docs/STATUS_TAXONOMY.md` — taxonomy rules
 - `docs/SYSTEM_MAP.md` — this file
+- `docs/OPERATING_RULES.md` — the 5 non-negotiables
+- `docs/CANDIDATE_LIFECYCLE.md` — strategy candidate state machine
+- `docs/TABLE_REGISTRY.md` — every DB table classified
 
 **Active (recent, in use):**
 - `docs/TYPE_B_DEPLOY_CANDIDATE_2026_05_17.md` — current deploy candidate writeup
@@ -114,8 +117,15 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 |---|---|---|
 | `scripts/check_doc_drift.py` | **active** | Catches test-count drift between README and reality. |
 | `scripts/build_audit_bundle.py` | **active** | Assembles R2 audit bundle + presigned URL for external review. |
+| `scripts/data_inventory_report.py` | **active** | Factual partition inventory (counts/sizes/hashes/year coverage). Not semantic validation. |
 | `scripts/install_*.ps1` | **reference** | Scheduled-task installers. |
 | `scripts/mirror_to_husky.ps1` | **reference** | Collaborator data mirroring. |
+
+### `backend/scripts/data/` — backend data utilities
+
+| Path | Status | What |
+|---|---|---|
+| `backend/scripts/data/create_snapshot.py` | **active** (skeleton) | Creates dataset snapshots; DB write block is a PLACEHOLDER until 247's `dataset-snapshots-v1` branch lands. Walks data, computes hashes, derives snapshot_id deterministically. |
 
 ## Current deploy candidate
 
