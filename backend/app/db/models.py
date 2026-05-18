@@ -317,6 +317,13 @@ class DatasetSnapshot(Base):
         back_populates="snapshot",
         cascade="all, delete-orphan",
         foreign_keys="DatasetSnapshotPartition.snapshot_id",
+        order_by="DatasetSnapshotPartition.id",
+    )
+    inputs: Mapped[list["DatasetSnapshotInput"]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+        foreign_keys="DatasetSnapshotInput.snapshot_id",
+        order_by="DatasetSnapshotInput.id",
     )
     backtest_runs: Mapped[list["BacktestRun"]] = relationship(
         back_populates="dataset_snapshot",
@@ -339,6 +346,27 @@ class DatasetSnapshotPartition(Base):
 
     snapshot: Mapped[DatasetSnapshot] = relationship(
         back_populates="partitions",
+        foreign_keys=[snapshot_id],
+    )
+
+
+class DatasetSnapshotInput(Base):
+    """A source manifest or data root used to derive a dataset snapshot."""
+
+    __tablename__ = "dataset_snapshot_inputs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_id: Mapped[str] = mapped_column(
+        ForeignKey("dataset_snapshots.snapshot_id"), index=True
+    )
+    input_kind: Mapped[str] = mapped_column(String(40), index=True)
+    input_uri: Mapped[str] = mapped_column(String(500), index=True)
+    sha256: Mapped[str | None] = mapped_column(String(64), index=True)
+    size: Mapped[int | None] = mapped_column(BigInteger)
+    metadata_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+
+    snapshot: Mapped[DatasetSnapshot] = relationship(
+        back_populates="inputs",
         foreign_keys=[snapshot_id],
     )
 

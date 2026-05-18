@@ -46,6 +46,23 @@ snapshot.partitions.append(
 )
 ```
 
+## Record Snapshot Inputs
+
+Use one `DatasetSnapshotInput` row per source manifest, inventory file, or data
+root that the snapshot utility used to derive the snapshot.
+
+```python
+snapshot.inputs.append(
+    models.DatasetSnapshotInput(
+        input_kind="r2_inventory",
+        input_uri="r2://bsdata-prod/_research_inventory.json",
+        sha256="<inventory-sha256>",
+        size=12345,
+        metadata_json={"generator": "create_snapshot.py"},
+    )
+)
+```
+
 ## Attach Snapshot To A Backtest Run
 
 Historical runs can stay null. Locked walk-forward and production-grade runs
@@ -95,3 +112,16 @@ snapshots = (
 ```
 
 This answers: "which snapshots included this exact data object?"
+
+## Query Snapshots By Input
+
+```python
+snapshots = (
+    session.query(models.DatasetSnapshot)
+    .join(models.DatasetSnapshotInput)
+    .filter(models.DatasetSnapshotInput.input_kind == "r2_inventory")
+    .all()
+)
+```
+
+This answers: "which snapshots were derived from this class of source input?"

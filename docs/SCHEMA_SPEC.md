@@ -199,6 +199,22 @@ so consumers can query "which snapshots used this R2 key/hash?"
 | `size` | bigint | yes | Object size in bytes |
 | `sha256` | string | yes | Partition/object SHA-256 |
 
+### Table: `dataset_snapshot_inputs`
+
+One source manifest, inventory, or data root used to derive a snapshot. This
+captures snapshot-level provenance; individual hashed objects stay in
+`dataset_snapshot_partitions`.
+
+| Column | Type | Required | Semantics |
+|---|---|---|---|
+| `id` | integer | yes | Primary key |
+| `snapshot_id` | string FK | yes | Owning `dataset_snapshots.snapshot_id` |
+| `input_kind` | string | yes | Source category, e.g. `r2_inventory`, `research_events_manifest`, `local_root` |
+| `input_uri` | string | yes | R2 URI, repo-relative path, or local root used by the snapshot utility |
+| `sha256` | string | no | Hash of the manifest/input when available |
+| `size` | bigint | no | Input size in bytes when available |
+| `metadata_json` | JSON object | no | Extra source metadata such as generator version or root schema |
+
 ### `backtest_runs` Provenance Columns
 
 These columns are nullable for historical backfill compatibility. Going
@@ -324,4 +340,4 @@ Schema changes:
 |---|---|---|---|
 | 2026-04-25 | n/a → `1` | tbbo, mbp-1, ohlcv-1m | Initial spec doc; pins existing v1 schemas |
 | 2026-05-17 | metadata DB | hypotheses, trial_groups, trials, trial_lock_records | Added trial registry and lock records for selection-bias visibility and two-lock walk-forward proof |
-| 2026-05-17 | metadata DB | dataset_snapshots, dataset_snapshot_partitions, backtest_runs | Added structured dataset snapshots and run provenance fields |
+| 2026-05-17 | metadata DB | dataset_snapshots, dataset_snapshot_partitions, dataset_snapshot_inputs, backtest_runs | Added structured dataset snapshots and run provenance fields |

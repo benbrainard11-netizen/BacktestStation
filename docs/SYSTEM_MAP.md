@@ -25,7 +25,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 
 | Path | Status | What |
 |---|---|---|
-| `backend/app/db/models.py` | **core** | SQLAlchemy models. Recently added Hypothesis/TrialGroup/Trial/TrialLockRecord (trial registry). |
+| `backend/app/db/models.py` | **core** | SQLAlchemy models. Recently added trial registry plus dataset snapshot provenance tables. |
 | `backend/app/db/session.py` | **core** | DB engine + `_run_data_migrations()`. ALL migrations go here for now (Alembic deferred). |
 | `backend/app/engine/` | **core** | Pure backtest engine. No imports from api/db/storage/ingest per CLAUDE.md rule #1. |
 | `backend/app/research/detectors/` | **core** | The 14+ event detectors (FVG, OB, sweep, swing, etc.). Code-reviewed FVG + 22 tests pass. |
@@ -38,6 +38,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/scripts/ml/tbbo_resolver.py` | **active** | Reusable TBBO honest-fill resolver. Should be kept for v21. |
 | `backend/scripts/ml/v14_*.py` | **deprecated** | level-reactions audit attempt — null result, waiting on `reaction.fire_ts` schema from 247. |
 | `backend/tests/test_trial_registry.py` | **core** | Trial registry tests (3, all pass). |
+| `backend/tests/test_dataset_snapshots.py` | **core** | Dataset snapshot schema/provenance tests. |
 | `backend/tests/test_liquidity_sweep_reactions.py::test_ob_confirmation_join` | **unknown** | KNOWN pre-existing failure in full suite. Needs investigation (247 lane). |
 
 ### `data/` — local data (gitignored)
@@ -98,6 +99,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 **Active (recent, in use):**
 - `docs/TYPE_B_DEPLOY_CANDIDATE_2026_05_17.md` — current deploy candidate writeup
 - `docs/TRIAL_REGISTRY_USAGE.md` — how to use the new trial tables (from 247)
+- `docs/DATASET_SNAPSHOT_USAGE.md` - how to create/query snapshot provenance rows
 - `docs/BEN_247_PROMPT_2026_05_17_*.md` (4 files) — open 247 asks
 - `docs/RESEARCH_VALIDATION_PACKET_2026_05_17.md` — evidence packet for external review
 - `docs/TBBO_RESOLVER_DESIGN_2026_05_17.md` — TBBO design notes
@@ -125,7 +127,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 
 | Path | Status | What |
 |---|---|---|
-| `backend/scripts/data/create_snapshot.py` | **active** (skeleton) | Creates dataset snapshots; DB write block is a PLACEHOLDER until 247's `dataset-snapshots-v1` branch lands. Walks data, computes hashes, derives snapshot_id deterministically. |
+| `backend/scripts/data/create_snapshot.py` | **active** (skeleton) | Creates dataset snapshots. DB schema is now present on the Q1 branch; benpc owns wiring the utility to write snapshot rows. |
 
 ## Current deploy candidate
 
@@ -151,7 +153,7 @@ Next gates required before paper trade:
 
 | Item | Owner | Status |
 |---|---|---|
-| Dataset snapshots schema build | 247 | Prompt sent (`BEN_247_PROMPT_2026_05_17_DATASET_SNAPSHOTS.md`) |
+| Dataset snapshots schema build | 247 | Q1 branch shipped (`dataset-snapshots-v2`) |
 | Trial registry merged to active branch | benpc | Done (`d910324`) |
 | `reaction.fire_ts` on level-reactions | 247 | Prompt sent (older) |
 | R2 inventory-overwrite bug fix | 247 | Prompt sent (older, has ready-to-apply Python) |

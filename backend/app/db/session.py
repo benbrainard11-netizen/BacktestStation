@@ -450,6 +450,21 @@ def _run_data_migrations(engine: Engine) -> None:
                     ")"
                 )
             )
+        if not inspector.has_table("dataset_snapshot_inputs"):
+            connection.execute(
+                text(
+                    "CREATE TABLE dataset_snapshot_inputs ("
+                    " id INTEGER PRIMARY KEY,"
+                    " snapshot_id VARCHAR(64) NOT NULL "
+                    "REFERENCES dataset_snapshots(snapshot_id),"
+                    " input_kind VARCHAR(40) NOT NULL,"
+                    " input_uri VARCHAR(500) NOT NULL,"
+                    " sha256 VARCHAR(64),"
+                    " size BIGINT,"
+                    " metadata_json JSON"
+                    ")"
+                )
+            )
         for index_name, table_name, column in [
             ("ix_dataset_snapshots_snapshot_id", "dataset_snapshots", "snapshot_id"),
             ("ix_dataset_snapshots_status", "dataset_snapshots", "status"),
@@ -467,6 +482,26 @@ def _run_data_migrations(engine: Engine) -> None:
             (
                 "ix_dataset_snapshot_partitions_sha256",
                 "dataset_snapshot_partitions",
+                "sha256",
+            ),
+            (
+                "ix_dataset_snapshot_inputs_snapshot_id",
+                "dataset_snapshot_inputs",
+                "snapshot_id",
+            ),
+            (
+                "ix_dataset_snapshot_inputs_input_kind",
+                "dataset_snapshot_inputs",
+                "input_kind",
+            ),
+            (
+                "ix_dataset_snapshot_inputs_input_uri",
+                "dataset_snapshot_inputs",
+                "input_uri",
+            ),
+            (
+                "ix_dataset_snapshot_inputs_sha256",
+                "dataset_snapshot_inputs",
                 "sha256",
             ),
         ]:

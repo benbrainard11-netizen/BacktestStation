@@ -15,12 +15,17 @@ def test_dataset_snapshot_tables_and_backtest_columns_exist(tmp_path: Path) -> N
     create_all(engine)
     inspector = inspect(engine)
 
-    assert {"dataset_snapshots", "dataset_snapshot_partitions"}.issubset(
-        set(inspector.get_table_names())
-    )
+    assert {
+        "dataset_snapshots",
+        "dataset_snapshot_partitions",
+        "dataset_snapshot_inputs",
+    }.issubset(set(inspector.get_table_names()))
     snapshot_columns = {c["name"] for c in inspector.get_columns("dataset_snapshots")}
     partition_columns = {
         c["name"] for c in inspector.get_columns("dataset_snapshot_partitions")
+    }
+    input_columns = {
+        c["name"] for c in inspector.get_columns("dataset_snapshot_inputs")
     }
     run_columns = {c["name"] for c in inspector.get_columns("backtest_runs")}
 
@@ -42,6 +47,14 @@ def test_dataset_snapshot_tables_and_backtest_columns_exist(tmp_path: Path) -> N
         "validation_report_id",
     }.issubset(snapshot_columns)
     assert {"snapshot_id", "r2_key", "size", "sha256"}.issubset(partition_columns)
+    assert {
+        "snapshot_id",
+        "input_kind",
+        "input_uri",
+        "sha256",
+        "size",
+        "metadata_json",
+    }.issubset(input_columns)
     assert {"dataset_snapshot_id", "code_commit_sha", "seed"}.issubset(run_columns)
 
     index_names = {
@@ -49,6 +62,7 @@ def test_dataset_snapshot_tables_and_backtest_columns_exist(tmp_path: Path) -> N
         for table_name in (
             "dataset_snapshots",
             "dataset_snapshot_partitions",
+            "dataset_snapshot_inputs",
             "backtest_runs",
         )
         for index in inspector.get_indexes(table_name)
@@ -60,6 +74,10 @@ def test_dataset_snapshot_tables_and_backtest_columns_exist(tmp_path: Path) -> N
         "ix_dataset_snapshot_partitions_snapshot_id",
         "ix_dataset_snapshot_partitions_r2_key",
         "ix_dataset_snapshot_partitions_sha256",
+        "ix_dataset_snapshot_inputs_snapshot_id",
+        "ix_dataset_snapshot_inputs_input_kind",
+        "ix_dataset_snapshot_inputs_input_uri",
+        "ix_dataset_snapshot_inputs_sha256",
         "ix_backtest_runs_dataset_snapshot_id",
     }.issubset(index_names)
 
@@ -106,6 +124,24 @@ def test_dataset_snapshot_roundtrip_with_backtest_run_and_partitions(
                 ),
             ]
         )
+        snapshot.inputs.extend(
+            [
+                models.DatasetSnapshotInput(
+                    input_kind="r2_inventory",
+                    input_uri="r2://bsdata-prod/_research_inventory.json",
+                    sha256="c" * 64,
+                    size=500,
+                    metadata_json={"version": "2026-05-17"},
+                ),
+                models.DatasetSnapshotInput(
+                    input_kind="research_events_manifest",
+                    input_uri="repo://data/research_events/manifest.json",
+                    sha256="d" * 64,
+                    size=600,
+                    metadata_json={"source": "repo"},
+                ),
+            ]
+        )
         run = models.BacktestRun(
             symbol="NQ",
             timeframe="1m",
@@ -125,6 +161,10 @@ def test_dataset_snapshot_roundtrip_with_backtest_run_and_partitions(
         assert loaded_run.dataset_snapshot is not None
         assert loaded_run.dataset_snapshot.symbols_json == ["NQ.c.0", "ES.c.0"]
         assert loaded_run.dataset_snapshot.partitions[0].snapshot_id == SNAPSHOT_ID
+        assert loaded_run.dataset_snapshot.inputs[0].input_kind == "r2_inventory"
+        assert loaded_run.dataset_snapshot.inputs[0].metadata_json == {
+            "version": "2026-05-17"
+        }
         assert loaded_run.code_commit_sha == "6727c90307c0f60768fac1eb5d4af5e1075dd3a1"
         assert loaded_run.seed == 247
 
@@ -138,6 +178,16 @@ def test_dataset_snapshot_roundtrip_with_backtest_run_and_partitions(
             .all()
         )
         assert [snap.snapshot_id for snap in snapshots_with_nq_partition] == [
+            SNAPSHOT_ID
+        ]
+
+        snapshots_with_inventory = (
+            session.query(models.DatasetSnapshot)
+            .join(models.DatasetSnapshotInput)
+            .filter(models.DatasetSnapshotInput.input_kind == "r2_inventory")
+            .all()
+        )
+        assert [snap.snapshot_id for snap in snapshots_with_inventory] == [
             SNAPSHOT_ID
         ]
 
@@ -218,6 +268,8 @@ def test_dataset_snapshot_migration_is_idempotent_on_legacy_backtest_runs(
     inspector = inspect(engine)
     run_columns = {c["name"] for c in inspector.get_columns("backtest_runs")}
     assert {"dataset_snapshot_id", "code_commit_sha", "seed"}.issubset(run_columns)
-    assert {"dataset_snapshots", "dataset_snapshot_partitions"}.issubset(
-        set(inspector.get_table_names())
-    )
+    assert {
+        "dataset_snapshots",
+        "dataset_snapshot_partitions",
+        "dataset_snapshot_inputs",
+    }.issubset(set(inspector.get_table_names()))

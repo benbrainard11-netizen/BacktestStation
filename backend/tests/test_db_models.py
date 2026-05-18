@@ -22,6 +22,7 @@ EXPECTED_TABLES = {
     "knowledge_cards",
     "dataset_snapshots",
     "dataset_snapshot_partitions",
+    "dataset_snapshot_inputs",
     "hypotheses",
     "trial_groups",
     "trials",
