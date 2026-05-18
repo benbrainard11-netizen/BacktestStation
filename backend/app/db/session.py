@@ -139,6 +139,28 @@ def _run_data_migrations(engine: Engine) -> None:
             connection.execute(
                 text("ALTER TABLE backtest_runs ADD COLUMN tags JSON")
             )
+        if "dataset_snapshot_id" not in run_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE backtest_runs ADD COLUMN "
+                    "dataset_snapshot_id VARCHAR(64) "
+                    "REFERENCES dataset_snapshots(snapshot_id)"
+                )
+            )
+        if "code_commit_sha" not in run_columns:
+            connection.execute(
+                text("ALTER TABLE backtest_runs ADD COLUMN code_commit_sha VARCHAR(40)")
+            )
+        if "seed" not in run_columns:
+            connection.execute(
+                text("ALTER TABLE backtest_runs ADD COLUMN seed INTEGER")
+            )
+        connection.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_backtest_runs_dataset_snapshot_id "
+                "ON backtest_runs(dataset_snapshot_id)"
+            )
+        )
 
         # 2026-04-25: StrategyVersion.baseline_run_id added for the Forward
         # Drift Monitor — points at the run we expect live behavior to track.
@@ -386,6 +408,74 @@ def _run_data_migrations(engine: Engine) -> None:
                 )
         if inspector.has_table("knowledge_cards"):
             _seed_default_knowledge_cards(connection)
+
+        # 2026-05-17: DatasetSnapshot tables. The snapshot creation utility
+        # lives outside this migration; these tables store its durable data
+        # scope and partition-level integrity proofs.
+        if not inspector.has_table("dataset_snapshots"):
+            connection.execute(
+                text(
+                    "CREATE TABLE dataset_snapshots ("
+                    " id INTEGER PRIMARY KEY,"
+                    " snapshot_id VARCHAR(64) NOT NULL UNIQUE,"
+                    " name VARCHAR(200),"
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    " created_by VARCHAR(80),"
+                    " symbols_json JSON NOT NULL,"
+                    " date_start DATETIME NOT NULL,"
+                    " date_end DATETIME NOT NULL,"
+                    " schemas_json JSON NOT NULL,"
+                    " r2_inventory_hash VARCHAR(64),"
+                    " research_events_manifest_sha256 VARCHAR(64),"
+                    " partition_count INTEGER NOT NULL,"
+                    " total_bytes BIGINT,"
+                    " roll_map_version VARCHAR(40),"
+                    " known_exclusions_json JSON,"
+                    " status VARCHAR(20) NOT NULL DEFAULT 'draft',"
+                    " notes TEXT,"
+                    " validation_report_id INTEGER"
+                    ")"
+                )
+            )
+        if not inspector.has_table("dataset_snapshot_partitions"):
+            connection.execute(
+                text(
+                    "CREATE TABLE dataset_snapshot_partitions ("
+                    " id INTEGER PRIMARY KEY,"
+                    " snapshot_id VARCHAR(64) NOT NULL "
+                    "REFERENCES dataset_snapshots(snapshot_id),"
+                    " r2_key VARCHAR(500) NOT NULL,"
+                    " size BIGINT NOT NULL,"
+                    " sha256 VARCHAR(64) NOT NULL"
+                    ")"
+                )
+            )
+        for index_name, table_name, column in [
+            ("ix_dataset_snapshots_snapshot_id", "dataset_snapshots", "snapshot_id"),
+            ("ix_dataset_snapshots_status", "dataset_snapshots", "status"),
+            ("ix_dataset_snapshots_created_at", "dataset_snapshots", "created_at"),
+            (
+                "ix_dataset_snapshot_partitions_snapshot_id",
+                "dataset_snapshot_partitions",
+                "snapshot_id",
+            ),
+            (
+                "ix_dataset_snapshot_partitions_r2_key",
+                "dataset_snapshot_partitions",
+                "r2_key",
+            ),
+            (
+                "ix_dataset_snapshot_partitions_sha256",
+                "dataset_snapshot_partitions",
+                "sha256",
+            ),
+        ]:
+            connection.execute(
+                text(
+                    f"CREATE INDEX IF NOT EXISTS {index_name} "
+                    f"ON {table_name}({column})"
+                )
+            )
 
         # 2026-05-05: StrategyPromotionCheck table — per-candidate
         # full-robustness verdict (paper / research_only / killed). Fresh
