@@ -1,0 +1,12 @@
+{
+  "protocol_id": "locked_walkforward_v13_v19_2026_05_17",
+  "code_commit_sha": "e2368d0c7f74e7655adf6dcb553bba3e223f299f",
+  "executed_at": "2026-05-18T00:07:58.762582+00:00",
+  "elapsed_min": 19.9,
+  "windows_run": [
+    "locked_holdout_1",
+    "locked_holdout_2"
+  ],
+  "n_families": 4,
+  "n_results": 24
+}

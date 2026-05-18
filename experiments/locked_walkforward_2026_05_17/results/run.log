@@ -1,0 +1,87 @@
+=== V20 — Locked walk-forward execution ===
+Lockfile: C:\Users\benbr\BacktestStation\experiments\locked_walkforward_2026_05_17\lockfile.yaml
+Protocol ID: locked_walkforward_v13_v19_2026_05_17
+Lock status: active
+
+Locked candidate: 4 families
+  - FVG strict                    reverse=False  hour_filter=False
+  - OB strict                     reverse=False  hour_filter=False
+  - Swing reversed                reverse=True  hour_filter=False
+  - Sweep reversed (filtered)     reverse=True  hour_filter=True
+
+======================================================================
+=== WINDOW: locked_holdout_1  [2018-01-01 00:00:00+00:00 -> 2019-12-31 19:55:00+00:00] ===
+======================================================================
+
+--- Family: FVG strict ---
+  events in window: 33,802 (of 190,767 total)
+    [primary_2tick] n=22088  cum_R=  +846.0  avg_R=+0.038  win=0.440  DD=205.0
+    [stress_1tick] n=22088  cum_R= +2082.9  avg_R=+0.094  win=0.461  DD=115.5
+    [no_slippage] n=22088  cum_R= +3318.3  avg_R=+0.150  win=0.483  DD= 70.7
+
+--- Family: OB strict ---
+  events in window: 6,238 (of 35,063 total)
+    [primary_2tick] n= 4117  cum_R= +1391.5  avg_R=+0.338  win=0.578  DD= 15.0
+    [stress_1tick] n= 4117  cum_R= +1648.5  avg_R=+0.400  win=0.602  DD= 14.4
+    [no_slippage] n= 4117  cum_R= +1886.1  avg_R=+0.458  win=0.623  DD= 12.5
+
+--- Family: Swing reversed ---
+  events in window: 8,169 (of 45,458 total)
+    [primary_2tick] n= 5328  cum_R= -1968.0  avg_R=-0.369  win=0.249  DD=1971.2
+    [stress_1tick] n= 5328  cum_R= -1697.1  avg_R=-0.319  win=0.266  DD=1701.4
+    [no_slippage] n= 5328  cum_R= -1404.7  avg_R=-0.264  win=0.286  DD=1410.1
+
+--- Family: Sweep reversed (filtered) ---
+  events in window: 7,131 (of 40,286 total)
+    [primary_2tick]       hour-filter dropped 2826 of 4744 trades
+n= 1908  cum_R=  +958.4  avg_R=+0.502  win=0.537  DD= 17.5
+    [stress_1tick]       hour-filter dropped 2826 of 4744 trades
+n= 1908  cum_R= +1070.3  avg_R=+0.561  win=0.551  DD= 14.6
+    [no_slippage]       hour-filter dropped 2826 of 4744 trades
+n= 1908  cum_R= +1188.5  avg_R=+0.623  win=0.566  DD= 13.4
+
+======================================================================
+=== WINDOW: locked_holdout_2  [2026-01-01 00:00:00+00:00 -> 2026-05-15 23:59:59+00:00] ===
+======================================================================
+
+--- Family: FVG strict ---
+  events in window: 2,471 (of 190,767 total)
+    [primary_2tick] n= 1547  cum_R=  +243.0  avg_R=+0.157  win=0.512  DD= 34.7
+    [stress_1tick] n= 1547  cum_R=  +260.1  avg_R=+0.168  win=0.515  DD= 33.2
+    [no_slippage] n= 1547  cum_R=  +282.3  avg_R=+0.183  win=0.520  DD= 31.1
+
+--- Family: OB strict ---
+  events in window: 364 (of 35,063 total)
+    [primary_2tick] n=  242  cum_R=  +117.8  avg_R=+0.487  win=0.653  DD=  5.6
+    [stress_1tick] n=  242  cum_R=  +122.2  avg_R=+0.505  win=0.657  DD=  5.5
+    [no_slippage] n=  242  cum_R=  +126.8  avg_R=+0.524  win=0.657  DD=  5.4
+
+--- Family: Swing reversed ---
+  events in window: 487 (of 45,458 total)
+    [primary_2tick] n=  307  cum_R=   -75.8  avg_R=-0.247  win=0.319  DD= 78.2
+    [stress_1tick] n=  307  cum_R=   -70.1  avg_R=-0.228  win=0.322  DD= 72.8
+    [no_slippage] n=  307  cum_R=   -67.0  avg_R=-0.218  win=0.329  DD= 70.0
+
+--- Family: Sweep reversed (filtered) ---
+  events in window: 432 (of 40,286 total)
+    [primary_2tick]       hour-filter dropped 171 of 294 trades
+n=  114  cum_R=   +84.3  avg_R=+0.739  win=0.649  DD=  4.0
+    [stress_1tick]       hour-filter dropped 171 of 294 trades
+n=  114  cum_R=   +85.2  avg_R=+0.747  win=0.649  DD=  4.0
+    [no_slippage]       hour-filter dropped 171 of 294 trades
+n=  114  cum_R=   +86.1  avg_R=+0.755  win=0.649  DD=  4.0
+
+======================================================================
+=== HEADLINE: Combined cum_R per window x slippage ===
+======================================================================
+                                      cum_r
+window           slippage                  
+locked_holdout_1 no_slippage    4988.168695
+                 primary_2tick  1227.908505
+                 stress_1tick   3104.595523
+locked_holdout_2 no_slippage     428.229033
+                 primary_2tick   369.225400
+                 stress_1tick    397.318263
+
+=== DONE in 19.9 min ===
+  results: C:\Users\benbr\BacktestStation\experiments\locked_walkforward_2026_05_17\results
