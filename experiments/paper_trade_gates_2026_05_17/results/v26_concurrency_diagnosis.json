@@ -1,0 +1,89 @@
+{
+  "generator": "v26_concurrency_diagnosis",
+  "generated_at_utc": "2026-05-18T01:47:11.395869Z",
+  "independent_baseline_cum_r": 2551.98,
+  "blocks": {
+    "n_total": 2420,
+    "blocked_cum_r": 1186.8,
+    "by_direction": {
+      "same_direction_blocks": 1190,
+      "same_direction_blocked_cum_r": 784.25,
+      "opposite_direction_blocks": 1230,
+      "opposite_direction_blocked_cum_r": 402.55,
+      "interpretation": "same-direction blocks = correlated signals, edge wouldn't be much higher anyway; opposite-direction blocks = positions would net out in a real account, so 'block' model is overly pessimistic"
+    },
+    "by_family_pair": {
+      "OB strict blocks OB strict": {
+        "count": 1028,
+        "blocked_cum_r": 357.83
+      },
+      "OB strict blocks Sweep reversed (filtered)": {
+        "count": 511,
+        "blocked_cum_r": 387.7
+      },
+      "Sweep reversed (filtered) blocks OB strict": {
+        "count": 698,
+        "blocked_cum_r": 281.41
+      },
+      "Sweep reversed (filtered) blocks Sweep reversed (filtered)": {
+        "count": 183,
+        "blocked_cum_r": 159.86
+      }
+    },
+    "by_symbol": {
+      "ES.c.0": {
+        "count": 1224,
+        "blocked_cum_r": 570.36
+      },
+      "NQ.c.0": {
+        "count": 1196,
+        "blocked_cum_r": 616.44
+      }
+    }
+  },
+  "hypotheticals": {
+    "more_symbols": {
+      "2x_symbols": {
+        "hypothetical_factor": 2,
+        "n_taken": 4863,
+        "n_blocked": 1518,
+        "cum_r": 1730.14,
+        "block_rate": 0.2379
+      },
+      "4x_symbols": {
+        "hypothetical_factor": 4,
+        "n_taken": 5467,
+        "n_blocked": 914,
+        "cum_r": 1967.56,
+        "block_rate": 0.1432
+      },
+      "6x_symbols": {
+        "hypothetical_factor": 6,
+        "n_taken": 5793,
+        "n_blocked": 588,
+        "cum_r": 2276.4,
+        "block_rate": 0.0921
+      }
+    },
+    "shorter_window": {
+      "window_60m": {
+        "new_window_minutes": 60,
+        "n_taken": 5597,
+        "n_blocked": 784,
+        "cum_r": 2101.3
+      },
+      "window_120m": {
+        "new_window_minutes": 120,
+        "n_taken": 4750,
+        "n_blocked": 1631,
+        "cum_r": 1663.66
+      },
+      "window_180m": {
+        "new_window_minutes": 180,
+        "n_taken": 4379,
+        "n_blocked": 2002,
+        "cum_r": 1496.65
+      }
+    }
+  }
+}
