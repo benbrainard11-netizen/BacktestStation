@@ -68,7 +68,8 @@ from app.db.models import ResearchEvent  # noqa: E402
 
 # --- config ---
 
-TRADE_SYMBOLS = {"NQ.c.0", "ES.c.0", "YM.c.0"}
+DEFAULT_TRADE_SYMBOLS = {"NQ.c.0", "ES.c.0", "YM.c.0"}
+trade_symbols = DEFAULT_TRADE_SYMBOLS  # mutated by main() if --symbols given
 LOOKAHEAD_MINUTES = 60
 
 OUT_DIR = Path(r"D:/BacktestStationData/expanded_holdout_2015_2017/data/ml/anchors")
@@ -179,7 +180,7 @@ def build_ob_slim(
     skipped = {"non_trade_symbol": 0, "missing_geometry": 0, "label_none": 0}
     for _, ev in ob_events.iterrows():
         sym = ev["primary_symbol"]
-        if sym not in TRADE_SYMBOLS:
+        if sym not in trade_symbols:
             skipped["non_trade_symbol"] += 1
             continue
         ed = _parse_event_data(ev["event_data"])
@@ -226,7 +227,7 @@ def build_sweep_slim(
     skipped = {"non_trade_symbol": 0}
     for _, ev in sweep_events.iterrows():
         sym = ev["primary_symbol"]
-        if sym not in TRADE_SYMBOLS:
+        if sym not in trade_symbols:
             skipped["non_trade_symbol"] += 1
             continue
         # Sweep side: derive from event_type prefix-ish (high → bearish, low → bullish)
@@ -254,7 +255,16 @@ def main() -> int:
     parser.add_argument("--start", required=True, help="Inclusive start date YYYY-MM-DD")
     parser.add_argument("--end", required=True, help="Exclusive end date YYYY-MM-DD")
     parser.add_argument("--out-dir", default=str(OUT_DIR))
+    parser.add_argument(
+        "--symbols",
+        default=None,
+        help="Comma-separated symbols. Default: NQ.c.0,ES.c.0,YM.c.0.",
+    )
     args = parser.parse_args()
+
+    global trade_symbols
+    if args.symbols:
+        trade_symbols = {s.strip() for s in args.symbols.split(",") if s.strip()}
 
     start = date.fromisoformat(args.start)
     end = date.fromisoformat(args.end)
@@ -279,7 +289,7 @@ def main() -> int:
     # Pre-load bars for each trade symbol once over the whole range
     print("\nLoading 1m bars for trade symbols...")
     bars_by_symbol: dict[str, pd.DataFrame] = {}
-    for sym in sorted(TRADE_SYMBOLS):
+    for sym in sorted(trade_symbols):
         t = time_mod.time()
         bars_by_symbol[sym] = _load_bars_cache(sym, start, end + pd.Timedelta(days=2).to_pytimedelta())
         print(f"  {sym}: {len(bars_by_symbol[sym]):,} bars in {time_mod.time()-t:.1f}s")

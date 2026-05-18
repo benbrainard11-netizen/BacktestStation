@@ -90,7 +90,7 @@ FAMILIES = [
 ]
 
 
-SYMBOLS = {"NQ.c.0", "ES.c.0", "YM.c.0"}
+DEFAULT_SYMBOLS = {"NQ.c.0", "ES.c.0", "YM.c.0"}
 
 
 def simulate_picks(picks: pd.DataFrame, bars: BarsCache, *, reverse: bool,
@@ -147,9 +147,19 @@ def main() -> int:
     parser.add_argument("--window-end", required=True)
     parser.add_argument("--out-dir", default=None,
                         help="Default: derived from anchor-base parent.")
+    parser.add_argument(
+        "--symbols",
+        default=None,
+        help="Comma-separated symbol list. Default: NQ.c.0,ES.c.0,YM.c.0.",
+    )
     parser.add_argument("--label", default="auto",
                         help="auto | filter to label==1 only | none (simulate all)")
     args = parser.parse_args()
+
+    if args.symbols:
+        symbols = {s.strip() for s in args.symbols.split(",") if s.strip()}
+    else:
+        symbols = DEFAULT_SYMBOLS
 
     anchor_base = Path(args.anchor_base)
     if not anchor_base.exists():
@@ -171,7 +181,7 @@ def main() -> int:
     print(f"=== V28 — Slim-anchor walk-forward ===")
     print(f"Anchor base: {anchor_base}")
     print(f"Window:      {win_start} → {win_end}")
-    print(f"Symbols:     {sorted(SYMBOLS)}")
+    print(f"Symbols:     {sorted(symbols)}")
     print(f"Out dir:     {out_dir}")
     print()
 
@@ -203,7 +213,7 @@ def main() -> int:
 
         td = simulate_picks(
             window_picks, bars,
-            reverse=fam["reverse"], hour_filter=fam["hour_filter"], symbols=SYMBOLS,
+            reverse=fam["reverse"], hour_filter=fam["hour_filter"], symbols=symbols,
         )
         if td.empty:
             print(f"  no trades; skipping")
