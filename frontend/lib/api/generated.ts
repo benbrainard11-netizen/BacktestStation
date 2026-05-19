@@ -440,6 +440,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/live/active-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Active Candidates */
+        get: operations["read_active_candidates_api_dashboard_live_active_candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/live/drift-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Drift Report */
+        get: operations["read_drift_report_api_dashboard_live_drift_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/live/positions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Positions */
+        get: operations["read_positions_api_dashboard_live_positions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/live/signals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Live Signals */
+        get: operations["read_live_signals_api_dashboard_live_signals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/trials/group/{group_id}": {
         parameters: {
             query?: never;
@@ -2546,6 +2614,136 @@ export interface components {
              * @default 0
              */
             total_partitions: number;
+        };
+        /** DashboardLiveActiveCandidates */
+        DashboardLiveActiveCandidates: {
+            /**
+             * Active Count
+             * @default 0
+             */
+            active_count: number;
+            /** Candidates */
+            candidates?: components["schemas"]["DashboardLiveCandidate"][];
+            /** Message */
+            message: string;
+            /** Paper Ready Candidates */
+            paper_ready_candidates?: components["schemas"]["DashboardLiveCandidate"][];
+            /**
+             * Paper Trade Active
+             * @default false
+             */
+            paper_trade_active: boolean;
+            /**
+             * Start Command Template
+             * @default bs paper start <candidate_id>
+             */
+            start_command_template: string;
+        };
+        /** DashboardLiveCandidate */
+        DashboardLiveCandidate: {
+            /** Candidate Config Id */
+            candidate_config_id?: string | null;
+            /** Candidate Id */
+            candidate_id: number;
+            /** Candidate Name */
+            candidate_name: string;
+            /** Lifecycle Status */
+            lifecycle_status: string;
+            /** Start Command */
+            start_command: string;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Strategy Name */
+            strategy_name?: string | null;
+            /** Strategy Version */
+            strategy_version?: string | null;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+        };
+        /** DashboardLiveDriftReport */
+        DashboardLiveDriftReport: {
+            /** Drift R */
+            drift_r?: number | null;
+            /** Expected R */
+            expected_r?: number | null;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /**
+             * Has Report
+             * @default false
+             */
+            has_report: boolean;
+            /** Message */
+            message: string;
+            /** Realized R */
+            realized_r?: number | null;
+            /**
+             * Status
+             * @default not_started
+             */
+            status: string;
+        };
+        /** DashboardLivePosition */
+        DashboardLivePosition: {
+            /** Avg Price */
+            avg_price?: number | null;
+            /** Opened At */
+            opened_at?: string | null;
+            /** Quantity */
+            quantity: number;
+            /** Side */
+            side: string;
+            /** Symbol */
+            symbol: string;
+            /** Unrealized Pnl */
+            unrealized_pnl?: number | null;
+        };
+        /** DashboardLivePositions */
+        DashboardLivePositions: {
+            /**
+             * Count
+             * @default 0
+             */
+            count: number;
+            /** Message */
+            message: string;
+            /** Positions */
+            positions?: components["schemas"]["DashboardLivePosition"][];
+        };
+        /** DashboardLiveSignal */
+        DashboardLiveSignal: {
+            /**
+             * Executed
+             * @default false
+             */
+            executed: boolean;
+            /** Id */
+            id: number;
+            /** Price */
+            price: number;
+            /** Reason */
+            reason?: string | null;
+            /** Side */
+            side: string;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+        };
+        /** DashboardLiveSignals */
+        DashboardLiveSignals: {
+            /** Count */
+            count: number;
+            /** Signals */
+            signals?: components["schemas"]["DashboardLiveSignal"][];
+            /** Since */
+            since?: string | null;
         };
         /** DashboardLocalCoverage */
         DashboardLocalCoverage: {
@@ -6568,6 +6766,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardR2Status"];
+                };
+            };
+        };
+    };
+    read_active_candidates_api_dashboard_live_active_candidates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLiveActiveCandidates"];
+                };
+            };
+        };
+    };
+    read_drift_report_api_dashboard_live_drift_report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLiveDriftReport"];
+                };
+            };
+        };
+    };
+    read_positions_api_dashboard_live_positions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLivePositions"];
+                };
+            };
+        };
+    };
+    read_live_signals_api_dashboard_live_signals_get: {
+        parameters: {
+            query?: {
+                since?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLiveSignals"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

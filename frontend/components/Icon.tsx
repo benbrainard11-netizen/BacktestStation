@@ -20,6 +20,7 @@ const MAP: Record<IconName, typeof Inbox> = {
   health: Activity,
   trials: FileText,
   candidates: BarChart3,
+  live: Activity,
   bolt: Zap,
   film: Film,
   layers: Layers,

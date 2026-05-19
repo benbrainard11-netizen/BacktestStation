@@ -31,6 +31,7 @@ from app.api import (
 )
 from app.api.dashboard import candidates as dashboard_candidates
 from app.api.dashboard import data_health as dashboard_data_health
+from app.api.dashboard import live as dashboard_live
 from app.api.dashboard import trials as dashboard_trials
 
 app = FastAPI(
@@ -70,6 +71,7 @@ app.include_router(data_health.router, prefix="/api")
 app.include_router(dashboard_data_health.router, prefix="/api")
 app.include_router(dashboard_trials.router, prefix="/api")
 app.include_router(dashboard_candidates.router, prefix="/api")
+app.include_router(dashboard_live.router, prefix="/api")
 app.include_router(autopsy.router, prefix="/api")
 app.include_router(notes.router, prefix="/api")
 app.include_router(experiments.router, prefix="/api")
