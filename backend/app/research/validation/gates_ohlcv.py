@@ -35,8 +35,68 @@ from app.research.validation.schema_gates import (
 SCHEMA = "ohlcv-1m"
 
 # --- threshold defaults (overridable via runner config, not here) ---
+#
+# These are fallback values used when the symbol is not in the per-asset-class
+# table below. Index/FX-tuned. See SESSION_MIN_BY_ASSET_CLASS for the
+# session-aware version.
 MISSING_MINUTES_WARN_THRESHOLD = 50
 MISSING_MINUTES_FAIL_THRESHOLD = 200
+
+# Per-asset-class expected session length (minutes per trading day) for CME
+# globex hours. Approximate; the threshold logic is "warn if missing > 20%
+# of expected, fail if missing > 40%."
+#
+# Why: the full-warehouse validation on 2026-05-18 found 50% of partitions
+# "failing" missing_minutes because non-index symbols structurally have
+# shorter sessions (grains ~14h, bonds/energies ~17-23h). The gate was
+# correctly flagging that grains close overnight — but that's their normal
+# schedule, not bad data. Per docs/experiments/warehouse_validation_2026_05_18/FINDINGS.md.
+SESSION_MIN_BY_ASSET_CLASS = {
+    "index": 1380,   # ~23 hours -- NQ, ES, YM, RTY
+    "fx": 1380,      # ~23 hours -- 6A, 6B, 6C, 6E, 6J, 6N, 6S
+    "energy": 1380,  # ~23 hours -- CL, BZ, HO, RB, NG
+    "metal": 1380,   # ~23 hours -- GC, SI, HG, PA, PL
+    "bond": 1380,    # ~23 hours -- ZB, ZN, ZF, ZT
+    "grain": 830,    # ~14 hours -- ZC, ZS, ZW (CME grains: pause overnight)
+}
+
+ASSET_CLASS_BY_SYMBOL = {
+    # Index
+    "ES.c.0": "index", "NQ.c.0": "index", "YM.c.0": "index", "RTY.c.0": "index",
+    # FX
+    "6A.c.0": "fx", "6B.c.0": "fx", "6C.c.0": "fx", "6E.c.0": "fx",
+    "6J.c.0": "fx", "6N.c.0": "fx", "6S.c.0": "fx",
+    # Energy
+    "CL.c.0": "energy", "BZ.c.0": "energy", "HO.c.0": "energy",
+    "RB.c.0": "energy", "NG.c.0": "energy",
+    # Metal
+    "GC.c.0": "metal", "SI.c.0": "metal", "HG.c.0": "metal",
+    "PA.c.0": "metal", "PL.c.0": "metal",
+    # Bond
+    "ZB.c.0": "bond", "ZN.c.0": "bond", "ZF.c.0": "bond", "ZT.c.0": "bond",
+    # Grain
+    "ZC.c.0": "grain", "ZS.c.0": "grain", "ZW.c.0": "grain",
+}
+
+# Warn/fail as fraction of MISSING / EXPECTED. So warn @ 20% missing, fail @ 40%.
+MISSING_MINUTES_WARN_FRACTION = 0.20
+MISSING_MINUTES_FAIL_FRACTION = 0.40
+
+
+def _expected_session_min_for_symbol(symbol: str | None) -> int:
+    """Return the expected session-length-in-minutes for a symbol.
+
+    Unknown symbols default to 1380 (index-equivalent) which is the most
+    permissive — better to under-warn an unknown than to drown the report
+    in false fails.
+    """
+    if symbol is None:
+        return 1380
+    asset_class = ASSET_CLASS_BY_SYMBOL.get(symbol)
+    if asset_class is None:
+        return 1380
+    return SESSION_MIN_BY_ASSET_CLASS.get(asset_class, 1380)
+
 
 REQUIRED_COLS = (
     "ts_event",
@@ -266,19 +326,23 @@ def gate_timestamp_aligned_1m(
 
 
 def gate_missing_minutes(df: pd.DataFrame, ctx: PartitionContext) -> GateResult:
-    """Count minute-gaps within the partition.
+    """Count minute-gaps within the partition (session-aware).
 
     Heuristic: count missing minutes between the first and last bar in
-    the partition. Doesn't try to match a specific session calendar —
-    that would require contract-by-contract session tables. The threshold
-    is generous (>50 to warn, >200 to fail) because non-RTH partitions
-    legitimately have lots of low-activity minutes that may not have
-    trades.
+    the partition; compare to the symbol's expected daily session length.
+
+    Threshold logic (per-symbol, session-aware):
+      - warn if missing > MISSING_MINUTES_WARN_FRACTION (20%) of expected
+      - fail if missing > MISSING_MINUTES_FAIL_FRACTION (40%) of expected
+
+    Where "expected" = SESSION_MIN_BY_ASSET_CLASS[ctx.symbol's class].
+    Index/FX/energy/metal/bond default to 1380 min (~23h). Grains default
+    to 830 min (~14h). Symbols outside this map fall back to the legacy
+    absolute thresholds (50/200 min) for safety.
 
     Note: an "empty" bar from upstream isn't counted as missing here —
-    we only check the (first, last) range. To detect "the partition is
-    missing the entire afternoon" you need the lineage tool (out of
-    scope for v1).
+    we only check the (first, last) range. Cross-partition lineage is a
+    separate tool (out of scope).
     """
     name = "missing_minutes"
     if df.empty:
@@ -293,26 +357,39 @@ def gate_missing_minutes(df: pd.DataFrame, ctx: PartitionContext) -> GateResult:
     ts = ts.sort_values().drop_duplicates()
     first = ts.iloc[0]
     last = ts.iloc[-1]
-    expected = int((last - first).total_seconds() // 60) + 1
+    expected_in_range = int((last - first).total_seconds() // 60) + 1
     actual = len(ts)
-    missing = max(0, expected - actual)
+    missing = max(0, expected_in_range - actual)
 
     if missing == 0:
         return passing(name)
 
-    if missing > MISSING_MINUTES_FAIL_THRESHOLD:
+    # Session-aware thresholds
+    expected_session = _expected_session_min_for_symbol(ctx.symbol)
+    if ctx.symbol in ASSET_CLASS_BY_SYMBOL:
+        warn_threshold = int(expected_session * MISSING_MINUTES_WARN_FRACTION)
+        fail_threshold = int(expected_session * MISSING_MINUTES_FAIL_FRACTION)
+        threshold_basis = f"asset_class={ASSET_CLASS_BY_SYMBOL[ctx.symbol]}, session={expected_session}min"
+    else:
+        # Unknown symbol — fall back to legacy absolute thresholds
+        warn_threshold = MISSING_MINUTES_WARN_THRESHOLD
+        fail_threshold = MISSING_MINUTES_FAIL_THRESHOLD
+        threshold_basis = "legacy_absolute"
+
+    if missing > fail_threshold:
         severity = "fail"
-    elif missing > MISSING_MINUTES_WARN_THRESHOLD:
+    elif missing > warn_threshold:
         severity = "warn"
     else:
-        # Below warn threshold: small gaps are tolerable, log as pass
-        # with detail so it surfaces only in --strict mode.
         return passing(
             name,
             details={
                 "missing_minutes": missing,
                 "first": str(first),
                 "last": str(last),
+                "warn_threshold": warn_threshold,
+                "fail_threshold": fail_threshold,
+                "threshold_basis": threshold_basis,
                 "below_warn_threshold": True,
             },
         )
@@ -323,15 +400,17 @@ def gate_missing_minutes(df: pd.DataFrame, ctx: PartitionContext) -> GateResult:
         severity=severity,
         message=(
             f"{missing} missing minutes between {first} and {last} "
-            f"(threshold warn>{MISSING_MINUTES_WARN_THRESHOLD}, "
-            f"fail>{MISSING_MINUTES_FAIL_THRESHOLD})"
+            f"(warn>{warn_threshold}, fail>{fail_threshold}; {threshold_basis})"
         ),
         details={
             "missing_minutes": missing,
             "first": str(first),
             "last": str(last),
-            "expected_bars": expected,
+            "expected_bars_in_range": expected_in_range,
             "actual_bars": actual,
+            "warn_threshold": warn_threshold,
+            "fail_threshold": fail_threshold,
+            "threshold_basis": threshold_basis,
         },
     )
 

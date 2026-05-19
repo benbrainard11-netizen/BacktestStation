@@ -37,7 +37,7 @@ OUTPUT:
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -181,7 +181,7 @@ def write_md(results: list[dict]) -> str:
     lines: list[str] = []
     lines.append("# v23 — Block Bootstrap (Paper-Trade Gate 2)")
     lines.append("")
-    lines.append(f"_Generated {datetime.utcnow().isoformat()}Z_")
+    lines.append(f"_Generated {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")}Z_")
     lines.append("")
     lines.append(
         f"Tests whether the v20 OB strict + Sweep reversed cum_R is robust to "
@@ -233,7 +233,7 @@ def main() -> int:
 
     payload = {
         "generator": "v23_block_bootstrap",
-        "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "n_resamples_per_block": N_RESAMPLES,
         "block_sizes_days": list(BLOCK_SIZES),
         "trading_days_per_year": TRADING_DAYS_PER_YEAR,

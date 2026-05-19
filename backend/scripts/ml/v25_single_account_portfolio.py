@@ -46,7 +46,7 @@ OUTPUT:
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -197,7 +197,7 @@ def write_md(
     lines: list[str] = []
     lines.append("# v25 — Single-Account Portfolio Simulator (Paper-Trade Gate 4)")
     lines.append("")
-    lines.append(f"_Generated {datetime.utcnow().isoformat()}Z_")
+    lines.append(f"_Generated {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")}Z_")
     lines.append("")
     lines.append("Tests how much of the v20 independent-family edge survives when "
                  "OB strict + Sweep reversed run on one account with concurrency caps.")
@@ -308,7 +308,7 @@ def main() -> int:
 
     payload = {
         "generator": "v25_single_account_portfolio",
-        "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "independent_baseline_cum_r": round(summary_independent, 2),
         "cum_r_per_family_independent": cum_r_per_family,
         "configurations": [r for r in results.values()],

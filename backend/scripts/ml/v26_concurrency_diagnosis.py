@@ -23,7 +23,7 @@ OUTPUT:
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -324,7 +324,7 @@ def main() -> int:
 
     payload = {
         "generator": "v26_concurrency_diagnosis",
-        "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "independent_baseline_cum_r": round(float(baseline), 2),
         "blocks": {
             "n_total": int(len(blocks)),

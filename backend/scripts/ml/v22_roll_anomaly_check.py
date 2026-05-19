@@ -39,7 +39,7 @@ OUTPUT:
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -216,7 +216,7 @@ def write_md(results: list[dict], windows: list[tuple[date, date]]) -> str:
     lines: list[str] = []
     lines.append("# v22 — Roll-Anomaly Check (Paper-Trade Gate 1)")
     lines.append("")
-    lines.append(f"_Generated {datetime.utcnow().isoformat()}Z_")
+    lines.append(f"_Generated {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")}Z_")
     lines.append("")
     lines.append(
         "Tests whether the v20 OB strict + Sweep reversed result is "
@@ -278,7 +278,7 @@ def main() -> int:
 
     payload = {
         "generator": "v22_roll_anomaly_check",
-        "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "thresholds": {
             "inflation_ratio_max": 2.0,
             "avg_r_ratio_min": 0.5,

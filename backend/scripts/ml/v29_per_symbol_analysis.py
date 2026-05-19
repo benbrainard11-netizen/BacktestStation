@@ -266,7 +266,7 @@ def main() -> int:
             "n_trades_total": int(len(trades)),
             "baseline_cum_r": round(baseline, 2),
             "universes": {k: results[k] for k in results},
-            "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+            "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         }, indent=2, default=str)
     )
     print(f"Wrote: {out_dir / 'v29_summary.json'}")

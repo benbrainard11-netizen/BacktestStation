@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class WarehouseSchemaSummary(BaseModel):
@@ -18,9 +18,16 @@ class WarehouseSchemaSummary(BaseModel):
     Counts are derived from the `datasets` table (populated by
     `dataset_scanner.scan_datasets`), so a stale scan can show stale
     counts — `WarehouseSummary.last_scan_ts` exposes the freshness.
+
+    Field naming note: the JSON wire format uses `"schema"` (the natural
+    name) but the Python attribute is `schema_name` to avoid shadowing
+    `BaseModel.schema()`. Construction via either name works
+    (`populate_by_name=True`).
     """
 
-    schema: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_name: str = Field(alias="schema")
     partition_count: int
     total_bytes: int
     symbols: list[str] = Field(default_factory=list)

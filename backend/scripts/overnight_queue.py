@@ -273,6 +273,54 @@ def _format_duration(seconds: float) -> str:
     return f"{minutes/60:.2f}h"
 
 
+def _kill_process_tree(pid: int) -> None:
+    """Best-effort kill of pid + all descendants. Windows-safe.
+
+    Strategy:
+      1. Try psutil (cross-platform; handles privileged children correctly).
+      2. Fall back to `taskkill /F /T /PID <pid>` on Windows.
+      3. Fall back to os.kill on POSIX.
+    Failure is logged-but-not-raised — caller is already in a degraded
+    state (subprocess timed out).
+    """
+    try:
+        import psutil  # type: ignore[import-not-found]
+    except ImportError:
+        psutil = None  # type: ignore[assignment]
+
+    if psutil is not None:
+        try:
+            parent = psutil.Process(pid)
+            children = parent.children(recursive=True)
+            for child in children:
+                try:
+                    child.kill()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            try:
+                parent.kill()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            return
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass  # fall through to platform fallback
+
+    if os.name == "nt":
+        # /F = force, /T = kill tree
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                capture_output=True, timeout=10,
+            )
+        except Exception:  # noqa: BLE001 — best-effort
+            pass
+    else:
+        try:
+            os.kill(pid, 9)
+        except ProcessLookupError:
+            pass
+
+
 def run_task(task: Task, log_dir: Path) -> dict:
     """Run a single task. Returns a dict with status + timing + log path."""
     log_path = log_dir / f"{task.id}.log"
@@ -297,6 +345,11 @@ def run_task(task: Task, log_dir: Path) -> dict:
     env["PYTHONUNBUFFERED"] = "1"  # so logs flush as we go
     env.update(task.env)
 
+    # Hardened timeout: Popen + wait(timeout) so we can explicitly kill the
+    # process tree on Windows. subprocess.run(timeout=...) calls .kill() on
+    # the parent only; on Windows that frequently fails with Access Denied
+    # when the child has spawned its own children (e.g., a pandas worker
+    # holding a lock). We use psutil if available, fall back to taskkill /T.
     try:
         with log_path.open("w", encoding="utf-8") as logf:
             logf.write(f"# {task.id}\n")
@@ -306,19 +359,30 @@ def run_task(task: Task, log_dir: Path) -> dict:
             logf.write(f"# Timeout: {task.timeout_sec}s\n\n")
             logf.flush()
 
-            proc = subprocess.run(
+            proc = subprocess.Popen(
                 task.cmd,
                 stdout=logf,
                 stderr=subprocess.STDOUT,
                 cwd=task.cwd,
-                timeout=task.timeout_sec,
                 env=env,
             )
-        exit_code = proc.returncode
-        status = "OK" if exit_code == 0 else "FAIL"
-    except subprocess.TimeoutExpired:
-        exit_code = -1
-        status = "TIMEOUT"
+            try:
+                exit_code = proc.wait(timeout=task.timeout_sec)
+                status = "OK" if exit_code == 0 else "FAIL"
+            except subprocess.TimeoutExpired:
+                _kill_process_tree(proc.pid)
+                # Drain any remaining output then surface as timeout
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    pass
+                exit_code = -1
+                status = "TIMEOUT"
+                with log_path.open("a", encoding="utf-8") as logf2:
+                    logf2.write(
+                        f"\n!! TIMEOUT after {task.timeout_sec}s — "
+                        f"killed process tree pid={proc.pid}\n"
+                    )
     except FileNotFoundError as exc:
         with log_path.open("a", encoding="utf-8") as logf:
             logf.write(f"\n!! FileNotFoundError: {exc}\n")

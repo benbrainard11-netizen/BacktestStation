@@ -35,7 +35,7 @@ import argparse
 import json
 import sys
 import time as time_mod
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -284,7 +284,7 @@ def main() -> int:
 
     # Save the config used for this run
     config = {
-        "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "symbols": sorted(symbols),
         "windows": {k: (str(v[0]), str(v[1])) for k, v in WINDOWS.items()},
         "families": [f["name"] for f in families],

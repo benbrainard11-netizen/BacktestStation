@@ -305,29 +305,8 @@ class TestOhlcvGates:
         assert result.details["below_warn_threshold"] is True
 
     def test_missing_minutes_warn(self):
-        # 60-minute gap > 50 warn threshold, < 200 fail threshold
-        base = pd.Timestamp("2026-05-15 14:30:00", tz="UTC")
-        rows = []
-        for offset in (0, 1, 62, 63):
-            rows.append(
-                {
-                    "ts_event": base + pd.Timedelta(minutes=offset),
-                    "symbol": "NQ.c.0",
-                    "open": 1.0,
-                    "high": 2.0,
-                    "low": 0.5,
-                    "close": 1.5,
-                    "volume": 1,
-                    "trade_count": 1,
-                    "vwap": 1.0,
-                }
-            )
-        df = pd.DataFrame(rows)
-        result = gates_ohlcv.gate_missing_minutes(df, _ohlcv_ctx())
-        assert result.severity == "warn"
-
-    def test_missing_minutes_fail(self):
-        # 300-minute gap > 200 fail threshold
+        # NQ.c.0 has 1380-min session -> warn=276, fail=552. A 300-min gap
+        # exceeds warn (276) but is under fail (552).
         base = pd.Timestamp("2026-05-15 14:30:00", tz="UTC")
         rows = []
         for offset in (0, 1, 302, 303):
@@ -346,7 +325,55 @@ class TestOhlcvGates:
             )
         df = pd.DataFrame(rows)
         result = gates_ohlcv.gate_missing_minutes(df, _ohlcv_ctx())
+        assert result.severity == "warn"
+        assert result.details["warn_threshold"] == 276
+        assert result.details["fail_threshold"] == 552
+        assert "index" in result.details["threshold_basis"]
+
+    def test_missing_minutes_fail(self):
+        # 600-minute gap exceeds NQ's fail threshold (552).
+        base = pd.Timestamp("2026-05-15 14:30:00", tz="UTC")
+        rows = []
+        for offset in (0, 1, 602, 603):
+            rows.append(
+                {
+                    "ts_event": base + pd.Timedelta(minutes=offset),
+                    "symbol": "NQ.c.0",
+                    "open": 1.0,
+                    "high": 2.0,
+                    "low": 0.5,
+                    "close": 1.5,
+                    "volume": 1,
+                    "trade_count": 1,
+                    "vwap": 1.0,
+                }
+            )
+        df = pd.DataFrame(rows)
+        result = gates_ohlcv.gate_missing_minutes(df, _ohlcv_ctx())
         assert result.severity == "fail"
+
+    def test_missing_minutes_grain_session_aware(self):
+        # ZS.c.0 (soybeans) is grain class with ~14h session = 830 min.
+        # warn = 166 min, fail = 332 min. A 200-min gap warns; on NQ it'd pass.
+        base = pd.Timestamp("2026-05-15 14:30:00", tz="UTC")
+        rows = []
+        for offset in (0, 1, 202, 203):
+            rows.append(
+                {
+                    "ts_event": base + pd.Timedelta(minutes=offset),
+                    "symbol": "ZS.c.0",
+                    "open": 1.0, "high": 2.0, "low": 0.5, "close": 1.5,
+                    "volume": 1, "trade_count": 1, "vwap": 1.0,
+                }
+            )
+        df = pd.DataFrame(rows)
+        ctx = PartitionContext(
+            schema="ohlcv-1m", symbol="ZS.c.0", date="2026-05-15", timeframe="1m"
+        )
+        result = gates_ohlcv.gate_missing_minutes(df, ctx)
+        assert result.severity == "warn"
+        assert result.details["warn_threshold"] == 166
+        assert "grain" in result.details["threshold_basis"]
 
     def test_required_columns_null(self):
         df = _good_ohlcv_partition()

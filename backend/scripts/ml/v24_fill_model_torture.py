@@ -40,7 +40,7 @@ OUTPUT:
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -227,7 +227,7 @@ def write_md(results: list[dict]) -> str:
     lines: list[str] = []
     lines.append("# v24 — Fill-Model Torture (Paper-Trade Gate 3)")
     lines.append("")
-    lines.append(f"_Generated {datetime.utcnow().isoformat()}Z_")
+    lines.append(f"_Generated {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")}Z_")
     lines.append("")
     lines.append(
         "Tests OHLC-level range consistency + volume credibility of v20 fills "
@@ -286,7 +286,7 @@ def main() -> int:
 
     payload = {
         "generator": "v24_fill_model_torture",
-        "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "volume_thresholds": list(VOL_THRESHOLDS),
         "results": results,
         "overall_pass": all(r.get("passed", False) for r in results),

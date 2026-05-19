@@ -35,7 +35,7 @@ from __future__ import annotations
 import argparse
 import json
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -280,7 +280,7 @@ def write_summary_md(per_sym: pd.DataFrame, per_class: pd.DataFrame, out_dir: Pa
     lines: list[str] = []
     lines.append("# Feature Profiles — per asset + per asset class")
     lines.append("")
-    lines.append(f"_Generated {datetime.utcnow().isoformat()}Z_")
+    lines.append(f"_Generated {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")}Z_")
     lines.append("")
     lines.append(f"Coverage: {per_sym['feature'].nunique()} features × "
                  f"{per_sym['symbol'].nunique()} symbols = "
@@ -363,7 +363,7 @@ def main() -> int:
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[3]
-    run_id = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_dir = Path(args.out_dir) if args.out_dir else (
         repo_root / "experiments" / f"feature_profiles_{run_id}"
     )
