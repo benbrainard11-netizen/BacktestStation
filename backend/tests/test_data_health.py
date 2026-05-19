@@ -142,7 +142,7 @@ def test_warehouse_summary_rolls_up_per_schema(session: Session) -> None:
     assert payload.warehouse.total_partitions == 3
     assert payload.warehouse.total_bytes == 13_000_000
 
-    by_schema = {s.schema: s for s in payload.warehouse.schemas}
+    by_schema = {s.schema_name: s for s in payload.warehouse.schemas}
     assert set(by_schema.keys()) == {"tbbo", "mbp-1"}
     assert by_schema["tbbo"].partition_count == 2
     assert by_schema["tbbo"].symbols == ["ES.c.0", "NQ.c.0"]

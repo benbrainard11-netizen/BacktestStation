@@ -35,24 +35,20 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/scripts/data/create_snapshot.py` | **active** | Builds + persists a `dataset_snapshots` row (wired to 247's Q1 schema). Computes per-partition sha256, manifest hash, deterministic snapshot_id. |
 | `backend/scripts/data/validate_snapshot.py` | **active** | CLI that runs the validation runner against a snapshot_id. Writes `partition_validation_reports` + `partition_validation_findings`. Wrapped by `bs data validate` (Q3). |
 | `backend/app/ingest/` | **active** | R2 + Databento ingestion. Has known inventory-overwrite bug (prompt sent to 247). |
-| `backend/scripts/ml/rigorous_backtest_v1.py` ... `v9_ob.py` | **core** | The v8a simulator stack. **FROZEN per validation-lockdown until v21 protocol completes.** |
-| `backend/scripts/ml/v13_registry_audit.py` | **reference** | The audit that found Type B clusters. Already executed; results in archive. |
-| `backend/scripts/ml/v15-v19_*.py` | **reference** | Slippage / sanity / TBBO / strict-label checks from this weekend's validation chain. Executed. |
-| `backend/scripts/ml/v20_locked_walkforward.py` | **reference** | The locked walk-forward executor. Completed; result is PARTIAL FAIL. |
-| `backend/scripts/ml/v22-v25_*.py` | **reference** | 4 paper-trade gates (roll-anomaly, block bootstrap, fill-model torture, single-account portfolio). 3 PASS, 1 FAIL (gate 4 retention 53.5% < 70%). |
-| `backend/scripts/ml/v26_concurrency_diagnosis.py` | **reference** | Decomposed gate-4 fail: half blocks same-direction (correlated, OK), half opposite-direction (would net out IRL). |
-| `backend/scripts/ml/v27_expanded_universe.py` | **reference** | NQ+ES+YM walk-forward (YM was unused in v20). +60% absolute R, retention still 53%. |
-| `backend/scripts/ml/v28_slim_anchor_walkforward.py` | **active** | Walk-forward against slim anchor matrices (v19-style label). Validated on 2018-2019 (within 15% of v27 baseline). Used for 2015-2017 fresh holdout. |
-| `backend/scripts/ml/v29_per_symbol_analysis.py` | **active** | Per-symbol cum_R + liquidity profile + 4-universe single-account retention. |
-| `backend/scripts/generate_events_2015_2017.py` | **active** | Generates OB+Sweep events 2015-2017 via run_scan (idempotent). 23,021 events / 11.8 min runtime. |
-| `backend/scripts/build_slim_anchors_2015_2017.py` | **active** | Builds slim anchor parquet from research events + recomputed strict label. Symbol-configurable. |
-| `backend/scripts/ml/tbbo_resolver.py` | **active** | Reusable TBBO honest-fill resolver. Should be kept for v21. |
-| `backend/scripts/cli/` | **active** | `bs` operator CLI scaffold: doctor/status/data/snapshot/trial v1 commands. |
-| `backend/scripts/ml/v14_*.py` | **deprecated** | level-reactions audit attempt — null result, waiting on `reaction.fire_ts` schema from 247. |
-| `backend/tests/test_trial_registry.py` | **core** | Trial registry tests (3, all pass). |
-| `backend/tests/test_dataset_snapshots.py` | **core** | Dataset snapshot schema/provenance tests. |
-| `backend/tests/test_validation_reports.py` | **core** | Partition validation report schema tests. |
-| `backend/tests/test_liquidity_sweep_reactions.py::test_ob_confirmation_join` | **unknown** | KNOWN pre-existing failure in full suite. Needs investigation (247 lane). |
+| `backend/scripts/cli/` | **active** | `bs` operator CLI: doctor / status / data / snapshot / trial v1 commands (Q3). |
+| `backend/scripts/data/` | **active** | Snapshot + validation entry points: `create_snapshot.py`, `validate_snapshot.py`, `smoke_validate_partitions.py`. |
+| `backend/scripts/ml/rigorous_backtest_v1.py` ... `v9_ob.py` | **core** | The v8a simulator stack. **FROZEN until v21 protocol completes.** Trade rule, fill model, stop/target sim live here. |
+| `backend/scripts/ml/v13-v20_*.py` | **reference** | Validation chain (May 2026): registry audit (v13), slippage/sanity/TBBO checks (v15-v19), locked walk-forward (v20, PARTIAL FAIL). |
+| `backend/scripts/ml/v22-v29_*.py` | **reference** | Post-v20 research: 4 paper-trade gates (v22-v25), concurrency diagnosis (v26), expanded-universe walk-forwards (v27-v28), per-symbol analysis (v29). See `experiments/paper_trade_gates_2026_05_17/` and `experiments/fresh_holdout_2015_2017/`. |
+| `backend/scripts/ml/v30_feature_profiles.py` | **active** | Per-feature × per-asset behavior profiler. Reads all events + outcomes, writes profile CSVs + SUMMARY. See `experiments/feature_profiles_*/`. |
+| `backend/scripts/ml/tbbo_resolver.py` | **active** | Reusable TBBO honest-fill resolver. Lives here for v21 reuse. |
+| `backend/scripts/ml/v14_*.py` | **deprecated** | level-reactions audit — null result; waiting on `reaction.fire_ts` from 247. |
+| `backend/scripts/generate_events_2015_2017.py` | **active** | Run detectors over 2015-2017 bars; writes events to DB (idempotent). |
+| `backend/scripts/build_slim_anchors_2015_2017.py` | **active** | Build "slim" anchor parquet from research events + recomputed strict label. Symbol-configurable. |
+| `backend/scripts/export_research_events_to_parquet.py` | **active** | Re-export research_events from DB to partitioned parquets when the DB has rows the parquet mirror is missing. |
+| `backend/scripts/overnight_queue.py` | **active** | Sequential subprocess runner for long overnight DB additions + analyses + cleanups. Kill-tree hardened on Windows. |
+| `backend/tests/test_trial_registry.py` + `test_dataset_snapshots.py` + `test_validation_reports.py` + `test_validation_runner.py` + `test_validation_gates.py` + `test_cli.py` + `test_dashboard_data_health.py` | **core** | Schema + registry + CLI + dashboard test suites. ~100 tests across the foundation. |
+| `backend/tests/test_liquidity_sweep_reactions.py::test_ob_confirmation_join` | **unknown** | Pre-existing failure in full suite. Needs investigation (247 lane). |
 
 ### `data/` — local data (gitignored)
 
@@ -136,12 +132,6 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `scripts/install_*.ps1` | **reference** | Scheduled-task installers. |
 | `scripts/mirror_to_husky.ps1` | **reference** | Collaborator data mirroring. |
 
-### `backend/scripts/data/` — backend data utilities
-
-| Path | Status | What |
-|---|---|---|
-| `backend/scripts/data/create_snapshot.py` | **active** (skeleton) | Creates dataset snapshots. DB schema is now present on the Q1 branch; benpc owns wiring the utility to write snapshot rows. |
-
 ## Current deploy candidate
 
 **Status**: paper-trade candidate (NOT real-money deployable yet)
@@ -149,33 +139,36 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 ```
 candidate: OB strict + Sweep reversed (filtered)
 v20 locked walk-forward result: 2-family core passed; 4-family failed
-expected per-year R: 250-350R (base case) / 100-200R (conservative)
-expected per-year $ return on $150K capital: 25-80% (triangulated by 3 reviewers)
-killed: Swing reversed (regime artifact, direction-flip falsifier hit)
+v28 fresh 2015-2017 holdout: ~1,735 R/yr (consistent within 6% of 2018-2019)
+v25 single-account haircut: ~53% retention -> ~590-940 R/yr at cap=2
+expected per-year R live (planning bar): 300-600 R/yr
+killed: Swing reversed (regime artifact -- but unreversed shows 65% hit rate; worth re-test)
 research-only: FVG strict (regime-dependent, not deploy-core)
 ```
 
 Next gates required before paper trade:
-1. Roll-anomaly check (limited — no per-contract bars on disk)
-2. Day/week block bootstrap
-3. Fill-model torture (target-through + volume-gating)
-4. Single-account portfolio simulator
-5. v21 lockfile (the 2-family core, freshly locked)
+1. Roll-anomaly check (v22) ✓ PASS
+2. Day/week block bootstrap (v23) ✓ PASS
+3. Fill-model torture (v24) ✓ PASS
+4. Single-account portfolio simulator (v25) ✗ FAIL (retention 53% vs 70% threshold; diagnosed in v26, partially mitigated by v27/v28)
+5. v21 lockfile (the 2-family core, freshly locked) — pending
+6. Paper-trade infrastructure (live signal generator + drift report) — pending 247 Q8
 
 ## Open coordination items
 
 | Item | Owner | Status |
 |---|---|---|
-| 247 execution queue (Q1-Q8) | 247 | Prompt sent (`BEN_247_PROMPT_2026_05_17_EXECUTION_QUEUE.md`); 247 confirmed started |
-| Dataset snapshots schema (Q1) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
-| `partition_validation_reports` + findings tables (Q2) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
-| `bs` CLI scaffold (Q3) | 247 | Done — merged into `assets/expanded-universe-v1` (`157aa0c`) |
-| Dashboard Data Health backend (Q4) | 247 | Built on `data-health-backend-v1`; ready for review/merge |
-| Validation library (`backend/app/research/validation/`) | benpc | Done (`16e86d9`) — 48 gates, 58 tests pass. Runner can now be wired in (Q2 tables exist). |
-| Trial registry merged to active branch | benpc | Done (`d910324`) |
+| 247 execution queue Q1-Q4 | 247 | Done — all merged (commits `5fe75b7`, `157aa0c`, `bc07134`, `435cffb`) |
+| 247 execution queue Q5 (Data Health frontend) | 247 | Up next per `DASHBOARD_DESIGN.md` |
+| 247 execution queue Q6-Q8 (Trials/Candidates/Live Monitor) | 247 | Queued |
+| Validation library + runner + CLI wiring | benpc | Done (`39e5faf` + `157aa0c`) — 102 tests pass, end-to-end smoke verified |
+| Trial registry | benpc | Done (`d910324`) |
+| Full-warehouse validation report | benpc | Done — 64,843 partitions; only `missing_minutes` calibration warns/fails (now session-aware) + 14 RTY VWAP warnings to investigate |
 | `reaction.fire_ts` on level-reactions | 247 | Prompt sent (older) |
 | R2 inventory-overwrite bug fix | 247 | Prompt sent (older, has ready-to-apply Python) |
-| Pre-existing test failure (sweep reactions ob_confirmation_join) | 247 | Flagged but not in queue yet |
+| Pre-existing test failure (sweep reactions `ob_confirmation_join`) | 247 | Flagged but not in queue yet |
+| forming_volume_profile outcomes timeout | benpc | Re-running on B2 of cleanup pass (no timeout) |
+| Stale research_events parquet (missing 2015-2017 events) | benpc | `export_research_events_to_parquet.py` written; run on demand |
 
 ## Honest gaps (what this map doesn't cover yet)
 
