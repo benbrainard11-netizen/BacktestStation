@@ -18,6 +18,8 @@ import type { IconName } from "@/lib/navigation";
 const MAP: Record<IconName, typeof Inbox> = {
   inbox: Inbox,
   health: Activity,
+  trials: FileText,
+  candidates: BarChart3,
   bolt: Zap,
   film: Film,
   layers: Layers,
