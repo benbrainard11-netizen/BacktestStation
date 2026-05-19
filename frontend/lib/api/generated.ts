@@ -304,6 +304,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/candidates/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Candidates */
+        get: operations["read_candidates_api_dashboard_candidates_list_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/candidates/{candidate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Candidate Detail */
+        get: operations["read_candidate_detail_api_dashboard_candidates__candidate_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/candidates/{candidate_id}/kill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Kill Candidate */
+        post: operations["kill_candidate_api_dashboard_candidates__candidate_id__kill_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/candidates/{candidate_id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Promote Candidate */
+        post: operations["promote_candidate_api_dashboard_candidates__candidate_id__promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/data-health/findings": {
         parameters: {
             query?: never;
@@ -364,6 +432,74 @@ export interface paths {
         };
         /** Read R2 Status */
         get: operations["read_r2_status_api_dashboard_data_health_r2_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/trials/group/{group_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Trial Group Detail */
+        get: operations["read_trial_group_detail_api_dashboard_trials_group__group_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/trials/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Active Trial Groups */
+        get: operations["read_active_trial_groups_api_dashboard_trials_groups_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/trials/hypotheses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Active Hypotheses */
+        get: operations["read_active_hypotheses_api_dashboard_trials_hypotheses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/trials/locks/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Recent Locks */
+        get: operations["read_recent_locks_api_dashboard_trials_locks_recent_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2130,6 +2266,159 @@ export interface components {
             /** Trades */
             trades: number;
         };
+        /** DashboardCandidateActionResult */
+        DashboardCandidateActionResult: {
+            /** Accepted */
+            accepted: boolean;
+            /** Action */
+            action: string;
+            /** Candidate Id */
+            candidate_id: number;
+            /** Current Status */
+            current_status: string;
+            /** Lifecycle Status */
+            lifecycle_status: string;
+            /** Message */
+            message: string;
+        };
+        /** DashboardCandidateColumn */
+        DashboardCandidateColumn: {
+            /** Candidates */
+            candidates: components["schemas"]["DashboardCandidateSummary"][];
+            /** Count */
+            count: number;
+            /** Status */
+            status: string;
+        };
+        /** DashboardCandidateDetail */
+        DashboardCandidateDetail: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Candidate Config Id */
+            candidate_config_id?: string | null;
+            /** Candidate Name */
+            candidate_name: string;
+            /** Created At */
+            created_at?: string | null;
+            /** Evidence Paths Json */
+            evidence_paths_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Fail Reasons */
+            fail_reasons?: string[] | null;
+            /** Final Verdict */
+            final_verdict?: string | null;
+            /** Findings Path */
+            findings_path?: string | null;
+            /** Id */
+            id: number;
+            /** Last Status At */
+            last_status_at?: string | null;
+            /** Lifecycle Status */
+            lifecycle_status: string;
+            /** Linked Backtest Run Ids */
+            linked_backtest_run_ids?: number[];
+            /** Linked Trials */
+            linked_trials?: components["schemas"]["DashboardCandidateLinkedTrial"][];
+            /** Metrics Json */
+            metrics_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Next Actions */
+            next_actions?: string[] | null;
+            /** Notes */
+            notes?: string | null;
+            /** Pass Reasons */
+            pass_reasons?: string[] | null;
+            /** Robustness Json */
+            robustness_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Source Dir */
+            source_dir?: string | null;
+            /** Source Repo */
+            source_repo?: string | null;
+            /** Status */
+            status: string;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Strategy Name */
+            strategy_name?: string | null;
+            /** Strategy Version */
+            strategy_version?: string | null;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** DashboardCandidateLinkedTrial */
+        DashboardCandidateLinkedTrial: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Candidate Config Id */
+            candidate_config_id?: string | null;
+            /** Id */
+            id: number;
+            /**
+             * Is Selected
+             * @default false
+             */
+            is_selected: boolean;
+            /** Status */
+            status: string;
+            /** Summary Metrics Json */
+            summary_metrics_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Trial Group Id */
+            trial_group_id: number;
+            /** Trial Group Name */
+            trial_group_name: string;
+            /** Trial Lock Record Id */
+            trial_lock_record_id?: number | null;
+        };
+        /** DashboardCandidateList */
+        DashboardCandidateList: {
+            /** Candidates */
+            candidates: components["schemas"]["DashboardCandidateSummary"][];
+            /** Columns */
+            columns: components["schemas"]["DashboardCandidateColumn"][];
+            /** Count */
+            count: number;
+            /** Lifecycle */
+            lifecycle?: string[];
+        };
+        /** DashboardCandidateSummary */
+        DashboardCandidateSummary: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Candidate Config Id */
+            candidate_config_id?: string | null;
+            /** Candidate Name */
+            candidate_name: string;
+            /** Findings Path */
+            findings_path?: string | null;
+            /** Id */
+            id: number;
+            /** Last Status At */
+            last_status_at?: string | null;
+            /** Lifecycle Status */
+            lifecycle_status: string;
+            /** Source Dir */
+            source_dir?: string | null;
+            /** Source Repo */
+            source_repo?: string | null;
+            /** Status */
+            status: string;
+            /** Strategy Id */
+            strategy_id?: number | null;
+            /** Strategy Name */
+            strategy_name?: string | null;
+            /** Strategy Version */
+            strategy_version?: string | null;
+            /** Strategy Version Id */
+            strategy_version_id?: number | null;
+        };
         /** DashboardCoverageItem */
         DashboardCoverageItem: {
             /** Days Since Latest */
@@ -2168,6 +2457,58 @@ export interface components {
              * @default 0
              */
             total_bytes: number;
+        };
+        /** DashboardHypothesisDetail */
+        DashboardHypothesisDetail: {
+            /** Created At */
+            created_at?: string | null;
+            /** Hypothesis Md */
+            hypothesis_md: string;
+            /** Id */
+            id: number;
+            /** Notes */
+            notes?: string | null;
+            /** Parent Strategy Version Id */
+            parent_strategy_version_id?: number | null;
+            /** Rationale Md */
+            rationale_md?: string | null;
+            /** Status */
+            status: string;
+            /** Tags Json */
+            tags_json?: string[] | null;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** DashboardHypothesisItem */
+        DashboardHypothesisItem: {
+            /**
+             * Active Trial Group Count
+             * @default 0
+             */
+            active_trial_group_count: number;
+            /** Created At */
+            created_at?: string | null;
+            /** Id */
+            id: number;
+            /** Owner */
+            owner?: string | null;
+            /** Parent Strategy Version Id */
+            parent_strategy_version_id?: number | null;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** DashboardHypothesisList */
+        DashboardHypothesisList: {
+            /** Count */
+            count: number;
+            /** Hypotheses */
+            hypotheses: components["schemas"]["DashboardHypothesisItem"][];
         };
         /** DashboardLatestValidation */
         DashboardLatestValidation: {
@@ -2255,6 +2596,136 @@ export interface components {
              * @default 0
              */
             total_gb: number;
+        };
+        /** DashboardTrialGroupDetail */
+        DashboardTrialGroupDetail: {
+            /** Completed At */
+            completed_at?: string | null;
+            /** Created At */
+            created_at?: string | null;
+            hypothesis: components["schemas"]["DashboardHypothesisDetail"];
+            /** Id */
+            id: number;
+            /** Locks */
+            locks?: components["schemas"]["DashboardTrialLockItem"][];
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            /** Search Space Json */
+            search_space_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Selected Trial Id */
+            selected_trial_id?: number | null;
+            /** Selection Rule */
+            selection_rule?: string | null;
+            /** Status */
+            status: string;
+            /** Trials */
+            trials?: components["schemas"]["DashboardTrialItem"][];
+        };
+        /** DashboardTrialGroupItem */
+        DashboardTrialGroupItem: {
+            /** Completed At */
+            completed_at?: string | null;
+            /**
+             * Completed Trial Count
+             * @default 0
+             */
+            completed_trial_count: number;
+            /** Created At */
+            created_at?: string | null;
+            /** Hypothesis Id */
+            hypothesis_id: number;
+            /** Hypothesis Title */
+            hypothesis_title: string;
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Selected Trial Id */
+            selected_trial_id?: number | null;
+            /** Selection Rule */
+            selection_rule?: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Trial Count
+             * @default 0
+             */
+            trial_count: number;
+        };
+        /** DashboardTrialGroupList */
+        DashboardTrialGroupList: {
+            /** Count */
+            count: number;
+            /** Groups */
+            groups: components["schemas"]["DashboardTrialGroupItem"][];
+        };
+        /** DashboardTrialItem */
+        DashboardTrialItem: {
+            /** Backtest Run Id */
+            backtest_run_id?: number | null;
+            /** Candidate Config Id */
+            candidate_config_id?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Data Snapshot Sha */
+            data_snapshot_sha?: string | null;
+            /** Id */
+            id: number;
+            /**
+             * Is Selected
+             * @default false
+             */
+            is_selected: boolean;
+            /** Params Json */
+            params_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Selection Reason */
+            selection_reason?: string | null;
+            /** Started At */
+            started_at?: string | null;
+            /** Status */
+            status: string;
+            /** Summary Metrics Json */
+            summary_metrics_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Trial Group Id */
+            trial_group_id: number;
+            /** Trial Lock Record Id */
+            trial_lock_record_id?: number | null;
+        };
+        /** DashboardTrialLockItem */
+        DashboardTrialLockItem: {
+            /** Candidate Set Hash */
+            candidate_set_hash: string;
+            /** Code Commit Sha */
+            code_commit_sha: string;
+            /** Dataset Snapshot Id */
+            dataset_snapshot_id: string;
+            /** Id */
+            id: number;
+            /** Lock Type */
+            lock_type: string;
+            /** Locked At */
+            locked_at?: string | null;
+            /** Status */
+            status: string;
+            /** Trial Group Id */
+            trial_group_id: number;
+            /** Trial Group Name */
+            trial_group_name: string;
+        };
+        /** DashboardTrialLockList */
+        DashboardTrialLockList: {
+            /** Count */
+            count: number;
+            /** Locks */
+            locks: components["schemas"]["DashboardTrialLockItem"][];
         };
         /** DashboardValidationFinding */
         DashboardValidationFinding: {
@@ -5286,6 +5757,11 @@ export interface components {
          *     Counts are derived from the `datasets` table (populated by
          *     `dataset_scanner.scan_datasets`), so a stale scan can show stale
          *     counts — `WarehouseSummary.last_scan_ts` exposes the freshness.
+         *
+         *     Field naming note: the JSON wire format uses `"schema"` (the natural
+         *     name) but the Python attribute is `schema_name` to avoid shadowing
+         *     `BaseModel.schema()`. Construction via either name works
+         *     (`populate_by_name=True`).
          */
         WarehouseSchemaSummary: {
             /** Earliest Date */
@@ -5877,6 +6353,130 @@ export interface operations {
             };
         };
     };
+    read_candidates_api_dashboard_candidates_list_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardCandidateList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_candidate_detail_api_dashboard_candidates__candidate_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardCandidateDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    kill_candidate_api_dashboard_candidates__candidate_id__kill_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardCandidateActionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_candidate_api_dashboard_candidates__candidate_id__promote_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardCandidateActionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     read_validation_findings_api_dashboard_data_health_findings_get: {
         parameters: {
             query?: {
@@ -5968,6 +6568,130 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardR2Status"];
+                };
+            };
+        };
+    };
+    read_trial_group_detail_api_dashboard_trials_group__group_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                group_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardTrialGroupDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_active_trial_groups_api_dashboard_trials_groups_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardTrialGroupList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_active_hypotheses_api_dashboard_trials_hypotheses_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardHypothesisList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_recent_locks_api_dashboard_trials_locks_recent_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardTrialLockList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

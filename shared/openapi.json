@@ -955,6 +955,600 @@
         "title": "DailyPnL",
         "type": "object"
       },
+      "DashboardCandidateActionResult": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "integer"
+          },
+          "current_status": {
+            "title": "Current Status",
+            "type": "string"
+          },
+          "lifecycle_status": {
+            "title": "Lifecycle Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "action",
+          "accepted",
+          "current_status",
+          "lifecycle_status",
+          "message"
+        ],
+        "title": "DashboardCandidateActionResult",
+        "type": "object"
+      },
+      "DashboardCandidateColumn": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardCandidateSummary"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "count",
+          "candidates"
+        ],
+        "title": "DashboardCandidateColumn",
+        "type": "object"
+      },
+      "DashboardCandidateDetail": {
+        "properties": {
+          "backtest_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backtest Run Id"
+          },
+          "candidate_config_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Config Id"
+          },
+          "candidate_name": {
+            "title": "Candidate Name",
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "evidence_paths_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Paths Json"
+          },
+          "fail_reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fail Reasons"
+          },
+          "final_verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Verdict"
+          },
+          "findings_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Findings Path"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_status_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Status At"
+          },
+          "lifecycle_status": {
+            "title": "Lifecycle Status",
+            "type": "string"
+          },
+          "linked_backtest_run_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Linked Backtest Run Ids",
+            "type": "array"
+          },
+          "linked_trials": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardCandidateLinkedTrial"
+            },
+            "title": "Linked Trials",
+            "type": "array"
+          },
+          "metrics_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metrics Json"
+          },
+          "next_actions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Actions"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "pass_reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pass Reasons"
+          },
+          "robustness_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Robustness Json"
+          },
+          "source_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Dir"
+          },
+          "source_repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Repo"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          },
+          "strategy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Name"
+          },
+          "strategy_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "candidate_name",
+          "status",
+          "lifecycle_status"
+        ],
+        "title": "DashboardCandidateDetail",
+        "type": "object"
+      },
+      "DashboardCandidateLinkedTrial": {
+        "properties": {
+          "backtest_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backtest Run Id"
+          },
+          "candidate_config_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Config Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_selected": {
+            "default": false,
+            "title": "Is Selected",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary_metrics_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Metrics Json"
+          },
+          "trial_group_id": {
+            "title": "Trial Group Id",
+            "type": "integer"
+          },
+          "trial_group_name": {
+            "title": "Trial Group Name",
+            "type": "string"
+          },
+          "trial_lock_record_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Lock Record Id"
+          }
+        },
+        "required": [
+          "id",
+          "trial_group_id",
+          "trial_group_name",
+          "status"
+        ],
+        "title": "DashboardCandidateLinkedTrial",
+        "type": "object"
+      },
+      "DashboardCandidateList": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardCandidateSummary"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardCandidateColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "lifecycle": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lifecycle",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "columns",
+          "candidates"
+        ],
+        "title": "DashboardCandidateList",
+        "type": "object"
+      },
+      "DashboardCandidateSummary": {
+        "properties": {
+          "backtest_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backtest Run Id"
+          },
+          "candidate_config_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Config Id"
+          },
+          "candidate_name": {
+            "title": "Candidate Name",
+            "type": "string"
+          },
+          "findings_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Findings Path"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_status_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Status At"
+          },
+          "lifecycle_status": {
+            "title": "Lifecycle Status",
+            "type": "string"
+          },
+          "source_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Dir"
+          },
+          "source_repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Repo"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          },
+          "strategy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Name"
+          },
+          "strategy_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          }
+        },
+        "required": [
+          "id",
+          "candidate_name",
+          "status",
+          "lifecycle_status"
+        ],
+        "title": "DashboardCandidateSummary",
+        "type": "object"
+      },
       "DashboardCoverageItem": {
         "properties": {
           "days_since_latest": {
@@ -1060,6 +1654,200 @@
           "status"
         ],
         "title": "DashboardCoverageItem",
+        "type": "object"
+      },
+      "DashboardHypothesisDetail": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "hypothesis_md": {
+            "title": "Hypothesis Md",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "parent_strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Strategy Version Id"
+          },
+          "rationale_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale Md"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tags_json": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags Json"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "hypothesis_md"
+        ],
+        "title": "DashboardHypothesisDetail",
+        "type": "object"
+      },
+      "DashboardHypothesisItem": {
+        "properties": {
+          "active_trial_group_count": {
+            "default": 0,
+            "title": "Active Trial Group Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "parent_strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Strategy Version Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status"
+        ],
+        "title": "DashboardHypothesisItem",
+        "type": "object"
+      },
+      "DashboardHypothesisList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardHypothesisItem"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "hypotheses"
+        ],
+        "title": "DashboardHypothesisList",
         "type": "object"
       },
       "DashboardLatestValidation": {
@@ -1274,6 +2062,438 @@
           "fetched_at"
         ],
         "title": "DashboardR2Status",
+        "type": "object"
+      },
+      "DashboardTrialGroupDetail": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "hypothesis": {
+            "$ref": "#/components/schemas/DashboardHypothesisDetail"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "locks": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardTrialLockItem"
+            },
+            "title": "Locks",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "search_space_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Space Json"
+          },
+          "selected_trial_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Trial Id"
+          },
+          "selection_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Rule"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "trials": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardTrialItem"
+            },
+            "title": "Trials",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "hypothesis",
+          "name",
+          "status"
+        ],
+        "title": "DashboardTrialGroupDetail",
+        "type": "object"
+      },
+      "DashboardTrialGroupItem": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "completed_trial_count": {
+            "default": 0,
+            "title": "Completed Trial Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "hypothesis_id": {
+            "title": "Hypothesis Id",
+            "type": "integer"
+          },
+          "hypothesis_title": {
+            "title": "Hypothesis Title",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "selected_trial_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Trial Id"
+          },
+          "selection_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Rule"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "trial_count": {
+            "default": 0,
+            "title": "Trial Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "hypothesis_id",
+          "hypothesis_title",
+          "name",
+          "status"
+        ],
+        "title": "DashboardTrialGroupItem",
+        "type": "object"
+      },
+      "DashboardTrialGroupList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardTrialGroupItem"
+            },
+            "title": "Groups",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "groups"
+        ],
+        "title": "DashboardTrialGroupList",
+        "type": "object"
+      },
+      "DashboardTrialItem": {
+        "properties": {
+          "backtest_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backtest Run Id"
+          },
+          "candidate_config_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Config Id"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "data_snapshot_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Snapshot Sha"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_selected": {
+            "default": false,
+            "title": "Is Selected",
+            "type": "boolean"
+          },
+          "params_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params Json"
+          },
+          "selection_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Reason"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary_metrics_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Metrics Json"
+          },
+          "trial_group_id": {
+            "title": "Trial Group Id",
+            "type": "integer"
+          },
+          "trial_lock_record_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Lock Record Id"
+          }
+        },
+        "required": [
+          "id",
+          "trial_group_id",
+          "status"
+        ],
+        "title": "DashboardTrialItem",
+        "type": "object"
+      },
+      "DashboardTrialLockItem": {
+        "properties": {
+          "candidate_set_hash": {
+            "title": "Candidate Set Hash",
+            "type": "string"
+          },
+          "code_commit_sha": {
+            "title": "Code Commit Sha",
+            "type": "string"
+          },
+          "dataset_snapshot_id": {
+            "title": "Dataset Snapshot Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lock_type": {
+            "title": "Lock Type",
+            "type": "string"
+          },
+          "locked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locked At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "trial_group_id": {
+            "title": "Trial Group Id",
+            "type": "integer"
+          },
+          "trial_group_name": {
+            "title": "Trial Group Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "trial_group_id",
+          "trial_group_name",
+          "lock_type",
+          "candidate_set_hash",
+          "dataset_snapshot_id",
+          "code_commit_sha",
+          "status"
+        ],
+        "title": "DashboardTrialLockItem",
+        "type": "object"
+      },
+      "DashboardTrialLockList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "locks": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardTrialLockItem"
+            },
+            "title": "Locks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "locks"
+        ],
+        "title": "DashboardTrialLockList",
         "type": "object"
       },
       "DashboardValidationFinding": {
@@ -10601,7 +11821,7 @@
         "type": "object"
       },
       "WarehouseSchemaSummary": {
-        "description": "Per-schema rollup of what's in the on-disk warehouse.\n\nSchema = \"tbbo\" | \"mbp-1\" | \"ohlcv-1m\" | \"ohlcv-1s\" etc.\nCounts are derived from the `datasets` table (populated by\n`dataset_scanner.scan_datasets`), so a stale scan can show stale\ncounts \u2014 `WarehouseSummary.last_scan_ts` exposes the freshness.",
+        "description": "Per-schema rollup of what's in the on-disk warehouse.\n\nSchema = \"tbbo\" | \"mbp-1\" | \"ohlcv-1m\" | \"ohlcv-1s\" etc.\nCounts are derived from the `datasets` table (populated by\n`dataset_scanner.scan_datasets`), so a stale scan can show stale\ncounts \u2014 `WarehouseSummary.last_scan_ts` exposes the freshness.\n\nField naming note: the JSON wire format uses `\"schema\"` (the natural\nname) but the Python attribute is `schema_name` to avoid shadowing\n`BaseModel.schema()`. Construction via either name works\n(`populate_by_name=True`).",
         "properties": {
           "earliest_date": {
             "anyOf": [
@@ -11445,6 +12665,177 @@
         ]
       }
     },
+    "/api/dashboard/candidates/list": {
+      "get": {
+        "operationId": "read_candidates_api_dashboard_candidates_list_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 250,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCandidateList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Candidates",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/candidates/{candidate_id}": {
+      "get": {
+        "operationId": "read_candidate_detail_api_dashboard_candidates__candidate_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCandidateDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Candidate Detail",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/candidates/{candidate_id}/kill": {
+      "post": {
+        "operationId": "kill_candidate_api_dashboard_candidates__candidate_id__kill_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCandidateActionResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Kill Candidate",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/candidates/{candidate_id}/promote": {
+      "post": {
+        "operationId": "promote_candidate_api_dashboard_candidates__candidate_id__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCandidateActionResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote Candidate",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
     "/api/dashboard/data-health/findings": {
       "get": {
         "operationId": "read_validation_findings_api_dashboard_data_health_findings_get",
@@ -11613,6 +13004,183 @@
           }
         },
         "summary": "Read R2 Status",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/trials/group/{group_id}": {
+      "get": {
+        "operationId": "read_trial_group_detail_api_dashboard_trials_group__group_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardTrialGroupDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Trial Group Detail",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/trials/groups": {
+      "get": {
+        "operationId": "read_active_trial_groups_api_dashboard_trials_groups_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardTrialGroupList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Active Trial Groups",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/trials/hypotheses": {
+      "get": {
+        "operationId": "read_active_hypotheses_api_dashboard_trials_hypotheses_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardHypothesisList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Active Hypotheses",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/trials/locks/recent": {
+      "get": {
+        "operationId": "read_recent_locks_api_dashboard_trials_locks_recent_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardTrialLockList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Recent Locks",
         "tags": [
           "dashboard"
         ]
