@@ -159,7 +159,7 @@ Next gates required before paper trade:
 | Item | Owner | Status |
 |---|---|---|
 | 247 execution queue Q1-Q5 | 247 | Done — all merged (`5fe75b7` Q1+Q2, `157aa0c` Q3, `bc07134` Q4, this commit Q5) |
-| 247 execution queue Q6-Q8 (Trials/Candidates/Live Monitor) | 247 | Q6 backend in branch; Q7-Q8 queued |
+| 247 execution queue Q6-Q8 (Trials/Candidates/Live Monitor) | 247 | Q6 merged; Q7 frontend in branch; Q8 queued |
 | Validation library + runner + CLI wiring | benpc | Done (`39e5faf` + `157aa0c`) — 102 tests pass, end-to-end smoke verified |
 | Trial registry | benpc | Done (`d910324`) |
 | Full-warehouse validation report | benpc | Done — 64,843 partitions; only `missing_minutes` calibration warns/fails (now session-aware) + 14 RTY VWAP warnings to investigate |
@@ -174,6 +174,7 @@ Next gates required before paper trade:
 - `backend/app/api/`, `backend/app/cli/` — not classified yet, needs a pass
 - `backend/app/api/dashboard/` - operator dashboard APIs; Data Health live, Trials/Candidates backend added in Q6
 - `frontend/app/data-health/` - active dashboard Data Health screen; Q5 frontend build
+- `frontend/app/trials/`, `frontend/app/candidates/` - Trials/Candidates operator screens; Q7 frontend build
 - `shared/openapi.json`, `frontend/lib/api/generated.ts` — type generation pipeline, see CLAUDE.md rule #4
 - Some `docs/ML_*` files from earlier weeks — not yet status-tagged
 

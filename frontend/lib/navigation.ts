@@ -8,6 +8,8 @@
 export type IconName =
   | "inbox"
   | "health"
+  | "trials"
+  | "candidates"
   | "bolt"
   | "film"
   | "layers"
@@ -25,6 +27,13 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "data-health", label: "Data Health", icon: "health", href: "/data-health" },
+  { id: "trials", label: "Trials", icon: "trials", href: "/trials" },
+  {
+    id: "candidates",
+    label: "Candidates",
+    icon: "candidates",
+    href: "/candidates",
+  },
   { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
   { id: "backtests", label: "Backtests", icon: "bolt", href: "/backtests" },
   { id: "replay", label: "Replay", icon: "film", href: "/replay" },
