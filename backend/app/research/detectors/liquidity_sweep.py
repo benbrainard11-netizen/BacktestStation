@@ -93,6 +93,34 @@ _MODE_CONFIG: dict[str, dict[str, Any]] = {
                   "side": "low", "scope": "session_ny", "thesis": "bullish"},
     "ny_high_1h": {"ref": "prev_ny_high", "tf": "1h", "tf_minutes": 60,
                    "side": "high", "scope": "session_ny", "thesis": "bearish"},
+    # Session-scope at finer tracking timeframes (15m + 30m). Adds
+    # 12 new mode variants for intraday-tighter session sweeps.
+    # Reference level is still "previous SAME session" (yesterday's
+    # asia/london/ny). See docs/RESEARCH_EVENTS_DICTIONARY.md.
+    "asia_low_15m": {"ref": "prev_asia_low", "tf": "15m", "tf_minutes": 15,
+                     "side": "low", "scope": "session_asia", "thesis": "bullish"},
+    "asia_high_15m": {"ref": "prev_asia_high", "tf": "15m", "tf_minutes": 15,
+                      "side": "high", "scope": "session_asia", "thesis": "bearish"},
+    "asia_low_30m": {"ref": "prev_asia_low", "tf": "30m", "tf_minutes": 30,
+                     "side": "low", "scope": "session_asia", "thesis": "bullish"},
+    "asia_high_30m": {"ref": "prev_asia_high", "tf": "30m", "tf_minutes": 30,
+                      "side": "high", "scope": "session_asia", "thesis": "bearish"},
+    "london_low_15m": {"ref": "prev_london_low", "tf": "15m", "tf_minutes": 15,
+                       "side": "low", "scope": "session_london", "thesis": "bullish"},
+    "london_high_15m": {"ref": "prev_london_high", "tf": "15m", "tf_minutes": 15,
+                        "side": "high", "scope": "session_london", "thesis": "bearish"},
+    "london_low_30m": {"ref": "prev_london_low", "tf": "30m", "tf_minutes": 30,
+                       "side": "low", "scope": "session_london", "thesis": "bullish"},
+    "london_high_30m": {"ref": "prev_london_high", "tf": "30m", "tf_minutes": 30,
+                        "side": "high", "scope": "session_london", "thesis": "bearish"},
+    "ny_low_15m": {"ref": "prev_ny_low", "tf": "15m", "tf_minutes": 15,
+                   "side": "low", "scope": "session_ny", "thesis": "bullish"},
+    "ny_high_15m": {"ref": "prev_ny_high", "tf": "15m", "tf_minutes": 15,
+                    "side": "high", "scope": "session_ny", "thesis": "bearish"},
+    "ny_low_30m": {"ref": "prev_ny_low", "tf": "30m", "tf_minutes": 30,
+                   "side": "low", "scope": "session_ny", "thesis": "bullish"},
+    "ny_high_30m": {"ref": "prev_ny_high", "tf": "30m", "tf_minutes": 30,
+                    "side": "high", "scope": "session_ny", "thesis": "bearish"},
 }
 
 

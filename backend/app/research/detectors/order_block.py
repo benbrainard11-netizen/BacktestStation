@@ -124,6 +124,60 @@ _MODE_CONFIG: dict[str, dict[str, Any]] = {
         "ref": "prev_ny_high", "tf": "1h", "tf_minutes": 60,
         "side": "bearish", "scope": "session_ny",
     },
+    # Session-scope at finer tracking timeframes (15m + 30m).
+    # Adds 12 new mode variants for intraday-tighter session sweeps + OB
+    # confirmation. Reference level is still "previous SAME session"
+    # (yesterday's asia/london/ny). The fine-grained tracking lets OB
+    # candles + confirmation candles fit inside a single session window
+    # (8h asia, 7.5h london, 7.5h ny). See docs/RESEARCH_EVENTS_DICTIONARY.md.
+    "swept_asia_low_15m": {
+        "ref": "prev_asia_low", "tf": "15m", "tf_minutes": 15,
+        "side": "bullish", "scope": "session_asia",
+    },
+    "swept_asia_high_15m": {
+        "ref": "prev_asia_high", "tf": "15m", "tf_minutes": 15,
+        "side": "bearish", "scope": "session_asia",
+    },
+    "swept_asia_low_30m": {
+        "ref": "prev_asia_low", "tf": "30m", "tf_minutes": 30,
+        "side": "bullish", "scope": "session_asia",
+    },
+    "swept_asia_high_30m": {
+        "ref": "prev_asia_high", "tf": "30m", "tf_minutes": 30,
+        "side": "bearish", "scope": "session_asia",
+    },
+    "swept_london_low_15m": {
+        "ref": "prev_london_low", "tf": "15m", "tf_minutes": 15,
+        "side": "bullish", "scope": "session_london",
+    },
+    "swept_london_high_15m": {
+        "ref": "prev_london_high", "tf": "15m", "tf_minutes": 15,
+        "side": "bearish", "scope": "session_london",
+    },
+    "swept_london_low_30m": {
+        "ref": "prev_london_low", "tf": "30m", "tf_minutes": 30,
+        "side": "bullish", "scope": "session_london",
+    },
+    "swept_london_high_30m": {
+        "ref": "prev_london_high", "tf": "30m", "tf_minutes": 30,
+        "side": "bearish", "scope": "session_london",
+    },
+    "swept_ny_low_15m": {
+        "ref": "prev_ny_low", "tf": "15m", "tf_minutes": 15,
+        "side": "bullish", "scope": "session_ny",
+    },
+    "swept_ny_high_15m": {
+        "ref": "prev_ny_high", "tf": "15m", "tf_minutes": 15,
+        "side": "bearish", "scope": "session_ny",
+    },
+    "swept_ny_low_30m": {
+        "ref": "prev_ny_low", "tf": "30m", "tf_minutes": 30,
+        "side": "bullish", "scope": "session_ny",
+    },
+    "swept_ny_high_30m": {
+        "ref": "prev_ny_high", "tf": "30m", "tf_minutes": 30,
+        "side": "bearish", "scope": "session_ny",
+    },
 }
 
 MAX_LOOKBACK_BARS: int = 10
