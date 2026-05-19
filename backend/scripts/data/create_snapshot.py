@@ -166,50 +166,65 @@ def main() -> int:
         print("[dry-run] Re-run without --dry-run to commit.")
         return 0
 
-    # PLACEHOLDER: actual DB insertion goes here.
-    # When 247's dataset_snapshots schema lands, this block becomes:
-    #
-    # from app.db.session import get_session
-    # from app.db.models import (
-    #     DatasetSnapshot, DatasetSnapshotInput, DatasetSnapshotPartition
-    # )
-    # with get_session() as session:
-    #     snap = DatasetSnapshot(
-    #         snapshot_id=snapshot_id,
-    #         name=args.name,
-    #         created_by="benpc",
-    #         symbols_json=json.dumps(symbols),
-    #         date_start=args.date_start,
-    #         date_end=args.date_end,
-    #         schemas_json=json.dumps(schemas),
-    #         research_events_manifest_sha256=manifest_sha,
-    #         partition_count=len(partitions),
-    #         total_bytes=sum(p["size_bytes"] for p in partitions),
-    #         status="active",
-    #     )
-    #     session.add(snap)
-    #     for p in partitions:
-    #         session.add(DatasetSnapshotPartition(
-    #             snapshot_id=snapshot_id,
-    #             schema=p["schema"], symbol=p["symbol"], date=p["date"],
-    #             r2_key=p["r2_key"], size_bytes=p["size_bytes"], sha256=p["sha256"],
-    #         ))
-    #     session.add(DatasetSnapshotInput(
-    #         snapshot_id=snapshot_id,
-    #         input_kind="research_events_manifest",
-    #         input_uri=str(RESEARCH_EVENTS_MANIFEST.relative_to(ROOT)),
-    #         sha256=manifest_sha,
-    #     ))
-    #     session.commit()
-    # print(f"Wrote snapshot {snapshot_id} ({len(partitions)} partitions)")
-    print()
-    print("PLACEHOLDER: DB write skipped — dataset_snapshots schema not yet merged.")
-    print("Once 247's dataset-snapshots-v1 branch lands, uncomment DB insertion block.")
-    print()
-    print(f"Snapshot summary (not persisted):")
-    print(f"  snapshot_id: {snapshot_id}")
-    print(f"  partition_count: {len(partitions)}")
-    print(f"  total_bytes: {sum(p['size_bytes'] for p in partitions):,}")
+    # Real DB write — 247's schema landed on 2026-05-18 (commit 5fe75b7).
+    sys.path.insert(0, str(ROOT / "backend"))
+    from datetime import datetime
+    from app.db.session import (  # noqa: E402
+        create_all,
+        make_engine,
+        make_session_factory,
+    )
+    from app.db.models import (  # noqa: E402
+        DatasetSnapshot,
+        DatasetSnapshotInput,
+        DatasetSnapshotPartition,
+    )
+
+    engine = make_engine(f"sqlite:///{args.db_path}")
+    create_all(engine)  # ensure new tables + migrations exist
+    sf = make_session_factory(engine)
+    with sf() as db:
+        existing = db.query(DatasetSnapshot).filter_by(snapshot_id=snapshot_id).first()
+        if existing is not None:
+            print(f"\nSnapshot {snapshot_id} already exists in DB (id={existing.id}).")
+            print(f"Re-using existing row. Use --name with a unique suffix to fork.")
+            return 0
+
+        snap = DatasetSnapshot(
+            snapshot_id=snapshot_id,
+            name=args.name,
+            created_by="benpc",
+            symbols_json=symbols,
+            date_start=datetime.fromisoformat(args.date_start),
+            date_end=datetime.fromisoformat(args.date_end),
+            schemas_json=schemas,
+            research_events_manifest_sha256=manifest_sha,
+            partition_count=len(partitions),
+            total_bytes=sum(p["size_bytes"] for p in partitions),
+            status="active",
+        )
+        db.add(snap)
+        db.flush()
+
+        for p in partitions:
+            db.add(DatasetSnapshotPartition(
+                snapshot_id=snapshot_id,
+                r2_key=p["r2_key"],
+                size=int(p["size_bytes"]),
+                sha256=p["sha256"] or ("0" * 64),  # fallback when --with-hash skipped
+            ))
+        if manifest_sha:
+            db.add(DatasetSnapshotInput(
+                snapshot_id=snapshot_id,
+                input_kind="research_events_manifest",
+                input_uri=str(RESEARCH_EVENTS_MANIFEST.relative_to(ROOT)),
+                sha256=manifest_sha,
+                size=RESEARCH_EVENTS_MANIFEST.stat().st_size,
+            ))
+        db.commit()
+
+    print(f"\nWrote snapshot {snapshot_id} ({len(partitions):,} partitions, "
+          f"{sum(p['size_bytes'] for p in partitions):,} bytes total)")
     return 0
 
 

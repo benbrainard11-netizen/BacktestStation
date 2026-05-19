@@ -30,7 +30,9 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/app/engine/` | **core** | Pure backtest engine. No imports from api/db/storage/ingest per CLAUDE.md rule #1. |
 | `backend/app/research/detectors/` | **core** | The 14+ event detectors (FVG, OB, sweep, swing, etc.). Code-reviewed FVG + 22 tests pass. |
 | `backend/app/research/outcomes/` | **core** | Outcome computers (reaction labels). Includes the level-reactions schema from 247. |
-| `backend/app/research/validation/` | **active** | Semantic gate framework + 48 gates across 4 schemas (ohlcv-1m: 14, tbbo: 12, mbp-1: 15, research_events: 7). 58 unit tests pass. Runner + CLI script pending 247's Q2 (`partition_validation_reports` table). See `docs/VALIDATION_DESIGN.md`. |
+| `backend/app/research/validation/` | **core** | Semantic gate framework + 48 gates across 4 schemas + `runner.py` (walks snapshot, writes report+findings to DB). 71 tests pass. End-to-end smoke verified against real warehouse. See `docs/VALIDATION_DESIGN.md`. |
+| `backend/scripts/data/create_snapshot.py` | **active** | Builds + persists a `dataset_snapshots` row (wired to 247's Q1 schema). Computes per-partition sha256, manifest hash, deterministic snapshot_id. |
+| `backend/scripts/data/validate_snapshot.py` | **active** | CLI that runs the validation runner against a snapshot_id. Writes `partition_validation_reports` + `partition_validation_findings`. `bs data validate` wraps this once 247's Q3 lands. |
 | `backend/app/ingest/` | **active** | R2 + Databento ingestion. Has known inventory-overwrite bug (prompt sent to 247). |
 | `backend/scripts/ml/rigorous_backtest_v1.py` ... `v9_ob.py` | **core** | The v8a simulator stack. **FROZEN per validation-lockdown until v21 protocol completes.** |
 | `backend/scripts/ml/v13_registry_audit.py` | **reference** | The audit that found Type B clusters. Already executed; results in archive. |
