@@ -31,6 +31,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/app/research/detectors/` | **core** | The 14+ event detectors (FVG, OB, sweep, swing, etc.). Code-reviewed FVG + 22 tests pass. |
 | `backend/app/research/outcomes/` | **core** | Outcome computers (reaction labels). Includes the level-reactions schema from 247. |
 | `backend/app/research/validation/` | **core** | Semantic gate framework + 48 gates across 4 schemas + `runner.py` (walks snapshot, writes report+findings to DB). 71 tests pass. End-to-end smoke verified against real warehouse. See `docs/VALIDATION_DESIGN.md`. |
+| `backend/app/api/dashboard/` | **active** | Operator dashboard API namespace. Data Health backend endpoints for R2 status, local coverage, latest validation, and validation findings. |
 | `backend/scripts/data/create_snapshot.py` | **active** | Builds + persists a `dataset_snapshots` row (wired to 247's Q1 schema). Computes per-partition sha256, manifest hash, deterministic snapshot_id. |
 | `backend/scripts/data/validate_snapshot.py` | **active** | CLI that runs the validation runner against a snapshot_id. Writes `partition_validation_reports` + `partition_validation_findings`. Wrapped by `bs data validate` (Q3). |
 | `backend/app/ingest/` | **active** | R2 + Databento ingestion. Has known inventory-overwrite bug (prompt sent to 247). |
@@ -168,7 +169,8 @@ Next gates required before paper trade:
 | 247 execution queue (Q1-Q8) | 247 | Prompt sent (`BEN_247_PROMPT_2026_05_17_EXECUTION_QUEUE.md`); 247 confirmed started |
 | Dataset snapshots schema (Q1) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
 | `partition_validation_reports` + findings tables (Q2) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
-| `bs` CLI scaffold (Q3) | 247 | Branch shipped (`cli-scaffold-v1`) |
+| `bs` CLI scaffold (Q3) | 247 | Done — merged into `assets/expanded-universe-v1` (`157aa0c`) |
+| Dashboard Data Health backend (Q4) | 247 | Built on `data-health-backend-v1`; ready for review/merge |
 | Validation library (`backend/app/research/validation/`) | benpc | Done (`16e86d9`) — 48 gates, 58 tests pass. Runner can now be wired in (Q2 tables exist). |
 | Trial registry merged to active branch | benpc | Done (`d910324`) |
 | `reaction.fire_ts` on level-reactions | 247 | Prompt sent (older) |

@@ -955,6 +955,464 @@
         "title": "DailyPnL",
         "type": "object"
       },
+      "DashboardCoverageItem": {
+        "properties": {
+          "days_since_latest": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Since Latest"
+          },
+          "earliest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Date"
+          },
+          "feature_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Count"
+          },
+          "latest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Date"
+          },
+          "local_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Local Paths",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "partition_count": {
+            "default": 0,
+            "title": "Partition Count",
+            "type": "integer"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Count"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "stale",
+              "empty"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol_count": {
+            "default": 0,
+            "title": "Symbol Count",
+            "type": "integer"
+          },
+          "total_bytes": {
+            "default": 0,
+            "title": "Total Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "schema",
+          "status"
+        ],
+        "title": "DashboardCoverageItem",
+        "type": "object"
+      },
+      "DashboardLatestValidation": {
+        "properties": {
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "has_report": {
+            "title": "Has Report",
+            "type": "boolean"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "partitions_fail": {
+            "default": 0,
+            "title": "Partitions Fail",
+            "type": "integer"
+          },
+          "partitions_pass": {
+            "default": 0,
+            "title": "Partitions Pass",
+            "type": "integer"
+          },
+          "partitions_warn": {
+            "default": 0,
+            "title": "Partitions Warn",
+            "type": "integer"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "top_failing_gates": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardValidationGateSummary"
+            },
+            "title": "Top Failing Gates",
+            "type": "array"
+          },
+          "total_partitions": {
+            "default": 0,
+            "title": "Total Partitions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "has_report"
+        ],
+        "title": "DashboardLatestValidation",
+        "type": "object"
+      },
+      "DashboardLocalCoverage": {
+        "properties": {
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardCoverageItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "generated_at"
+        ],
+        "title": "DashboardLocalCoverage",
+        "type": "object"
+      },
+      "DashboardR2Status": {
+        "properties": {
+          "age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Seconds"
+          },
+          "bucket": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bucket"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "inventory_key": {
+            "title": "Inventory Key",
+            "type": "string"
+          },
+          "object_count": {
+            "default": 0,
+            "title": "Object Count",
+            "type": "integer"
+          },
+          "reachable": {
+            "title": "Reachable",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "recent",
+              "stale",
+              "very_stale",
+              "unknown",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "total_bytes": {
+            "default": 0,
+            "title": "Total Bytes",
+            "type": "integer"
+          },
+          "total_gb": {
+            "default": 0.0,
+            "title": "Total Gb",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reachable",
+          "status",
+          "inventory_key",
+          "fetched_at"
+        ],
+        "title": "DashboardR2Status",
+        "type": "object"
+      },
+      "DashboardValidationFinding": {
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "details_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details Json"
+          },
+          "gate_name": {
+            "title": "Gate Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "partition_r2_key": {
+            "title": "Partition R2 Key",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "integer"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "required": [
+          "id",
+          "report_id",
+          "partition_r2_key",
+          "schema",
+          "gate_name",
+          "severity"
+        ],
+        "title": "DashboardValidationFinding",
+        "type": "object"
+      },
+      "DashboardValidationFindings": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardValidationFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          }
+        },
+        "required": [
+          "count",
+          "findings"
+        ],
+        "title": "DashboardValidationFindings",
+        "type": "object"
+      },
+      "DashboardValidationGateSummary": {
+        "properties": {
+          "finding_count": {
+            "title": "Finding Count",
+            "type": "integer"
+          },
+          "gate_name": {
+            "title": "Gate Name",
+            "type": "string"
+          },
+          "partition_count": {
+            "title": "Partition Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gate_name",
+          "finding_count",
+          "partition_count"
+        ],
+        "title": "DashboardValidationGateSummary",
+        "type": "object"
+      },
       "DataHealthPayload": {
         "properties": {
           "disk": {
@@ -10984,6 +11442,179 @@
         "summary": "Export Trades Csv",
         "tags": [
           "backtests"
+        ]
+      }
+    },
+    "/api/dashboard/data-health/findings": {
+      "get": {
+        "operationId": "read_validation_findings_api_dashboard_data_health_findings_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "fail",
+              "title": "Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "schema",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Schema"
+            }
+          },
+          {
+            "in": "query",
+            "name": "symbol",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardValidationFindings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Validation Findings",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/data-health/latest-validation": {
+      "get": {
+        "operationId": "read_latest_validation_api_dashboard_data_health_latest_validation_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLatestValidation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Latest Validation",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/data-health/local-coverage": {
+      "get": {
+        "operationId": "read_local_coverage_api_dashboard_data_health_local_coverage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLocalCoverage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Local Coverage",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/data-health/r2-status": {
+      "get": {
+        "operationId": "read_r2_status_api_dashboard_data_health_r2_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardR2Status"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read R2 Status",
+        "tags": [
+          "dashboard"
         ]
       }
     },

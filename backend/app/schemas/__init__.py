@@ -10,6 +10,15 @@ from app.schemas.data_health import (
     WarehouseSchemaSummary,
     WarehouseSummary,
 )
+from app.schemas.dashboard_data_health import (
+    DashboardCoverageItem,
+    DashboardLatestValidation,
+    DashboardLocalCoverage,
+    DashboardR2Status,
+    DashboardValidationFinding,
+    DashboardValidationFindings,
+    DashboardValidationGateSummary,
+)
 from app.schemas.data_quality import DataQualityIssue, DataQualityReportRead
 from app.schemas.datasets import (
     DatasetCoverageRead,
@@ -156,6 +165,13 @@ __all__ = [
     "DataHealthPayload",
     "DataQualityIssue",
     "DataQualityReportRead",
+    "DashboardCoverageItem",
+    "DashboardLatestValidation",
+    "DashboardLocalCoverage",
+    "DashboardR2Status",
+    "DashboardValidationFinding",
+    "DashboardValidationFindings",
+    "DashboardValidationGateSummary",
     "DiskSpaceRead",
     "ScheduledTaskStatus",
     "WarehouseSchemaSummary",
