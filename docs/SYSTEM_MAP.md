@@ -158,8 +158,7 @@ Next gates required before paper trade:
 
 | Item | Owner | Status |
 |---|---|---|
-| 247 execution queue Q1-Q4 | 247 | Done — all merged (commits `5fe75b7`, `157aa0c`, `bc07134`, `435cffb`) |
-| 247 execution queue Q5 (Data Health frontend) | 247 | Up next per `DASHBOARD_DESIGN.md` |
+| 247 execution queue Q1-Q5 | 247 | Done — all merged (`5fe75b7` Q1+Q2, `157aa0c` Q3, `bc07134` Q4, this commit Q5) |
 | 247 execution queue Q6-Q8 (Trials/Candidates/Live Monitor) | 247 | Queued |
 | Validation library + runner + CLI wiring | benpc | Done (`39e5faf` + `157aa0c`) — 102 tests pass, end-to-end smoke verified |
 | Trial registry | benpc | Done (`d910324`) |
@@ -173,7 +172,7 @@ Next gates required before paper trade:
 ## Honest gaps (what this map doesn't cover yet)
 
 - `backend/app/api/`, `backend/app/cli/` — not classified yet, needs a pass
-- `frontend/` — UI work not in active scope; defer until deploy decision
+- `frontend/app/data-health/` - active dashboard Data Health screen; Q5 frontend build
 - `shared/openapi.json`, `frontend/lib/api/generated.ts` — type generation pipeline, see CLAUDE.md rule #4
 - Some `docs/ML_*` files from earlier weeks — not yet status-tagged
 

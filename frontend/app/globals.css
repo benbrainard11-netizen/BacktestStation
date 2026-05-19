@@ -658,3 +658,29 @@ body {
   overflow-x: hidden;
   background: var(--bg-0);
 }
+
+.table-head {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.filter-input {
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-2);
+  padding: 0 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-1);
+  outline: none;
+}
+
+.filter-input:focus {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}

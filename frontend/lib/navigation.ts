@@ -1,16 +1,13 @@
 /**
- * App navigation source of truth — flat, single-row, six items.
+ * App navigation source of truth.
  *
- * The earlier 3-profile (Dashboard / Research / Strategies) tab system is
- * gone. We collapsed it down to one horizontal nav per the simplification
- * plan (SIMPLIFY_PLAN.md, decided 2026-05-05). Folded routes:
- *   - Overview / Monitor / Notes / Data Health / Import / Experiments  → DELETED
- *   - Risk Profiles                                                    → tab inside Catalog
- *   - Data Health / Live Bot / Admin                                   → tabs inside Settings
+ * Dashboard Q5 brings Data Health back as an operator-console route while the
+ * rest of the app keeps the current horizontal chrome.
  */
 
 export type IconName =
   | "inbox"
+  | "health"
   | "bolt"
   | "film"
   | "layers"
@@ -27,25 +24,22 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { id: "inbox",     label: "Inbox",     icon: "inbox",    href: "/inbox" },
-  { id: "backtests", label: "Backtests", icon: "bolt",     href: "/backtests" },
-  { id: "replay",    label: "Replay",    icon: "film",     href: "/replay" },
-  { id: "catalog",   label: "Catalog",   icon: "layers",   href: "/strategies" },
-  { id: "builder",   label: "Builder",   icon: "wand",     href: "/strategies/builder" },
-  { id: "library",   label: "Library",   icon: "library",  href: "/library" },
-  { id: "research",  label: "Research",  icon: "research", href: "/research/events" },
-  { id: "settings",  label: "Settings",  icon: "settings", href: "/settings" },
+  { id: "data-health", label: "Data Health", icon: "health", href: "/data-health" },
+  { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
+  { id: "backtests", label: "Backtests", icon: "bolt", href: "/backtests" },
+  { id: "replay", label: "Replay", icon: "film", href: "/replay" },
+  { id: "catalog", label: "Catalog", icon: "layers", href: "/strategies" },
+  {
+    id: "builder",
+    label: "Builder",
+    icon: "wand",
+    href: "/strategies/builder",
+  },
+  { id: "library", label: "Library", icon: "library", href: "/library" },
+  { id: "research", label: "Research", icon: "research", href: "/research/events" },
+  { id: "settings", label: "Settings", icon: "settings", href: "/settings" },
 ];
 
-/** Resolve the single active nav item for a pathname.
- *
- * Uses longest-prefix-match so that when multiple items would match
- * (e.g. Catalog `/strategies` and Builder `/strategies/builder` both
- * "match" `/strategies/builder`), only the most specific one wins. The
- * earlier per-item `isActive` would light up both tabs at once.
- *
- * Returns the matching NavItem or null if no item is in the path.
- */
 export function findActiveNavItem(pathname: string): NavItem | null {
   let best: NavItem | null = null;
   let bestLen = -1;
