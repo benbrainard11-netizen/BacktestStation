@@ -30,7 +30,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/app/engine/` | **core** | Pure backtest engine. No imports from api/db/storage/ingest per CLAUDE.md rule #1. |
 | `backend/app/research/detectors/` | **core** | The 14+ event detectors (FVG, OB, sweep, swing, etc.). Code-reviewed FVG + 22 tests pass. |
 | `backend/app/research/outcomes/` | **core** | Outcome computers (reaction labels). Includes the level-reactions schema from 247. |
-| `backend/app/research/validation/` | **active** | Semantic gate framework + 48 gates across 4 schemas (ohlcv-1m: 14, tbbo: 12, mbp-1: 15, research_events: 7). 58 unit tests pass. Runner + CLI script pending 247's Q2 (`partition_validation_reports` table). See `docs/VALIDATION_DESIGN.md`. |
+| `backend/app/research/validation/` | **active** | Semantic gate framework + 48 gates across 4 schemas (ohlcv-1m: 14, tbbo: 12, mbp-1: 15, research_events: 7). 58 unit tests pass. Report tables exist; full runner wiring is pending. See `docs/VALIDATION_DESIGN.md`. |
 | `backend/app/ingest/` | **active** | R2 + Databento ingestion. Has known inventory-overwrite bug (prompt sent to 247). |
 | `backend/scripts/ml/rigorous_backtest_v1.py` ... `v9_ob.py` | **core** | The v8a simulator stack. **FROZEN per validation-lockdown until v21 protocol completes.** |
 | `backend/scripts/ml/v13_registry_audit.py` | **reference** | The audit that found Type B clusters. Already executed; results in archive. |
@@ -44,6 +44,7 @@ Full definitions: `docs/STATUS_TAXONOMY.md`.
 | `backend/scripts/generate_events_2015_2017.py` | **active** | Generates OB+Sweep events 2015-2017 via run_scan (idempotent). 23,021 events / 11.8 min runtime. |
 | `backend/scripts/build_slim_anchors_2015_2017.py` | **active** | Builds slim anchor parquet from research events + recomputed strict label. Symbol-configurable. |
 | `backend/scripts/ml/tbbo_resolver.py` | **active** | Reusable TBBO honest-fill resolver. Should be kept for v21. |
+| `backend/scripts/cli/` | **active** | `bs` operator CLI scaffold: doctor/status/data/snapshot/trial v1 commands. |
 | `backend/scripts/ml/v14_*.py` | **deprecated** | level-reactions audit attempt — null result, waiting on `reaction.fire_ts` schema from 247. |
 | `backend/tests/test_trial_registry.py` | **core** | Trial registry tests (3, all pass). |
 | `backend/tests/test_dataset_snapshots.py` | **core** | Dataset snapshot schema/provenance tests. |
@@ -163,9 +164,9 @@ Next gates required before paper trade:
 | Item | Owner | Status |
 |---|---|---|
 | 247 execution queue (Q1-Q8) | 247 | Prompt sent (`BEN_247_PROMPT_2026_05_17_EXECUTION_QUEUE.md`); 247 confirmed started |
-| Dataset snapshots schema (Q1) | 247 | Done — merged from `validation-reports-v1` |
-| `partition_validation_reports` + findings tables (Q2) | 247 | Done — merged from `validation-reports-v1` |
-| `bs` CLI scaffold (Q3) | 247 | Up next per `CLI_DESIGN.md` |
+| Dataset snapshots schema (Q1) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
+| `partition_validation_reports` + findings tables (Q2) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
+| `bs` CLI scaffold (Q3) | 247 | Branch shipped (`cli-scaffold-v1`) |
 | Validation library (`backend/app/research/validation/`) | benpc | Done (`16e86d9`) — 48 gates, 58 tests pass. Runner can now be wired in (Q2 tables exist). |
 | Trial registry merged to active branch | benpc | Done (`d910324`) |
 | `reaction.fire_ts` on level-reactions | 247 | Prompt sent (older) |
