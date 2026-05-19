@@ -170,7 +170,8 @@ Next gates required before paper trade:
 | Dataset snapshots schema (Q1) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
 | `partition_validation_reports` + findings tables (Q2) | 247 | Done — merged into `assets/expanded-universe-v1` (`5fe75b7`) |
 | `bs` CLI scaffold (Q3) | 247 | Done — merged into `assets/expanded-universe-v1` (`157aa0c`) |
-| Dashboard Data Health backend (Q4) | 247 | Built on `data-health-backend-v1`; ready for review/merge |
+| Dashboard Data Health backend (Q4) | 247 | Done - merged into `assets/expanded-universe-v1` (`bc07134`) |
+| Dashboard Data Health frontend (Q5) | 247 | Built on `data-health-frontend-v1`; ready for review/merge |
 | Validation library (`backend/app/research/validation/`) | benpc | Done (`16e86d9`) — 48 gates, 58 tests pass. Runner can now be wired in (Q2 tables exist). |
 | Trial registry merged to active branch | benpc | Done (`d910324`) |
 | `reaction.fire_ts` on level-reactions | 247 | Prompt sent (older) |
@@ -180,7 +181,7 @@ Next gates required before paper trade:
 ## Honest gaps (what this map doesn't cover yet)
 
 - `backend/app/api/`, `backend/app/cli/` — not classified yet, needs a pass
-- `frontend/` — UI work not in active scope; defer until deploy decision
+- `frontend/app/data-health/` - active dashboard Data Health screen; Q5 frontend build
 - `shared/openapi.json`, `frontend/lib/api/generated.ts` — type generation pipeline, see CLAUDE.md rule #4
 - Some `docs/ML_*` files from earlier weeks — not yet status-tagged
 
