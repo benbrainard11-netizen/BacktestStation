@@ -304,6 +304,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/data-health/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Validation Findings */
+        get: operations["read_validation_findings_api_dashboard_data_health_findings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/data-health/latest-validation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Latest Validation */
+        get: operations["read_latest_validation_api_dashboard_data_health_latest_validation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/data-health/local-coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Local Coverage */
+        get: operations["read_local_coverage_api_dashboard_data_health_local_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/data-health/r2-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read R2 Status */
+        get: operations["read_r2_status_api_dashboard_data_health_r2_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/data-health": {
         parameters: {
             query?: never;
@@ -2061,6 +2129,173 @@ export interface components {
             pnl: number;
             /** Trades */
             trades: number;
+        };
+        /** DashboardCoverageItem */
+        DashboardCoverageItem: {
+            /** Days Since Latest */
+            days_since_latest?: number | null;
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Feature Count */
+            feature_count?: number | null;
+            /** Latest Date */
+            latest_date?: string | null;
+            /** Local Paths */
+            local_paths?: string[];
+            /** Name */
+            name: string;
+            /**
+             * Partition Count
+             * @default 0
+             */
+            partition_count: number;
+            /** Row Count */
+            row_count?: number | null;
+            /** Schema */
+            schema: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "stale" | "empty";
+            /**
+             * Symbol Count
+             * @default 0
+             */
+            symbol_count: number;
+            /**
+             * Total Bytes
+             * @default 0
+             */
+            total_bytes: number;
+        };
+        /** DashboardLatestValidation */
+        DashboardLatestValidation: {
+            /** Generated At */
+            generated_at?: string | null;
+            /** Has Report */
+            has_report: boolean;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Partitions Fail
+             * @default 0
+             */
+            partitions_fail: number;
+            /**
+             * Partitions Pass
+             * @default 0
+             */
+            partitions_pass: number;
+            /**
+             * Partitions Warn
+             * @default 0
+             */
+            partitions_warn: number;
+            /** Report Id */
+            report_id?: number | null;
+            /** Snapshot Id */
+            snapshot_id?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Top Failing Gates */
+            top_failing_gates?: components["schemas"]["DashboardValidationGateSummary"][];
+            /**
+             * Total Partitions
+             * @default 0
+             */
+            total_partitions: number;
+        };
+        /** DashboardLocalCoverage */
+        DashboardLocalCoverage: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Items */
+            items: components["schemas"]["DashboardCoverageItem"][];
+        };
+        /** DashboardR2Status */
+        DashboardR2Status: {
+            /** Age Seconds */
+            age_seconds?: number | null;
+            /** Bucket */
+            bucket?: string | null;
+            /** Error */
+            error?: string | null;
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /** Generated At */
+            generated_at?: string | null;
+            /** Inventory Key */
+            inventory_key: string;
+            /**
+             * Object Count
+             * @default 0
+             */
+            object_count: number;
+            /** Reachable */
+            reachable: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "recent" | "stale" | "very_stale" | "unknown" | "unavailable";
+            /**
+             * Total Bytes
+             * @default 0
+             */
+            total_bytes: number;
+            /**
+             * Total Gb
+             * @default 0
+             */
+            total_gb: number;
+        };
+        /** DashboardValidationFinding */
+        DashboardValidationFinding: {
+            /** Date */
+            date?: string | null;
+            /** Details Json */
+            details_json?: string | null;
+            /** Gate Name */
+            gate_name: string;
+            /** Id */
+            id: number;
+            /** Message */
+            message?: string | null;
+            /** Partition R2 Key */
+            partition_r2_key: string;
+            /** Report Id */
+            report_id: number;
+            /** Schema */
+            schema: string;
+            /** Severity */
+            severity: string;
+            /** Symbol */
+            symbol?: string | null;
+        };
+        /** DashboardValidationFindings */
+        DashboardValidationFindings: {
+            /** Count */
+            count: number;
+            /** Findings */
+            findings: components["schemas"]["DashboardValidationFinding"][];
+            /** Severity */
+            severity?: string | null;
+        };
+        /** DashboardValidationGateSummary */
+        DashboardValidationGateSummary: {
+            /** Finding Count */
+            finding_count: number;
+            /** Gate Name */
+            gate_name: string;
+            /** Partition Count */
+            partition_count: number;
         };
         /** DataHealthPayload */
         DataHealthPayload: {
@@ -5638,6 +5873,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_validation_findings_api_dashboard_data_health_findings_get: {
+        parameters: {
+            query?: {
+                severity?: string | null;
+                schema?: string | null;
+                symbol?: string | null;
+                date?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardValidationFindings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_latest_validation_api_dashboard_data_health_latest_validation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLatestValidation"];
+                };
+            };
+        };
+    };
+    read_local_coverage_api_dashboard_data_health_local_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardLocalCoverage"];
+                };
+            };
+        };
+    };
+    read_r2_status_api_dashboard_data_health_r2_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardR2Status"];
                 };
             };
         };
