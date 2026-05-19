@@ -1946,6 +1946,363 @@
         "title": "DashboardLatestValidation",
         "type": "object"
       },
+      "DashboardLiveActiveCandidates": {
+        "properties": {
+          "active_count": {
+            "default": 0,
+            "title": "Active Count",
+            "type": "integer"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardLiveCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "paper_ready_candidates": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardLiveCandidate"
+            },
+            "title": "Paper Ready Candidates",
+            "type": "array"
+          },
+          "paper_trade_active": {
+            "default": false,
+            "title": "Paper Trade Active",
+            "type": "boolean"
+          },
+          "start_command_template": {
+            "default": "bs paper start <candidate_id>",
+            "title": "Start Command Template",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "DashboardLiveActiveCandidates",
+        "type": "object"
+      },
+      "DashboardLiveCandidate": {
+        "properties": {
+          "candidate_config_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Config Id"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "integer"
+          },
+          "candidate_name": {
+            "title": "Candidate Name",
+            "type": "string"
+          },
+          "lifecycle_status": {
+            "title": "Lifecycle Status",
+            "type": "string"
+          },
+          "start_command": {
+            "title": "Start Command",
+            "type": "string"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          },
+          "strategy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Name"
+          },
+          "strategy_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "candidate_name",
+          "lifecycle_status",
+          "start_command"
+        ],
+        "title": "DashboardLiveCandidate",
+        "type": "object"
+      },
+      "DashboardLiveDriftReport": {
+        "properties": {
+          "drift_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drift R"
+          },
+          "expected_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected R"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "has_report": {
+            "default": false,
+            "title": "Has Report",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "realized_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realized R"
+          },
+          "status": {
+            "default": "not_started",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "message"
+        ],
+        "title": "DashboardLiveDriftReport",
+        "type": "object"
+      },
+      "DashboardLivePosition": {
+        "properties": {
+          "avg_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Price"
+          },
+          "opened_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opened At"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "unrealized_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unrealized Pnl"
+          }
+        },
+        "required": [
+          "symbol",
+          "side",
+          "quantity"
+        ],
+        "title": "DashboardLivePosition",
+        "type": "object"
+      },
+      "DashboardLivePositions": {
+        "properties": {
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardLivePosition"
+            },
+            "title": "Positions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "DashboardLivePositions",
+        "type": "object"
+      },
+      "DashboardLiveSignal": {
+        "properties": {
+          "executed": {
+            "default": false,
+            "title": "Executed",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "strategy_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Version Id"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ts",
+          "side",
+          "price"
+        ],
+        "title": "DashboardLiveSignal",
+        "type": "object"
+      },
+      "DashboardLiveSignals": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardLiveSignal"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "title": "DashboardLiveSignals",
+        "type": "object"
+      },
       "DashboardLocalCoverage": {
         "properties": {
           "generated_at": {
@@ -13004,6 +13361,131 @@
           }
         },
         "summary": "Read R2 Status",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/live/active-candidates": {
+      "get": {
+        "operationId": "read_active_candidates_api_dashboard_live_active_candidates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLiveActiveCandidates"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Active Candidates",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/live/drift-report": {
+      "get": {
+        "operationId": "read_drift_report_api_dashboard_live_drift_report_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLiveDriftReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Drift Report",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/live/positions": {
+      "get": {
+        "operationId": "read_positions_api_dashboard_live_positions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLivePositions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Positions",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/live/signals": {
+      "get": {
+        "operationId": "read_live_signals_api_dashboard_live_signals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLiveSignals"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Live Signals",
         "tags": [
           "dashboard"
         ]

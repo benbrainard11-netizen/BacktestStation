@@ -10,6 +10,7 @@ export type IconName =
   | "health"
   | "trials"
   | "candidates"
+  | "live"
   | "bolt"
   | "film"
   | "layers"
@@ -33,6 +34,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Candidates",
     icon: "candidates",
     href: "/candidates",
+  },
+  {
+    id: "live-monitor",
+    label: "Live Monitor",
+    icon: "live",
+    href: "/live-monitor",
   },
   { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
   { id: "backtests", label: "Backtests", icon: "bolt", href: "/backtests" },

@@ -28,6 +28,15 @@ from app.schemas.dashboard_candidates import (
     DashboardCandidateList,
     DashboardCandidateSummary,
 )
+from app.schemas.dashboard_live import (
+    DashboardLiveActiveCandidates,
+    DashboardLiveCandidate,
+    DashboardLiveDriftReport,
+    DashboardLivePosition,
+    DashboardLivePositions,
+    DashboardLiveSignal,
+    DashboardLiveSignals,
+)
 from app.schemas.dashboard_trials import (
     DashboardHypothesisDetail,
     DashboardHypothesisItem,
@@ -196,6 +205,13 @@ __all__ = [
     "DashboardHypothesisDetail",
     "DashboardHypothesisItem",
     "DashboardHypothesisList",
+    "DashboardLiveActiveCandidates",
+    "DashboardLiveCandidate",
+    "DashboardLiveDriftReport",
+    "DashboardLivePosition",
+    "DashboardLivePositions",
+    "DashboardLiveSignal",
+    "DashboardLiveSignals",
     "DashboardLatestValidation",
     "DashboardLocalCoverage",
     "DashboardR2Status",
