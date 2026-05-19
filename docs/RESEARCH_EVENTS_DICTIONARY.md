@@ -2,7 +2,9 @@
 
 > **Status: canonical.** Single reference for navigating the BacktestStation research warehouse. If you're an ML researcher, an LLM agent, or someone building a strategy on top of this data — start here.
 
-This doc covers the **research events** layer: 4.4M+ detector fires across 15 detectors, 22+ symbols, 11 years of futures history. For raw bar storage + file layout, see [`DATA_FORMAT.md`](./DATA_FORMAT.md). For per-column field types and nullability, see [`SCHEMA_SPEC.md`](./SCHEMA_SPEC.md).
+This doc covers the **research events** layer: 4.87M+ detector fires across 16 detectors, 23 symbols, 11 years of futures history. For raw bar storage + file layout, see [`DATA_FORMAT.md`](./DATA_FORMAT.md). For per-column field types and nullability, see [`SCHEMA_SPEC.md`](./SCHEMA_SPEC.md).
+
+> Counts last refreshed: 2026-05-19 from R2 manifest `data/research_events/manifest.json` (4,869,147 rows, 365 parquet files). Local SQLite may lag R2 by hours-to-days depending on sync cadence.
 
 ## TL;DR — what's in the warehouse
 
@@ -57,11 +59,11 @@ The mode names use a compact convention that's easy to misread. Here's exactly w
 
 Source of truth: `backend/app/research/sessions.py::previous_session()`.
 
-## The 15 detectors
+## The 16 detectors
 
-Counts as of 2026-05-19. Per-symbol distribution is roughly uniform (NQ ~280k, YM ~270k, ES ~270k, others scale by liquidity).
+Counts as of 2026-05-19 from R2 manifest. Per-symbol distribution is roughly uniform across the major futures (NQ ~280k, YM ~270k, ES ~270k, others scale by liquidity).
 
-### 1. `order_block` (208,885 events, 14 variants)
+### 1. `order_block` (244,400 events, 14 variants)
 
 The v20 family. Detects sweep + opposite-close OB candle + confirmation close.
 
@@ -77,11 +79,11 @@ The v20 family. Detects sweep + opposite-close OB candle + confirmation close.
 
 **Note**: only 1H/4H/1D tracking timeframes. To add 15m/30m, see Gap 4 in `tradebot/ROADMAP_NOTES.md` (pending).
 
-### 2. `liquidity_sweep` (249,774 events, 14 variants)
+### 2. `liquidity_sweep` (290,515 events, 14 variants)
 
 Same 14 modes as order_block, but fires on the SWEEP alone (no OB + confirmation requirement). Higher event count, lower per-event signal quality. Used REVERSED in v20 (sweep of high → LONG signal).
 
-### 3. `fvg_formation` (1,296,636 events, 8 variants)
+### 3. `fvg_formation` (1,453,096 events, 8 variants)
 
 Fair Value Gap detection — 3-candle pattern with an unfilled gap.
 
@@ -94,7 +96,7 @@ Fair Value Gap detection — 3-candle pattern with an unfilled gap.
 
 Sides: bullish/bearish. Outcomes track mitigation (was the gap tapped/filled).
 
-### 4. `forming_volume_profile` (1,195,635 events, 6 variants)
+### 4. `forming_volume_profile` (1,176,018 events, 6 variants)
 
 Daily volume profile snapshotted at intermediate timestamps (1h / 4h marks).
 
@@ -105,7 +107,7 @@ Daily volume profile snapshotted at intermediate timestamps (1h / 4h marks).
 
 Used for "is the day's profile shaping up bullish or bearish at this snapshot point?"
 
-### 5. `swing_pivot` (366,123 events, 10 variants)
+### 5. `swing_pivot` (422,488 events, 10 variants)
 
 N-bar swing highs/lows (pivot_3 = 3 bars on each side, pivot_5 = 5).
 
@@ -117,7 +119,7 @@ N-bar swing highs/lows (pivot_3 = 3 bars on each side, pivot_5 = 5).
 
 Sides: high/low.
 
-### 6. `displacement_candle` (198,287 events, 6 variants)
+### 6. `displacement_candle` (226,342 events, 6 variants)
 
 Large-body candles relative to recent average — momentum signals.
 
@@ -129,7 +131,7 @@ Large-body candles relative to recent average — momentum signals.
 
 Sides: bullish/bearish.
 
-### 7. `opening_range_breakout` (168,121 events, 12 variants)
+### 7. `opening_range_breakout` (192,981 events, 12 variants)
 
 Opening-range break of N-minute window after session open.
 
@@ -140,7 +142,7 @@ Opening-range break of N-minute window after session open.
 
 Sides: bullish/bearish/doji.
 
-### 8. `interval_true_range` (199,912 events, 15 variants)
+### 8. `interval_true_range` (226,287 events, 15 variants)
 
 ATR-style range measurement over distinct intervals.
 
@@ -152,7 +154,7 @@ ATR-style range measurement over distinct intervals.
 
 Sides: bullish/bearish/doji.
 
-### 9. `volume_profile` (193,391 events, 15 variants)
+### 9. `volume_profile` (219,757 events, 15 variants)
 
 Completed volume profiles per period.
 
@@ -164,7 +166,7 @@ Completed volume profiles per period.
 
 Sides: balanced/buying/selling.
 
-### 10. `time_profile` (111,054 events, 12 variants)
+### 10. `time_profile` (125,233 events, 12 variants)
 
 Time-of-day session structure (3-session vs 4-session segmentations).
 
@@ -176,7 +178,7 @@ Time-of-day session structure (3-session vs 4-session segmentations).
 
 Sides: bullish/bearish/doji.
 
-### 11. `psp_candle_divergence` (76,714 events, 6 variants)
+### 11. `psp_candle_divergence` (89,105 events, 6 variants)
 
 Power-of-3 / candle divergence between correlated symbols.
 
@@ -188,7 +190,7 @@ Power-of-3 / candle divergence between correlated symbols.
 
 Sides: bullish/bearish.
 
-### 12. `first_third_range` (55,587 events, 6 variants)
+### 12. `first_third_range` (63,164 events, 6 variants)
 
 First 1/3 of period range — early indicator of period direction.
 
@@ -199,7 +201,7 @@ First 1/3 of period range — early indicator of period direction.
 
 Sides: bullish/bearish/doji.
 
-### 13. `opening_gap_levels` (39,424 events, 4 variants)
+### 13. `opening_gap_levels` (46,382 events, 4 variants)
 
 New daily / weekly opening gaps (NDOG / NWOG).
 
@@ -210,7 +212,7 @@ New daily / weekly opening gaps (NDOG / NWOG).
 
 Sides: gap_up/gap_down.
 
-### 14. `equal_levels` (22,595 events, 14 variants)
+### 14. `equal_levels` (61,185 events, 14 variants)
 
 Repeated highs/lows at the same price (within 5pts or 15pts tolerance).
 
@@ -222,7 +224,7 @@ Repeated highs/lows at the same price (within 5pts or 15pts tolerance).
 
 Sides: high/low.
 
-### 15. `smt_htf_reference_divergence` (11,630 events, 4 variants)
+### 15. `smt_htf_reference_divergence` (13,780 events, 4 variants)
 
 Smart-money-technique divergence between correlated symbols (NQ vs ES, etc.).
 
@@ -232,6 +234,82 @@ Smart-money-technique divergence between correlated symbols (NQ vs ES, etc.).
 | weekly_smt | 4H | 3.1k |
 
 Sides: high/low.
+
+### 16. `macro_event_anchor` (18,414 events, 113 distinct event_types)
+
+Scheduled US economic-release anchor events. For each FOMC / NFP / CPI /
+ISM / etc. release, this detector emits one event PER tracked symbol
+(currently ES/NQ/YM = 3 rows per release). The event marks the moment
+the news prints; `outcomes` carry forward-window R-stats for 1m/5m/etc.
+intervals so you can study price reaction.
+
+This is fundamentally different from the price-action detectors above:
+it's anchored to **calendar events**, not chart patterns. Use it to
+join price-reaction stats against scheduled macro catalysts.
+
+| Field | Value |
+|---|---|
+| event_types | 113 distinct `pre_<event_group>` strings |
+| timeframe | `macro` (single bucket) |
+| sides | `high` / `medium` (Forex Factory impact rating) |
+| symbols | ES.c.0, NQ.c.0, YM.c.0 (one event = 3 rows) |
+| years covered | 2015–2025 |
+
+Event_type families (selection from 113):
+
+- **FOMC**: `pre_fomc_statement`, `pre_fomc_press_conference`, `pre_fomc_member_powell_speaks` (+ historical members: yellen, bernanke, dudley, fischer, brainard, lacker, lockhart, evans, tarullo, williams, rosengren, quarles, waller...)
+- **Jobs**: `pre_non_farm_employment_change`, `pre_nfp`, `pre_unemployment_claims`, `pre_unemployment_rate`
+- **Inflation/Growth**: `pre_ppi_m_m`, `pre_prelim_gdp_q_q`, `pre_prelim_gdp_price_index_q_q`, `pre_prelim_uom_inflation_expectations`
+- **Activity**: `pre_ism_manufacturing_pmi`, `pre_ism_services_pmi`, `pre_ism_manufacturing_prices`, `pre_industrial_production_m_m`, `pre_retail_sales_m_m`, `pre_personal_spending_m_m`
+- **Housing**: `pre_housing_starts`, `pre_new_home_sales`, `pre_pending_home_sales_m_m`, `pre_s_and_p_cs_composite_20_hpi_y_y`, `pre_nahb_housing_market_index`
+- **Trade**: `pre_trade_balance`, `pre_goods_trade_balance`, `pre_import_prices_m_m`
+- **Political**: `pre_president_trump_speaks`, `pre_president_biden_speaks`, `pre_presidential_election`
+- **Treasury**: `pre_treasury_sec_yellen_speaks`, `pre_treasury_sec_mnuchin_speaks`, `pre_treasury_sec_lew_speaks`, `pre_treasury_currency_report`
+- **Sentiment**: `pre_prelim_uom_consumer_sentiment`, `pre_revised_uom_consumer_sentiment`
+- **Regional Fed**: `pre_philly_fed_manufacturing_index`, `pre_richmond_manufacturing_index`
+
+Sample `event_data`:
+```json
+{
+  "schema_version": 1,
+  "detector_version": "v1",
+  "source_event_id": "2015_01_02_100000_usd_ism_manufacturing_pmi_75aca3",
+  "event_name": "ISM Manufacturing PMI",
+  "event_group": "ism_manufacturing_pmi",
+  "country": "US",
+  "currency": "USD",
+  "impact": "high",
+  "source": "forex_factory_archive",
+  "release_ts_utc": "2015-01-02T15:00:00+00:00",
+  "release_ts_et": "2015-01-02T10:00:00-05:00",
+  "minutes_until_release": 1.0,
+  "scheduled_hour_et": 10,
+  "day_of_week_et": 4,
+  "has_forecast": true,
+  "forecast_raw": "57.6"
+}
+```
+
+Sample `outcomes`:
+```json
+{
+  "schema_version": 1,
+  "outcome_version": "v2",
+  "release_ts_utc": "2015-01-02T15:00:00+00:00",
+  "reference_close": 2062.25,
+  "max_horizon_minutes": 1440,
+  "next_1m": {
+    "open": 2062.25, "high": 2063.0, "low": 2060.5, "close": 2060.75,
+    "range_pts": 2.5, "body_pts": -1.5, "return_pts": -1.5,
+    "abs_return_pts": 1.5
+  },
+  "next_5m": {...},
+  "next_15m": {...},
+  "next_1h": {...}
+}
+```
+
+Common query pattern: "what's the median 5m return on NQ after a high-impact NFP release?" — filter by `event_type='pre_non_farm_employment_change'`, `side='high'`, `primary_symbol='NQ.c.0'`, extract `outcomes.next_5m.return_pts`.
 
 ## The JSON columns
 
@@ -372,5 +450,5 @@ bars = duckdb.query(duckdb_query).to_df()
 
 ## Cross-references
 
-- Live trading engine: `services/tradebot/` — separate from this research data (intentionally). Strategies in the live engine are re-ports of research detectors as streaming state machines. Currently only `order_block` and `liquidity_sweep` are ported to live; the other 13 detectors are research-only.
+- Live trading engine: `services/tradebot/` — separate from this research data (intentionally). Strategies in the live engine are re-ports of research detectors as streaming state machines. Currently only `order_block` and `liquidity_sweep` are ported to live (as `ob_sweep_v8a`); the other 14 detectors are research-only.
 - Knowledge cards: each event can link to a `research_entries` row (currently empty — feature unused, may be deprecated).
