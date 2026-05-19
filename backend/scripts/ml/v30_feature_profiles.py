@@ -68,6 +68,20 @@ def _parse_outcomes(raw) -> dict | None:
     return None
 
 
+# Detectors whose anchor is by-definition the price extreme.
+# For these, MAE-against-thesis is structurally near-zero (44% near-zero
+# for swing_pivot vs 1.3% for order_block) and the MFE/MAE ratio is
+# inflated by construction, NOT by predictive edge. Flag accordingly.
+PIVOT_ANCHORED_FEATURES = frozenset({"swing_pivot", "equal_levels"})
+
+
+def _metric_reliability(feature: str) -> str:
+    """Tag the feature's MFE/MAE-ratio interpretability."""
+    if feature in PIVOT_ANCHORED_FEATURES:
+        return "pivot_anchored__mae_inflated"  # ratio structurally too high
+    return "reactive__comparable"
+
+
 def _build_one_profile(events: pd.DataFrame, feature: str, symbol: str) -> dict:
     """Compute one row of the profile for a (feature, symbol)."""
     n = len(events)
@@ -90,6 +104,7 @@ def _build_one_profile(events: pd.DataFrame, feature: str, symbol: str) -> dict:
         return {
             "feature": feature, "symbol": symbol,
             "asset_class": ASSET_CLASS.get(symbol, "other"),
+            "metric_reliability": _metric_reliability(feature),
             "count": n, "n_years": n_years, "per_year": round(per_year, 1),
             "n_with_outcomes": 0,
             "hour_mode_utc": hour_mode,
@@ -113,6 +128,28 @@ def _build_one_profile(events: pd.DataFrame, feature: str, symbol: str) -> dict:
     fwd50_mfe = parsed.apply(lambda d: _extract(d, "forward_50_candles", "mfe_pts_in_thesis"))
     fwd50_mae = parsed.apply(lambda d: _extract(d, "forward_50_candles", "mae_pts_against_thesis"))
     fwd50_last = parsed.apply(lambda d: _extract(d, "forward_50_candles", "last_close_vs_reference_pts"))
+
+    # Fallback for detectors whose outcomes JSON lacks
+    # `last_close_vs_reference_pts` (e.g., swing_pivot): derive it from
+    # last_close - reference_close. We have both fields in forward_*_candles.
+    def _derive_last_minus_ref(d, horizon_key):
+        block = d.get(horizon_key) if isinstance(d, dict) else None
+        if not isinstance(block, dict):
+            return None
+        lc = block.get("last_close")
+        rc = block.get("reference_close")
+        if lc is None or rc is None:
+            return None
+        try:
+            return float(lc) - float(rc)
+        except (TypeError, ValueError):
+            return None
+
+    if fwd10_last.notna().mean() < 0.5:
+        # Mostly missing; derive
+        fwd10_last = parsed.apply(lambda d: _derive_last_minus_ref(d, "forward_10_candles"))
+    if fwd50_last.notna().mean() < 0.5:
+        fwd50_last = parsed.apply(lambda d: _derive_last_minus_ref(d, "forward_50_candles"))
 
     # NOTE on direction interpretation: forward_*_candles.last_close_vs_reference_pts
     # is signed in PRICE direction, not thesis direction. We need to multiply by
@@ -145,6 +182,7 @@ def _build_one_profile(events: pd.DataFrame, feature: str, symbol: str) -> dict:
         "feature": feature,
         "symbol": symbol,
         "asset_class": ASSET_CLASS.get(symbol, "other"),
+        "metric_reliability": _metric_reliability(feature),
         "count": n,
         "n_years": n_years,
         "per_year": round(per_year, 1),
