@@ -40,6 +40,7 @@ import argparse
 import calendar
 import datetime as dt
 import logging
+import math
 import os
 import sys
 import time
@@ -62,6 +63,7 @@ DEFAULT_SCHEMA = "mbp-1"
 ALLOWED_SCHEMAS = ("mbp-1", "tbbo", "ohlcv-1m", "ohlcv-1s", "ohlcv-1h", "ohlcv-1d")
 SYMBOLS = ["NQ.c.0", "ES.c.0", "YM.c.0", "RTY.c.0"]
 STYPE_IN = "continuous"
+COST_ABORT_THRESHOLD_USD = 0.0
 
 # Retry config for transient Databento failures. Empirically (2026-04-27)
 # their MBP-1 endpoint returned "503 <empty message>" or "Response ended
@@ -208,6 +210,64 @@ def _get_range_with_retry(
     ) from last_exc
 
 
+def _quote_cost_for_symbols(
+    client: "db.Historical",
+    *,
+    day: dt.date,
+    symbols: list[str],
+    schema: str,
+    logger: logging.Logger,
+) -> float:
+    """Quote one day of Databento data before any paid pull can happen."""
+    if not symbols:
+        return 0.0
+    start = day.isoformat()
+    end = (day + dt.timedelta(days=1)).isoformat()
+    cost = float(
+        client.metadata.get_cost(
+            dataset=DATASET,
+            schema=schema,
+            symbols=symbols,
+            stype_in=STYPE_IN,
+            start=start,
+            end=end,
+        )
+    )
+    if not math.isfinite(cost):
+        raise RuntimeError(f"Databento cost check returned non-finite value: {cost}")
+    logger.info(
+        "cost quote: schema=%s symbols=%s window=%s..%s = $%.4f",
+        schema,
+        len(symbols),
+        start,
+        end,
+        cost,
+    )
+    return cost
+
+
+def _assert_zero_cost(cost: float, *, context: str) -> None:
+    if cost != COST_ABORT_THRESHOLD_USD:
+        raise RuntimeError(
+            f"ABORT: Databento cost quote ${cost:.4f} for {context} "
+            "is not $0.00. Refusing to pull to avoid paid API usage."
+        )
+
+
+def _missing_symbols_for_day(
+    data_root: Path,
+    day: dt.date,
+    symbols: list[str],
+    schema: str,
+) -> list[str]:
+    missing: list[str] = []
+    for symbol in symbols:
+        path = file_for_date_symbol(data_root, day, symbol, schema)
+        if not path.exists() or path.stat().st_size == 0:
+            missing.append(symbol)
+    return missing
+
+
 def pull_day(
     client: "db.Historical",
     out_path: Path,
@@ -251,18 +311,31 @@ def pull_day(
     # parents up from the directory.
     data_root = out_path.parent.parent.parent
 
+    missing_symbols = _missing_symbols_for_day(data_root, day, symbols, schema)
+    if not missing_symbols:
+        total_bytes = sum(
+            file_for_date_symbol(data_root, day, symbol, schema).stat().st_size
+            for symbol in symbols
+        )
+        logger.info("%s %s: all symbol DBNs already exist", day.isoformat(), schema)
+        return True, total_bytes
+
+    cost = _quote_cost_for_symbols(
+        client,
+        day=day,
+        symbols=missing_symbols,
+        schema=schema,
+        logger=logger,
+    )
+    _assert_zero_cost(
+        cost,
+        context=f"{schema} {day.isoformat()} symbols={','.join(missing_symbols)}",
+    )
+
     any_wrote = False
     total_bytes = 0
-    for i, symbol in enumerate(symbols):
+    for i, symbol in enumerate(missing_symbols):
         sym_path = file_for_date_symbol(data_root, day, symbol, schema)
-
-        # Idempotent skip: if this symbol-day file already exists and is
-        # non-empty, leave it alone.
-        if sym_path.exists() and sym_path.stat().st_size > 0:
-            logger.info(f"  skip existing: {sym_path.name}")
-            any_wrote = True  # treat existing files as "we have this day"
-            total_bytes += sym_path.stat().st_size
-            continue
 
         try:
             response = _get_range_with_retry(
@@ -286,7 +359,7 @@ def pull_day(
             total_bytes += sz
 
         # Throttle so successive calls don't trip Databento's rate limit.
-        if i < len(symbols) - 1:
+        if i < len(missing_symbols) - 1:
             time.sleep(_THROTTLE_BETWEEN_CALLS_SEC)
 
     return any_wrote, total_bytes
@@ -319,6 +392,22 @@ def pull_one_day_one_symbol(
     if out_path.exists() and out_path.stat().st_size > 0:
         logger.info(f"  skip existing: {out_path.name}")
         return True, out_path.stat().st_size
+
+    cost = _quote_cost_for_symbols(
+        client,
+        day=day,
+        symbols=[symbol],
+        schema=schema,
+        logger=logger,
+    )
+    try:
+        _assert_zero_cost(
+            cost,
+            context=f"{schema} {day.isoformat()} symbol={symbol}",
+        )
+    except RuntimeError as e:
+        logger.error(str(e))
+        return False, 0
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     start = dt.datetime.combine(day, dt.time(0, 0, tzinfo=dt.timezone.utc))

@@ -65,7 +65,7 @@ Register-ScheduledTask `
     -Trigger $trigger `
     -Settings $settings `
     -Principal $principal `
-    -Description "Pull yesterday's MBP-1 (NQ/ES/YM) + TBBO (CL/NG/GC/SI/ZN/ZB/ZF/6E/6B/6J) from Databento. Cost-checked, aborts if quote > `$0.01."
+    -Description "Pull yesterday's MBP-1 (NQ/ES/YM) + TBBO (CL/NG/GC/SI/ZN/ZB/ZF/6E/6B/6J) from Databento. Cost-checked, aborts unless quote is exactly `$0.00."
 
 Write-Host ""
 Write-Host "Installed. Verify with:"

@@ -60,6 +60,12 @@ def _fake_client(rows_per_day: int) -> MagicMock:
 
     client = MagicMock()
     client.timeseries.get_range.side_effect = _make_response
+    client.metadata.get_cost.return_value = 0.0
+    return client
+
+
+def _attach_zero_cost(client: MagicMock) -> MagicMock:
+    client.metadata.get_cost.return_value = 0.0
     return client
 
 
@@ -179,6 +185,7 @@ def test_pull_month_continues_on_per_symbol_error(data_root: Path) -> None:
 
     client = MagicMock()
     client.timeseries.get_range.side_effect = _flaky
+    _attach_zero_cost(client)
 
     result = historical.pull_month(
         year=2026,
@@ -222,6 +229,7 @@ def test_get_range_retries_on_transient_error(data_root: Path) -> None:
 
     client = MagicMock()
     client.timeseries.get_range.side_effect = _flaky
+    _attach_zero_cost(client)
 
     result = historical.pull_month(
         year=2026,
@@ -243,11 +251,44 @@ def test_get_range_retries_on_transient_error(data_root: Path) -> None:
 
 
 def test_pull_month_rejects_invalid_month() -> None:
-    client = MagicMock()
+    client = _attach_zero_cost(MagicMock())
     with pytest.raises(ValueError):
         historical.pull_month(year=2026, month=13, client=client)
     with pytest.raises(ValueError):
         historical.pull_month(year=2026, month=0, client=client)
+
+
+def test_pull_month_aborts_paid_quote_before_get_range(data_root: Path) -> None:
+    client = _fake_client(rows_per_day=10)
+    client.metadata.get_cost.return_value = 0.01
+
+    result = historical.pull_month(
+        year=2026,
+        month=3,
+        client=client,
+        data_root=data_root,
+        max_days=1,
+    )
+
+    assert result.errors
+    assert "ABORT" in result.errors[0]
+    assert client.timeseries.get_range.call_count == 0
+
+
+def test_pull_one_day_one_symbol_aborts_paid_quote(data_root: Path) -> None:
+    client = _fake_client(rows_per_day=10)
+    client.metadata.get_cost.return_value = 0.01
+
+    wrote, size = historical.pull_one_day_one_symbol(
+        client,
+        dt.date(2026, 3, 1),
+        "NQ.c.0",
+        data_root=data_root,
+    )
+
+    assert wrote is False
+    assert size == 0
+    assert client.timeseries.get_range.call_count == 0
 
 
 # --- CLI -----------------------------------------------------------------

@@ -9,9 +9,9 @@ Idempotent: per-symbol-per-day files already on disk are skipped.
 
 Cost safety:
     Pre-flight check via `databento.Historical.metadata.get_cost`.
-    If the quote exceeds COST_ABORT_THRESHOLD_USD ($0.01), the script
+    If the quote is anything other than exactly $0.00, the script
     refuses to run. This is the safety against silent billing once
-    the user's free trial of MBP-1 ends.
+    Databento free-window coverage changes.
 
 CLI:
     # default: pull yesterday UTC
@@ -70,9 +70,9 @@ OTHER_SYMBOLS = [
 ]
 OTHER_SCHEMA = "tbbo"
 
-# Hard guard against silent billing. The trial returns $0; if the API
-# ever quotes more, this aborts the whole run before any pull happens.
-COST_ABORT_THRESHOLD_USD = 0.01
+# Hard guard against silent billing. Free-window pulls return exactly $0.
+# Any positive quote aborts the whole run before any paid API pull happens.
+COST_ABORT_THRESHOLD_USD = 0.0
 
 
 @dataclass
@@ -186,9 +186,9 @@ def pull_days(
     Idempotent: pre-existing per-symbol DBN files are skipped (handled
     by `historical.pull_day`).
 
-    Cost safety: aborts before any pull if the metadata cost quote
-    exceeds `cost_threshold_usd`. Returns a result with the quote
-    populated so callers can surface what happened.
+    Cost safety: aborts before any pull if the metadata cost quote is
+    anything other than exactly $0.00. `cost_threshold_usd` is retained
+    for backward compatibility but paid thresholds are not honored.
     """
     data_root = data_root or _data_root()
     api_key = api_key or os.environ.get("DATABENTO_API_KEY")
@@ -209,11 +209,17 @@ def pull_days(
     result.cost_quote_usd = cost
     logger.info(f"total cost quote for window: ${cost:.4f}")
 
-    if cost > cost_threshold_usd:
+    if cost_threshold_usd != COST_ABORT_THRESHOLD_USD:
+        logger.warning(
+            "paid Databento thresholds are disabled; enforcing $0.00 "
+            "regardless of requested threshold $%.4f",
+            cost_threshold_usd,
+        )
+
+    if cost != 0.0:
         msg = (
-            f"ABORT: cost quote ${cost:.4f} exceeds threshold "
-            f"${cost_threshold_usd:.4f}. Refusing to pull. Check trial "
-            f"status on databento.com or raise threshold explicitly."
+            f"ABORT: Databento cost quote ${cost:.4f} is not $0.00. "
+            "Refusing to pull to avoid paid API usage."
         )
         logger.error(msg)
         result.errors.append(msg)
@@ -288,8 +294,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=float,
         default=COST_ABORT_THRESHOLD_USD,
         help=(
-            f"Abort if metadata cost quote exceeds this (default "
-            f"${COST_ABORT_THRESHOLD_USD}). Set higher to allow paid pulls."
+            "Deprecated compatibility flag. Paid pulls are disabled; "
+            "the enforced threshold is always $0.00."
         ),
     )
     return p.parse_args(argv)

@@ -113,6 +113,21 @@ def test_pull_days_aborts_when_quote_exceeds_threshold(data_root: Path) -> None:
     assert client.timeseries.get_range.call_count == 0
 
 
+def test_pull_days_aborts_any_positive_quote_even_below_old_threshold(
+    data_root: Path,
+) -> None:
+    client = _fake_client(rows_per_call=10, cost_per_quote=0.001)
+    days = [dt.date(2026, 4, 30)]
+    result = daily.pull_days(
+        days, client=client, cost_threshold_usd=1.0, data_root=data_root
+    )
+
+    assert result.cost_quote_usd == pytest.approx(0.002)
+    assert result.errors
+    assert "not $0.00" in result.errors[0]
+    assert client.timeseries.get_range.call_count == 0
+
+
 def test_pull_days_proceeds_at_zero_cost(data_root: Path) -> None:
     """The hot path: trial returns $0 -> pulls go through."""
     client = _fake_client(rows_per_call=10, cost_per_quote=0.0)
