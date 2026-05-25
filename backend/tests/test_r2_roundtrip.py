@@ -294,8 +294,11 @@ def test_r2_upload_schema_filter_merges_inventory(
     assert stats.enumerated == 1
     assert uploaded == [mbo_part.r2_key]
     r2_keys = {p["r2_key"] for p in written["partitions"]}
-    assert r2_keys == {tbbo_part.r2_key, mbo_part.r2_key}
-    assert not any("symbol=OLD" in key for key in r2_keys)
+    assert r2_keys == {
+        tbbo_part.r2_key,
+        mbo_part.r2_key,
+        "raw/databento/mbo/symbol=OLD/date=2026-01-01/part-000.parquet",
+    }
 
 
 # --- Integration test (R2 required) -------------------------------------

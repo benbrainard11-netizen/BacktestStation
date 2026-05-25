@@ -45,9 +45,9 @@ Git should hold:
 Last verified during the MBO upload pass:
 
 ```text
-total partitions: 127084
-mbo partitions:   112
-mbo bytes:        17476381452
+total partitions: 127148
+mbo partitions:   176
+mbo bytes:        26084910575
 ```
 
 MBO scope:
@@ -55,12 +55,15 @@ MBO scope:
 | Field | Value |
 |---|---|
 | Symbols | `ES.c.0`, `NQ.c.0`, `RTY.c.0`, `YM.c.0` |
-| Dates | `2026-04-20` through `2026-05-22` |
-| Objects | `112` |
-| Size | `17.48 GB` decimal / `16.28 GiB` |
+| Dates | `2026-04-01` through `2026-05-22` |
+| Objects | `176` |
+| Size | `26.08 GB` decimal / `24.29 GiB` |
 | Prefix | `raw/databento/mbo/` |
 
 This was a local-to-R2 mirror only. It did not call Databento historical APIs.
+The local 24/7 node currently has `2026-04-20` through `2026-05-22`; older
+April MBO files are bucket-only from another machine and are indexed in
+`_inventory.json`.
 
 ## Prefix Layout
 
@@ -133,6 +136,19 @@ latest JSON report to:
 ```text
 {BS_DATA_ROOT}/logs/r2_freshness_latest.json
 ```
+
+If the audit shows bucket objects missing from `_inventory.json`, repair the
+selected schema from bucket listing:
+
+```powershell
+python -m app.ingest.r2_inventory_repair --schemas mbo --dry-run
+python -m app.ingest.r2_inventory_repair --schemas mbo
+python -m app.ingest.r2_freshness_audit
+```
+
+This repair does not call Databento, upload data, or delete data. It only lists
+objects already present in R2 and rewrites `_inventory.json` for the selected
+schema.
 
 Manual dry-run:
 

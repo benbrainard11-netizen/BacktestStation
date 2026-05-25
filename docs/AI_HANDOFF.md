@@ -43,6 +43,7 @@ cd C:\Users\benbr\BacktestStation
 ```powershell
 cd C:\Users\benbr\BacktestStation\backend
 python -m app.ingest.r2_freshness_audit
+python -m app.ingest.r2_inventory_repair --schemas mbo --dry-run
 python -m app.ingest.mbo_r2_mirror --dry-run
 python -m app.ingest.mbo_r2_mirror
 ```
@@ -78,8 +79,8 @@ BacktestStation:
 
 ```text
 branch: assets/expanded-universe-v1
-status: clean and synced
-latest known commit: 7308696 Add MBO R2 warehouse schema support
+status: should be clean and synced after the current task commits/pushes
+latest known commit: see `git log -1 --oneline`
 ```
 
 InsyncApp worktrees:
@@ -94,9 +95,9 @@ R2:
 
 ```text
 bucket: bsdata-prod
-inventory partitions: 127084
-mbo objects: 112
-mbo bytes: 17476381452
+inventory partitions: 127148
+mbo objects: 176
+mbo bytes: 26084910575
 ```
 
 ## How To Decide Where Work Belongs

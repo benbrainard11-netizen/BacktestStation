@@ -173,8 +173,9 @@ def _merge_inventory_partitions(
 
     Full uploads rebuild `_inventory.json` from local disk. Targeted uploads
     must not do that, because this machine may only hold one slice of the
-    warehouse. Instead, keep every existing non-target schema entry and
-    replace only entries for the schemas this run owns.
+    warehouse. Instead, keep every existing inventory entry and upsert the
+    partitions this run touched. A separate bucket-based repair command is
+    responsible for removing stale inventory entries.
     """
     existing_inventory = read_inventory(client, bucket)
     existing_parts = []
@@ -185,8 +186,6 @@ def _merge_inventory_partitions(
 
     merged_by_key: dict[str, dict] = {}
     for part in existing_parts:
-        if part.get("schema") in updated_schema_names:
-            continue
         key = part.get("r2_key")
         if isinstance(key, str):
             merged_by_key[key] = part

@@ -88,6 +88,7 @@ MBO-to-R2 manual mirror:
 ```powershell
 cd backend
 python -m app.ingest.r2_freshness_audit
+python -m app.ingest.r2_inventory_repair --schemas mbo --dry-run
 python -m app.ingest.mbo_r2_mirror --dry-run
 python -m app.ingest.mbo_r2_mirror
 ```

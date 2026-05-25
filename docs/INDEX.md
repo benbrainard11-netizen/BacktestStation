@@ -27,6 +27,7 @@ This index separates current operating docs from historical notes.
 | `scripts/workspace_health.ps1` | Read-only workspace status scan |
 | `scripts/install_mbo_r2_mirror_task.ps1` | Install daily local-MBO-to-R2 mirror task |
 | `python -m app.ingest.r2_freshness_audit` | Compare local MBO, R2 inventory, and bucket objects |
+| `python -m app.ingest.r2_inventory_repair --schemas mbo` | Repair R2 inventory from actual bucket objects |
 
 ## Active Research/Validation Docs
 

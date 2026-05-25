@@ -8,6 +8,7 @@ import typer
 
 from app.core.paths import REPO_ROOT
 from app.ingest import r2_freshness_audit
+from app.ingest import r2_inventory_repair
 from scripts.cli.output_format import emit_json, emit_lines
 
 app = typer.Typer(
@@ -108,4 +109,23 @@ def r2_freshness(
     else:
         emit_lines(r2_freshness_audit.format_text(audit).splitlines())
     if not audit.ok:
+        raise typer.Exit(1)
+
+
+@app.command("r2-repair-inventory")
+def r2_repair_inventory(
+    schemas: str = typer.Option("mbo", "--schemas", help="Comma-separated schema filter."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show counts without writing."),
+    json_output: bool = typer.Option(False, "--json", help="Emit JSON."),
+) -> None:
+    """Repair selected R2 inventory schemas from bucket objects."""
+    result = r2_inventory_repair.run(
+        schemas=r2_freshness_audit._parse_csv_set(schemas),
+        dry_run=dry_run,
+    )
+    if json_output:
+        emit_json(r2_inventory_repair.to_dict(result))
+    else:
+        emit_lines(r2_inventory_repair.format_text(result).splitlines())
+    if not result.ok:
         raise typer.Exit(1)
