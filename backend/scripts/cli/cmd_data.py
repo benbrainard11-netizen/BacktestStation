@@ -7,6 +7,7 @@ from typing import Annotated
 import typer
 
 from app.core.paths import REPO_ROOT
+from app.ingest import r2_freshness_audit
 from scripts.cli.output_format import emit_json, emit_lines
 
 app = typer.Typer(
@@ -77,3 +78,34 @@ def validate(
         typer.echo(result.stderr.rstrip(), err=True)
     if result.returncode != 0:
         raise typer.Exit(result.returncode)
+
+
+@app.command("r2-freshness")
+def r2_freshness(
+    schemas: str = typer.Option("mbo", "--schemas", help="Comma-separated schema filter."),
+    expected_symbols: str = typer.Option(
+        ",".join(r2_freshness_audit.CORE_MBO_SYMBOLS),
+        "--expected-symbols",
+        help="Comma-separated symbols expected in the selected schema.",
+    ),
+    expected_schemas: str = typer.Option(
+        ",".join(r2_freshness_audit.EXPECTED_MARKET_SCHEMAS),
+        "--expected-schemas",
+        help="Comma-separated schemas expected somewhere in R2 _inventory.json.",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Emit JSON."),
+    no_write: bool = typer.Option(False, "--no-write", help="Do not write the latest JSON report."),
+) -> None:
+    """Audit local/R2 freshness for selected warehouse schemas."""
+    audit = r2_freshness_audit.run(
+        schemas=r2_freshness_audit._parse_csv_set(schemas),
+        expected_symbols=r2_freshness_audit._parse_csv_list(expected_symbols),
+        expected_schemas=r2_freshness_audit._parse_csv_list(expected_schemas),
+        write_report=not no_write,
+    )
+    if json_output:
+        emit_json(r2_freshness_audit.to_dict(audit))
+    else:
+        emit_lines(r2_freshness_audit.format_text(audit).splitlines())
+    if not audit.ok:
+        raise typer.Exit(1)

@@ -26,6 +26,7 @@ KNOWN_TASKS: list[str] = [
     "BacktestStationParquetMirror",
     "BacktestStationDatasetScan",
     "BacktestStationR2Upload",
+    "BacktestStationMboR2Mirror",
     "BacktestStationHistorical",
     "BacktestStationGapFiller",
     "BacktestStation - Import Live Trades",

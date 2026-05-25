@@ -79,6 +79,7 @@ def _seed_trial_group(db_url: str) -> None:
         ["status", "--help"],
         ["data", "validate", "--help"],
         ["data", "inventory", "--help"],
+        ["data", "r2-freshness", "--help"],
         ["snapshot", "create", "--help"],
         ["snapshot", "list", "--help"],
         ["snapshot", "show", "--help"],

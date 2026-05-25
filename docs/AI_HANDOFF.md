@@ -42,6 +42,7 @@ cd C:\Users\benbr\BacktestStation
 
 ```powershell
 cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.r2_freshness_audit
 python -m app.ingest.mbo_r2_mirror --dry-run
 python -m app.ingest.mbo_r2_mirror
 ```

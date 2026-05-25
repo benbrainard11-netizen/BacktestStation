@@ -113,6 +113,27 @@ python -m app.ingest.r2_upload --dry-run --schemas mbo
 When daily local MBO parquet is available, mirror only MBO to R2. This path
 does not call Databento; it only reads local parquet under `BS_DATA_ROOT`.
 
+Freshness audit:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.r2_freshness_audit
+```
+
+The audit compares:
+
+1. Local MBO partitions under `BS_DATA_ROOT`.
+2. MBO entries in R2 `_inventory.json`.
+3. Actual R2 objects under `raw/databento/mbo/`.
+
+It reports latest dates, counts, bytes, missing core symbols, missing expected
+schemas, local-vs-inventory drift, and inventory-vs-bucket drift. It writes the
+latest JSON report to:
+
+```text
+{BS_DATA_ROOT}/logs/r2_freshness_latest.json
+```
+
 Manual dry-run:
 
 ```powershell
