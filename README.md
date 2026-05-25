@@ -1,117 +1,96 @@
 # BacktestStation
 
-A local-first research and command center for personal futures trading. Imported + engine-generated backtest runs, per-trade replay (1m and tick-level), live monitoring, drift detection, retroactive risk-profile evaluation, and a futures data warehouse — all running on local hardware.
+Local-first research, data, validation, and ML infrastructure for personal
+futures research.
 
-**Status (2026-04-27):** Phase 1 (Imported Results Command Center) shipped. Backtest engine, live ingester, and live-trades pipeline online. Trade replay shipped. Firm-rules editor + session journal landed end-of-day. 470 backend tests green. See [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) for the full live-state mirror.
+Status date: 2026-05-25
 
-## Where to look next
+## Current Role
 
-- **What we're building** → [`docs/ROADMAP.md`](docs/ROADMAP.md) — vision, current focus tier, deferred work, direction discipline rules.
-- **What's running today** → [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) — the canonical snapshot, refreshed after each milestone.
-- **Engineering rules** → [`CLAUDE.md`](CLAUDE.md) — non-negotiable rules for engine purity, schema discipline, mocked-page tagging, etc.
-- **Machine roles + data ownership** → [`docs/LOCAL_INFRASTRUCTURE.md`](docs/LOCAL_INFRASTRUCTURE.md) — three-machine setup (server / dev / contributor), append-only data rules, Husky onboarding.
-- **System design (current + future)** → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — sections 0-3 are current; sections 4+ describe a long-term engine end-state.
-- **Pre-merge review** → invoke the [`merge-review`](.claude/agents/merge-review.md) subagent before merging a branch.
+BacktestStation is the research and data brain. It owns:
+
+- Databento ingest and parquet warehouse schemas.
+- Cloudflare R2 upload/download/catalog tooling.
+- Research events, detectors, outcomes, strict labels, and feature matrices.
+- Dataset snapshots, partition validation, and trial registry tables.
+- Operator dashboards for data health, trials, candidates, and live-monitor
+  state.
+- Strategy-lab exports and ML research reports.
+
+Live/paper execution belongs in InsyncApp. Actual data files belong in local
+data roots or R2, not Git.
+
+## Start Here
+
+Read these first:
+
+- [Project Map](docs/PROJECT_MAP.md)
+- [Documentation Index](docs/INDEX.md)
+- [R2 Warehouse Map](docs/R2_WAREHOUSE_MAP.md)
+- [System Map](docs/SYSTEM_MAP.md)
+- [Schema Spec](docs/SCHEMA_SPEC.md)
+- [AI Handoff](docs/AI_HANDOFF.md)
+
+Older prompt, overnight, and ML result docs are historical unless one of the
+current maps links to them for a specific reason.
+
+## Current Branch
+
+Primary working branch:
+
+```text
+assets/expanded-universe-v1
+```
+
+Last known pushed head when this README was updated:
+
+```text
+7308696 Add MBO R2 warehouse schema support
+```
+
+## Data
+
+Local warehouse root is configured by `BS_DATA_ROOT`.
+
+Private cloud warehouse:
+
+```text
+R2 bucket: bsdata-prod
+```
+
+Latest verified R2 state:
+
+- Inventory partitions: `127084`
+- MBO objects: `112`
+- MBO size: `17.48 GB` decimal / `16.28 GiB`
+- MBO symbols: `ES.c.0`, `NQ.c.0`, `RTY.c.0`, `YM.c.0`
+- MBO dates: `2026-04-20` through `2026-05-22`
+
+See [R2 Warehouse Map](docs/R2_WAREHOUSE_MAP.md) for upload rules.
 
 ## Stack
 
-- **Backend:** FastAPI (Python 3.12), SQLAlchemy + SQLite (`meta.sqlite`), pyarrow, Pandas
-- **Engine:** pure Python, deterministic, lookahead-tested
-- **Frontend:** Next.js + TypeScript + Tailwind, lightweight-charts (replay)
-- **Desktop shell:** Tauri (spawns Next.js + uvicorn sidecar as one window)
-- **Data:** Databento (live TBBO + monthly historical MBP-1) → DBN (raw) → Parquet (queryable, Hive-partitioned by symbol + date)
-- **Network:** Tailscale connects ben-247 (server) ↔ benpc (dev) ↔ Husky's PC (contributor)
+- Backend: FastAPI, Python 3.12, SQLAlchemy, SQLite, PyArrow, Pandas
+- Frontend: Next.js, TypeScript, Tailwind
+- Data: Databento DBN/parquet, Hive partitions, Cloudflare R2
+- Validation: dataset snapshots, partition validation reports, trial registry
+- ML/research: strict labels, anchor matrices, walk-forward reports
 
-## Repo layout
-
-```
-backend/    FastAPI + engine + ingest pipelines + tests (444 tests green)
-frontend/   Next.js app + Tauri shell
-shared/     Generated OpenAPI schema (source of truth: backend Pydantic)
-docs/       Architecture, roadmap, schema spec, runbooks
-.claude/    Project agents (e.g. merge-review)
-data/       Local repo data (meta.sqlite, live_inbox/) — gitignored
-```
-
-The on-disk warehouse lives at `D:\data\` (or `BS_DATA_ROOT`), separate from this repo. See [`docs/SCHEMA_SPEC.md`](docs/SCHEMA_SPEC.md) for the canonical layout.
-
-## Getting started
-
-### Quickest path (Windows, desktop app)
-
-```cmd
-start.bat
-```
-
-Spawns the Tauri desktop window, which spawns Next.js (port 3000) + uvicorn (port 8000) as children. First run takes 60-90s for cargo to compile the shell.
-
-Prerequisites: backend venv + frontend node_modules. See per-component setup below if `start.bat` complains.
-
-### Backend (manual)
-
-macOS / Linux:
-
-```bash
-cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8000
-```
-
-Windows (PowerShell):
+## Quick Checks
 
 ```powershell
-cd backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8000
+git status --short --branch
+.\scripts\workspace_health.ps1
 ```
 
-Health check: `curl http://localhost:8000/api/health` → `{"status":"ok","version":"0.1.0"}`.
+Backend tests are run from the repo root or `backend/` depending on the target
+suite. Use focused tests for the area you changed.
 
-Tests: `pytest -q` (target: 470 passed; check `docs/PROJECT_STATE.md` for the current canonical count).
+## Guardrails
 
-### Frontend (manual)
+- Do not spend Databento API money without explicit approval.
+- Do not commit raw or derived warehouse data.
+- Do not overwrite R2 inventory from a partial local disk view.
+- Do not use future/outcome fields as model features.
+- Do not reset dirty worktrees without explicit approval.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open http://localhost:3000. Type-check: `npx tsc --noEmit`.
-
-### Generated API types
-
-Frontend imports TypeScript types generated from the FastAPI OpenAPI schema. Regenerate after any schema change:
-
-```bash
-bash scripts/generate-types.sh
-```
-
-Both `shared/openapi.json` and `frontend/lib/api/generated.ts` are committed.
-
-Drift check (fails if `shared/openapi.json` is stale):
-
-```bash
-cd backend
-.venv/Scripts/python.exe -m app.cli.export_openapi --check
-```
-
-Use generated types in new code:
-
-```ts
-import type { components } from "@/lib/api/generated";
-type NoteRead = components["schemas"]["NoteRead"];
-```
-
-## For collaborators
-
-1. Read [`docs/ROADMAP.md`](docs/ROADMAP.md) first — that's what we're building right now.
-2. Read [`docs/LOCAL_INFRASTRUCTURE.md`](docs/LOCAL_INFRASTRUCTURE.md) for machine roles + data ownership rules. (Especially: raw data is append-only.)
-3. Read [`CLAUDE.md`](CLAUDE.md) for engineering rules — they apply to humans + AI agents alike.
-4. One feature per branch, one PR per branch. Small PRs.
-5. If a file passes 300 lines, split it.
-6. Before merging: invoke the `merge-review` subagent. It reads the rules above and flags scope drift / engineering violations.
