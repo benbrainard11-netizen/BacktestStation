@@ -9,6 +9,7 @@ from app.db.session import get_session
 from app.schemas.dashboard_data_health import (
     DashboardLatestValidation,
     DashboardLocalCoverage,
+    DashboardR2Freshness,
     DashboardR2Status,
     DashboardValidationFindings,
 )
@@ -20,6 +21,11 @@ router = APIRouter(prefix="/dashboard/data-health", tags=["dashboard"])
 @router.get("/r2-status", response_model=DashboardR2Status)
 def read_r2_status() -> DashboardR2Status:
     return dashboard_data_health.get_r2_status()
+
+
+@router.get("/r2-freshness", response_model=DashboardR2Freshness)
+def read_r2_freshness() -> DashboardR2Freshness:
+    return dashboard_data_health.get_r2_freshness()
 
 
 @router.get("/local-coverage", response_model=DashboardLocalCoverage)

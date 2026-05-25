@@ -7,6 +7,7 @@ import { Card, PageHeader } from "@/components/atoms";
 import {
   CoverageCard,
   FindingsCard,
+  R2FreshnessCard,
   R2SyncCard,
   ValidationCard,
 } from "./DataHealthCards";
@@ -44,7 +45,10 @@ export function DataHealthClient() {
 
       {data ? (
         <div className="space-y-4">
-          <R2SyncCard r2={data.r2} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <R2SyncCard r2={data.r2} />
+            <R2FreshnessCard freshness={data.r2Freshness} />
+          </div>
           <CoverageCard items={data.coverage.items ?? []} />
           <ValidationCard report={data.validation} />
           <FindingsCard

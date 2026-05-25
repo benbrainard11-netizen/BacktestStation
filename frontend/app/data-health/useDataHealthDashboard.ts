@@ -7,6 +7,7 @@ import type {
   FindingsFilters,
   LatestValidation,
   LocalCoverage,
+  R2Freshness,
   R2Status,
   ValidationFindings,
 } from "./types";
@@ -26,13 +27,14 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 async function loadBundle(filters: FindingsFilters): Promise<DataHealthBundle> {
-  const [r2, coverage, validation, findings] = await Promise.all([
+  const [r2, r2Freshness, coverage, validation, findings] = await Promise.all([
     getJson<R2Status>("/api/dashboard/data-health/r2-status"),
+    getJson<R2Freshness>("/api/dashboard/data-health/r2-freshness"),
     getJson<LocalCoverage>("/api/dashboard/data-health/local-coverage"),
     getJson<LatestValidation>("/api/dashboard/data-health/latest-validation"),
     getJson<ValidationFindings>(findingsUrl(filters)),
   ]);
-  return { r2, coverage, validation, findings };
+  return { r2, r2Freshness, coverage, validation, findings };
 }
 
 export function useDataHealthDashboard(filters: FindingsFilters) {

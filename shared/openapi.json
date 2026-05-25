@@ -2325,6 +2325,300 @@
         "title": "DashboardLocalCoverage",
         "type": "object"
       },
+      "DashboardR2Freshness": {
+        "properties": {
+          "bucket": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bucket"
+          },
+          "bucket_missing_in_inventory": {
+            "$ref": "#/components/schemas/DashboardR2FreshnessDrift"
+          },
+          "bucket_objects": {
+            "$ref": "#/components/schemas/DashboardR2FreshnessSourceSummary"
+          },
+          "data_root": {
+            "title": "Data Root",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "expected_schemas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Expected Schemas",
+            "type": "array"
+          },
+          "expected_symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Expected Symbols",
+            "type": "array"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "inventory": {
+            "$ref": "#/components/schemas/DashboardR2FreshnessSourceSummary"
+          },
+          "inventory_all_schemas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inventory All Schemas",
+            "type": "array"
+          },
+          "inventory_matches_bucket": {
+            "title": "Inventory Matches Bucket",
+            "type": "boolean"
+          },
+          "inventory_missing_in_bucket": {
+            "$ref": "#/components/schemas/DashboardR2FreshnessDrift"
+          },
+          "inventory_missing_local": {
+            "$ref": "#/components/schemas/DashboardR2FreshnessDrift"
+          },
+          "local": {
+            "$ref": "#/components/schemas/DashboardR2FreshnessSourceSummary"
+          },
+          "local_is_fully_indexed": {
+            "title": "Local Is Fully Indexed",
+            "type": "boolean"
+          },
+          "local_matches_inventory": {
+            "title": "Local Matches Inventory",
+            "type": "boolean"
+          },
+          "local_missing_in_inventory": {
+            "$ref": "#/components/schemas/DashboardR2FreshnessDrift"
+          },
+          "missing_expected_schemas_in_inventory": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Expected Schemas In Inventory",
+            "type": "array"
+          },
+          "missing_expected_symbols": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Missing Expected Symbols",
+            "type": "object"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "report_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Path"
+          },
+          "schemas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Schemas",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "warn",
+              "fail",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbols_behind_latest": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Symbols Behind Latest",
+            "type": "object"
+          }
+        },
+        "required": [
+          "ok",
+          "status",
+          "data_root",
+          "local",
+          "inventory",
+          "bucket_objects",
+          "inventory_matches_bucket",
+          "local_is_fully_indexed",
+          "local_matches_inventory",
+          "local_missing_in_inventory",
+          "inventory_missing_local",
+          "inventory_missing_in_bucket",
+          "bucket_missing_in_inventory",
+          "fetched_at"
+        ],
+        "title": "DashboardR2Freshness",
+        "type": "object"
+      },
+      "DashboardR2FreshnessDrift": {
+        "properties": {
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "sample": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sample",
+            "type": "array"
+          }
+        },
+        "title": "DashboardR2FreshnessDrift",
+        "type": "object"
+      },
+      "DashboardR2FreshnessSourceSummary": {
+        "properties": {
+          "by_symbol": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DashboardR2FreshnessSymbolSummary"
+            },
+            "title": "By Symbol",
+            "type": "object"
+          },
+          "earliest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Date"
+          },
+          "latest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Date"
+          },
+          "partition_count": {
+            "default": 0,
+            "title": "Partition Count",
+            "type": "integer"
+          },
+          "schemas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Schemas",
+            "type": "array"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          },
+          "total_bytes": {
+            "default": 0,
+            "title": "Total Bytes",
+            "type": "integer"
+          },
+          "total_gb": {
+            "default": 0.0,
+            "title": "Total Gb",
+            "type": "number"
+          }
+        },
+        "title": "DashboardR2FreshnessSourceSummary",
+        "type": "object"
+      },
+      "DashboardR2FreshnessSymbolSummary": {
+        "properties": {
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "earliest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Date"
+          },
+          "latest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Date"
+          },
+          "total_bytes": {
+            "default": 0,
+            "title": "Total Bytes",
+            "type": "integer"
+          }
+        },
+        "title": "DashboardR2FreshnessSymbolSummary",
+        "type": "object"
+      },
       "DashboardR2Status": {
         "properties": {
           "age_seconds": {
@@ -13340,6 +13634,27 @@
           }
         },
         "summary": "Read Local Coverage",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/dashboard/data-health/r2-freshness": {
+      "get": {
+        "operationId": "read_r2_freshness_api_dashboard_data_health_r2_freshness_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardR2Freshness"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read R2 Freshness",
         "tags": [
           "dashboard"
         ]

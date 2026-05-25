@@ -423,6 +423,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/data-health/r2-freshness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read R2 Freshness */
+        get: operations["read_r2_freshness_api_dashboard_data_health_r2_freshness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/data-health/r2-status": {
         parameters: {
             query?: never;
@@ -2754,6 +2771,119 @@ export interface components {
             generated_at: string;
             /** Items */
             items: components["schemas"]["DashboardCoverageItem"][];
+        };
+        /** DashboardR2Freshness */
+        DashboardR2Freshness: {
+            /** Bucket */
+            bucket?: string | null;
+            bucket_missing_in_inventory: components["schemas"]["DashboardR2FreshnessDrift"];
+            bucket_objects: components["schemas"]["DashboardR2FreshnessSourceSummary"];
+            /** Data Root */
+            data_root: string;
+            /** Errors */
+            errors?: string[];
+            /** Expected Schemas */
+            expected_schemas?: string[];
+            /** Expected Symbols */
+            expected_symbols?: string[];
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            inventory: components["schemas"]["DashboardR2FreshnessSourceSummary"];
+            /** Inventory All Schemas */
+            inventory_all_schemas?: string[];
+            /** Inventory Matches Bucket */
+            inventory_matches_bucket: boolean;
+            inventory_missing_in_bucket: components["schemas"]["DashboardR2FreshnessDrift"];
+            inventory_missing_local: components["schemas"]["DashboardR2FreshnessDrift"];
+            local: components["schemas"]["DashboardR2FreshnessSourceSummary"];
+            /** Local Is Fully Indexed */
+            local_is_fully_indexed: boolean;
+            /** Local Matches Inventory */
+            local_matches_inventory: boolean;
+            local_missing_in_inventory: components["schemas"]["DashboardR2FreshnessDrift"];
+            /** Missing Expected Schemas In Inventory */
+            missing_expected_schemas_in_inventory?: string[];
+            /** Missing Expected Symbols */
+            missing_expected_symbols?: {
+                [key: string]: string[];
+            };
+            /** Ok */
+            ok: boolean;
+            /** Report Path */
+            report_path?: string | null;
+            /** Schemas */
+            schemas?: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "warn" | "fail" | "unavailable";
+            /** Symbols Behind Latest */
+            symbols_behind_latest?: {
+                [key: string]: {
+                    [key: string]: string | null;
+                };
+            };
+        };
+        /** DashboardR2FreshnessDrift */
+        DashboardR2FreshnessDrift: {
+            /**
+             * Count
+             * @default 0
+             */
+            count: number;
+            /** Sample */
+            sample?: string[];
+        };
+        /** DashboardR2FreshnessSourceSummary */
+        DashboardR2FreshnessSourceSummary: {
+            /** By Symbol */
+            by_symbol?: {
+                [key: string]: components["schemas"]["DashboardR2FreshnessSymbolSummary"];
+            };
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Latest Date */
+            latest_date?: string | null;
+            /**
+             * Partition Count
+             * @default 0
+             */
+            partition_count: number;
+            /** Schemas */
+            schemas?: string[];
+            /** Symbols */
+            symbols?: string[];
+            /**
+             * Total Bytes
+             * @default 0
+             */
+            total_bytes: number;
+            /**
+             * Total Gb
+             * @default 0
+             */
+            total_gb: number;
+        };
+        /** DashboardR2FreshnessSymbolSummary */
+        DashboardR2FreshnessSymbolSummary: {
+            /**
+             * Count
+             * @default 0
+             */
+            count: number;
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Latest Date */
+            latest_date?: string | null;
+            /**
+             * Total Bytes
+             * @default 0
+             */
+            total_bytes: number;
         };
         /** DashboardR2Status */
         DashboardR2Status: {
@@ -6746,6 +6876,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardLocalCoverage"];
+                };
+            };
+        };
+    };
+    read_r2_freshness_api_dashboard_data_health_r2_freshness_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardR2Freshness"];
                 };
             };
         };

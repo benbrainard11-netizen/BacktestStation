@@ -11,10 +11,15 @@ from sqlalchemy.orm import Session
 from app.core.paths import REPO_ROOT, warehouse_root
 from app.db.models import Dataset, PartitionValidationFinding
 from app.db.models import PartitionValidationReport, ResearchEvent
+from app.ingest import r2_freshness_audit
 from app.schemas.dashboard_data_health import (
     DashboardCoverageItem,
     DashboardLatestValidation,
     DashboardLocalCoverage,
+    DashboardR2Freshness,
+    DashboardR2FreshnessDrift,
+    DashboardR2FreshnessSourceSummary,
+    DashboardR2FreshnessSymbolSummary,
     DashboardValidationFinding,
     DashboardValidationFindings,
     DashboardValidationGateSummary,
@@ -32,6 +37,36 @@ def get_local_coverage(db: Session) -> DashboardLocalCoverage:
         _research_event_coverage(db, today),
     ]
     return DashboardLocalCoverage(items=items, generated_at=generated_at)
+
+
+def get_r2_freshness() -> DashboardR2Freshness:
+    audit = r2_freshness_audit.run(write_report=False)
+    return DashboardR2Freshness(
+        ok=audit.ok,
+        status=_r2_freshness_status(audit),
+        bucket=audit.bucket,
+        data_root=audit.data_root,
+        schemas=audit.schemas,
+        expected_symbols=audit.expected_symbols,
+        expected_schemas=audit.expected_schemas,
+        local=_source_summary(audit.local),
+        inventory=_source_summary(audit.inventory),
+        bucket_objects=_source_summary(audit.bucket_objects),
+        inventory_all_schemas=audit.inventory_all_schemas,
+        inventory_matches_bucket=audit.inventory_matches_bucket,
+        local_is_fully_indexed=audit.local_is_fully_indexed,
+        local_matches_inventory=audit.local_matches_inventory,
+        missing_expected_schemas_in_inventory=audit.missing_expected_schemas_in_inventory,
+        missing_expected_symbols=audit.missing_expected_symbols,
+        symbols_behind_latest=_nested_date_dict(audit.symbols_behind_latest),
+        local_missing_in_inventory=_drift(audit.local_missing_in_inventory),
+        inventory_missing_local=_drift(audit.inventory_missing_local),
+        inventory_missing_in_bucket=_drift(audit.inventory_missing_in_bucket),
+        bucket_missing_in_inventory=_drift(audit.bucket_missing_in_inventory),
+        report_path=audit.report_path,
+        errors=audit.errors,
+        fetched_at=_parse_datetime(audit.fetched_at) or _utc_now(),
+    )
 
 
 def get_latest_validation(db: Session) -> DashboardLatestValidation:
@@ -114,6 +149,52 @@ def get_findings(
     )
 
 
+def _r2_freshness_status(audit: r2_freshness_audit.R2FreshnessAudit) -> str:
+    if audit.errors:
+        return "unavailable"
+    if not audit.inventory_matches_bucket or not audit.local_is_fully_indexed:
+        return "fail"
+    if audit.inventory_missing_local.count > 0 or not audit.local_matches_inventory:
+        return "warn"
+    return "ok"
+
+
+def _source_summary(
+    summary: r2_freshness_audit.SourceSummary,
+) -> DashboardR2FreshnessSourceSummary:
+    return DashboardR2FreshnessSourceSummary(
+        partition_count=summary.partition_count,
+        total_bytes=summary.total_bytes,
+        total_gb=round(summary.total_bytes / 1_000_000_000, 3),
+        earliest_date=_parse_date(summary.earliest_date),
+        latest_date=_parse_date(summary.latest_date),
+        schemas=summary.schemas,
+        symbols=summary.symbols,
+        by_symbol={
+            symbol: DashboardR2FreshnessSymbolSummary(
+                count=item.count,
+                total_bytes=item.total_bytes,
+                earliest_date=_parse_date(item.earliest_date),
+                latest_date=_parse_date(item.latest_date),
+            )
+            for symbol, item in summary.by_symbol.items()
+        },
+    )
+
+
+def _drift(drift: r2_freshness_audit.DriftSummary) -> DashboardR2FreshnessDrift:
+    return DashboardR2FreshnessDrift(count=drift.count, sample=drift.sample)
+
+
+def _nested_date_dict(
+    raw: dict[str, dict[str, str | None]],
+) -> dict[str, dict[str, dt.date | None]]:
+    return {
+        scope: {symbol: _parse_date(value) for symbol, value in values.items()}
+        for scope, values in raw.items()
+    }
+
+
 def _dataset_coverage(
     db: Session, name: str, schema: str, today: dt.date
 ) -> DashboardCoverageItem:
@@ -190,6 +271,27 @@ def _date_or_none(value: Any) -> dt.date | None:
     if isinstance(value, dt.date):
         return value
     return None
+
+
+def _parse_date(value: str | None) -> dt.date | None:
+    if not value:
+        return None
+    try:
+        return dt.date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _parse_datetime(value: str | None) -> dt.datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
 
 
 def _days_since(value: dt.date | None, today: dt.date) -> int | None:

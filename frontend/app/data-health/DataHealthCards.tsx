@@ -6,6 +6,7 @@ import type {
   CoverageItem,
   FindingsFilters,
   LatestValidation,
+  R2Freshness,
   R2Status,
   ValidationFinding,
   ValidationFindings,
@@ -65,6 +66,118 @@ export function R2SyncCard({ r2 }: { r2: R2Status }) {
         <span className="mx-2 text-ink-4">|</span>
         Inventory: <span className="font-mono text-ink-1">{r2.inventory_key}</span>
         {r2.error ? <span className="ml-2 text-neg">{r2.error}</span> : null}
+      </div>
+    </Card>
+  );
+}
+
+export function R2FreshnessCard({ freshness }: { freshness: R2Freshness }) {
+  const cloudAligned =
+    freshness.inventory_matches_bucket && freshness.bucket_missing_in_inventory.count === 0;
+  const localBehind = freshness.inventory_missing_local.count > 0;
+  const errors = freshness.errors ?? [];
+  const inventoryAllSchemas = freshness.inventory_all_schemas ?? [];
+  const missingSchemas = freshness.missing_expected_schemas_in_inventory ?? [];
+  const symbolsBehind = Object.entries(freshness.symbols_behind_latest ?? {}).filter(
+    ([, symbols]) => Object.keys(symbols ?? {}).length > 0,
+  );
+
+  return (
+    <Card>
+      <CardHead
+        title="R2 freshness"
+        eyebrow={freshness.bucket ?? "bucket unavailable"}
+      />
+      <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-4">
+        <div className="bg-bg-1">
+          <Stat label="Status" value={<StatusBadge status={freshness.status} />} />
+        </div>
+        <div className="bg-bg-1">
+          <Stat
+            label="Inventory"
+            value={formatCount(freshness.inventory.partition_count)}
+            sub={formatBytes(freshness.inventory.total_bytes)}
+          />
+        </div>
+        <div className="bg-bg-1">
+          <Stat
+            label="Bucket"
+            value={formatCount(freshness.bucket_objects.partition_count)}
+            sub={formatBytes(freshness.bucket_objects.total_bytes)}
+          />
+        </div>
+        <div className="bg-bg-1">
+          <Stat
+            label="Local cache"
+            value={formatCount(freshness.local.partition_count)}
+            sub={formatBytes(freshness.local.total_bytes)}
+          />
+        </div>
+      </div>
+      <div className="grid gap-3 border-t border-line px-4 py-3 text-[12px] text-ink-3">
+        <div className="grid gap-2 sm:grid-cols-3">
+          <FreshnessSource label="local" source={freshness.local} />
+          <FreshnessSource label="inventory" source={freshness.inventory} />
+          <FreshnessSource label="bucket" source={freshness.bucket_objects} />
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <HealthLine
+            label="Inventory matches bucket"
+            ok={cloudAligned}
+            detail={
+              cloudAligned
+                ? "cloud index is aligned"
+                : `${formatCount(freshness.bucket_missing_in_inventory.count)} bucket-only objects`
+            }
+          />
+          <HealthLine
+            label="Local files indexed"
+            ok={freshness.local_is_fully_indexed}
+            detail={
+              freshness.local_is_fully_indexed
+                ? "local files are in inventory"
+                : `${formatCount(freshness.local_missing_in_inventory.count)} local-only objects`
+            }
+          />
+          <HealthLine
+            label="Local mirrors all R2"
+            ok={!localBehind}
+            warn={localBehind}
+            detail={
+              localBehind
+                ? `${formatCount(freshness.inventory_missing_local.count)} R2 objects not on this PC`
+                : "this PC has every indexed object"
+            }
+          />
+          <HealthLine
+            label="Expected schemas"
+            ok={missingSchemas.length === 0}
+            warn={missingSchemas.length > 0}
+            detail={
+              missingSchemas.length === 0
+                ? `${inventoryAllSchemas.length} schemas indexed`
+                : missingSchemas.join(", ")
+            }
+          />
+        </div>
+        {symbolsBehind.length > 0 ? (
+          <div className="rounded border border-line bg-bg-2 px-3 py-2">
+            <div className="mb-1 font-semibold text-ink-2">Symbols behind latest</div>
+            <div className="font-mono text-[11px] text-ink-3">
+              {symbolsBehind
+                .map(([scope, symbols]) => `${scope}: ${Object.keys(symbols).join(", ")}`)
+                .join(" | ")}
+            </div>
+          </div>
+        ) : null}
+        {errors.length > 0 ? (
+          <div className="rounded border border-neg/30 bg-neg-soft px-3 py-2 text-neg">
+            {errors.join(" | ")}
+          </div>
+        ) : null}
+        <div className="font-mono text-[11px] text-ink-4">
+          Fetched {formatDate(freshness.fetched_at)} from {freshness.data_root}
+        </div>
       </div>
     </Card>
   );
@@ -279,6 +392,51 @@ function FindingsTable({ rows }: { rows: ValidationFinding[] }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function FreshnessSource({
+  label,
+  source,
+}: {
+  label: string;
+  source: R2Freshness["local"];
+}) {
+  return (
+    <div className="rounded border border-line bg-bg-2 px-3 py-2">
+      <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-4">
+        {label}
+      </div>
+      <div className="font-mono text-[12px] text-ink-1">
+        {formatDay(source.earliest_date)} - {formatDay(source.latest_date)}
+      </div>
+      <div className="mt-1 text-[11px] text-ink-4">
+        {(source.symbols ?? []).join(", ") || "no symbols"}
+      </div>
+    </div>
+  );
+}
+
+function HealthLine({
+  label,
+  ok,
+  warn = false,
+  detail,
+}: {
+  label: string;
+  ok: boolean;
+  warn?: boolean;
+  detail: string;
+}) {
+  const tone: Tone = ok ? "pos" : warn ? "warn" : "neg";
+  return (
+    <div className="flex items-start justify-between gap-3 rounded border border-line bg-bg-2 px-3 py-2">
+      <div>
+        <div className="font-semibold text-ink-1">{label}</div>
+        <div className="mt-0.5 text-[11px] text-ink-4">{detail}</div>
+      </div>
+      <StatusDot tone={tone} />
     </div>
   );
 }

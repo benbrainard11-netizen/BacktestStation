@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.db import models
 from app.db.session import create_all, get_session, make_engine, make_session_factory
+from app.ingest import r2_freshness_audit
 from app.main import app
 from app.services import dashboard_data_health as service
 from app.services import dashboard_r2_status as r2_service
@@ -198,6 +199,82 @@ def test_r2_status_handles_unavailable_inventory(
     assert body["reachable"] is False
     assert body["status"] == "unavailable"
     assert "missing R2 credentials" in body["error"]
+
+
+def test_r2_freshness_endpoint_reports_inventory_bucket_match(
+    client: TestClient, monkeypatch
+) -> None:
+    source = r2_freshness_audit.SourceSummary(
+        partition_count=176,
+        total_bytes=26_084_910_575,
+        earliest_date="2026-04-01",
+        latest_date="2026-05-22",
+        schemas=["mbo"],
+        symbols=["ES.c.0", "NQ.c.0", "RTY.c.0", "YM.c.0"],
+        by_symbol={
+            "ES.c.0": r2_freshness_audit.SymbolSummary(
+                count=44,
+                total_bytes=6_000,
+                earliest_date="2026-04-01",
+                latest_date="2026-05-22",
+            )
+        },
+    )
+    local = r2_freshness_audit.SourceSummary(
+        partition_count=112,
+        total_bytes=17_476_381_452,
+        earliest_date="2026-04-20",
+        latest_date="2026-05-22",
+        schemas=["mbo"],
+        symbols=["ES.c.0", "NQ.c.0", "RTY.c.0", "YM.c.0"],
+    )
+    audit = r2_freshness_audit.R2FreshnessAudit(
+        ok=True,
+        fetched_at="2026-05-25T04:00:00+00:00",
+        bucket="bsdata-prod",
+        data_root="D:/data",
+        schemas=["mbo"],
+        expected_symbols=["ES.c.0", "NQ.c.0", "RTY.c.0", "YM.c.0"],
+        expected_schemas=["tbbo", "mbp-1", "mbo", "ohlcv-1m"],
+        local=local,
+        inventory=source,
+        bucket_objects=source,
+        inventory_all_schemas=["mbp-1", "mbo", "ohlcv-1m", "tbbo"],
+        missing_expected_schemas_in_inventory=[],
+        missing_expected_symbols={"local": [], "inventory": [], "bucket": []},
+        symbols_behind_latest={"local": {}, "inventory": {}, "bucket": {}},
+        local_missing_in_inventory=r2_freshness_audit.DriftSummary(
+            count=0, sample=[]
+        ),
+        inventory_missing_local=r2_freshness_audit.DriftSummary(
+            count=64,
+            sample=[
+                "raw/databento/mbo/symbol=ES.c.0/date=2026-04-01/part-000.parquet"
+            ],
+        ),
+        inventory_missing_in_bucket=r2_freshness_audit.DriftSummary(
+            count=0, sample=[]
+        ),
+        bucket_missing_in_inventory=r2_freshness_audit.DriftSummary(
+            count=0, sample=[]
+        ),
+        inventory_matches_bucket=True,
+        local_is_fully_indexed=True,
+        local_matches_inventory=False,
+    )
+    monkeypatch.setattr(service.r2_freshness_audit, "run", lambda **_kwargs: audit)
+
+    response = client.get("/api/dashboard/data-health/r2-freshness")
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "warn"
+    assert body["inventory_matches_bucket"] is True
+    assert body["local_is_fully_indexed"] is True
+    assert body["local_matches_inventory"] is False
+    assert body["inventory"]["partition_count"] == 176
+    assert body["inventory"]["total_gb"] == 26.085
+    assert body["inventory_missing_local"]["count"] == 64
 
 
 def test_local_coverage_rolls_up_datasets_and_research_events(
