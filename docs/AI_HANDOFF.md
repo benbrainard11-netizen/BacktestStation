@@ -38,6 +38,14 @@ cd C:\Users\benbr\BacktestStation
 .\scripts\workspace_health.ps1
 ```
 
+5. If the task is about MBO/R2 freshness, use the dedicated mirror command.
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.mbo_r2_mirror --dry-run
+python -m app.ingest.mbo_r2_mirror
+```
+
 ## Machine/Repo Roles
 
 | Workspace | Role |
@@ -59,6 +67,9 @@ cd C:\Users\benbr\BacktestStation
 - Do not run live trade execution without reading the current runbook and
   confirming kill-switch/account state.
 - Do not overwrite R2 inventories from partial local data.
+- For MBO cloud sync, prefer `python -m app.ingest.mbo_r2_mirror` or
+  `python -m app.ingest.r2_upload --schemas mbo`; do not use a full inventory
+  rebuild from a partial machine.
 
 ## Known State At Last Cleanup
 
@@ -106,4 +117,3 @@ Put work in InsyncApp when it is about:
 - App-side dashboards consuming BacktestStation/R2 artifacts.
 
 Put data in R2/local data roots, not Git.
-

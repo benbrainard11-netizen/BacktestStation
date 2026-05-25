@@ -52,6 +52,41 @@ function Write-EnvPresence {
     }
 }
 
+function Write-ScheduledTaskSummary {
+    param([string]$TaskName)
+
+    try {
+        $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+        $info = Get-ScheduledTaskInfo -TaskName $TaskName -ErrorAction SilentlyContinue
+        $nextRun = if ($info) { $info.NextRunTime } else { "" }
+        $lastResult = if ($info) { $info.LastTaskResult } else { "" }
+        Write-Host "${TaskName}: state=$($task.State) next=$nextRun last_result=$lastResult"
+        return
+    } catch {
+        $queryError = $_.Exception.Message
+    }
+
+    $systemRoot = $env:SystemRoot
+    if (-not $systemRoot) {
+        $systemRoot = "C:\Windows"
+    }
+    $taskFile = Join-Path $systemRoot ("System32\Tasks\" + $TaskName.TrimStart("\"))
+    if (-not (Test-Path -LiteralPath $taskFile)) {
+        Write-Host "${TaskName}: not installed or query blocked ($queryError)"
+        return
+    }
+
+    try {
+        $raw = Get-Content -Raw -LiteralPath $taskFile -ErrorAction Stop
+        $start = [regex]::Match($raw, "<StartBoundary>([^<]+)</StartBoundary>").Groups[1].Value
+        $enabled = [regex]::Match($raw, "<Enabled>([^<]+)</Enabled>").Groups[1].Value
+        $command = [regex]::Match($raw, "<Command>([^<]+)</Command>").Groups[1].Value
+        Write-Host "${TaskName}: installed (task file present; Scheduler query blocked: $queryError) start=$start enabled=$enabled command=$command"
+    } catch {
+        Write-Host "${TaskName}: installed (task file present; details blocked: $($_.Exception.Message))"
+    }
+}
+
 Write-Host "BacktestStation workspace health"
 Write-Host "Root: $Root"
 Write-Host "Timestamp: $((Get-Date).ToString('yyyy-MM-dd HH:mm:ss zzz'))"
@@ -134,3 +169,14 @@ Get-Process |
     } |
     Select-Object Id, ProcessName, Path |
     Format-Table -AutoSize
+
+Write-Section "Scheduled Tasks"
+$taskNames = @(
+    "BacktestStationMboR2Mirror",
+    "BacktestStationR2Upload",
+    "BacktestStationParquetMirror",
+    "BacktestStationDailyPull"
+)
+foreach ($taskName in $taskNames) {
+    Write-ScheduledTaskSummary $taskName
+}

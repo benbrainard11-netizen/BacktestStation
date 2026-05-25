@@ -110,14 +110,54 @@ python -m app.ingest.r2_upload --dry-run --schemas mbo
 
 ## Daily Mirror Target
 
-When daily local downloads are complete, mirror only the newly available
-schemas/partitions to R2. For MBO, the desired routine is:
+When daily local MBO parquet is available, mirror only MBO to R2. This path
+does not call Databento; it only reads local parquet under `BS_DATA_ROOT`.
 
-1. Download/produce local MBO parquet.
-2. Validate with dry-run.
-3. Upload only `--schemas mbo`.
-4. Confirm `_inventory.json` still includes non-MBO partitions.
-5. Record the run summary.
+Manual dry-run:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.mbo_r2_mirror --dry-run
+```
+
+Manual upload:
+
+```powershell
+cd C:\Users\benbr\BacktestStation\backend
+python -m app.ingest.mbo_r2_mirror
+```
+
+Install the daily scheduled task:
+
+```powershell
+cd C:\Users\benbr\BacktestStation
+powershell -ExecutionPolicy Bypass -File scripts\install_mbo_r2_mirror_task.ps1
+```
+
+The installed task is:
+
+```text
+BacktestStationMboR2Mirror
+```
+
+It runs `python -m app.ingest.mbo_r2_mirror`, which:
+
+1. Requires local MBO parquet to already exist under `BS_DATA_ROOT`.
+2. Validates local MBO with `r2_upload --dry-run --schemas mbo`.
+3. Aborts if any MBO partition is refused.
+4. Uploads only `--schemas mbo`.
+5. Merges MBO entries into existing `_inventory.json` so non-MBO inventory is
+   preserved.
+6. Records logs under `{BS_DATA_ROOT}/logs/`.
+
+Log files:
+
+```text
+{BS_DATA_ROOT}/logs/mbo_r2_mirror.log
+{BS_DATA_ROOT}/logs/mbo_r2_mirror_runs.json
+{BS_DATA_ROOT}/logs/r2_upload.log
+{BS_DATA_ROOT}/logs/r2_upload_runs.json
+```
 
 ## Cost Guard
 
@@ -126,4 +166,3 @@ approval.
 
 If a task requires `databento.metadata.get_cost`, historical downloads, or any
 new paid market-data request, stop and ask first.
-

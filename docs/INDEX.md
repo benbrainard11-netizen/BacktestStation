@@ -20,6 +20,13 @@ This index separates current operating docs from historical notes.
 | `docs/TRIAL_REGISTRY_USAGE.md` | Trial registry examples |
 | `docs/DATASET_SNAPSHOT_USAGE.md` | Dataset snapshot examples |
 
+## Operator Scripts
+
+| Script | Use |
+|---|---|
+| `scripts/workspace_health.ps1` | Read-only workspace status scan |
+| `scripts/install_mbo_r2_mirror_task.ps1` | Install daily local-MBO-to-R2 mirror task |
+
 ## Active Research/Validation Docs
 
 | Doc | Use |
@@ -57,4 +64,3 @@ These are useful context but are not current operating truth by default:
 
 If a historical doc contains instructions that conflict with a current map,
 follow the current map unless Ben explicitly says otherwise.
-

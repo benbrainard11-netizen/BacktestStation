@@ -83,6 +83,14 @@ git status --short --branch
 .\scripts\workspace_health.ps1
 ```
 
+MBO-to-R2 manual mirror:
+
+```powershell
+cd backend
+python -m app.ingest.mbo_r2_mirror --dry-run
+python -m app.ingest.mbo_r2_mirror
+```
+
 Backend tests are run from the repo root or `backend/` depending on the target
 suite. Use focused tests for the area you changed.
 
@@ -93,4 +101,3 @@ suite. Use focused tests for the area you changed.
 - Do not overwrite R2 inventory from a partial local disk view.
 - Do not use future/outcome fields as model features.
 - Do not reset dirty worktrees without explicit approval.
-

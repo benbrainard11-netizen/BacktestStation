@@ -20,6 +20,42 @@ DEFAULT_BUCKET = "bsdata-prod"
 INVENTORY_KEY = "_inventory.json"
 
 
+def _env(name: str, default: str | None = None) -> str | None:
+    """Read process env, then Windows User/Machine env for scheduled tasks.
+
+    Windows scheduled tasks launched with S4U can miss values set in the
+    interactive shell. Falling back to the registry keeps R2 tooling usable
+    when credentials were set with `[Environment]::SetEnvironmentVariable`.
+    """
+    value = os.environ.get(name)
+    if value:
+        return value
+    if os.name != "nt":
+        return default
+
+    try:
+        import winreg
+    except ImportError:  # pragma: no cover - non-Windows
+        return default
+
+    registry_locations = (
+        (winreg.HKEY_CURRENT_USER, "Environment"),
+        (
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
+        ),
+    )
+    for root, path in registry_locations:
+        try:
+            with winreg.OpenKey(root, path) as key:
+                value, _kind = winreg.QueryValueEx(key, name)
+            if isinstance(value, str) and value:
+                return value
+        except OSError:
+            continue
+    return default
+
+
 def make_s3_client() -> tuple[Any, str]:
     """Build a boto3 S3 client for Cloudflare R2 + return (client, bucket).
 
@@ -33,10 +69,10 @@ def make_s3_client() -> tuple[Any, str]:
     """
     import boto3
 
-    bucket = os.environ.get("BS_R2_BUCKET", DEFAULT_BUCKET)
-    endpoint = os.environ.get("BS_R2_ENDPOINT")
-    access_key = os.environ.get("BS_R2_ACCESS_KEY")
-    secret_key = os.environ.get("BS_R2_SECRET")
+    bucket = _env("BS_R2_BUCKET", DEFAULT_BUCKET) or DEFAULT_BUCKET
+    endpoint = _env("BS_R2_ENDPOINT")
+    access_key = _env("BS_R2_ACCESS_KEY")
+    secret_key = _env("BS_R2_SECRET")
     if not (endpoint and access_key and secret_key):
         raise RuntimeError(
             "r2_upload requires BS_R2_ENDPOINT, BS_R2_ACCESS_KEY, "
