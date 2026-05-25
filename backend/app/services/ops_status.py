@@ -184,6 +184,60 @@ def _json_heartbeat_check(
             age_seconds=loaded["age_seconds"],
         )
     payload = loaded["payload"] if isinstance(loaded["payload"], dict) else {}
+    payload_status = str(payload.get("status") or "").lower()
+    if payload_status in {"error", "failed", "fail"}:
+        return OpsCheck(
+            id=id,
+            label=label,
+            status="fail",
+            message=str(payload.get("last_error") or payload.get("message") or "Heartbeat reported an error."),
+            path=str(path),
+            exists=True,
+            updated_at=loaded["updated_at"],
+            age_seconds=loaded["age_seconds"],
+            metrics=_selected_metrics(
+                payload,
+                (
+                    "status",
+                    "message",
+                    "dataset",
+                    "schema",
+                    "symbols",
+                    "ticks_received",
+                    "ticks_last_60s",
+                    "last_error",
+                ),
+            ),
+        )
+    if payload_status in {
+        "missing_credentials",
+        "not_configured",
+        "import_missing",
+        "not_wired",
+    }:
+        return OpsCheck(
+            id=id,
+            label=label,
+            status="not_wired",
+            message=str(payload.get("message") or "Heartbeat is present but not ready."),
+            path=str(path),
+            exists=True,
+            updated_at=loaded["updated_at"],
+            age_seconds=loaded["age_seconds"],
+            metrics=_selected_metrics(
+                payload,
+                (
+                    "status",
+                    "message",
+                    "dataset",
+                    "schema",
+                    "symbols",
+                    "async_rithmic_available",
+                    "credential_groups_present",
+                    "optional_keys_present",
+                ),
+            ),
+        )
     last_ts = _parse_datetime(payload.get(ts_field))
     age = _age_seconds(last_ts) if last_ts else loaded["age_seconds"]
     status = _freshness_status(age)

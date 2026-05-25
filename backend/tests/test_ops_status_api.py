@@ -81,6 +81,17 @@ def test_ops_status_reads_mbp1_r2_and_rithmic_config(
         warehouse / "logs" / "mbo_r2_mirror_runs.json",
         [{"ts": _now_iso(), "ok": True, "errors": []}],
     )
+    _write_json(
+        warehouse / "heartbeat" / "rithmic_market_data.json",
+        {
+            "status": "missing_credentials",
+            "message": "waiting for Rithmic keys",
+            "updated_at": _now_iso(),
+            "symbols": ["NQ.c.0"],
+            "async_rithmic_available": True,
+            "credential_groups_present": {"user": False},
+        },
+    )
     env_path = insync / "services" / "tradebot" / ".env"
     env_path.parent.mkdir(parents=True, exist_ok=True)
     env_path.write_text(
@@ -111,6 +122,7 @@ def test_ops_status_reads_mbp1_r2_and_rithmic_config(
         assert checks["rithmic_config"]["status"] == "ok"
         assert "RITHMIC_PASSWORD" in checks["rithmic_config"]["metrics"]["present_keys"]
         assert checks["rithmic_market_data"]["status"] == "not_wired"
+        assert checks["rithmic_market_data"]["metrics"]["status"] == "missing_credentials"
     finally:
         shutil.rmtree(case, ignore_errors=True)
 
