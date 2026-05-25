@@ -18,6 +18,7 @@ from app.api import (
     knowledge,
     monitor,
     notes,
+    ops,
     promotion_checks,
     prompts,
     prop_firm,
@@ -61,6 +62,7 @@ app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(imports.router, prefix="/api")
 app.include_router(knowledge.router, prefix="/api")
 app.include_router(monitor.router, prefix="/api")
+app.include_router(ops.router, prefix="/api")
 app.include_router(strategies.router, prefix="/api")
 app.include_router(strategies.versions_router, prefix="/api")
 app.include_router(backtests.router, prefix="/api")

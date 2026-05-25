@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { OpsMonitor } from "@/components/OpsMonitor";
 
-export default function RootPage() {
-  redirect("/data-health");
+export default function HomePage() {
+  return <OpsMonitor />;
 }
