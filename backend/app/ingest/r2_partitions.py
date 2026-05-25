@@ -32,7 +32,7 @@ class Partition:
     local_path: Path
     r2_key: str
     kind: str  # "raw" | "bars"
-    schema_name: str  # tbbo | mbp-1 | ohlcv-1m
+    schema_name: str  # tbbo | mbp-1 | mbo | ohlcv-1m
     symbol: str
     date: dt.date
     timeframe: str | None  # bars only
@@ -131,14 +131,15 @@ def validate(part: Partition) -> bool:
         # `pq.read_table(path)` treats Hive-style parent directories such
         # as `symbol=NQ.c.0` as partition columns, then tries to merge
         # that dictionary-encoded path value with the file's real
-        # `symbol: string` column. Read the file body directly so the
-        # validation gate checks the parquet schema, not the path layout.
-        table = pq.ParquetFile(part.local_path).read()
+        # `symbol: string` column. Read only the parquet file schema so
+        # the validation gate checks the file body, not the path layout.
+        # This also keeps MBO validation cheap enough for multi-GB batches.
+        arrow_schema = pq.ParquetFile(part.local_path).schema_arrow
     except Exception as e:
         logger.warning(f"REFUSE {part.r2_key}: parquet read failed: {e}")
         return False
 
-    errors = schema.validate_table(table)
+    errors = schema.validate_arrow_schema(arrow_schema)
     if errors:
         logger.warning(f"REFUSE {part.r2_key}: validation errors: {errors}")
         return False

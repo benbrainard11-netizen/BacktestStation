@@ -14,6 +14,7 @@ If you're adding a new schema, edit this file FIRST, get the shape right on pape
 ├── processed/                              derived parquet, regenerable from raw
 │   ├── tbbo/symbol={X}/date={Y}/part-000.parquet
 │   ├── mbp-1/symbol={X}/date={Y}/part-000.parquet
+│   ├── mbo/symbol={X}/date={Y}/part-000.parquet
 │   └── bars/timeframe=1m/symbol={X}/date={Y}/part-000.parquet
 ├── manifests/                              per-file metadata + integrity hashes
 └── logs/
@@ -44,7 +45,7 @@ These apply to every schema in this repo. Pin them.
 
 ### Sequence numbers
 
-- All raw schemas (TBBO, MBP-1) carry a `sequence` (uint32) column. It's monotonic per `(publisher_id, instrument_id)` stream.
+- All raw schemas (TBBO, MBP-1, MBO) carry a `sequence` (uint32) column. It's monotonic per `(publisher_id, instrument_id)` stream.
 - Used for: gap detection (skipped messages → integrity issue), deterministic replay (sort tie-breaker), reconnect resumption.
 - Bars don't carry sequence — they're aggregations. The first/last sequence of the source rows is recoverable from the raw partition.
 
@@ -61,7 +62,7 @@ Every parquet file embeds a `bs.*` metadata block in its footer (see `parquet_mi
 | `bs.generator.version` | bumped on producer-behavior changes (currently `2`) |
 | `bs.generator.timestamp` | when this parquet was written |
 | `bs.row_count` | row count for fast list-without-load |
-| `bs.schema.name` | one of `tbbo`, `mbp-1`, `ohlcv-1m` |
+| `bs.schema.name` | one of `tbbo`, `mbp-1`, `mbo`, `ohlcv-1m` |
 | `bs.schema.version` | bumped on schema changes (currently `1`) |
 | `bs.ts_event.min` | first ts in the file (ISO-format) |
 | `bs.ts_event.max` | last ts in the file |
@@ -118,6 +119,30 @@ Readers (`app.data.read_*`) check `bs.schema.version` and refuse to load future-
 | `sequence` | uint32 | | Monotonic per stream |
 
 **Gotcha:** the bid_px/ask_px columns are the book state AFTER the event in MBP-1 (vs at-the-trade in TBBO). Don't conflate them across schemas.
+
+## Schema: MBO (Market By Order)
+
+`bs.schema.name = "mbo"`. Order-level add/modify/cancel/trade records. This is the high-fidelity feed used for orderflow and book-replay research.
+
+| Column | Type | Required | Source / Semantics |
+|---|---|---|---|
+| `ts_event` | timestamp[ns,UTC] | yes | Exchange event time |
+| `ts_recv` | timestamp[ns,UTC] | | Databento receive time |
+| `rtype` | uint8 | | Databento record type |
+| `publisher_id` | uint16 | | Databento publisher |
+| `instrument_id` | uint32 | | Databento numeric instrument ID |
+| `action` | string | yes | Add/modify/cancel/trade action |
+| `side` | string | yes | Bid/ask side for order-book actions |
+| `price` | float64 | yes | Order/trade price |
+| `size` | uint32 | yes | Order/trade size |
+| `channel_id` | uint8 | | Databento channel ID |
+| `order_id` | uint64 | yes | Native order identifier |
+| `flags` | uint8 | | Databento flags |
+| `ts_in_delta` | int32 | | Delta from upstream timestamp to receive time |
+| `sequence` | uint32 | yes | Monotonic per stream |
+| `symbol` | string | yes | Canonical |
+
+**Gotcha:** MBO is intentionally scoped to ES/NQ/YM/RTY for now. Do not expand it to the full universe without an explicit storage/API-cost decision.
 
 ## Schema: OHLCV-1m bars
 
@@ -380,6 +405,7 @@ Schema changes:
 | Date | From → To | Schemas affected | What changed |
 |---|---|---|---|
 | 2026-04-25 | n/a → `1` | tbbo, mbp-1, ohlcv-1m | Initial spec doc; pins existing v1 schemas |
+| 2026-05-24 | `1` | mbo | Added MBO warehouse schema support for R2 publication; schema version remains `1` because files already carry compatible v1 metadata |
 | 2026-05-17 | metadata DB | hypotheses, trial_groups, trials, trial_lock_records | Added trial registry and lock records for selection-bias visibility and two-lock walk-forward proof |
 | 2026-05-17 | metadata DB | dataset_snapshots, dataset_snapshot_partitions, dataset_snapshot_inputs, backtest_runs | Added structured dataset snapshots and run provenance fields |
 | 2026-05-17 | metadata DB | partition_validation_reports, partition_validation_findings, dataset_snapshots | Added partition validation report storage and latest-report pointer |

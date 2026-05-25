@@ -26,7 +26,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from app.data.schema import BARS_1M_SCHEMA, SCHEMA_VERSION
+from app.data.schema import BARS_1M_SCHEMA, MBO_SCHEMA, SCHEMA_VERSION
 from app.data.storage import LocalStorage, R2Storage, get_storage
 from app.ingest import r2_upload
 from app.ingest.r2_partitions import Partition, validate
@@ -136,6 +136,65 @@ def test_r2_upload_validation_reads_file_not_hive_partition_columns(
     )
 
 
+def test_r2_upload_validation_accepts_mbo_schema(tmp_path: Path) -> None:
+    symbol = "ES.c.0"
+    date = dt.date(2026, 5, 22)
+    path = (
+        tmp_path
+        / "raw"
+        / "databento"
+        / "mbo"
+        / f"symbol={symbol}"
+        / f"date={date.isoformat()}"
+        / "part-000.parquet"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    df = pd.DataFrame(
+        [
+            {
+                "ts_event": pd.Timestamp(date, tz="UTC"),
+                "ts_recv": pd.Timestamp(date, tz="UTC"),
+                "rtype": 160,
+                "publisher_id": 1,
+                "instrument_id": 123,
+                "action": "A",
+                "side": "B",
+                "price": 5300.25,
+                "size": 4,
+                "channel_id": 1,
+                "order_id": 999,
+                "flags": 0,
+                "ts_in_delta": 100,
+                "sequence": 42,
+                "symbol": symbol,
+            }
+        ]
+    )
+    table = pa.Table.from_pandas(df, schema=MBO_SCHEMA.pa_schema, preserve_index=False)
+    table = table.replace_schema_metadata(
+        {
+            **(table.schema.metadata or {}),
+            b"bs.schema.version": SCHEMA_VERSION.encode("utf-8"),
+            b"bs.schema.name": b"mbo",
+        }
+    )
+    pq.write_table(table, path)
+
+    assert validate(
+        Partition(
+            local_path=path,
+            r2_key=f"raw/databento/mbo/symbol={symbol}/date={date.isoformat()}/part-000.parquet",
+            kind="raw",
+            schema_name="mbo",
+            symbol=symbol,
+            date=date,
+            timeframe=None,
+            size=path.stat().st_size,
+        )
+    )
+
+
 def test_r2_upload_dry_run_honors_limit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     parts = [
         Partition(
@@ -167,6 +226,76 @@ def test_r2_upload_dry_run_honors_limit(tmp_path: Path, monkeypatch: pytest.Monk
     assert stats.validated == 3
     assert stats.refused == 0
     assert len(seen) == 3
+
+
+def test_r2_upload_schema_filter_merges_inventory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mbo_part = Partition(
+        local_path=tmp_path / "mbo.parquet",
+        r2_key="raw/databento/mbo/symbol=ES.c.0/date=2026-05-22/part-000.parquet",
+        kind="raw",
+        schema_name="mbo",
+        symbol="ES.c.0",
+        date=dt.date(2026, 5, 22),
+        timeframe=None,
+        size=10,
+    )
+    tbbo_part = Partition(
+        local_path=tmp_path / "tbbo.parquet",
+        r2_key="raw/databento/tbbo/symbol=ES.c.0/date=2026-05-22/part-000.parquet",
+        kind="raw",
+        schema_name="tbbo",
+        symbol="ES.c.0",
+        date=dt.date(2026, 5, 22),
+        timeframe=None,
+        size=10,
+    )
+    uploaded: list[str] = []
+    written: dict = {}
+
+    monkeypatch.setattr(r2_upload, "warehouse_root", lambda: tmp_path)
+    monkeypatch.setattr(r2_upload, "enumerate_partitions", lambda root: [mbo_part, tbbo_part])
+    monkeypatch.setattr(r2_upload, "make_s3_client", lambda: ("client", "bucket"))
+    monkeypatch.setattr(r2_upload, "object_exists_with_size", lambda *args: False)
+    monkeypatch.setattr(r2_upload, "validate", lambda part: True)
+    monkeypatch.setattr(
+        r2_upload,
+        "upload_file",
+        lambda client, bucket, path, key: uploaded.append(key),
+    )
+    monkeypatch.setattr(
+        r2_upload,
+        "read_inventory",
+        lambda client, bucket: {
+            "partitions": [
+                {
+                    "schema": "tbbo",
+                    "r2_key": tbbo_part.r2_key,
+                    "size": tbbo_part.size,
+                },
+                {
+                    "schema": "mbo",
+                    "r2_key": "raw/databento/mbo/symbol=OLD/date=2026-01-01/part-000.parquet",
+                    "size": 1,
+                },
+            ]
+        },
+    )
+
+    def fake_write_inventory(client, bucket, **kwargs):
+        written.update(kwargs)
+
+    monkeypatch.setattr(r2_upload, "write_inventory", fake_write_inventory)
+
+    stats = r2_upload.run(schemas={"mbo"})
+
+    assert stats.enumerated == 1
+    assert uploaded == [mbo_part.r2_key]
+    r2_keys = {p["r2_key"] for p in written["partitions"]}
+    assert r2_keys == {tbbo_part.r2_key, mbo_part.r2_key}
+    assert not any("symbol=OLD" in key for key in r2_keys)
 
 
 # --- Integration test (R2 required) -------------------------------------

@@ -50,16 +50,24 @@ class DataSchema:
 
     def validate_table(self, table: pa.Table) -> list[str]:
         """Return a list of human-readable validation errors. Empty list = OK."""
+        return self.validate_arrow_schema(table.schema)
+
+    def validate_arrow_schema(self, schema: pa.Schema) -> list[str]:
+        """Return validation errors for a parquet/arrow schema.
+
+        This is intentionally schema-only because the upload gate checks
+        structural compatibility; row-level data quality gates live elsewhere.
+        """
         errors: list[str] = []
         # Every required column must be present.
         for col in self.required_columns:
-            if col not in table.schema.names:
+            if col not in schema.names:
                 errors.append(f"missing required column: {col}")
         # Every column we emit must match expected type if it's in the schema.
-        for col in table.schema.names:
+        for col in schema.names:
             if col in self.column_names:
                 expected = self.field_for(col).type
-                actual = table.schema.field(col).type
+                actual = schema.field(col).type
                 if not _types_compatible(expected, actual):
                     errors.append(
                         f"column {col!r} has type {actual!s}, expected {expected!s}"
@@ -148,6 +156,41 @@ MBP1_SCHEMA = DataSchema(
     required_columns=("ts_event", "symbol", "price", "size", "bid_px", "ask_px"),
 )
 
+# --- MBO -----------------------------------------------------------------
+
+MBO_SCHEMA = DataSchema(
+    name="mbo",
+    pa_schema=pa.schema(
+        [
+            ("ts_event", pa.timestamp("ns", tz="UTC")),
+            ("ts_recv", pa.timestamp("ns", tz="UTC")),
+            ("rtype", pa.uint8()),
+            ("publisher_id", pa.uint16()),
+            ("instrument_id", pa.uint32()),
+            ("action", pa.string()),
+            ("side", pa.string()),
+            ("price", pa.float64()),
+            ("size", pa.uint32()),
+            ("channel_id", pa.uint8()),
+            ("order_id", pa.uint64()),
+            ("flags", pa.uint8()),
+            ("ts_in_delta", pa.int32()),
+            ("sequence", pa.uint32()),
+            ("symbol", pa.string()),
+        ]
+    ),
+    required_columns=(
+        "ts_event",
+        "symbol",
+        "action",
+        "side",
+        "price",
+        "size",
+        "order_id",
+        "sequence",
+    ),
+)
+
 # --- OHLCV-1m bars (computed) -------------------------------------------
 
 BARS_1M_SCHEMA = DataSchema(
@@ -180,6 +223,7 @@ BARS_1M_SCHEMA = DataSchema(
 SCHEMA_BY_NAME: dict[str, DataSchema] = {
     "tbbo": TBBO_SCHEMA,
     "mbp-1": MBP1_SCHEMA,
+    "mbo": MBO_SCHEMA,
     "ohlcv-1m": BARS_1M_SCHEMA,
 }
 

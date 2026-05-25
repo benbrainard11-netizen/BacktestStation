@@ -11,7 +11,8 @@
 │   ├── historical/               Databento Historical MBP-1 DBN (per day)
 │   ├── databento/                Hive-partitioned parquet derived from DBN
 │   │   ├── tbbo/
-│   │   └── mbp-1/
+│   │   ├── mbp-1/
+│   │   └── mbo/
 │   └── bot/                      live trading bot Rithmic CSVs (future)
 ├── processed/                    derived from raw, regeneratable
 │   └── bars/                     pre-computed bars
@@ -47,6 +48,7 @@ raw/databento/{schema}/symbol={symbol}/date={YYYY-MM-DD}/part-000.parquet
 Examples:
 - `raw/databento/tbbo/symbol=NQ.c.0/date=2026-04-24/part-000.parquet`
 - `raw/databento/mbp-1/symbol=ES.c.0/date=2026-03-15/part-000.parquet`
+- `raw/databento/mbo/symbol=ES.c.0/date=2026-05-22/part-000.parquet`
 
 `{schema}` is the databento schema name (`tbbo`, `mbp-1`, etc.).
 `{symbol}` is the resolved continuous symbol (`NQ.c.0`, not `NQM6`).
@@ -110,6 +112,18 @@ Same as TBBO plus:
 | `ask_ct` | `uint32` | order count at top ask |
 | `ts_in_delta` | `int32` | nanos between event and recv |
 
+### MBO
+
+Market-by-order records. Same core event fields as MBP-style data, plus:
+
+| Column | Type | Notes |
+|---|---|---|
+| `rtype` | `uint8` | Databento record type |
+| `channel_id` | `uint8` | Databento channel ID |
+| `order_id` | `uint64` | Native order identifier for add/modify/cancel tracking |
+| `action` | `string` | `A` add, `M` modify, `C` cancel, `T` trade, etc. |
+| `side` | `string` | Bid/ask side for order-book actions |
+
 ### OHLCV-1m bars
 
 | Column | Type | Notes |
@@ -141,7 +155,7 @@ Each parquet file carries key/value metadata in its footer (via `pyarrow.parquet
 | `bs.row_count` | total rows (also in parquet's native metadata) |
 | `bs.ts_event.min` | ISO-8601 UTC, earliest event in file |
 | `bs.ts_event.max` | ISO-8601 UTC, latest event in file |
-| `bs.schema.name` | "tbbo", "mbp-1", "ohlcv-1m" |
+| `bs.schema.name` | "tbbo", "mbp-1", "mbo", "ohlcv-1m" |
 | `bs.schema.version` | "1" |
 
 Lets you trace any parquet back to its DBN source, detect generator-version drift, and verify integrity offline.

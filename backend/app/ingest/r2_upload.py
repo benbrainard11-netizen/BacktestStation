@@ -16,6 +16,7 @@ CLI:
     python -m app.ingest.r2_upload --dry-run        # validate only, no I/O
     python -m app.ingest.r2_upload --rebuild        # re-upload all
     python -m app.ingest.r2_upload --limit 10       # cap to 10 uploads
+    python -m app.ingest.r2_upload --schemas mbo    # upload one schema, merge inventory
 
 See `docs/R2_SETUP.md` for required env vars.
 """
@@ -36,6 +37,7 @@ from app.ingest.r2_client import (
     INVENTORY_KEY,
     make_s3_client,
     object_exists_with_size,
+    read_inventory,
     upload_file,
     write_inventory,
 )
@@ -69,6 +71,7 @@ def run(
     dry_run: bool = False,
     rebuild: bool = False,
     limit: int | None = None,
+    schemas: set[str] | None = None,
 ) -> UploadStats:
     """Run one upload pass. Returns stats."""
     root = warehouse_root()
@@ -78,11 +81,17 @@ def run(
     file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logger.addHandler(file_handler)
     logger.setLevel(logging.INFO)
-    logger.info(f"=== r2_upload start | dry_run={dry_run} rebuild={rebuild} limit={limit}")
+    schema_msg = ",".join(sorted(schemas)) if schemas else "all"
+    logger.info(
+        f"=== r2_upload start | dry_run={dry_run} rebuild={rebuild} "
+        f"limit={limit} schemas={schema_msg}"
+    )
 
     stats = UploadStats()
     try:
         partitions = enumerate_partitions(root)
+        if schemas is not None:
+            partitions = [p for p in partitions if p.schema_name in schemas]
         stats.enumerated = len(partitions)
         logger.info(f"enumerated {stats.enumerated} candidate partitions")
 
@@ -122,14 +131,23 @@ def run(
                 stats.errors.append(f"{p.r2_key}: {e}")
                 logger.error(f"UPLOAD FAILED {p.r2_key}: {e}")
 
+        inventory_partitions = [to_inventory_dict(p) for p in kept_for_inventory]
+        if schemas is not None:
+            inventory_partitions = _merge_inventory_partitions(
+                client,
+                bucket,
+                updated_schema_names=schemas,
+                updated_partitions=inventory_partitions,
+            )
+
         write_inventory(
             client,
             bucket,
             schema_version=SCHEMA_VERSION,
             generator_version=GENERATOR_VERSION,
-            partitions=[to_inventory_dict(p) for p in kept_for_inventory],
+            partitions=inventory_partitions,
         )
-        stats.inventory_partitions = len(kept_for_inventory)
+        stats.inventory_partitions = len(inventory_partitions)
         logger.info(f"wrote {INVENTORY_KEY} with {stats.inventory_partitions} partitions")
     finally:
         logger.info(
@@ -142,6 +160,41 @@ def run(
         logger.removeHandler(file_handler)
         file_handler.close()
     return stats
+
+
+def _merge_inventory_partitions(
+    client,
+    bucket: str,
+    *,
+    updated_schema_names: set[str],
+    updated_partitions: list[dict],
+) -> list[dict]:
+    """Merge a targeted schema upload into the existing R2 inventory.
+
+    Full uploads rebuild `_inventory.json` from local disk. Targeted uploads
+    must not do that, because this machine may only hold one slice of the
+    warehouse. Instead, keep every existing non-target schema entry and
+    replace only entries for the schemas this run owns.
+    """
+    existing_inventory = read_inventory(client, bucket)
+    existing_parts = []
+    if isinstance(existing_inventory, dict):
+        raw_parts = existing_inventory.get("partitions", [])
+        if isinstance(raw_parts, list):
+            existing_parts = [p for p in raw_parts if isinstance(p, dict)]
+
+    merged_by_key: dict[str, dict] = {}
+    for part in existing_parts:
+        if part.get("schema") in updated_schema_names:
+            continue
+        key = part.get("r2_key")
+        if isinstance(key, str):
+            merged_by_key[key] = part
+    for part in updated_partitions:
+        key = part.get("r2_key")
+        if isinstance(key, str):
+            merged_by_key[key] = part
+    return sorted(merged_by_key.values(), key=lambda p: str(p.get("r2_key", "")))
 
 
 def _persist_run_summary(root: Path, stats: UploadStats, *, dry_run: bool) -> None:
@@ -193,13 +246,32 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="cap upload count this run (for testing)",
     )
+    parser.add_argument(
+        "--schemas",
+        type=str,
+        default=None,
+        help=(
+            "comma-separated schema filter, e.g. mbo or tbbo,mbp-1. "
+            "When set, inventory is merged instead of rebuilt."
+        ),
+    )
     args = parser.parse_args(argv)
+    schemas = (
+        {s.strip() for s in args.schemas.split(",") if s.strip()}
+        if args.schemas
+        else None
+    )
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    stats = run(dry_run=args.dry_run, rebuild=args.rebuild, limit=args.limit)
+    stats = run(
+        dry_run=args.dry_run,
+        rebuild=args.rebuild,
+        limit=args.limit,
+        schemas=schemas,
+    )
     print(
         f"enumerated={stats.enumerated} validated={stats.validated} "
         f"refused={stats.refused} uploaded={stats.uploaded} "

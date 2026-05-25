@@ -75,6 +75,26 @@ def upload_file(client: Any, bucket: str, local_path: Path, key: str) -> None:
     client.upload_file(str(local_path), bucket, key)
 
 
+def read_inventory(client: Any, bucket: str) -> dict[str, Any] | None:
+    """Fetch `_inventory.json` if present.
+
+    Returns None when the object does not exist. Other S3/client errors are
+    propagated because silently rebuilding a partial inventory would hide a
+    dangerous publish failure.
+    """
+    from botocore.exceptions import ClientError
+
+    try:
+        obj = client.get_object(Bucket=bucket, Key=INVENTORY_KEY)
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "")
+        if code in ("404", "NoSuchKey", "NotFound"):
+            return None
+        raise
+    body = obj["Body"].read()
+    return json.loads(body.decode("utf-8"))
+
+
 def write_inventory(
     client: Any,
     bucket: str,
