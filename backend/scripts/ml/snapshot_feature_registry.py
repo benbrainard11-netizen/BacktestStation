@@ -202,6 +202,15 @@ FEATURE_RULES: tuple[FeatureRule, ...] = (
         description="State-aware nearest NDOG/NWOG memory levels known by the snapshot cutoff.",
     ),
     FeatureRule(
+        prefix="fsd1.",
+        family="developing_vwap_sd1",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description=(
+            "Developing VWAP and first-standard-deviation bands over active "
+            "sessions/day/week, computed from 1m bars strictly before the snapshot cutoff."
+        ),
+    ),
+    FeatureRule(
         prefix="pc.",
         family="period_close",
         valid_snapshots=("at_period_close",),
