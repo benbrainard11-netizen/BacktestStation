@@ -120,6 +120,10 @@ Better next hypotheses:
 4. Replace OR30 multi-category testing with simpler high-first versus low-first labels to avoid tiny expected cells.
 5. Re-run on 3-5 years before promoting anything into a strategy rule.
 
+Focused follow-up design:
+
+- `docs/SESSION_SWEEP_CONTEXT_MBP1_STUDY_DESIGN.md`
+
 ## Leakage Check
 
 Safe inputs:
