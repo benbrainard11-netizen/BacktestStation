@@ -196,6 +196,30 @@ FEATURE_RULES: tuple[FeatureRule, ...] = (
         description="State-aware nearest FVG zone geometry known by the snapshot cutoff.",
     ),
     FeatureRule(
+        prefix="obgeom.",
+        family="order_block_geometry_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="State-aware nearest order-block zone geometry known by the snapshot cutoff.",
+    ),
+    FeatureRule(
+        prefix="liqgeom.",
+        family="liquidity_level_geometry_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="State-aware nearby liquidity-level geometry known by the snapshot cutoff.",
+    ),
+    FeatureRule(
+        prefix="regime.",
+        family="market_regime_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="Volatility, range, and market-regime context known by the snapshot cutoff.",
+    ),
+    FeatureRule(
+        prefix="smtstate.",
+        family="smt_state_timeline_context",
+        valid_snapshots=("at_fire", "at_period_close"),
+        description="Active and recently confirmed multi-timeframe SMT state known by the snapshot cutoff.",
+    ),
+    FeatureRule(
         prefix="gapctx.",
         family="opening_gap_memory_context",
         valid_snapshots=("at_fire", "at_period_close"),

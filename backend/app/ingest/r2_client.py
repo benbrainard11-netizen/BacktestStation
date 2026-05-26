@@ -111,6 +111,16 @@ def upload_file(client: Any, bucket: str, local_path: Path, key: str) -> None:
     client.upload_file(str(local_path), bucket, key)
 
 
+def put_json(client: Any, bucket: str, key: str, payload: dict[str, Any]) -> None:
+    body = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
+    client.put_object(
+        Bucket=bucket,
+        Key=key,
+        Body=body,
+        ContentType="application/json",
+    )
+
+
 def read_inventory(client: Any, bucket: str) -> dict[str, Any] | None:
     """Fetch `_inventory.json` if present.
 
