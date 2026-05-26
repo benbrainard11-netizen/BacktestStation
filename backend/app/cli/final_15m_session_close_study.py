@@ -112,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
         "output_dir": str(output_dir),
         "overview": summary["overview"],
         "bucket_stats_preview": _df_preview(summary["bucket_stats"]),
+        "targeted_effect_stats_preview": _df_preview(summary["targeted_effect_stats"]),
+        "context_effects_preview": _df_preview(summary["context_effects"]),
         "categorical_tests": _df_preview(summary["categorical_tests"]),
         "numeric_tests": _df_preview(summary["numeric_tests"]),
     }
@@ -131,6 +133,8 @@ def _write_summary_outputs(
         "close_bucket_distribution",
         "close_bias_distribution",
         "bucket_stats",
+        "targeted_effect_stats",
+        "context_effects",
         "categorical_tests",
         "numeric_tests",
     ):
@@ -139,9 +143,9 @@ def _write_summary_outputs(
         value.to_csv(output_dir / f"{name}.csv", index=False)
 
 
-def _df_preview(value: Any) -> list[dict[str, object]]:
+def _df_preview(value: Any, *, limit: int = 20) -> list[dict[str, object]]:
     if isinstance(value, pd.DataFrame):
-        return value.to_dict(orient="records")
+        return value.head(limit).to_dict(orient="records")
     return []
 
 

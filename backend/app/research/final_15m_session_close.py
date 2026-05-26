@@ -27,6 +27,12 @@ ET = ZoneInfo("America/New_York")
 UTC = dt.UTC
 
 FINAL_CANDLE_MINUTES = 15
+RTH_OPEN_ET = dt.time(9, 30)
+OPENING_RANGE_MINUTES = 30
+EARLY_GLOBEX_MINUTES = 120
+EARLY_RTH_MINUTES = 60
+ROLLING_RANGE_LOOKBACK = 20
+ROLLING_RANGE_MIN_PERIODS = 10
 
 CloseBucket = Literal[
     "strong_bearish",
@@ -78,6 +84,25 @@ class SessionSummary:
     @property
     def range_pts(self) -> float:
         return self.high - self.low
+
+
+@dataclass(frozen=True)
+class WindowSummary:
+    """OHLC summary for a smaller intraday window inside a session."""
+
+    open: float
+    high: float
+    low: float
+    close: float
+    bar_count: int
+
+    @property
+    def range_pts(self) -> float:
+        return self.high - self.low
+
+    @property
+    def return_pts(self) -> float:
+        return self.close - self.open
 
 
 def build_final_15m_session_close_study(
@@ -132,7 +157,7 @@ def build_final_15m_session_close_study(
             )
         )
 
-    return pd.DataFrame(rows)
+    return _add_prior_context_columns(pd.DataFrame(rows))
 
 
 def globex_day_periods(*, start: dt.date, end: dt.date) -> list[GlobexPeriod]:
@@ -245,6 +270,8 @@ def summarize_study(study: pd.DataFrame) -> dict[str, pd.DataFrame | dict[str, o
             "close_bucket_distribution": empty,
             "close_bias_distribution": empty,
             "bucket_stats": empty,
+            "targeted_effect_stats": empty,
+            "context_effects": empty,
             "categorical_tests": empty,
             "numeric_tests": empty,
         }
@@ -263,6 +290,8 @@ def summarize_study(study: pd.DataFrame) -> dict[str, pd.DataFrame | dict[str, o
         "close_bucket_distribution": distribution(study, "final_close_bucket"),
         "close_bias_distribution": distribution(study, "final_close_bias"),
         "bucket_stats": bucket_stats(study),
+        "targeted_effect_stats": targeted_effect_stats(study),
+        "context_effects": context_effects(study),
         "categorical_tests": categorical_tests(study),
         "numeric_tests": numeric_tests(study),
     }
@@ -307,16 +336,162 @@ def bucket_stats(study: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def targeted_effect_stats(study: pd.DataFrame) -> pd.DataFrame:
+    """Summarize the more targeted next-session effects by final close bucket."""
+
+    rows: list[dict[str, object]] = []
+    for bucket in _CLOSE_BUCKET_ORDER:
+        group = study.loc[study["final_close_bucket"] == bucket]
+        if group.empty:
+            continue
+        rows.append(
+            {
+                "final_close_bucket": bucket,
+                "count": int(len(group)),
+                "overnight_bullish_rate": _rate(
+                    _col(group, "next_overnight_direction") == "bullish"
+                ),
+                "overnight_bearish_rate": _rate(
+                    _col(group, "next_overnight_direction") == "bearish"
+                ),
+                "overnight_continuation_rate": _rate(
+                    _col(group, "next_overnight_continues_final_bias")
+                ),
+                "mean_overnight_return_pts": _mean(
+                    _col(group, "next_overnight_return_pts")
+                ),
+                "early_globex_2h_bullish_rate": _rate(
+                    _col(group, "next_early_globex_2h_direction") == "bullish"
+                ),
+                "early_globex_2h_continuation_rate": _rate(
+                    _col(group, "next_early_globex_2h_continues_final_bias")
+                ),
+                "mean_early_globex_2h_return_pts": _mean(
+                    _col(group, "next_early_globex_2h_return_pts")
+                ),
+                "rth_first_60m_bullish_rate": _rate(
+                    _col(group, "next_rth_first_60m_direction") == "bullish"
+                ),
+                "rth_first_60m_continuation_rate": _rate(
+                    _col(group, "next_rth_first_60m_continues_final_bias")
+                ),
+                "mean_rth_first_60m_return_pts": _mean(
+                    _col(group, "next_rth_first_60m_return_pts")
+                ),
+                "prior_high_swept_first_rate": _rate(
+                    _col(group, "next_first_liquidity_sweep")
+                    == "prior_high_swept_first"
+                ),
+                "prior_low_swept_first_rate": _rate(
+                    _col(group, "next_first_liquidity_sweep")
+                    == "prior_low_swept_first"
+                ),
+                "or30_high_first_rate": _rate(
+                    _col(group, "next_or30_first_break")
+                    == "opening_range_high_first"
+                ),
+                "or30_low_first_rate": _rate(
+                    _col(group, "next_or30_first_break")
+                    == "opening_range_low_first"
+                ),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def context_effects(study: pd.DataFrame, *, min_count: int = 20) -> pd.DataFrame:
+    """Find regimes where final-candle bias has a larger targeted effect.
+
+    Context columns must be known by the current session close. This table is
+    descriptive only; promising rows still need separate validation.
+    """
+
+    context_cols = [
+        "day_name_et",
+        "final_body_direction",
+        "session_direction",
+        "session_close_bias",
+        "prior_session_direction",
+        "prior20_range_regime",
+    ]
+    rows: list[dict[str, object]] = []
+    for context_col in context_cols:
+        if context_col not in study.columns:
+            continue
+        grouped = study.groupby([context_col, "final_close_bias"], dropna=False)
+        for (context_value, final_bias), group in grouped:
+            if len(group) < min_count:
+                continue
+            rows.append(
+                {
+                    "context": context_col,
+                    "context_value": str(context_value),
+                    "final_close_bias": str(final_bias),
+                    "count": int(len(group)),
+                    "pct_of_study": float(len(group) / len(study)),
+                    "overnight_continuation_rate": _rate(
+                        _col(group, "next_overnight_continues_final_bias")
+                    ),
+                    "early_globex_2h_continuation_rate": _rate(
+                        _col(group, "next_early_globex_2h_continues_final_bias")
+                    ),
+                    "rth_first_60m_continuation_rate": _rate(
+                        _col(group, "next_rth_first_60m_continues_final_bias")
+                    ),
+                    "mean_overnight_return_pts": _mean(
+                        _col(group, "next_overnight_return_pts")
+                    ),
+                    "mean_early_globex_2h_return_pts": _mean(
+                        _col(group, "next_early_globex_2h_return_pts")
+                    ),
+                    "mean_rth_first_60m_return_pts": _mean(
+                        _col(group, "next_rth_first_60m_return_pts")
+                    ),
+                    "prior_high_swept_first_rate": _rate(
+                        _col(group, "next_first_liquidity_sweep")
+                        == "prior_high_swept_first"
+                    ),
+                    "prior_low_swept_first_rate": _rate(
+                        _col(group, "next_first_liquidity_sweep")
+                        == "prior_low_swept_first"
+                    ),
+                    "or30_high_first_rate": _rate(
+                        _col(group, "next_or30_first_break")
+                        == "opening_range_high_first"
+                    ),
+                    "or30_low_first_rate": _rate(
+                        _col(group, "next_or30_first_break")
+                        == "opening_range_low_first"
+                    ),
+                }
+            )
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows).sort_values(
+        ["context", "context_value", "final_close_bias"]
+    )
+
+
 def categorical_tests(study: pd.DataFrame) -> pd.DataFrame:
     tests = [
         ("final_close_bucket", "next_direction"),
         ("final_close_bias", "next_direction"),
         ("final_close_bucket", "next_first_break"),
+        ("final_close_bucket", "next_first_liquidity_sweep"),
+        ("final_close_bias", "next_first_liquidity_sweep"),
+        ("final_close_bucket", "next_overnight_direction"),
+        ("final_close_bias", "next_overnight_continues_final_bias"),
+        ("final_close_bucket", "next_or30_first_break"),
+        ("final_close_bucket", "next_rth_first_60m_direction"),
         ("final_close_bucket", "next_close_bucket"),
         ("final_close_bias", "next_took_prior_session_high"),
         ("final_close_bias", "next_took_prior_session_low"),
     ]
-    rows = [_chi_square_test(study, feature, outcome) for feature, outcome in tests]
+    rows = [
+        _chi_square_test(study, feature, outcome)
+        for feature, outcome in tests
+        if feature in study.columns and outcome in study.columns
+    ]
     return pd.DataFrame([row for row in rows if row is not None])
 
 
@@ -326,8 +501,17 @@ def numeric_tests(study: pd.DataFrame) -> pd.DataFrame:
         ("final_close_bucket", "next_close_position"),
         ("final_close_bucket", "next_mfe_up_pts"),
         ("final_close_bucket", "next_mae_down_pts"),
+        ("final_close_bucket", "next_gap_from_session_close_pts"),
+        ("final_close_bucket", "next_overnight_return_pts"),
+        ("final_close_bucket", "next_early_globex_2h_return_pts"),
+        ("final_close_bucket", "next_or30_return_pts"),
+        ("final_close_bucket", "next_rth_first_60m_return_pts"),
     ]
-    rows = [_kruskal_test(study, feature, outcome) for feature, outcome in tests]
+    rows = [
+        _kruskal_test(study, feature, outcome)
+        for feature, outcome in tests
+        if feature in study.columns and outcome in study.columns
+    ]
     return pd.DataFrame([row for row in rows if row is not None])
 
 
@@ -345,7 +529,12 @@ def _build_row(
     final_high = float(final_bar["high"])
     final_low = float(final_bar["low"])
     final_close = float(final_bar["close"])
+    final_range = final_high - final_low
+    final_body = final_close - final_open
     final_position = close_position(final_close, final_high, final_low)
+    final_bias = close_bias(final_position)
+    session_position = close_position(session.close, session.high, session.low)
+    session_return = session.close - session.open
     next_position = close_position(next_session.close, next_session.high, next_session.low)
     next_return = next_session.close - next_session.open
     next_first_break = _first_prior_session_break(
@@ -354,13 +543,23 @@ def _build_row(
         prior_low=session.low,
         buffer_pts=prior_break_buffer_pts,
     )
+    next_first_sweep = _liquidity_sweep_label(next_first_break)
     next_took_high = bool(next_session.high > session.high + prior_break_buffer_pts)
     next_took_low = bool(next_session.low < session.low - prior_break_buffer_pts)
+    next_gap = next_session.open - session.close
+    next_windows = _next_session_windows(
+        next_bars,
+        next_session=next_session,
+        direction_deadzone_pts=direction_deadzone_pts,
+        prior_break_buffer_pts=prior_break_buffer_pts,
+    )
 
     return {
         "symbol": symbol,
         "session": "globex_day",
         "session_date": session.label_date.isoformat(),
+        "day_of_week_et": session.label_date.weekday(),
+        "day_name_et": session.label_date.strftime("%A").lower(),
         "session_start_utc": session.period.start_utc,
         "session_end_utc": session.period.end_utc,
         "session_start_et": session.period.start_utc.astimezone(ET).isoformat(),
@@ -370,6 +569,11 @@ def _build_row(
         "session_low": session.low,
         "session_close": session.close,
         "session_range_pts": session.range_pts,
+        "session_return_pts": session_return,
+        "session_direction": _direction(session_return, direction_deadzone_pts),
+        "session_close_position": session_position,
+        "session_close_bucket": close_bucket(session_position),
+        "session_close_bias": close_bias(session_position),
         "session_bar_count": session.bar_count,
         "final_candle_start_utc": _to_utc_datetime(final_bar.name),
         "final_candle_start_et": _to_utc_datetime(final_bar.name).astimezone(ET).isoformat(),
@@ -377,17 +581,22 @@ def _build_row(
         "final_high": final_high,
         "final_low": final_low,
         "final_close": final_close,
-        "final_range_pts": final_high - final_low,
-        "final_body_pts": final_close - final_open,
+        "final_range_pts": final_range,
+        "final_body_pts": final_body,
+        "final_body_direction": _direction(final_body, 0.0),
+        "final_body_frac_of_range": _ratio(abs(final_body), final_range),
+        "final_range_frac_of_session": _ratio(final_range, session.range_pts),
         "final_close_position": final_position,
         "final_close_bucket": close_bucket(final_position),
-        "final_close_bias": close_bias(final_position),
+        "final_close_bias": final_bias,
         "next_session_date": next_session.label_date.isoformat(),
         "next_session_open": next_session.open,
         "next_session_high": next_session.high,
         "next_session_low": next_session.low,
         "next_session_close": next_session.close,
         "next_session_range_pts": next_session.range_pts,
+        "next_gap_from_session_close_pts": next_gap,
+        "next_gap_direction": _direction(next_gap, direction_deadzone_pts),
         "next_return_pts": next_return,
         "next_direction": _direction(next_return, direction_deadzone_pts),
         "next_close_position": next_position,
@@ -403,9 +612,98 @@ def _build_row(
         "next_took_prior_session_low": next_took_low,
         "next_break_type": _break_type(next_took_high, next_took_low),
         "next_first_break": next_first_break,
+        "next_first_liquidity_sweep": next_first_sweep,
+        "next_first_sweep_closed_back_inside_prior_range": (
+            _sweep_closed_back_inside(
+                next_first_sweep=next_first_sweep,
+                next_close=next_session.close,
+                prior_high=session.high,
+                prior_low=session.low,
+            )
+        ),
         "next_closed_above_prior_session_high": bool(next_session.close > session.high),
         "next_closed_below_prior_session_low": bool(next_session.close < session.low),
         "next_range_vs_current_range": _ratio(next_session.range_pts, session.range_pts),
+        **_continuation_fields(
+            prefix="next_overnight",
+            direction=next_windows["next_overnight_direction"],
+            final_bias=final_bias,
+        ),
+        **_continuation_fields(
+            prefix="next_early_globex_2h",
+            direction=next_windows["next_early_globex_2h_direction"],
+            final_bias=final_bias,
+        ),
+        **_continuation_fields(
+            prefix="next_rth_first_60m",
+            direction=next_windows["next_rth_first_60m_direction"],
+            final_bias=final_bias,
+        ),
+        **next_windows,
+    }
+
+
+def _next_session_windows(
+    next_bars: pd.DataFrame,
+    *,
+    next_session: SessionSummary,
+    direction_deadzone_pts: float,
+    prior_break_buffer_pts: float,
+) -> dict[str, object]:
+    rth_open = _et_datetime(next_session.label_date, RTH_OPEN_ET)
+    or_end = rth_open + dt.timedelta(minutes=OPENING_RANGE_MINUTES)
+    early_globex_end = next_session.period.start_utc + dt.timedelta(
+        minutes=EARLY_GLOBEX_MINUTES
+    )
+    early_rth_end = rth_open + dt.timedelta(minutes=EARLY_RTH_MINUTES)
+
+    overnight = _window_summary(next_bars, next_session.period.start_utc, rth_open)
+    early_globex = _window_summary(
+        next_bars,
+        next_session.period.start_utc,
+        min(early_globex_end, next_session.period.end_utc),
+    )
+    opening_range = _window_summary(next_bars, rth_open, or_end)
+    early_rth = _window_summary(next_bars, rth_open, early_rth_end)
+
+    or_first_break = "unavailable"
+    if opening_range is not None:
+        or_first_break = _first_range_break(
+            next_bars,
+            high=opening_range.high,
+            low=opening_range.low,
+            start_utc=or_end,
+            end_utc=next_session.period.end_utc,
+            high_label="opening_range_high_first",
+            low_label="opening_range_low_first",
+            buffer_pts=prior_break_buffer_pts,
+        )
+
+    return {
+        "next_overnight_return_pts": _window_return(overnight),
+        "next_overnight_direction": _window_direction(
+            overnight,
+            direction_deadzone_pts,
+        ),
+        "next_early_globex_2h_return_pts": _window_return(early_globex),
+        "next_early_globex_2h_direction": _window_direction(
+            early_globex,
+            direction_deadzone_pts,
+        ),
+        "next_or30_open": _window_open(opening_range),
+        "next_or30_high": _window_high(opening_range),
+        "next_or30_low": _window_low(opening_range),
+        "next_or30_close": _window_close(opening_range),
+        "next_or30_range_pts": _window_range(opening_range),
+        "next_or30_return_pts": _window_return(opening_range),
+        "next_or30_direction": _window_direction(opening_range, direction_deadzone_pts),
+        "next_or30_close_position": _window_close_position(opening_range),
+        "next_or30_first_break": or_first_break,
+        "next_rth_first_60m_return_pts": _window_return(early_rth),
+        "next_rth_first_60m_direction": _window_direction(
+            early_rth,
+            direction_deadzone_pts,
+        ),
     }
 
 
@@ -426,6 +724,190 @@ def _first_prior_session_break(
         if broke_low:
             return "prior_low_first"
     return "none"
+
+
+def _first_range_break(
+    bars: pd.DataFrame,
+    *,
+    high: float,
+    low: float,
+    start_utc: dt.datetime,
+    end_utc: dt.datetime,
+    high_label: str,
+    low_label: str,
+    buffer_pts: float,
+) -> str:
+    window = _slice_window(bars, start_utc, end_utc)
+    for _, bar in window.iterrows():
+        broke_high = float(bar["high"]) > high + buffer_pts
+        broke_low = float(bar["low"]) < low - buffer_pts
+        if broke_high and broke_low:
+            return "both_same_bar"
+        if broke_high:
+            return high_label
+        if broke_low:
+            return low_label
+    return "none"
+
+
+def _liquidity_sweep_label(first_break: str) -> str:
+    if first_break == "prior_high_first":
+        return "prior_high_swept_first"
+    if first_break == "prior_low_first":
+        return "prior_low_swept_first"
+    return first_break
+
+
+def _sweep_closed_back_inside(
+    *,
+    next_first_sweep: str,
+    next_close: float,
+    prior_high: float,
+    prior_low: float,
+) -> bool | None:
+    if next_first_sweep == "prior_high_swept_first":
+        return bool(next_close < prior_high)
+    if next_first_sweep == "prior_low_swept_first":
+        return bool(next_close > prior_low)
+    return None
+
+
+def _window_summary(
+    bars: pd.DataFrame,
+    start_utc: dt.datetime,
+    end_utc: dt.datetime,
+) -> WindowSummary | None:
+    window = _slice_window(bars, start_utc, end_utc)
+    if window.empty:
+        return None
+    return WindowSummary(
+        open=float(window["open"].iloc[0]),
+        high=float(window["high"].max()),
+        low=float(window["low"].min()),
+        close=float(window["close"].iloc[-1]),
+        bar_count=int(len(window)),
+    )
+
+
+def _slice_window(
+    bars: pd.DataFrame,
+    start_utc: dt.datetime,
+    end_utc: dt.datetime,
+) -> pd.DataFrame:
+    return bars.loc[
+        (bars.index >= pd.Timestamp(start_utc))
+        & (bars.index < pd.Timestamp(end_utc))
+    ]
+
+
+def _window_open(window: WindowSummary | None) -> float | None:
+    return None if window is None else window.open
+
+
+def _window_high(window: WindowSummary | None) -> float | None:
+    return None if window is None else window.high
+
+
+def _window_low(window: WindowSummary | None) -> float | None:
+    return None if window is None else window.low
+
+
+def _window_close(window: WindowSummary | None) -> float | None:
+    return None if window is None else window.close
+
+
+def _window_range(window: WindowSummary | None) -> float | None:
+    return None if window is None else window.range_pts
+
+
+def _window_return(window: WindowSummary | None) -> float | None:
+    return None if window is None else window.return_pts
+
+
+def _window_direction(window: WindowSummary | None, deadzone_pts: float) -> str:
+    if window is None:
+        return "unavailable"
+    return _direction(window.return_pts, deadzone_pts)
+
+
+def _window_close_position(window: WindowSummary | None) -> float | None:
+    if window is None:
+        return None
+    return close_position(window.close, window.high, window.low)
+
+
+def _continuation_fields(
+    *,
+    prefix: str,
+    direction: object,
+    final_bias: CloseBias,
+) -> dict[str, bool | None]:
+    value: bool | None
+    if final_bias == "bullish":
+        value = direction == "bullish"
+    elif final_bias == "bearish":
+        value = direction == "bearish"
+    else:
+        value = None
+    return {f"{prefix}_continues_final_bias": value}
+
+
+def _add_prior_context_columns(study: pd.DataFrame) -> pd.DataFrame:
+    if study.empty:
+        return study
+    out = study.sort_values("session_start_utc").reset_index(drop=True).copy()
+    ranges = pd.to_numeric(out["session_range_pts"], errors="coerce")
+
+    out["prior_session_direction"] = out["session_direction"].shift(1).fillna("unknown")
+    out["prior_session_range_pts"] = ranges.shift(1)
+    out["prior_session_return_pts"] = pd.to_numeric(
+        out["session_return_pts"], errors="coerce"
+    ).shift(1)
+    out["prior_session_close_position"] = pd.to_numeric(
+        out["session_close_position"], errors="coerce"
+    ).shift(1)
+    out["prior20_median_session_range_pts"] = (
+        ranges.shift(1)
+        .rolling(ROLLING_RANGE_LOOKBACK, min_periods=ROLLING_RANGE_MIN_PERIODS)
+        .median()
+    )
+    out["prior20_session_range_percentile"] = _rolling_percentile(
+        ranges,
+        lookback=ROLLING_RANGE_LOOKBACK,
+        min_periods=ROLLING_RANGE_MIN_PERIODS,
+    )
+    out["prior20_range_regime"] = out["prior20_session_range_percentile"].map(
+        _range_regime
+    )
+    return out
+
+
+def _rolling_percentile(
+    values: pd.Series,
+    *,
+    lookback: int,
+    min_periods: int,
+) -> list[float | None]:
+    out: list[float | None] = []
+    for i, value in enumerate(values):
+        prior = values.iloc[max(0, i - lookback) : i].dropna()
+        if pd.isna(value) or len(prior) < min_periods:
+            out.append(None)
+            continue
+        below = (prior < value).sum()
+        equal = (prior == value).sum()
+        out.append(float((below + 0.5 * equal) / len(prior)))
+    return out
+
+
+def _range_regime(percentile: float | None) -> str:
+    if percentile is None or pd.isna(percentile):
+        return "unknown"
+    if percentile <= 0.33:
+        return "low_range"
+    if percentile >= 0.67:
+        return "high_range"
+    return "normal_range"
 
 
 def _direction(value: float, deadzone_pts: float) -> str:
@@ -518,6 +1000,10 @@ def _normalize_bars(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def _et_datetime(label_date: dt.date, boundary_time: dt.time) -> dt.datetime:
+    return dt.datetime.combine(label_date, boundary_time, tzinfo=ET).astimezone(UTC)
+
+
 def _sort_category(df: pd.DataFrame, column: str) -> pd.DataFrame:
     if column == "final_close_bucket":
         order = _CLOSE_BUCKET_ORDER
@@ -555,12 +1041,20 @@ def _median(series: pd.Series) -> float | None:
 
 
 def _rate(series: pd.Series) -> float | None:
-    if len(series) == 0:
+    values = pd.Series(series).dropna()
+    if len(values) == 0:
         return None
-    return float(pd.Series(series).astype(float).mean())
+    value = values.astype(float).mean()
+    return None if pd.isna(value) else float(value)
 
 
 def _ratio(numerator: float, denominator: float) -> float | None:
     if denominator == 0 or not math.isfinite(denominator):
         return None
     return float(numerator / denominator)
+
+
+def _col(df: pd.DataFrame, column: str) -> pd.Series:
+    if column in df.columns:
+        return df[column]
+    return pd.Series([None] * len(df), index=df.index)

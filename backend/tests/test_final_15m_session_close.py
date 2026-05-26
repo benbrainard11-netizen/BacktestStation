@@ -126,7 +126,48 @@ def test_build_study_labels_next_session_without_using_same_day_future() -> None
     assert row["next_direction"] == "bullish"
     assert bool(row["next_took_prior_session_high"]) is True
     assert row["next_first_break"] == "prior_high_first"
+    assert row["next_first_liquidity_sweep"] == "prior_high_swept_first"
+    assert row["next_overnight_direction"] == "bullish"
+    assert bool(row["next_overnight_continues_final_bias"]) is True
+    assert row["next_or30_first_break"] == "opening_range_high_first"
+    assert row["next_rth_first_60m_direction"] == "bullish"
     assert row["next_return_pts"] > 0
+
+
+def test_prior_context_columns_use_only_completed_prior_sessions() -> None:
+    periods = globex_day_periods(
+        start=dt.date(2026, 5, 5),
+        end=dt.date(2026, 5, 8),
+    )
+    rows = []
+    for i, period in enumerate(periods):
+        rows.extend(
+            _session_bars(
+                start_utc=period.start_utc,
+                base=100.0 + i * 10.0,
+                final=(
+                    108.0 + i * 10.0,
+                    110.0 + i * 10.0,
+                    100.0 + i * 10.0,
+                    109.0 + i * 10.0,
+                ),
+            )
+        )
+
+    study = build_final_15m_session_close_study(
+        _bars(rows),
+        symbol=NQ,
+        start=dt.date(2026, 5, 5),
+        end=dt.date(2026, 5, 7),
+    )
+
+    assert len(study) == 2
+    assert study.iloc[0]["prior_session_direction"] == "unknown"
+    assert study.iloc[1]["prior_session_direction"] == study.iloc[0]["session_direction"]
+    assert pd.isna(study.iloc[0]["prior_session_range_pts"])
+    assert study.iloc[1]["prior_session_range_pts"] == pytest.approx(
+        study.iloc[0]["session_range_pts"]
+    )
 
 
 def test_summary_tables_include_distribution_and_stats() -> None:
@@ -171,6 +212,7 @@ def test_summary_tables_include_distribution_and_stats() -> None:
     assert summary["overview"]["rows"] == 2
     assert len(summary["close_bucket_distribution"]) == 2
     assert len(stats) == 2
+    assert len(summary["targeted_effect_stats"]) == 2
     assert stats.loc[
         stats["final_close_bucket"] == "strong_bullish",
         "next_bullish_rate",
