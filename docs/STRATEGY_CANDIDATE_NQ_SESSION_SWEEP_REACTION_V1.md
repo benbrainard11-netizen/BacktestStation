@@ -747,6 +747,10 @@ Suggested files:
 - `backend/app/cli/nq_session_sweep_reaction_v1.py`
 - `backend/tests/test_nq_session_sweep_reaction_v1.py`
 
+Implementation/runbook:
+
+- `docs/NQ_SESSION_SWEEP_REACTION_V1_BACKTEST.md`
+
 ## 16. Beginner Mental Model
 
 Think of each day like this:
