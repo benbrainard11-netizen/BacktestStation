@@ -30,6 +30,10 @@ def _raw_partition_root(schema: str) -> str:
     return f"raw/databento/{schema}"
 
 
+def _clean_mbo_trading_day_root() -> str:
+    return "clean/databento/mbo_trading_day"
+
+
 def _date_range(start: str | dt.date, end: str | dt.date) -> list[dt.date]:
     """Half-open [start, end). Mirrors app.data.reader._date_range."""
     s = _parse_date(start)
@@ -127,6 +131,32 @@ def load_mbp1(
         symbol=symbol,
         start=start,
         end=end,
+        columns=columns,
+        as_pandas=as_pandas,
+        data_root=cache_root,
+    )
+
+
+def load_mbo_trading_day(
+    *,
+    symbol: str,
+    trading_day: str | dt.date,
+    columns: list[str] | None = None,
+    as_pandas: bool = True,
+) -> Any:
+    """Load clean MBO records for one Globex trading day from R2 + cache."""
+    from app.data.reader import read_mbo_trading_day
+
+    trading_day_d = _parse_date(trading_day)
+    cache_root = ensure_cached(
+        partition_root=_clean_mbo_trading_day_root(),
+        symbol=symbol,
+        dates=[trading_day_d],
+        date_partition_name="trading_day",
+    )
+    return read_mbo_trading_day(
+        symbol=symbol,
+        trading_day=trading_day_d,
         columns=columns,
         as_pandas=as_pandas,
         data_root=cache_root,

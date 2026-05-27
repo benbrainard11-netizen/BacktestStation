@@ -62,6 +62,20 @@ processed/bars/timeframe={tf}/symbol={symbol}/date={YYYY-MM-DD}/part-000.parquet
 
 Currently `{tf}` is only ever `1m`. Other timeframes (5m, 15m, 1h, daily) are derived at read time from the 1m bars by the reader library — not pre-computed. Adding pre-computed timeframes would mean storing six near-redundant copies of the same data.
 
+### `clean/databento/mbo_trading_day/`
+
+```
+clean/databento/mbo_trading_day/symbol={symbol}/trading_day={YYYY-MM-DD}/part-000.parquet
+```
+
+This is the clean MBO layer for MIRA and orderflow research. `{trading_day}` is
+the CME equity-index futures Globex trading day: 18:00 ET previous calendar day
+through 17:00 ET on the labeled trading-day date. These files are physically
+filtered trading-day partitions, not UTC-calendar raw partitions.
+
+Use `read_mbo_trading_day(...)` or `bsdata.load_mbo_trading_day(...)` instead
+of reading raw MBO paths directly.
+
 ### `features/`
 
 ```

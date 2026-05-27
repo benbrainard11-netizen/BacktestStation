@@ -10,7 +10,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from app.data import read_bars, read_mbo, read_tbbo
+from app.data import read_bars, read_mbo, read_mbo_trading_day, read_tbbo
 from app.data.reader import _date_range, _parse_date, add_mid_and_spread
 from app.data.schema import BARS_1M_SCHEMA, MBO_SCHEMA, TBBO_SCHEMA
 
@@ -154,6 +154,48 @@ def _write_mbo_partition(
     return out
 
 
+def _write_mbo_rows(
+    data_root: Path,
+    *,
+    symbol: str,
+    date: dt.date,
+    timestamps: list[pd.Timestamp],
+) -> Path:
+    out = (
+        data_root
+        / "raw"
+        / "databento"
+        / "mbo"
+        / f"symbol={symbol}"
+        / f"date={date.isoformat()}"
+        / "part-000.parquet"
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rows = len(timestamps)
+    df = pd.DataFrame(
+        {
+            "ts_event": pd.to_datetime(timestamps),
+            "ts_recv": pd.to_datetime(timestamps),
+            "rtype": [160] * rows,
+            "publisher_id": [1] * rows,
+            "instrument_id": [12345] * rows,
+            "action": ["A"] * rows,
+            "side": ["B"] * rows,
+            "price": [5000.0 + i * 0.25 for i in range(rows)],
+            "size": [1] * rows,
+            "channel_id": [1] * rows,
+            "order_id": list(range(2000, 2000 + rows)),
+            "flags": [0] * rows,
+            "ts_in_delta": [0] * rows,
+            "sequence": list(range(rows)),
+            "symbol": [symbol] * rows,
+        }
+    )
+    table = pa.Table.from_pandas(df, schema=MBO_SCHEMA.pa_schema, preserve_index=False)
+    pq.write_table(table, out)
+    return out
+
+
 @pytest.fixture
 def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     root = tmp_path / "data"
@@ -263,6 +305,99 @@ def test_read_mbo_single_day_projection(data_root: Path) -> None:
     assert "order_id" not in df.columns
 
 
+def test_read_mbo_datetime_window_filters_inside_calendar_day(data_root: Path) -> None:
+    _write_mbo_partition(data_root, symbol="ES.c.0", date=dt.date(2026, 4, 24), rows=5)
+
+    df = read_mbo(
+        symbol="ES.c.0",
+        start=dt.datetime(2026, 4, 24, 13, 30, 0, 1000, tzinfo=dt.timezone.utc),
+        end=dt.datetime(2026, 4, 24, 13, 30, 0, 3000, tzinfo=dt.timezone.utc),
+    )
+
+    assert len(df) == 2
+    assert df["ts_event"].min() >= pd.Timestamp("2026-04-24T13:30:00.001Z")
+    assert df["ts_event"].max() < pd.Timestamp("2026-04-24T13:30:00.003Z")
+
+
+def test_read_mbo_trading_day_spans_utc_calendar_partitions(data_root: Path) -> None:
+    symbol = "ES.c.0"
+    _write_mbo_rows(
+        data_root,
+        symbol=symbol,
+        date=dt.date(2026, 5, 4),
+        timestamps=[
+            pd.Timestamp("2026-05-04T21:59:00Z"),  # before Tue trading day
+            pd.Timestamp("2026-05-04T22:00:00Z"),  # Tue trading day opens
+        ],
+    )
+    _write_mbo_rows(
+        data_root,
+        symbol=symbol,
+        date=dt.date(2026, 5, 5),
+        timestamps=[
+            pd.Timestamp("2026-05-05T20:59:00Z"),  # inside
+            pd.Timestamp("2026-05-05T21:00:00Z"),  # exclusive close
+        ],
+    )
+
+    df = read_mbo_trading_day(symbol=symbol, trading_day=dt.date(2026, 5, 5))
+
+    assert len(df) == 2
+    assert list(df["ts_event"]) == [
+        pd.Timestamp("2026-05-04T22:00:00Z"),
+        pd.Timestamp("2026-05-05T20:59:00Z"),
+    ]
+
+
+def test_read_mbo_trading_day_prefers_clean_cache(data_root: Path) -> None:
+    symbol = "ES.c.0"
+    _write_mbo_rows(
+        data_root,
+        symbol=symbol,
+        date=dt.date(2026, 5, 5),
+        timestamps=[pd.Timestamp("2026-05-05T12:00:00Z")],
+    )
+    cache = (
+        data_root
+        / "clean"
+        / "databento"
+        / "mbo_trading_day"
+        / f"symbol={symbol}"
+        / "trading_day=2026-05-05"
+        / "part-000.parquet"
+    )
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cached_df = pd.DataFrame(
+        {
+            "ts_event": pd.to_datetime([pd.Timestamp("2026-05-05T13:00:00Z")]),
+            "ts_recv": pd.to_datetime([pd.Timestamp("2026-05-05T13:00:00Z")]),
+            "rtype": [160],
+            "publisher_id": [1],
+            "instrument_id": [12345],
+            "action": ["T"],
+            "side": ["A"],
+            "price": [9999.0],
+            "size": [3],
+            "channel_id": [1],
+            "order_id": [777],
+            "flags": [0],
+            "ts_in_delta": [0],
+            "sequence": [42],
+            "symbol": [symbol],
+        }
+    )
+    pq.write_table(
+        pa.Table.from_pandas(cached_df, schema=MBO_SCHEMA.pa_schema, preserve_index=False),
+        cache,
+    )
+
+    df = read_mbo_trading_day(symbol=symbol, trading_day=dt.date(2026, 5, 5), data_root=data_root)
+
+    assert len(df) == 1
+    assert df.iloc[0]["price"] == 9999.0
+    assert df.iloc[0]["action"] == "T"
+
+
 def test_symbol_isolation_no_leak(data_root: Path) -> None:
     """Writing NQ.c.0 partition should not surface in ES.c.0 reads."""
     _write_tbbo_partition(data_root, symbol="NQ.c.0", date=dt.date(2026, 4, 24), rows=3)
@@ -279,6 +414,21 @@ def test_read_bars_1m_passthrough(data_root: Path) -> None:
         symbol="NQ.c.0", timeframe="1m", start="2026-04-24", end="2026-04-25"
     )
     assert len(df) == 60
+
+
+def test_read_bars_datetime_window_filters_inside_calendar_day(data_root: Path) -> None:
+    _write_bars_1m_partition(data_root, symbol="NQ.c.0", date=dt.date(2026, 4, 24), minutes=60)
+
+    df = read_bars(
+        symbol="NQ.c.0",
+        timeframe="1m",
+        start=dt.datetime(2026, 4, 24, 13, 40, tzinfo=dt.timezone.utc),
+        end=dt.datetime(2026, 4, 24, 13, 45, tzinfo=dt.timezone.utc),
+    )
+
+    assert len(df) == 5
+    assert df["ts_event"].min() == pd.Timestamp("2026-04-24T13:40:00Z")
+    assert df["ts_event"].max() == pd.Timestamp("2026-04-24T13:44:00Z")
 
 
 def test_read_bars_5m_aggregates_correctly(data_root: Path) -> None:

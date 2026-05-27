@@ -12,7 +12,16 @@ Producers (parquet_mirror, historical puller) read from
 `app.data.manifest` to write audit manifests.
 """
 
-from app.data.reader import read_bars, read_mbo, read_mbp1, read_tbbo
+from app.data.reader import (
+    read_bars,
+    read_bars_trading_day,
+    read_mbo,
+    read_mbo_trading_day,
+    read_mbp1,
+    read_mbp1_trading_day,
+    read_tbbo,
+    read_tbbo_trading_day,
+)
 from app.data.schema import (
     BARS_1M_SCHEMA,
     GENERATOR_VERSION,
@@ -32,7 +41,11 @@ __all__ = [
     "SCHEMA_VERSION",
     "TBBO_SCHEMA",
     "read_bars",
+    "read_bars_trading_day",
     "read_mbo",
+    "read_mbo_trading_day",
     "read_mbp1",
+    "read_mbp1_trading_day",
     "read_tbbo",
+    "read_tbbo_trading_day",
 ]

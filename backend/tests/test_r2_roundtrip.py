@@ -26,10 +26,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from app.data.schema import BARS_1M_SCHEMA, SCHEMA_VERSION
+from app.data.schema import BARS_1M_SCHEMA, MBO_SCHEMA, SCHEMA_VERSION
 from app.data.storage import LocalStorage, R2Storage, get_storage
 from app.ingest import r2_upload
-from app.ingest.r2_partitions import Partition, validate
+from app.ingest.r2_partitions import Partition, enumerate_partitions, validate
 
 # --- Unit tests ---------------------------------------------------------
 
@@ -136,6 +136,63 @@ def test_r2_upload_validation_reads_file_not_hive_partition_columns(
     )
 
 
+def test_r2_partition_enumerates_clean_mbo_trading_day(tmp_path: Path) -> None:
+    symbol = "ES.c.0"
+    trading_day = dt.date(2026, 5, 5)
+    path = (
+        tmp_path
+        / "clean"
+        / "databento"
+        / "mbo_trading_day"
+        / f"symbol={symbol}"
+        / f"trading_day={trading_day.isoformat()}"
+        / "part-000.parquet"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.DataFrame(
+        [
+            {
+                "ts_event": pd.Timestamp("2026-05-04T22:00:00Z"),
+                "ts_recv": pd.Timestamp("2026-05-04T22:00:00Z"),
+                "rtype": 160,
+                "publisher_id": 1,
+                "instrument_id": 12345,
+                "action": "A",
+                "side": "B",
+                "price": 5000.0,
+                "size": 1,
+                "channel_id": 1,
+                "order_id": 1,
+                "flags": 0,
+                "ts_in_delta": 0,
+                "sequence": 1,
+                "symbol": symbol,
+            }
+        ]
+    )
+    table = pa.Table.from_pandas(df, schema=MBO_SCHEMA.pa_schema, preserve_index=False)
+    table = table.replace_schema_metadata(
+        {
+            **(table.schema.metadata or {}),
+            b"bs.schema.version": SCHEMA_VERSION.encode("utf-8"),
+        }
+    )
+    pq.write_table(table, path)
+
+    parts = enumerate_partitions(tmp_path, kinds={"clean_mbo_trading_day"})
+
+    assert len(parts) == 1
+    assert parts[0].kind == "clean_mbo_trading_day"
+    assert parts[0].schema_name == "mbo"
+    assert parts[0].date == trading_day
+    assert parts[0].trading_day == trading_day
+    assert parts[0].r2_key == (
+        "clean/databento/mbo_trading_day/"
+        "symbol=ES.c.0/trading_day=2026-05-05/part-000.parquet"
+    )
+    assert validate(parts[0])
+
+
 def test_r2_upload_dry_run_honors_limit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     parts = [
         Partition(
@@ -153,7 +210,7 @@ def test_r2_upload_dry_run_honors_limit(tmp_path: Path, monkeypatch: pytest.Monk
     seen: list[str] = []
 
     monkeypatch.setattr(r2_upload, "warehouse_root", lambda: tmp_path)
-    monkeypatch.setattr(r2_upload, "enumerate_partitions", lambda root: parts)
+    monkeypatch.setattr(r2_upload, "enumerate_partitions", lambda root, kinds=None: parts)
 
     def fake_validate(part: Partition) -> bool:
         seen.append(part.r2_key)
@@ -167,6 +224,56 @@ def test_r2_upload_dry_run_honors_limit(tmp_path: Path, monkeypatch: pytest.Monk
     assert stats.validated == 3
     assert stats.refused == 0
     assert len(seen) == 3
+
+
+def test_r2_upload_kind_filter_preserves_other_inventory_kinds() -> None:
+    existing = [
+        {
+            "kind": "raw",
+            "schema": "mbo",
+            "symbol": "ES.c.0",
+            "date": "2026-04-22",
+            "timeframe": None,
+            "size": 100,
+            "r2_key": "raw/databento/mbo/symbol=ES.c.0/date=2026-04-22/part-000.parquet",
+        },
+        {
+            "kind": "clean_mbo_trading_day",
+            "schema": "mbo",
+            "symbol": "ES.c.0",
+            "date": "2026-04-22",
+            "trading_day": "2026-04-22",
+            "timeframe": None,
+            "size": 100,
+            "r2_key": (
+                "clean/databento/mbo_trading_day/"
+                "symbol=ES.c.0/trading_day=2026-04-22/part-000.parquet"
+            ),
+        },
+    ]
+    replacement = {
+        "kind": "clean_mbo_trading_day",
+        "schema": "mbo",
+        "symbol": "NQ.c.0",
+        "date": "2026-04-23",
+        "trading_day": "2026-04-23",
+        "timeframe": None,
+        "size": 200,
+        "r2_key": (
+            "clean/databento/mbo_trading_day/"
+            "symbol=NQ.c.0/trading_day=2026-04-23/part-000.parquet"
+        ),
+    }
+
+    merged = r2_upload._merge_inventory_partitions(
+        existing=existing,
+        replacements=[replacement],
+        replacement_kinds={"clean_mbo_trading_day"},
+    )
+
+    assert [p["kind"] for p in merged] == ["raw", "clean_mbo_trading_day"]
+    assert merged[0]["r2_key"].startswith("raw/databento/mbo/")
+    assert merged[1]["r2_key"] == replacement["r2_key"]
 
 
 # --- Integration test (R2 required) -------------------------------------

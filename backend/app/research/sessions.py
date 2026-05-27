@@ -171,6 +171,50 @@ def previous_globex_day(ref: datetime) -> GlobexPeriod:
     )
 
 
+def trading_date_for(ref: datetime) -> date:
+    """Return the ET trading-date label for the Globex day containing `ref`.
+
+    The label is the local ET date of the 17:00 Globex close. For example,
+    Sun 18:00 ET -> Mon 17:00 ET is labeled Monday.
+    """
+    return globex_day_for(ref).end_utc.astimezone(ET).date()
+
+
+def globex_day_for_trading_date(trading_day: date) -> GlobexPeriod:
+    """Return the full Globex day labeled by `trading_day`.
+
+    `trading_day` is the ET date of the session close:
+    Monday = Sunday 18:00 ET -> Monday 17:00 ET.
+    """
+    if trading_day.weekday() >= 5:
+        raise ValueError("Globex trading day labels must be Monday-Friday")
+    start_et = datetime.combine(
+        trading_day - timedelta(days=1),
+        time(GLOBEX_DAY_START_HOUR_ET),
+        tzinfo=ET,
+    )
+    end_et = datetime.combine(
+        trading_day,
+        time(GLOBEX_DAY_END_HOUR_ET),
+        tzinfo=ET,
+    )
+    return GlobexPeriod(
+        start_utc=start_et.astimezone(UTC),
+        end_utc=end_et.astimezone(UTC),
+        label="globex_day",
+    )
+
+
+def previous_trading_date(trading_day: date) -> date:
+    """Previous weekday trading-date label, skipping Saturday/Sunday."""
+    if trading_day.weekday() >= 5:
+        raise ValueError("trading_day must be Monday-Friday")
+    prev = trading_day - timedelta(days=1)
+    while prev.weekday() >= 5:
+        prev -= timedelta(days=1)
+    return prev
+
+
 # ---------- Week boundaries ----------
 
 
@@ -337,6 +381,37 @@ def session_for(ref: datetime, session_name: str) -> GlobexPeriod:
         start_utc=start_et.astimezone(UTC),
         end_utc=end_et.astimezone(UTC),
         label=f"session_{session_name}",
+    )
+
+
+def session_for_trading_date(trading_day: date, session_name: str) -> GlobexPeriod:
+    """Return an intraday session inside a specific Globex trading day."""
+    day = globex_day_for_trading_date(trading_day)
+    return session_for(day.start_utc + timedelta(hours=1), session_name)
+
+
+def rth_session_for_trading_date(
+    trading_day: date,
+    *,
+    end_hour: int = 16,
+    end_minute: int = 0,
+) -> GlobexPeriod:
+    """Return the cash/RTH session for a Globex trading-date label.
+
+    Default RTH is 09:30-16:00 ET. This is intentionally separate from
+    the `ny` Globex session, which runs 09:30-17:00 ET in this research
+    taxonomy.
+    """
+    if trading_day.weekday() >= 5:
+        raise ValueError("RTH trading day labels must be Monday-Friday")
+    start_et = datetime.combine(trading_day, time(9, 30), tzinfo=ET)
+    end_et = datetime.combine(trading_day, time(end_hour, end_minute), tzinfo=ET)
+    if end_et <= start_et:
+        raise ValueError("RTH end must be after 09:30 ET")
+    return GlobexPeriod(
+        start_utc=start_et.astimezone(UTC),
+        end_utc=end_et.astimezone(UTC),
+        label="session_rth",
     )
 
 

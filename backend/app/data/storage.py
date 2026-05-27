@@ -53,11 +53,14 @@ class Storage(Protocol):
         dates: list[dt.date],
         empty_schema: pa.Schema,
         columns: list[str] | None,
+        date_partition_name: str = "date",
     ) -> pa.Table:
         """Read all partition files matching `(symbol, date)` for `date in dates`.
 
         `partition_root` is the warehouse-relative prefix, e.g.
         `"raw/databento/tbbo"` or `"processed/bars/timeframe=1m"`.
+        `date_partition_name` defaults to `date`; clean trading-day
+        partitions use `trading_day`.
 
         Missing partitions are silently skipped (logged at info level)
         and `empty_schema.empty_table()` is returned if nothing matches.
@@ -79,6 +82,7 @@ class LocalStorage:
         dates: list[dt.date],
         empty_schema: pa.Schema,
         columns: list[str] | None,
+        date_partition_name: str = "date",
     ) -> pa.Table:
         partition_dir = self.root / partition_root
         paths: list[Path] = []
@@ -86,7 +90,7 @@ class LocalStorage:
             candidate = (
                 partition_dir
                 / f"symbol={symbol}"
-                / f"date={d.isoformat()}"
+                / f"{date_partition_name}={d.isoformat()}"
                 / "part-000.parquet"
             )
             if candidate.exists():
@@ -139,6 +143,7 @@ class R2Storage:
         dates: list[dt.date],
         empty_schema: pa.Schema,
         columns: list[str] | None,
+        date_partition_name: str = "date",
     ) -> pa.Table:
         from pyarrow.fs import FileType
 
@@ -146,7 +151,7 @@ class R2Storage:
         for d in dates:
             key = (
                 f"{self.bucket}/{partition_root}/symbol={symbol}/"
-                f"date={d.isoformat()}/part-000.parquet"
+                f"{date_partition_name}={d.isoformat()}/part-000.parquet"
             )
             try:
                 info = self._fs.get_file_info(key)

@@ -11,7 +11,7 @@ trading schedule:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -19,9 +19,14 @@ import pytest
 from app.research.sessions import (
     GlobexPeriod,
     globex_day_for,
+    globex_day_for_trading_date,
     globex_week_for,
     previous_globex_day,
     previous_globex_week,
+    previous_trading_date,
+    rth_session_for_trading_date,
+    session_for_trading_date,
+    trading_date_for,
 )
 
 ET = ZoneInfo("America/New_York")
@@ -121,6 +126,32 @@ def test_previous_day_for_sunday_evening():
     prev = previous_globex_day(_et(2026, 5, 3, 19, 0))  # Sun 19:00
     assert prev.start_utc == _et(2026, 4, 30, 18, 0).astimezone(UTC)
     assert prev.end_utc == _et(2026, 5, 1, 17, 0).astimezone(UTC)
+
+
+def test_trading_date_for_labels_by_globex_close_date():
+    assert trading_date_for(_et(2026, 5, 3, 19, 0)) == date(2026, 5, 4)
+    assert trading_date_for(_et(2026, 5, 5, 14, 0)) == date(2026, 5, 5)
+    assert trading_date_for(_et(2026, 5, 5, 18, 0)) == date(2026, 5, 6)
+
+
+def test_globex_day_for_trading_date_uses_full_futures_day():
+    p = globex_day_for_trading_date(date(2026, 5, 5))
+    assert p.start_utc == _et(2026, 5, 4, 18, 0).astimezone(UTC)
+    assert p.end_utc == _et(2026, 5, 5, 17, 0).astimezone(UTC)
+
+
+def test_trading_date_helpers_skip_weekend():
+    assert previous_trading_date(date(2026, 5, 4)) == date(2026, 5, 1)
+
+
+def test_session_helpers_for_specific_trading_date():
+    td = date(2026, 5, 5)
+    asia = session_for_trading_date(td, "asia")
+    rth = rth_session_for_trading_date(td)
+    assert asia.start_utc == _et(2026, 5, 4, 18, 0).astimezone(UTC)
+    assert asia.end_utc == _et(2026, 5, 5, 2, 0).astimezone(UTC)
+    assert rth.start_utc == _et(2026, 5, 5, 9, 30).astimezone(UTC)
+    assert rth.end_utc == _et(2026, 5, 5, 16, 0).astimezone(UTC)
 
 
 # ---------- globex_week_for ----------

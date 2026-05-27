@@ -6,7 +6,13 @@ against Ben's curated warehouse without needing direct disk access.
 
 Public API mirrors `app.data.reader` from the BacktestStation backend:
 
-    from bsdata import load_bars, load_tbbo, load_mbp1, get_inventory
+    from bsdata import (
+        get_inventory,
+        load_bars,
+        load_mbo_trading_day,
+        load_mbp1,
+        load_tbbo,
+    )
 
     df = load_bars(symbol="NQ.c.0", start="2026-04-01", end="2026-04-25", timeframe="1m")
 
@@ -23,7 +29,13 @@ See README.md for one-time setup.
 """
 
 from bsdata.inventory import get_inventory
-from bsdata.loader import load_bars, load_mbp1, load_tbbo
+from bsdata.loader import load_bars, load_mbo_trading_day, load_mbp1, load_tbbo
 
-__all__ = ["get_inventory", "load_bars", "load_mbp1", "load_tbbo"]
+__all__ = [
+    "get_inventory",
+    "load_bars",
+    "load_mbo_trading_day",
+    "load_mbp1",
+    "load_tbbo",
+]
 __version__ = "0.1.0"

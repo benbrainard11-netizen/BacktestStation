@@ -16,6 +16,7 @@ CLI:
     python -m app.ingest.r2_upload --dry-run        # validate only, no I/O
     python -m app.ingest.r2_upload --rebuild        # re-upload all
     python -m app.ingest.r2_upload --limit 10       # cap to 10 uploads
+    python -m app.ingest.r2_upload --kind clean_mbo_trading_day
 
 See `docs/R2_SETUP.md` for required env vars.
 """
@@ -41,6 +42,7 @@ from app.ingest.r2_client import (
 )
 from app.ingest.r2_partitions import (
     Partition,
+    SUPPORTED_KINDS,
     enumerate_partitions,
     to_inventory_dict,
     validate,
@@ -69,6 +71,7 @@ def run(
     dry_run: bool = False,
     rebuild: bool = False,
     limit: int | None = None,
+    kinds: set[str] | None = None,
 ) -> UploadStats:
     """Run one upload pass. Returns stats."""
     root = warehouse_root()
@@ -78,11 +81,14 @@ def run(
     file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logger.addHandler(file_handler)
     logger.setLevel(logging.INFO)
-    logger.info(f"=== r2_upload start | dry_run={dry_run} rebuild={rebuild} limit={limit}")
+    logger.info(
+        f"=== r2_upload start | dry_run={dry_run} rebuild={rebuild} "
+        f"limit={limit} kinds={sorted(kinds) if kinds else 'all'}"
+    )
 
     stats = UploadStats()
     try:
-        partitions = enumerate_partitions(root)
+        partitions = enumerate_partitions(root, kinds=kinds)
         stats.enumerated = len(partitions)
         logger.info(f"enumerated {stats.enumerated} candidate partitions")
 
@@ -122,14 +128,20 @@ def run(
                 stats.errors.append(f"{p.r2_key}: {e}")
                 logger.error(f"UPLOAD FAILED {p.r2_key}: {e}")
 
+        inventory_partitions = _inventory_partitions_for_write(
+            client,
+            bucket,
+            replacements=[to_inventory_dict(p) for p in kept_for_inventory],
+            replacement_kinds=kinds,
+        )
         write_inventory(
             client,
             bucket,
             schema_version=SCHEMA_VERSION,
             generator_version=GENERATOR_VERSION,
-            partitions=[to_inventory_dict(p) for p in kept_for_inventory],
+            partitions=inventory_partitions,
         )
-        stats.inventory_partitions = len(kept_for_inventory)
+        stats.inventory_partitions = len(inventory_partitions)
         logger.info(f"wrote {INVENTORY_KEY} with {stats.inventory_partitions} partitions")
     finally:
         logger.info(
@@ -142,6 +154,57 @@ def run(
         logger.removeHandler(file_handler)
         file_handler.close()
     return stats
+
+
+def _load_existing_inventory_partitions(client, bucket: str) -> list[dict]:
+    """Return existing `_inventory.json` partitions, or empty if absent."""
+    from botocore.exceptions import ClientError
+
+    try:
+        obj = client.get_object(Bucket=bucket, Key=INVENTORY_KEY)
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "")
+        if code in ("404", "NoSuchKey", "NotFound"):
+            return []
+        raise
+    payload = json.loads(obj["Body"].read().decode("utf-8"))
+    partitions = payload.get("partitions", [])
+    return partitions if isinstance(partitions, list) else []
+
+
+def _merge_inventory_partitions(
+    *,
+    existing: list[dict],
+    replacements: list[dict],
+    replacement_kinds: set[str] | None,
+) -> list[dict]:
+    """Merge kind-filtered uploads into the existing inventory.
+
+    A full upload writes exactly `replacements`. A filtered upload preserves
+    unrelated kinds from the current R2 inventory and replaces only the kinds
+    processed by this run.
+    """
+    if not replacement_kinds:
+        return replacements
+    preserved = [p for p in existing if p.get("kind") not in replacement_kinds]
+    return preserved + replacements
+
+
+def _inventory_partitions_for_write(
+    client,
+    bucket: str,
+    *,
+    replacements: list[dict],
+    replacement_kinds: set[str] | None,
+) -> list[dict]:
+    if not replacement_kinds:
+        return replacements
+    existing = _load_existing_inventory_partitions(client, bucket)
+    return _merge_inventory_partitions(
+        existing=existing,
+        replacements=replacements,
+        replacement_kinds=replacement_kinds,
+    )
 
 
 def _persist_run_summary(root: Path, stats: UploadStats, *, dry_run: bool) -> None:
@@ -193,13 +256,24 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="cap upload count this run (for testing)",
     )
+    parser.add_argument(
+        "--kind",
+        action="append",
+        choices=SUPPORTED_KINDS,
+        help="only process one partition kind; may be repeated",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    stats = run(dry_run=args.dry_run, rebuild=args.rebuild, limit=args.limit)
+    stats = run(
+        dry_run=args.dry_run,
+        rebuild=args.rebuild,
+        limit=args.limit,
+        kinds=set(args.kind) if args.kind else None,
+    )
     print(
         f"enumerated={stats.enumerated} validated={stats.validated} "
         f"refused={stats.refused} uploaded={stats.uploaded} "

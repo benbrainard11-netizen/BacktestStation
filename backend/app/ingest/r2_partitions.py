@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,27 +25,39 @@ from app.services.dataset_scanner import _HIVE_BARS_RE, _HIVE_RAW_RE
 
 logger = logging.getLogger(__name__)
 
+SUPPORTED_KINDS = ("raw", "bars", "clean_mbo_trading_day")
+
 
 @dataclass(frozen=True)
 class Partition:
-    """One uploadable parquet partition (raw or bars)."""
+    """One uploadable parquet partition."""
 
     local_path: Path
     r2_key: str
-    kind: str  # "raw" | "bars"
-    schema_name: str  # tbbo | mbp-1 | ohlcv-1m
+    kind: str  # raw | bars | clean_mbo_trading_day
+    schema_name: str  # tbbo | mbp-1 | mbo | ohlcv-1m
     symbol: str
     date: dt.date
     timeframe: str | None  # bars only
     size: int
+    trading_day: dt.date | None = None
 
 
-def enumerate_partitions(root: Path) -> list[Partition]:
+def enumerate_partitions(
+    root: Path,
+    *,
+    kinds: Iterable[str] | None = None,
+) -> list[Partition]:
     """Walk the warehouse for read-side parquet partitions."""
     out: list[Partition] = []
+    want = set(kinds or SUPPORTED_KINDS)
+    unknown = want - set(SUPPORTED_KINDS)
+    if unknown:
+        known = ", ".join(SUPPORTED_KINDS)
+        raise ValueError(f"unknown partition kind(s): {sorted(unknown)}; known: {known}")
 
     raw_root = root / "raw" / "databento"
-    if raw_root.exists():
+    if "raw" in want and raw_root.exists():
         for path in raw_root.rglob("*.parquet"):
             m = _HIVE_RAW_RE.search(str(path))
             if not m:
@@ -70,7 +83,7 @@ def enumerate_partitions(root: Path) -> list[Partition]:
             )
 
     bars_root = root / "processed" / "bars"
-    if bars_root.exists():
+    if "bars" in want and bars_root.exists():
         for path in bars_root.rglob("*.parquet"):
             m = _HIVE_BARS_RE.search(str(path))
             if not m:
@@ -96,7 +109,57 @@ def enumerate_partitions(root: Path) -> list[Partition]:
                 )
             )
 
+    clean_mbo_root = root / "clean" / "databento" / "mbo_trading_day"
+    if "clean_mbo_trading_day" in want and clean_mbo_root.exists():
+        for path in clean_mbo_root.rglob("*.parquet"):
+            parsed = _parse_clean_mbo_trading_day(path, clean_mbo_root)
+            if parsed is None:
+                logger.info(f"unrecognized clean MBO parquet path, skipping: {path}")
+                continue
+            symbol, trading_day = parsed
+            r2_key = path.relative_to(root).as_posix()
+            out.append(
+                Partition(
+                    local_path=path,
+                    r2_key=r2_key,
+                    kind="clean_mbo_trading_day",
+                    schema_name="mbo",
+                    symbol=symbol,
+                    date=trading_day,
+                    timeframe=None,
+                    size=path.stat().st_size,
+                    trading_day=trading_day,
+                )
+            )
+
     return out
+
+
+def _parse_clean_mbo_trading_day(
+    path: Path,
+    clean_mbo_root: Path,
+) -> tuple[str, dt.date] | None:
+    try:
+        rel = path.relative_to(clean_mbo_root)
+    except ValueError:
+        return None
+    if len(rel.parts) != 3:
+        return None
+    symbol_part, trading_day_part, file_name = rel.parts
+    if file_name != "part-000.parquet":
+        return None
+    if not symbol_part.startswith("symbol="):
+        return None
+    if not trading_day_part.startswith("trading_day="):
+        return None
+    symbol = symbol_part.removeprefix("symbol=")
+    try:
+        trading_day = dt.date.fromisoformat(
+            trading_day_part.removeprefix("trading_day=")
+        )
+    except ValueError:
+        return None
+    return symbol, trading_day
 
 
 def validate(part: Partition) -> bool:
@@ -152,6 +215,7 @@ def to_inventory_dict(p: Partition) -> dict:
         "schema": p.schema_name,
         "symbol": p.symbol,
         "date": p.date.isoformat(),
+        "trading_day": p.trading_day.isoformat() if p.trading_day is not None else None,
         "timeframe": p.timeframe,
         "size": p.size,
         "r2_key": p.r2_key,

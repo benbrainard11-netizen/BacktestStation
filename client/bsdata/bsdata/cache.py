@@ -8,6 +8,7 @@ Cache layout mirrors the warehouse exactly:
 
     {cache_root}/raw/databento/{schema}/symbol={X}/date={Y}/part-000.parquet
     {cache_root}/processed/bars/timeframe={tf}/symbol={X}/date={Y}/part-000.parquet
+    {cache_root}/clean/databento/mbo_trading_day/symbol={X}/trading_day={Y}/part-000.parquet
 
 So `LocalStorage(cache_root)` reads cached partitions with no special
 casing — same code path as ben-247's local reads.
@@ -65,12 +66,13 @@ def cache_path_for(
     partition_root: str,
     symbol: str,
     date: dt.date,
+    date_partition_name: str = "date",
 ) -> Path:
     return (
         cache_root
         / partition_root
         / f"symbol={symbol}"
-        / f"date={date.isoformat()}"
+        / f"{date_partition_name}={date.isoformat()}"
         / "part-000.parquet"
     )
 
@@ -80,10 +82,11 @@ def r2_key_for(
     partition_root: str,
     symbol: str,
     date: dt.date,
+    date_partition_name: str = "date",
 ) -> str:
     return (
         f"{partition_root}/symbol={symbol}/"
-        f"date={date.isoformat()}/part-000.parquet"
+        f"{date_partition_name}={date.isoformat()}/part-000.parquet"
     )
 
 
@@ -112,6 +115,7 @@ def ensure_cached(
     partition_root: str,
     symbol: str,
     dates: list[dt.date],
+    date_partition_name: str = "date",
 ) -> Path:
     """Make sure all requested partitions are present in the local cache.
 
@@ -130,10 +134,16 @@ def ensure_cached(
             partition_root=partition_root,
             symbol=symbol,
             date=d,
+            date_partition_name=date_partition_name,
         )
         if cache_file.exists():
             continue
-        key = r2_key_for(partition_root=partition_root, symbol=symbol, date=d)
+        key = r2_key_for(
+            partition_root=partition_root,
+            symbol=symbol,
+            date=d,
+            date_partition_name=date_partition_name,
+        )
         missing.append((d, cache_file, key))
 
     if not missing:

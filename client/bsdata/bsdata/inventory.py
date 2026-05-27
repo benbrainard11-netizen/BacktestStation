@@ -22,13 +22,14 @@ _cached_inventory: "Inventory | None" = None
 
 @dataclass(frozen=True)
 class InventoryPartition:
-    kind: str               # "raw" | "bars"
-    schema: str             # tbbo | mbp-1 | ohlcv-1m
+    kind: str               # raw | bars | clean_mbo_trading_day
+    schema: str             # tbbo | mbp-1 | mbo | ohlcv-1m
     symbol: str
     date: dt.date
     timeframe: str | None   # bars only
     size: int
     r2_key: str
+    trading_day: dt.date | None = None
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,11 @@ def _parse_inventory(payload: dict[str, Any]) -> Inventory:
                 timeframe=p.get("timeframe"),
                 size=int(p["size"]),
                 r2_key=p["r2_key"],
+                trading_day=(
+                    dt.date.fromisoformat(p["trading_day"])
+                    if p.get("trading_day")
+                    else None
+                ),
             )
         )
     return Inventory(

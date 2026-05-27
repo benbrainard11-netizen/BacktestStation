@@ -4,7 +4,7 @@ Read parquet partitions from Ben's BacktestStation R2 mirror, cached
 locally, with the same loader API the backend uses internally.
 
 ```python
-from bsdata import load_bars, load_tbbo, load_mbp1, get_inventory
+from bsdata import load_bars, load_tbbo, load_mbp1, load_mbo_trading_day, get_inventory
 
 # What's in the warehouse?
 inv = get_inventory()
@@ -19,6 +19,9 @@ df = load_tbbo(symbol="NQ.c.0", start="2026-04-24", end="2026-04-25")
 
 # Raw MBP-1
 df = load_mbp1(symbol="NQ.c.0", start="2026-04-24", end="2026-04-25")
+
+# Clean MBO by full Globex trading day. Use this for MIRA/orderflow research.
+df = load_mbo_trading_day(symbol="ES.c.0", trading_day="2026-04-22")
 ```
 
 First call for a given (symbol, date) downloads the parquet from R2 to
@@ -69,6 +72,8 @@ For persistent setup, save the env vars to your User scope:
 - Default location: `~/.bsdata/cache/` (override via `BS_R2_CACHE_ROOT`).
 - Layout mirrors the warehouse Hive partitioning, so cached reads go
   through the same `LocalStorage` codepath the backend uses internally.
+- Clean MBO trading-day files cache under
+  `clean/databento/mbo_trading_day/symbol=.../trading_day=.../`.
 - No cache eviction yet (Tier 1). Manage manually:
   `Remove-Item -Recurse ~\.bsdata\cache` to nuke; subsequent calls
   re-download from R2.

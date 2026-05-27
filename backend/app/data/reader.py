@@ -22,7 +22,9 @@ from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.compute as pc
+import pyarrow.parquet as pq
 
+from app.core.paths import warehouse_root
 from app.data.schema import (
     BARS_1M_SCHEMA,
     MBP1_SCHEMA,
@@ -64,6 +66,10 @@ def _bars_partition_prefix(timeframe: str) -> str:
     return f"processed/bars/timeframe={timeframe}"
 
 
+def _clean_mbo_trading_day_prefix() -> str:
+    return "clean/databento/mbo_trading_day"
+
+
 def _resolve_storage(data_root: Path | None) -> Storage:
     """If `data_root` is explicitly passed, force LocalStorage there.
     Otherwise pick the backend from env vars (`BS_DATA_BACKEND`)."""
@@ -83,6 +89,23 @@ def _parse_date(value: str | dt.date | dt.datetime) -> dt.date:
     return dt.date.fromisoformat(value)
 
 
+def _parse_timestamp(value: str | dt.date | dt.datetime) -> dt.datetime:
+    """Parse date-ish input as a tz-aware UTC timestamp."""
+    if isinstance(value, dt.datetime):
+        ts = value
+    elif isinstance(value, dt.date):
+        ts = dt.datetime.combine(value, dt.time.min)
+    else:
+        raw = value.strip()
+        if "T" in raw or " " in raw:
+            ts = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        else:
+            ts = dt.datetime.combine(dt.date.fromisoformat(raw), dt.time.min)
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=dt.timezone.utc)
+    return ts.astimezone(dt.timezone.utc)
+
+
 def _date_range(start: dt.date, end: dt.date) -> list[dt.date]:
     """Half-open [start, end). Empty list if end <= start."""
     out: list[dt.date] = []
@@ -91,6 +114,101 @@ def _date_range(start: dt.date, end: dt.date) -> list[dt.date]:
         out.append(cur)
         cur = cur + dt.timedelta(days=1)
     return out
+
+
+def _partition_dates_for_window(
+    start: str | dt.date | dt.datetime,
+    end: str | dt.date | dt.datetime,
+) -> list[dt.date]:
+    """Calendar partitions whose UTC date overlaps [start, end)."""
+    start_ts = _parse_timestamp(start)
+    end_ts = _parse_timestamp(end)
+    if end_ts <= start_ts:
+        return []
+    last_ts = end_ts - dt.timedelta(microseconds=1)
+    return _date_range(start_ts.date(), last_ts.date() + dt.timedelta(days=1))
+
+
+def _filter_table_window(
+    table: pa.Table,
+    *,
+    schema: DataSchema,
+    start: str | dt.date | dt.datetime,
+    end: str | dt.date | dt.datetime,
+) -> pa.Table:
+    """Apply exact half-open timestamp filtering after partition reads."""
+    if table.num_rows == 0 or schema.sort_key not in table.column_names:
+        return table
+    start_ts = _parse_timestamp(start)
+    end_ts = _parse_timestamp(end)
+    if end_ts <= start_ts:
+        return table.slice(0, 0)
+    ts_col = table[schema.sort_key]
+    start_scalar = pa.scalar(start_ts, type=ts_col.type)
+    end_scalar = pa.scalar(end_ts, type=ts_col.type)
+    mask = pc.and_(
+        pc.greater_equal(ts_col, start_scalar),
+        pc.less(ts_col, end_scalar),
+    )
+    return table.filter(mask)
+
+
+def _globex_period_for_trading_day(trading_day: str | dt.date):
+    # Imported lazily to keep the base data reader usable without loading
+    # the research package at module import time.
+    from app.research.sessions import globex_day_for_trading_date
+
+    return globex_day_for_trading_date(_parse_date(trading_day))
+
+
+def _mbo_trading_day_cache_path(
+    *,
+    symbol: str,
+    trading_day: dt.date,
+    data_root: Path | None,
+) -> Path:
+    root = data_root if data_root is not None else warehouse_root()
+    return (
+        root
+        / "clean"
+        / "databento"
+        / "mbo_trading_day"
+        / f"symbol={symbol}"
+        / f"trading_day={trading_day.isoformat()}"
+        / "part-000.parquet"
+    )
+
+
+def _read_mbo_trading_day_cache(
+    *,
+    symbol: str,
+    trading_day: dt.date,
+    columns: list[str] | None,
+    data_root: Path | None,
+) -> pa.Table | None:
+    read_columns = columns
+    if read_columns is not None and MBO_SCHEMA.sort_key not in read_columns:
+        read_columns = [MBO_SCHEMA.sort_key] + list(read_columns)
+    if data_root is not None:
+        path = _mbo_trading_day_cache_path(
+            symbol=symbol,
+            trading_day=trading_day,
+            data_root=data_root,
+        )
+        if not path.exists():
+            return None
+        return pq.ParquetFile(path).read(columns=read_columns)
+
+    storage = _resolve_storage(data_root)
+    table = storage.read_partitions(
+        partition_root=_clean_mbo_trading_day_prefix(),
+        symbol=symbol,
+        dates=[trading_day],
+        empty_schema=MBO_SCHEMA.pa_schema,
+        columns=read_columns,
+        date_partition_name="trading_day",
+    )
+    return None if table.num_rows == 0 else table
 
 
 # --- Core reader ---------------------------------------------------------
@@ -104,6 +222,7 @@ def _read_partitioned(
     dates: list[dt.date],
     schema: DataSchema,
     columns: list[str] | None,
+    date_partition_name: str = "date",
 ) -> pa.Table:
     """Read all matching partition files for `(symbol, date)` via `storage`."""
     if columns is not None and schema.sort_key not in columns:
@@ -116,6 +235,7 @@ def _read_partitioned(
         dates=dates,
         empty_schema=schema.pa_schema,
         columns=columns,
+        date_partition_name=date_partition_name,
     )
 
 
@@ -134,9 +254,7 @@ def read_tbbo(
     `as_pandas=False`. Missing days are silently skipped.
     """
     storage = _resolve_storage(data_root)
-    start_d = _parse_date(start)
-    end_d = _parse_date(end)
-    dates = _date_range(start_d, end_d)
+    dates = _partition_dates_for_window(start, end)
     table = _read_partitioned(
         storage,
         partition_root=_raw_partition_prefix("tbbo"),
@@ -145,6 +263,7 @@ def read_tbbo(
         schema=TBBO_SCHEMA,
         columns=columns,
     )
+    table = _filter_table_window(table, schema=TBBO_SCHEMA, start=start, end=end)
     return table.to_pandas() if as_pandas else table
 
 
@@ -159,7 +278,7 @@ def read_mbp1(
 ):
     """Read MBP-1 records for `symbol` over [start, end)."""
     storage = _resolve_storage(data_root)
-    dates = _date_range(_parse_date(start), _parse_date(end))
+    dates = _partition_dates_for_window(start, end)
     table = _read_partitioned(
         storage,
         partition_root=_raw_partition_prefix("mbp-1"),
@@ -168,6 +287,7 @@ def read_mbp1(
         schema=MBP1_SCHEMA,
         columns=columns,
     )
+    table = _filter_table_window(table, schema=MBP1_SCHEMA, start=start, end=end)
     return table.to_pandas() if as_pandas else table
 
 
@@ -182,7 +302,7 @@ def read_mbo(
 ):
     """Read MBO records for `symbol` over [start, end)."""
     storage = _resolve_storage(data_root)
-    dates = _date_range(_parse_date(start), _parse_date(end))
+    dates = _partition_dates_for_window(start, end)
     table = _read_partitioned(
         storage,
         partition_root=_raw_partition_prefix("mbo"),
@@ -191,7 +311,85 @@ def read_mbo(
         schema=MBO_SCHEMA,
         columns=columns,
     )
+    table = _filter_table_window(table, schema=MBO_SCHEMA, start=start, end=end)
     return table.to_pandas() if as_pandas else table
+
+
+def read_tbbo_trading_day(
+    *,
+    symbol: str,
+    trading_day: str | dt.date,
+    columns: list[str] | None = None,
+    as_pandas: bool = True,
+    data_root: Path | None = None,
+):
+    """Read TBBO over the full Globex trading day labeled `trading_day`."""
+    period = _globex_period_for_trading_day(trading_day)
+    return read_tbbo(
+        symbol=symbol,
+        start=period.start_utc,
+        end=period.end_utc,
+        columns=columns,
+        as_pandas=as_pandas,
+        data_root=data_root,
+    )
+
+
+def read_mbp1_trading_day(
+    *,
+    symbol: str,
+    trading_day: str | dt.date,
+    columns: list[str] | None = None,
+    as_pandas: bool = True,
+    data_root: Path | None = None,
+):
+    """Read MBP-1 over the full Globex trading day labeled `trading_day`."""
+    period = _globex_period_for_trading_day(trading_day)
+    return read_mbp1(
+        symbol=symbol,
+        start=period.start_utc,
+        end=period.end_utc,
+        columns=columns,
+        as_pandas=as_pandas,
+        data_root=data_root,
+    )
+
+
+def read_mbo_trading_day(
+    *,
+    symbol: str,
+    trading_day: str | dt.date,
+    columns: list[str] | None = None,
+    as_pandas: bool = True,
+    data_root: Path | None = None,
+):
+    """Read MBO over the full Globex trading day labeled `trading_day`."""
+    trading_day_d = _parse_date(trading_day)
+    cached = _read_mbo_trading_day_cache(
+        symbol=symbol,
+        trading_day=trading_day_d,
+        columns=columns,
+        data_root=data_root,
+    )
+    if cached is not None:
+        period = _globex_period_for_trading_day(trading_day_d)
+        cached = _filter_table_window(
+            cached,
+            schema=MBO_SCHEMA,
+            start=period.start_utc,
+            end=period.end_utc,
+        )
+        return cached.to_pandas() if as_pandas else cached
+
+    period = _globex_period_for_trading_day(trading_day_d)
+    return read_mbo(
+        symbol=symbol,
+        start=period.start_utc,
+        end=period.end_utc,
+        columns=columns,
+        as_pandas=as_pandas,
+        data_root=data_root,
+    )
 
 
 def read_bars(
@@ -217,7 +415,7 @@ def read_bars(
         raise ValueError(f"unknown timeframe {timeframe!r}; known: {known}")
 
     storage = _resolve_storage(data_root)
-    dates = _date_range(_parse_date(start), _parse_date(end))
+    dates = _partition_dates_for_window(start, end)
     base = _read_partitioned(
         storage,
         partition_root=_bars_partition_prefix("1m"),
@@ -226,6 +424,7 @@ def read_bars(
         schema=BARS_1M_SCHEMA,
         columns=None,  # need full set for resampling; project at the end
     )
+    base = _filter_table_window(base, schema=BARS_1M_SCHEMA, start=start, end=end)
 
     if base.num_rows == 0:
         return base.to_pandas() if as_pandas else base
@@ -244,6 +443,28 @@ def read_bars(
         resampled = resampled.select(keep)
 
     return resampled.to_pandas() if as_pandas else resampled
+
+
+def read_bars_trading_day(
+    *,
+    symbol: str,
+    timeframe: str,
+    trading_day: str | dt.date,
+    columns: list[str] | None = None,
+    as_pandas: bool = True,
+    data_root: Path | None = None,
+):
+    """Read bars over the full Globex trading day labeled `trading_day`."""
+    period = _globex_period_for_trading_day(trading_day)
+    return read_bars(
+        symbol=symbol,
+        timeframe=timeframe,
+        start=period.start_utc,
+        end=period.end_utc,
+        columns=columns,
+        as_pandas=as_pandas,
+        data_root=data_root,
+    )
 
 
 # --- Resample ------------------------------------------------------------

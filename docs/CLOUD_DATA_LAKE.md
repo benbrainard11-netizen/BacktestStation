@@ -13,6 +13,7 @@ One private bucket, currently documented as `bsdata-prod`.
 | Prefix | Owner | Purpose |
 |---|---|---|
 | `raw/databento/` | `python -m app.ingest.r2_upload` | Raw Databento parquet partitions. |
+| `clean/databento/mbo_trading_day/` | `python -m app.ingest.r2_upload --kind clean_mbo_trading_day` | Clean MBO partitions by futures trading day for MIRA/orderflow research. |
 | `processed/bars/` | `python -m app.ingest.r2_upload` | Normalized OHLCV bars used by readers. |
 | `data/research_events/` | `backend/scripts/ml/export_research_events_parquet.py` then `r2_artifacts` | Shareable parquet snapshot of the `research_events` table. |
 | `data/ml/features/` | `python -m app.ingest.r2_artifacts` | Per-feature ML matrices. |
@@ -22,7 +23,7 @@ One private bucket, currently documented as `bsdata-prod`.
 | `data/research/` | `python -m app.ingest.r2_artifacts` | Curated source datasets, such as macro calendars. |
 | `exports/` | `python -m app.ingest.r2_artifacts` | Exact strategy-lab zip packages. |
 | `experiments/` | `python -m app.ingest.r2_artifacts --profile experiments` | Optional backtest/GPU result artifacts. |
-| `_inventory.json` | `r2_upload` | Raw/bars partition inventory. |
+| `_inventory.json` | `r2_upload` | Raw/bars/clean warehouse partition inventory. |
 | `_research_inventory.json` | `r2_artifacts` | Research/ML artifact inventory. |
 
 ## Machine Roles
@@ -36,7 +37,7 @@ One private bucket, currently documented as `bsdata-prod`.
 
 Never give friends the read-write token.
 
-## Publish Raw/Bars Warehouse
+## Publish Warehouse Data
 
 Run from `backend/` or with backend on `PYTHONPATH`:
 
@@ -46,8 +47,15 @@ python -m app.ingest.r2_upload --dry-run
 python -m app.ingest.r2_upload
 ```
 
-This uploads only validated warehouse partitions under `raw/databento/` and
-`processed/bars/`.
+This uploads validated warehouse partitions under `raw/databento/`,
+`processed/bars/`, and `clean/databento/`.
+
+To publish only the clean MBO trading-day layer:
+
+```powershell
+python -m app.ingest.r2_upload --kind clean_mbo_trading_day --dry-run
+python -m app.ingest.r2_upload --kind clean_mbo_trading_day
+```
 
 ## Publish Research Events
 
