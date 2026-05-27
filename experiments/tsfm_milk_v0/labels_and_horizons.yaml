@@ -10,17 +10,33 @@ horizons_minutes:
   - 90
   - 240
 
-# Threshold rule (PLAN §2, user-locked):
-#   up    if future_return >  k * sigma
-#   down  if future_return < -k * sigma
+# Threshold rule — Option A (locked 2026-05-27 after empirical comparison in
+# explore_label_thresholds.py; see report/STATUS_FOR_BEN.md addendum):
+#
+#   up    if future_return >  +k * sigma_h(t)
+#   down  if future_return <  -k * sigma_h(t)
 #   flat  otherwise
+#
 # where:
-#   future_return = log(close_{t+h} / close_t)
-#   sigma         = stddev of 1-minute log returns over last 60 minutes
+#   future_return(t, h) = log(close_{t+h} / close_t)
+#   sigma_h(t)          = rolling stddev of h-minute log returns, computed
+#                          per (symbol, horizon) over the last ~30 trading days
+#   k                   = 0.5  (locked)
+#
+# Empirical class balance pooled across 12 (symbol × month) cells:
+#   horizon 15m  → flat 35%  up 33%  down 32%
+#   horizon 30m  → flat 35%  up 34%  down 32%
+#   horizon 60m  → flat 36%  up 33%  down 31%
+#   horizon 90m  → flat 37%  up 33%  down 30%
+#   horizon 240m → flat 42%  up 31%  down 27%
+#
+# All three classes stay in the 25-45% band → trainable 3-way classification.
 thresholding:
+  rule: horizon_specific_sigma   # Option A
   k: 0.5
-  sigma_window_minutes: 60
-  sigma_min_observations: 50  # drop if fewer than this many returns in window
+  sigma_h_window_bars: 41400     # ~30 trading days at ~1380 1-min bars/day
+  sigma_h_min_observations: 1000 # require at least this many forward returns to compute
+  fallback_when_insufficient: drop_anchor  # don't fabricate sigma_h
 
 class_codes:
   flat: 0
@@ -38,10 +54,11 @@ reject_rules:
   - reason: roll_boundary_in_label_window
     description: continuous-contract instrument_id changes inside [ts, ts+h]
 
-# Expected class distributions (rough — confirm in qa.py --audit).
+# Empirical class distributions confirmed 2026-05-27 (explore_label_thresholds.py
+# Option A on 3 sample months × 4 symbols = 12 cells per horizon).
 expected_balance:
-  h_15m:  {flat: 0.40, up: 0.30, down: 0.30}
-  h_30m:  {flat: 0.38, up: 0.31, down: 0.31}
-  h_60m:  {flat: 0.36, up: 0.32, down: 0.32}
-  h_90m:  {flat: 0.34, up: 0.33, down: 0.33}
-  h_240m: {flat: 0.30, up: 0.35, down: 0.35}
+  h_15m:  {flat: 0.35, up: 0.33, down: 0.32}
+  h_30m:  {flat: 0.35, up: 0.34, down: 0.32}
+  h_60m:  {flat: 0.36, up: 0.33, down: 0.31}
+  h_90m:  {flat: 0.37, up: 0.33, down: 0.30}
+  h_240m: {flat: 0.42, up: 0.31, down: 0.27}
