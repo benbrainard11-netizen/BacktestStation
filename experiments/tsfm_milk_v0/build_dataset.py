@@ -600,27 +600,56 @@ def main(argv: list[str] | None = None) -> int:
                       f"{(s['meta_bytes'] + s['inputs_bytes']) / 1e6:.1f}MB, "
                       f"{time_mod.time()-t:.1f}s")
                 summary.append(s)
-        elif refit_p:
-            refit_idx = select_phase_anchors(df, valid_mask, refit_p["start_date"], refit_p["end_date"], args.anchor_stride)
-            holdout_idx = select_phase_anchors(df, valid_mask, holdout_p["start_date"], holdout_p["end_date"], args.anchor_stride) if holdout_p else np.array([], dtype=int)
-
-            refit_pre = len(refit_idx)
-            if holdout_p and len(holdout_idx) > 0:
-                refit_idx, _ = apply_purge_and_embargo(
-                    refit_idx, np.array([], dtype=int), holdout_idx, df, max_horizon_min=max_h, embargo_hours=embargo_hours
+        elif refit_p or holdout_p:
+            # refit and holdout are in separate fold_groups in enumerate_phases
+            # (one phase each). When holdout_p is None, only refit is present, and
+            # vice versa. We need to look up the OTHER phase from the original folds_cfg
+            # so we can purge refit against holdout properly.
+            if refit_p and not holdout_p:
+                hold_cfg = folds_cfg.get("final_holdout", {})
+                if hold_cfg:
+                    holdout_p_resolved = {
+                        "phase": "holdout",
+                        "start_date": dt.date.fromisoformat(str(hold_cfg["holdout_start"])),
+                        "end_date": dt.date.fromisoformat(str(hold_cfg["holdout_end"])),
+                    }
+                else:
+                    holdout_p_resolved = None
+                refit_idx = select_phase_anchors(df, valid_mask, refit_p["start_date"], refit_p["end_date"], args.anchor_stride)
+                holdout_idx_for_purge = (
+                    select_phase_anchors(df, valid_mask, holdout_p_resolved["start_date"], holdout_p_resolved["end_date"], args.anchor_stride)
+                    if holdout_p_resolved else np.array([], dtype=int)
                 )
-            print(f"  refit  {refit_pre:,} -> {len(refit_idx):,} (purged)")
-            for phase_name, phase_idx in [("refit", refit_idx), ("holdout", holdout_idx)]:
-                if len(phase_idx) == 0:
-                    continue
-                t = time_mod.time()
-                inputs = assemble_inputs_tensor(df, phase_idx, lookback)
-                s = write_phase_output(out_dir, phase_name, phase_name, df, phase_idx, inputs, horizons)
-                print(f"  wrote {phase_name}: {s['n_anchors']:,} anchors, "
-                      f"tensor {s['tensor_shape']}, "
-                      f"{(s['meta_bytes'] + s['inputs_bytes']) / 1e6:.1f}MB, "
-                      f"{time_mod.time()-t:.1f}s")
-                summary.append(s)
+                refit_pre = len(refit_idx)
+                if len(holdout_idx_for_purge) > 0:
+                    refit_idx, _ = apply_purge_and_embargo(
+                        refit_idx, np.array([], dtype=int), holdout_idx_for_purge,
+                        df, max_horizon_min=max_h, embargo_hours=embargo_hours,
+                    )
+                print(f"  refit  {refit_pre:,} -> {len(refit_idx):,} (purged)")
+                if len(refit_idx) > 0:
+                    t = time_mod.time()
+                    inputs = assemble_inputs_tensor(df, refit_idx, lookback)
+                    s = write_phase_output(out_dir, "refit", "refit", df, refit_idx, inputs, horizons)
+                    print(f"  wrote refit: {s['n_anchors']:,} anchors, "
+                          f"tensor {s['tensor_shape']}, "
+                          f"{(s['meta_bytes'] + s['inputs_bytes']) / 1e6:.1f}MB, "
+                          f"{time_mod.time()-t:.1f}s")
+                    summary.append(s)
+            elif holdout_p:
+                holdout_idx = select_phase_anchors(
+                    df, valid_mask, holdout_p["start_date"], holdout_p["end_date"], args.anchor_stride,
+                )
+                print(f"  holdout  {len(holdout_idx):,} anchors")
+                if len(holdout_idx) > 0:
+                    t = time_mod.time()
+                    inputs = assemble_inputs_tensor(df, holdout_idx, lookback)
+                    s = write_phase_output(out_dir, "holdout", "holdout", df, holdout_idx, inputs, horizons)
+                    print(f"  wrote holdout: {s['n_anchors']:,} anchors, "
+                          f"tensor {s['tensor_shape']}, "
+                          f"{(s['meta_bytes'] + s['inputs_bytes']) / 1e6:.1f}MB, "
+                          f"{time_mod.time()-t:.1f}s")
+                    summary.append(s)
 
     # Final summary
     summary_path = out_dir / "build_summary.json"
