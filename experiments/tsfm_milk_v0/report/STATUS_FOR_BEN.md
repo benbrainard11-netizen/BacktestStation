@@ -121,3 +121,38 @@ experiments/tsfm_milk_v0/
 ```
 
 Welcome back. Pick a label fix and let's go.
+
+---
+
+## Addendum — Empirical comparison of label-fix options
+
+Generated: 2026-05-27T18:49:23.113454+00:00
+
+Computed the class balance each option would give us, on 3 representative
+sample months (2021-06, 2022-06, 2024-10) × 4 symbols.
+Pooled across symbols + months:
+
+| option | horizon (min) | mean flat | mean up | mean down |
+|---|---|---|---|---|
+| A_sigma_h | 15 | 34.94% | 33.14% | 31.92% |
+| A_sigma_h | 30 | 34.67% | 33.65% | 31.68% |
+| A_sigma_h | 60 | 35.66% | 33.40% | 30.94% |
+| A_sigma_h | 90 | 37.22% | 32.64% | 30.14% |
+| A_sigma_h | 240 | 41.74% | 31.47% | 26.78% |
+
+| B_sqrt_h_x_sigma_60 | 15 | 41.39% | 29.96% | 28.65% |
+| B_sqrt_h_x_sigma_60 | 30 | 41.70% | 30.06% | 28.24% |
+| B_sqrt_h_x_sigma_60 | 60 | 43.77% | 29.21% | 27.02% |
+| B_sqrt_h_x_sigma_60 | 90 | 45.78% | 28.56% | 25.67% |
+| B_sqrt_h_x_sigma_60 | 240 | 51.70% | 26.54% | 21.77% |
+
+| C_per_horizon_k | 15 | 11.23% | 45.47% | 43.31% |
+| C_per_horizon_k | 30 | 12.87% | 45.08% | 42.05% |
+| C_per_horizon_k | 60 | 14.53% | 44.57% | 40.89% |
+| C_per_horizon_k | 90 | 14.86% | 44.44% | 40.69% |
+| C_per_horizon_k | 240 | 15.51% | 46.55% | 37.95% |
+
+**Read:** an option keeps the model trainable when the flat fraction stays
+roughly between 25% and 50% at every horizon. Up/down should be roughly
+balanced and similar across horizons. Use this table to pick a labelling
+fix.
