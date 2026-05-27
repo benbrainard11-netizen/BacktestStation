@@ -617,3 +617,7 @@ This keeps the research honest:
 - one pre-session question: which side sweeps first?
 - one post-sweep question: does the sweep continue or reverse?
 - one additive-value question: does MBP-1 improve over bars/context alone?
+
+First strategy candidate built from this design:
+
+- `docs/STRATEGY_CANDIDATE_NQ_SESSION_SWEEP_REACTION_V1.md`
