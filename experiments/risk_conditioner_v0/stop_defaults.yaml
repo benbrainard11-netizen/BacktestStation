@@ -1,0 +1,35 @@
+# Per-symbol default stop sizes — used ONLY if the detector/strategy
+# does not provide a planned stop_price at signal time.
+#
+# Codex must inspect existing engine output FIRST (see PLAN.md §10.1).
+# These are placeholders to be filled during the ambiguity audit.
+#
+# Tick sizes for reference (Databento canonical, 2026-05-26):
+#   ES.c.0:  0.25 (mini), point_value=$50
+#   NQ.c.0:  0.25 (mini), point_value=$20
+#   YM.c.0:  1.0,         point_value=$5
+#   RTY.c.0: 0.10,        point_value=$50
+
+defaults:
+  ES.c.0:
+    stop_ticks: TBD            # placeholder — fill from engine audit
+    target_ticks: TBD
+    notes: "Replace TBD after Codex inspects detector signal schema."
+
+  NQ.c.0:
+    stop_ticks: TBD
+    target_ticks: TBD
+
+  YM.c.0:
+    stop_ticks: TBD
+    target_ticks: TBD
+
+  RTY.c.0:
+    stop_ticks: TBD
+    target_ticks: TBD
+
+# Behavior when both detector stop and defaults are missing
+on_missing_stop:
+  action: reject_sample
+  reason: "no_planned_stop_available"
+  log: true

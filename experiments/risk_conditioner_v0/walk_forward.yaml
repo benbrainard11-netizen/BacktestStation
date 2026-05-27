@@ -1,0 +1,70 @@
+# Walk-forward configuration for risk_conditioner_v0.
+# Path A: expanding-window 4-fold + final holdout.
+# Training universe: detector-fired trades with full MBP-1 feature availability.
+# Date range: 2025-05-01 → 2026-05-22 (~329 trading days, ~13 months).
+
+path: A
+strategy: expanding_window
+
+folds:
+  - id: 1
+    train_start: 2025-05-01
+    train_end:   2025-09-30
+    val_start:   2025-10-01
+    val_end:     2025-10-31
+    test_start:  2025-11-03
+    test_end:    2025-11-28
+
+  - id: 2
+    train_start: 2025-05-01
+    train_end:   2025-10-31
+    val_start:   2025-11-03
+    val_end:     2025-11-28
+    test_start:  2025-12-01
+    test_end:    2025-12-31
+
+  - id: 3
+    train_start: 2025-05-01
+    train_end:   2025-11-28
+    val_start:   2025-12-01
+    val_end:     2025-12-31
+    test_start:  2026-01-02
+    test_end:    2026-01-30
+
+  - id: 4
+    train_start: 2025-05-01
+    train_end:   2025-12-31
+    val_start:   2026-01-02
+    val_end:     2026-01-30
+    test_start:  2026-02-02
+    test_end:    2026-02-27
+
+# Final UNTOUCHED holdout — model + hyperparameter selection must be locked
+# using Folds 1–4 ONLY, then refit on the union of all selection data
+# and tested once on the holdout.
+final_holdout:
+  refit_start:   2025-05-01
+  refit_end:     2026-02-27
+  holdout_start: 2026-03-02
+  holdout_end:   2026-05-22
+
+# embargo = max(1 full trading session, T_cap_i, max_feature_lookback)
+# With T_cap=60min and max_feature_lookback=900s, this is 1 trading session.
+embargo:
+  unit: trading_session
+  value: 1
+
+# Purge: drop training samples whose label_interval overlaps val/test windows.
+purge:
+  rule: label_interval_overlap
+  description: |
+    A training sample is invalid for a test window if
+    label_interval_i = [ts_entry_i, label_end_i] intersects test_time_window.
+
+# Continuous-contract roll handling.
+# Symbols are Databento .c.0 (continuous, unadjusted).
+# Roll artifacts can create fake MAE / target hits.
+roll_handling:
+  exclude_roll_day: true
+  exclude_day_before_roll: false
+  exclude_if_instrument_id_changes_in_label_window: true
