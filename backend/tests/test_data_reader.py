@@ -10,9 +10,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from app.data import read_bars, read_tbbo
+from app.data import read_bars, read_mbo, read_tbbo
 from app.data.reader import _date_range, _parse_date, add_mid_and_spread
-from app.data.schema import BARS_1M_SCHEMA, TBBO_SCHEMA
+from app.data.schema import BARS_1M_SCHEMA, MBO_SCHEMA, TBBO_SCHEMA
 
 
 # --- Path helpers --------------------------------------------------------
@@ -103,6 +103,53 @@ def _write_bars_1m_partition(
         )
     df = pd.DataFrame(rows)
     table = pa.Table.from_pandas(df, schema=BARS_1M_SCHEMA.pa_schema, preserve_index=False)
+    pq.write_table(table, out)
+    return out
+
+
+def _write_mbo_partition(
+    data_root: Path,
+    *,
+    symbol: str,
+    date: dt.date,
+    rows: int = 5,
+) -> Path:
+    out = (
+        data_root
+        / "raw"
+        / "databento"
+        / "mbo"
+        / f"symbol={symbol}"
+        / f"date={date.isoformat()}"
+        / "part-000.parquet"
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    base_ts = pd.Timestamp(date, tz="UTC") + pd.Timedelta("13:30:00")
+    df = pd.DataFrame(
+        {
+            "ts_event": pd.to_datetime(
+                [base_ts + pd.Timedelta(milliseconds=i) for i in range(rows)]
+            ),
+            "ts_recv": pd.to_datetime(
+                [base_ts + pd.Timedelta(milliseconds=i) for i in range(rows)]
+            ),
+            "rtype": [160] * rows,
+            "publisher_id": [1] * rows,
+            "instrument_id": [12345] * rows,
+            "action": ["A", "M", "T", "C", "R"][:rows],
+            "side": ["B", "A", "A", "B", "N"][:rows],
+            "price": [5000.0 + i * 0.25 for i in range(rows)],
+            "size": [1 + i for i in range(rows)],
+            "channel_id": [1] * rows,
+            "order_id": list(range(1000, 1000 + rows)),
+            "flags": [0] * rows,
+            "ts_in_delta": [0] * rows,
+            "sequence": list(range(rows)),
+            "symbol": [symbol] * rows,
+        }
+    )
+    table = pa.Table.from_pandas(df, schema=MBO_SCHEMA.pa_schema, preserve_index=False)
     pq.write_table(table, out)
     return out
 
@@ -199,6 +246,21 @@ def test_read_tbbo_returns_pyarrow_table_when_requested(data_root: Path) -> None
     )
     assert isinstance(table, pa.Table)
     assert table.num_rows == 3
+
+
+def test_read_mbo_single_day_projection(data_root: Path) -> None:
+    _write_mbo_partition(data_root, symbol="ES.c.0", date=dt.date(2026, 4, 24), rows=5)
+
+    df = read_mbo(
+        symbol="ES.c.0",
+        start="2026-04-24",
+        end="2026-04-25",
+        columns=["action", "side", "price", "size"],
+    )
+    assert len(df) == 5
+    assert "ts_event" in df.columns
+    assert set(df.columns).issuperset({"action", "side", "price", "size"})
+    assert "order_id" not in df.columns
 
 
 def test_symbol_isolation_no_leak(data_root: Path) -> None:

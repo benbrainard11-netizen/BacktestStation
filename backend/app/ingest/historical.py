@@ -59,7 +59,7 @@ except ImportError:  # pragma: no cover
 
 DATASET = "GLBX.MDP3"
 DEFAULT_SCHEMA = "mbp-1"
-ALLOWED_SCHEMAS = ("mbp-1", "tbbo", "ohlcv-1m", "ohlcv-1s", "ohlcv-1h", "ohlcv-1d")
+ALLOWED_SCHEMAS = ("mbp-1", "mbo", "tbbo", "ohlcv-1m", "ohlcv-1s", "ohlcv-1h", "ohlcv-1d")
 SYMBOLS = ["NQ.c.0", "ES.c.0", "YM.c.0", "RTY.c.0"]
 STYPE_IN = "continuous"
 

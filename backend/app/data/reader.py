@@ -26,6 +26,7 @@ import pyarrow.compute as pc
 from app.data.schema import (
     BARS_1M_SCHEMA,
     MBP1_SCHEMA,
+    MBO_SCHEMA,
     TBBO_SCHEMA,
     DataSchema,
 )
@@ -165,6 +166,29 @@ def read_mbp1(
         symbol=symbol,
         dates=dates,
         schema=MBP1_SCHEMA,
+        columns=columns,
+    )
+    return table.to_pandas() if as_pandas else table
+
+
+def read_mbo(
+    *,
+    symbol: str,
+    start: str | dt.date,
+    end: str | dt.date,
+    columns: list[str] | None = None,
+    as_pandas: bool = True,
+    data_root: Path | None = None,
+):
+    """Read MBO records for `symbol` over [start, end)."""
+    storage = _resolve_storage(data_root)
+    dates = _date_range(_parse_date(start), _parse_date(end))
+    table = _read_partitioned(
+        storage,
+        partition_root=_raw_partition_prefix("mbo"),
+        symbol=symbol,
+        dates=dates,
+        schema=MBO_SCHEMA,
         columns=columns,
     )
     return table.to_pandas() if as_pandas else table

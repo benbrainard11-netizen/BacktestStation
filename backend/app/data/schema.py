@@ -148,6 +148,32 @@ MBP1_SCHEMA = DataSchema(
     required_columns=("ts_event", "symbol", "price", "size", "bid_px", "ask_px"),
 )
 
+# --- MBO -----------------------------------------------------------------
+
+MBO_SCHEMA = DataSchema(
+    name="mbo",
+    pa_schema=pa.schema(
+        [
+            ("ts_event", pa.timestamp("ns", tz="UTC")),
+            ("ts_recv", pa.timestamp("ns", tz="UTC")),
+            ("rtype", pa.uint8()),
+            ("publisher_id", pa.uint16()),
+            ("instrument_id", pa.uint32()),
+            ("action", pa.string()),
+            ("side", pa.string()),
+            ("price", pa.float64()),
+            ("size", pa.uint32()),
+            ("channel_id", pa.uint8()),
+            ("order_id", pa.uint64()),
+            ("flags", pa.uint8()),
+            ("ts_in_delta", pa.int32()),
+            ("sequence", pa.uint32()),
+            ("symbol", pa.string()),
+        ]
+    ),
+    required_columns=("ts_event", "symbol", "action", "side", "price", "size"),
+)
+
 # --- OHLCV-1m bars (computed) -------------------------------------------
 
 BARS_1M_SCHEMA = DataSchema(
@@ -180,6 +206,7 @@ BARS_1M_SCHEMA = DataSchema(
 SCHEMA_BY_NAME: dict[str, DataSchema] = {
     "tbbo": TBBO_SCHEMA,
     "mbp-1": MBP1_SCHEMA,
+    "mbo": MBO_SCHEMA,
     "ohlcv-1m": BARS_1M_SCHEMA,
 }
 
