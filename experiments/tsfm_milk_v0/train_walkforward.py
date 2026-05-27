@@ -156,12 +156,16 @@ def make_forecaster(model_name: str) -> Forecaster:
     if model_name == "lightgbm":
         from baseline_lightgbm import LightGBMBaselineForecaster
         return LightGBMBaselineForecaster(n_estimators=200, last_window=60, learning_rate=0.05)
+    if model_name == "transformer":
+        from transformer_forecaster import TransformerForecaster
+        return TransformerForecaster(max_epochs=8, batch_size=256, learning_rate=1e-3)
     if model_name == "ttm":
         try:
             from ttm_forecaster import TTMForecaster  # type: ignore
         except (ImportError, NotImplementedError):
             raise NotImplementedError(
-                "ttm_forecaster not yet implemented. Skip or train other models first."
+                "ttm_forecaster not yet implemented (env blocker — see transformer_forecaster.py docstring). "
+                "Skip or train other models first."
             )
         return TTMForecaster()
     if model_name == "moirai":
