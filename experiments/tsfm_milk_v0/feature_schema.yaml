@@ -7,7 +7,11 @@
 #   {sym}_close_minus_open_pct  (close - open) / open
 #   {sym}_log_volume            log(1 + volume)
 #   {sym}_log_trade_count       log(1 + trade_count)
-#   {sym}_close_vs_vwap_pct     (close - vwap) / vwap
+#   {sym}_close_vs_typical_pct  (close - typical) / typical, typical=(h+l+c)/3
+#                                (vwap-based version was planned but vwap is null
+#                                 in the bar mirror before 2025-01; the typical-
+#                                 price proxy is deterministic per bar and works
+#                                 across the full 8-year universe.)
 #   {sym}_realized_vol_60       stddev(log_return_1m, last 60 bars)
 #
 # Cross-asset derived channels (4):
@@ -32,7 +36,7 @@ per_symbol_channels:
   - close_minus_open_pct
   - log_volume
   - log_trade_count
-  - close_vs_vwap_pct
+  - close_vs_typical_pct
   - realized_vol_60
 
 cross_asset_channels:
