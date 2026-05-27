@@ -1,0 +1,14 @@
+# tsfm_milk_v0 — gitignore
+
+# Artifacts (dataset parquet, model checkpoints, predictions) — regenerable.
+out/
+
+# Notebook checkpoints.
+.ipynb_checkpoints/
+
+# Local-only scratch.
+scratch/
+*.tmp
+*.pt
+*.bin
+*.safetensors

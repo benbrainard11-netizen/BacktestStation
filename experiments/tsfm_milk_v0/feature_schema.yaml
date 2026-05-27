@@ -1,0 +1,61 @@
+# tsfm_milk_v0 multivariate input schema.
+# 32 channels per timestamp. Lookback window = 240 minutes (4h).
+#
+# Per-symbol channels (7 × 4 symbols = 28):
+#   {sym}_log_return_1m         log(close_t / close_t-1)
+#   {sym}_high_minus_low_pct    (high - low) / close
+#   {sym}_close_minus_open_pct  (close - open) / open
+#   {sym}_log_volume            log(1 + volume)
+#   {sym}_log_trade_count       log(1 + trade_count)
+#   {sym}_close_vs_vwap_pct     (close - vwap) / vwap
+#   {sym}_realized_vol_60       stddev(log_return_1m, last 60 bars)
+#
+# Cross-asset derived channels (4):
+#   nq_over_es_log_ratio_z      z(log(NQ/ES), rolling 60)
+#   rty_over_es_log_ratio_z     z(log(RTY/ES), rolling 60)
+#   equity_basket_mean_return   mean(4 syms' log_return_1m)
+#   equity_basket_dispersion    std(4 syms' log_return_1m)
+
+version: 0
+total_channels: 32
+lookback_minutes: 240
+
+symbols:
+  - ES.c.0
+  - NQ.c.0
+  - YM.c.0
+  - RTY.c.0
+
+per_symbol_channels:
+  - log_return_1m
+  - high_minus_low_pct
+  - close_minus_open_pct
+  - log_volume
+  - log_trade_count
+  - close_vs_vwap_pct
+  - realized_vol_60
+
+cross_asset_channels:
+  - nq_over_es_log_ratio_z
+  - rty_over_es_log_ratio_z
+  - equity_basket_mean_return
+  - equity_basket_dispersion
+
+# Anchor sampling — only inside RTH (UTC).
+rth_window_utc:
+  start: "13:30"
+  end:   "20:00"
+
+# Drop anchor row if any channel has more than this fraction of missing data
+# inside the lookback window.
+max_missing_fraction_in_lookback: 0.05
+
+# Drop anchor row if symbol bar count in the lookback < this.
+min_bars_in_lookback: 230  # 240 - 10 grace
+
+# v0.3+ expansion channels — NOT in v0.
+v0_3_expansion_candidates:
+  - mbp1_top_imbalance        # add 4 channels for ES/NQ/YM/RTY top-of-book imbalance
+  - mbo_cancel_rate_60s       # add 4 channels for MBO cancel rate per symbol
+  - atlas_vol_regime          # add 4 channels for Atlas 1h vol_regime predictions
+  - macro_event_proximity     # distance to next macro calendar event

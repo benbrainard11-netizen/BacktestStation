@@ -1,0 +1,84 @@
+# tsfm_milk_v0 walk-forward configuration.
+# 6-fold expanding window + final untouched holdout.
+#
+# Each fold spans different market regimes:
+#   Fold 1: post-COVID rally / meme-stock era
+#   Fold 2: Fed tightening prep
+#   Fold 3: 2022 bear / vol spike
+#   Fold 4: late 2022 + 2023 recovery
+#   Fold 5: 2023 / 2024 chop
+#   Fold 6: 2025 — most recent
+
+strategy: expanding_window
+
+folds:
+  - id: 1
+    train_start: 2018-05-01
+    train_end:   2020-12-31
+    val_start:   2021-01-04
+    val_end:     2021-01-31
+    test_start:  2021-02-01
+    test_end:    2021-04-30
+
+  - id: 2
+    train_start: 2018-05-01
+    train_end:   2021-04-30
+    val_start:   2021-05-03
+    val_end:     2021-05-31
+    test_start:  2021-06-01
+    test_end:    2021-08-31
+
+  - id: 3
+    train_start: 2018-05-01
+    train_end:   2021-08-31
+    val_start:   2021-09-01
+    val_end:     2021-09-30
+    test_start:  2021-10-01
+    test_end:    2022-04-30
+
+  - id: 4
+    train_start: 2018-05-01
+    train_end:   2022-04-30
+    val_start:   2022-05-02
+    val_end:     2022-05-31
+    test_start:  2022-06-01
+    test_end:    2023-04-30
+
+  - id: 5
+    train_start: 2018-05-01
+    train_end:   2023-04-30
+    val_start:   2023-05-01
+    val_end:     2023-05-31
+    test_start:  2023-06-01
+    test_end:    2024-12-31
+
+  - id: 6
+    train_start: 2018-05-01
+    train_end:   2024-12-31
+    val_start:   2025-01-02
+    val_end:     2025-01-31
+    test_start:  2025-02-03
+    test_end:    2026-02-27
+
+# UNTOUCHED until model + hyperparameter selection is complete on Folds 1-6.
+final_holdout:
+  refit_start:   2018-05-01
+  refit_end:     2026-02-27
+  holdout_start: 2026-03-01
+  holdout_end:   2026-05-21
+
+# Embargo: longer than (max_horizon / 4) so label windows don't leak.
+# max_horizon = 240 minutes → 1h embargo is comfortably safe.
+embargo:
+  unit: hour
+  value: 1
+
+# Purge: drop training rows whose [ts, ts + max_horizon] crosses into val/test.
+purge:
+  rule: label_window_overlap
+  max_horizon_minutes: 240
+
+# Continuous-contract roll handling.
+roll_handling:
+  exclude_anchor_if_roll_in_label_window: true
+  exclude_anchor_if_roll_in_lookback: false  # roll in lookback is fine — past data

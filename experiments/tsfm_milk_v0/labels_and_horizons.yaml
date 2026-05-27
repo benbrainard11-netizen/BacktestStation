@@ -1,0 +1,47 @@
+# tsfm_milk_v0 label configuration.
+# 3-way classification (up / down / flat) at 5 horizons.
+
+version: 0
+
+horizons_minutes:
+  - 15
+  - 30
+  - 60
+  - 90
+  - 240
+
+# Threshold rule (PLAN §2, user-locked):
+#   up    if future_return >  k * sigma
+#   down  if future_return < -k * sigma
+#   flat  otherwise
+# where:
+#   future_return = log(close_{t+h} / close_t)
+#   sigma         = stddev of 1-minute log returns over last 60 minutes
+thresholding:
+  k: 0.5
+  sigma_window_minutes: 60
+  sigma_min_observations: 50  # drop if fewer than this many returns in window
+
+class_codes:
+  flat: 0
+  up:   1
+  down: 2
+
+# Rows to reject before training.
+reject_rules:
+  - reason: missing_sigma
+    description: sigma is null or zero
+  - reason: future_bar_outside_rth
+    description: required forward bar falls outside RTH (cuts 4h horizon late in session)
+  - reason: insufficient_lookback
+    description: lookback window has < min_bars_in_lookback bars
+  - reason: roll_boundary_in_label_window
+    description: continuous-contract instrument_id changes inside [ts, ts+h]
+
+# Expected class distributions (rough — confirm in qa.py --audit).
+expected_balance:
+  h_15m:  {flat: 0.40, up: 0.30, down: 0.30}
+  h_30m:  {flat: 0.38, up: 0.31, down: 0.31}
+  h_60m:  {flat: 0.36, up: 0.32, down: 0.32}
+  h_90m:  {flat: 0.34, up: 0.33, down: 0.33}
+  h_240m: {flat: 0.30, up: 0.35, down: 0.35}
