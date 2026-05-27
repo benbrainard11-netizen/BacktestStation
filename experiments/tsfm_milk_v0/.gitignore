@@ -12,3 +12,6 @@ scratch/
 *.pt
 *.bin
 *.safetensors
+
+# Third-party code we vendor for local install (IBM granite-tsfm).
+_vendor/
