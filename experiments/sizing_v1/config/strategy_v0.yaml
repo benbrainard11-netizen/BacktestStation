@@ -12,21 +12,26 @@ holdout_used: true               # also use the final untouched holdout 2026-03 
 
 # Only these (symbol, horizon) cells get traded. From milk-v1 iter-1 honest economic:
 active_cells:
+  # threshold lowered to 0.45 (from 0.55) after sizing_v1 diagnostic showed
+  # the calibrated model only clears 0.55 forty-five times in 5 years.
+  # At 0.45: ~2,021 tradeable signals across the dataset. The model is
+  # calibrated (ECE 0.03) so it rarely claims high confidence — 0.45 is
+  # roughly its p70 of confidence, which is the realistic trading threshold.
   - symbol: NQ.c.0
     horizon: h_60m
-    threshold: 0.55          # min max-probability to trigger a trade
+    threshold: 0.45          # min max-probability to trigger a trade
     aggregate_R_from_iter1: 43211    # sanity reference: what milk-v1 saw on this cell
   - symbol: RTY.c.0
     horizon: h_90m
-    threshold: 0.55
+    threshold: 0.45
     aggregate_R_from_iter1: 18741
   - symbol: ES.c.0
     horizon: h_15m
-    threshold: 0.55
+    threshold: 0.45
     aggregate_R_from_iter1: 11611
   - symbol: YM.c.0
     horizon: h_30m
-    threshold: 0.55
+    threshold: 0.45
     aggregate_R_from_iter1: 8136
 
 # Explicitly NOT traded.
