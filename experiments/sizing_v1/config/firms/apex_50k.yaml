@@ -1,0 +1,62 @@
+# Apex Trader Funding — $50K account.
+# Numbers TBD by user/friend research. Placeholder values estimated from
+# public marketing; verify before serious sim runs.
+
+firm_name: apex
+account_size: 50000
+evaluation_type: combine
+notes: |
+  Apex has multiple account sizes ($25K, $50K, $100K, $150K, $250K).
+  $50K is the most popular size. They market the Trader Funding pricing.
+
+# Daily Loss Limit.
+daily_loss_limit: 1500        # TBD — verify
+daily_loss_intraday: true
+
+# Trailing Drawdown.
+trailing_drawdown: 2500       # TBD — verify
+trailing_drawdown_locks_at_starting_balance: true
+trailing_drawdown_resets_daily: false
+trailing_drawdown_uses_eod: true
+
+# Profit Target.
+profit_target: 3000           # TBD — verify
+
+# Consistency Rule.
+consistency_rule_pct: 30      # Apex has a consistency rule — 5% of total profit (more strict than Topstep)
+                              # ACTUALLY VERIFY THIS — Apex's rule is sometimes
+                              # "no single day > 30% of profit" too
+consistency_rule_applies_at_eval: false
+consistency_rule_applies_at_funded: true
+
+# Min activity.
+min_trade_days: 5
+min_trade_count_per_day: 0
+
+# News / event restrictions.
+news_blackout_minutes_before: 2     # Apex restricts trading near major news
+news_blackout_minutes_after: 2
+events_blocked:
+  - FOMC
+  - CPI
+  - NFP
+
+# Eval window.
+max_eval_days: 0              # TBD — verify if Apex has a time limit
+
+# Contract limits.
+max_position_size: 10         # Apex allows up to 10 contracts on $50K
+max_total_position: 10
+allowed_symbols:
+  - ES.c.0
+  - NQ.c.0
+  - YM.c.0
+  - RTY.c.0
+
+# Reset.
+allow_reset: true
+reset_cost_usd: 80            # TBD — verify
+
+# Economics.
+eval_fee_usd: 167             # Apex's monthly fee — approximate
+funded_account_value_usd: 1000

@@ -1,0 +1,8 @@
+# sizing_v1 — gitignore
+
+# Per-account trade outputs and final states (regenerable, big).
+out/
+
+# Local-only scratch.
+scratch/
+*.tmp

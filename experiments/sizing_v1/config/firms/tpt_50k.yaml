@@ -1,0 +1,45 @@
+# Take Profit Trader (TPT) — $50K account.
+# Numbers TBD by user/friend research.
+
+firm_name: tpt
+account_size: 50000
+evaluation_type: combine
+notes: |
+  Take Profit Trader (TPT) - confirm rules.
+
+daily_loss_limit: 1500        # TBD
+daily_loss_intraday: true
+
+trailing_drawdown: 2500       # TBD
+trailing_drawdown_locks_at_starting_balance: true
+trailing_drawdown_resets_daily: false
+trailing_drawdown_uses_eod: true
+
+profit_target: 3000           # TBD
+
+consistency_rule_pct: 30
+consistency_rule_applies_at_eval: false
+consistency_rule_applies_at_funded: true
+
+min_trade_days: 5
+min_trade_count_per_day: 0
+
+news_blackout_minutes_before: 0
+news_blackout_minutes_after: 0
+events_blocked: []
+
+max_eval_days: 30             # TBD
+
+max_position_size: 5
+max_total_position: 5
+allowed_symbols:
+  - ES.c.0
+  - NQ.c.0
+  - YM.c.0
+  - RTY.c.0
+
+allow_reset: true
+reset_cost_usd: 80
+
+eval_fee_usd: 165
+funded_account_value_usd: 1000

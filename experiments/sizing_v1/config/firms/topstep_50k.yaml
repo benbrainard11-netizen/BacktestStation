@@ -1,0 +1,65 @@
+# Topstep Trading Combine, $50K account.
+# Public rules verified vs topstep.com docs (subject to confirmation).
+#
+# Topstep is the canonical, best-documented firm. Use this as the template
+# for other firm configs.
+
+firm_name: topstep
+account_size: 50000
+evaluation_type: combine    # vs personal-funded
+notes: |
+  Topstep Trading Combine is the standard evaluation product. Pass it to
+  qualify for a funded account. We're modeling the $50K Combine here.
+
+# Daily Loss Limit (DLL).
+daily_loss_limit: 1000
+daily_loss_intraday: true     # DLL checked intraday — most retail futures prop firms
+                              # close your account same-day if hit
+
+# Trailing Drawdown / Max Loss Limit.
+# Topstep's MLL trails your end-of-day balance HIGH WATER up to the starting
+# balance, then locks at the starting balance. So if you grow to $52K, MLL
+# floor = $50K (locked). You can lose down to but not below that.
+trailing_drawdown: 2000
+trailing_drawdown_locks_at_starting_balance: true
+trailing_drawdown_resets_daily: false
+trailing_drawdown_uses_eod: true    # EOD balance used for water mark, not intraday peak
+
+# Profit Target.
+profit_target: 3000           # need +$3K to pass
+
+# Consistency Rule.
+consistency_rule_pct: 30      # at funded stage only — no single day can be >30% of total profit
+consistency_rule_applies_at_eval: false
+consistency_rule_applies_at_funded: true
+
+# Min activity.
+min_trade_days: 5             # 5 distinct trading days minimum to pass
+min_trade_count_per_day: 0
+
+# News / event restrictions.
+news_blackout_minutes_before: 0     # Topstep allows news trading on Combine
+news_blackout_minutes_after: 0
+events_blocked: []
+
+# Eval window.
+max_eval_days: 0              # 0 = no time limit on Topstep Combine
+
+# Contract limits.
+max_position_size: 5          # max contracts per symbol concurrent on $50K
+max_total_position: 5         # same
+allowed_symbols:
+  - ES.c.0
+  - NQ.c.0
+  - YM.c.0
+  - RTY.c.0
+  # CME equity index futures only for v1; Topstep allows broader set
+
+# Reset / restart.
+allow_reset: true
+reset_cost_usd: 99
+
+# Economics (milking-math inputs).
+eval_fee_usd: 165             # monthly subscription cost approx
+funded_account_value_usd: 1000   # rough resale / operate value of a passed funded account
+                                  # (CONFIRM with user — varies)

@@ -1,0 +1,67 @@
+# Strategy config for sizing_v1.
+# Locks which model cells we deploy, with what threshold and sizing.
+
+strategy_name: lightgbm_ensemble_v0
+generated_at: 2026-05-28
+
+# Where to read model predictions from.
+model_predictions_dir: ../tsfm_milk_v0/out/predictions/lightgbm_ensemble
+model_name: lightgbm_ensemble
+folds_used: [1, 2, 3, 4, 5, 6]   # all walk-forward test windows
+holdout_used: true               # also use the final untouched holdout 2026-03 → 2026-05
+
+# Only these (symbol, horizon) cells get traded. From milk-v1 iter-1 honest economic:
+active_cells:
+  - symbol: NQ.c.0
+    horizon: h_60m
+    threshold: 0.55          # min max-probability to trigger a trade
+    aggregate_R_from_iter1: 43211    # sanity reference: what milk-v1 saw on this cell
+  - symbol: RTY.c.0
+    horizon: h_90m
+    threshold: 0.55
+    aggregate_R_from_iter1: 18741
+  - symbol: ES.c.0
+    horizon: h_15m
+    threshold: 0.55
+    aggregate_R_from_iter1: 11611
+  - symbol: YM.c.0
+    horizon: h_30m
+    threshold: 0.55
+    aggregate_R_from_iter1: 8136
+
+# Explicitly NOT traded.
+# h_240m loses for everyone (-138k aggregate). Drop it.
+inactive_cells:
+  - {symbol: '*', horizon: h_240m, reason: 'negative economic edge per milk-v1 iter-1'}
+
+# Sizing method (v1 default).
+sizing_method: fixed_1
+sizing_params:
+  contracts: 1                    # fixed 1 contract per trade
+  # Reserved for v1.5:
+  kelly_fraction: 0.15            # if/when we switch to kelly_fractional
+  vol_target_R: 1.0               # if/when we switch to vol_targeted
+
+# Entry rules.
+entry:
+  at: next_bar_open               # ts_decision's bar close → next bar open
+  jitter_seconds: [0, 59]         # uniform random offset in this range
+  jitter_seed_per_account: true   # different accounts get different jitter
+
+# Exit rules.
+exit:
+  method: time_only               # v1: just hold to horizon
+  # Reserved for v1.5+:
+  stop_R: null                    # e.g., -1.0 → exit if down 1R
+  target_R: null                  # e.g., +2.0 → exit if up 2R
+  trailing_stop_R: null
+
+# Costs (per round trip, per contract).
+costs:
+  slippage_ticks_per_side: 1.0    # 1 tick slip on entry, 1 tick on exit
+  commission_usd: 1.50            # round-trip commission
+
+# Optional confidence-direction asymmetry.
+direction_filter:
+  require_max_minus_runner_up: 0.05    # min difference between top class and 2nd
+  # set to 0 to disable; higher = more selective
