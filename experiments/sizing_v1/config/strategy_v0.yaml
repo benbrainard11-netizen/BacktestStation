@@ -39,7 +39,10 @@ active_cells:
 inactive_cells:
   - {symbol: '*', horizon: h_240m, reason: 'negative economic edge per milk-v1 iter-1'}
 
-# Sizing method (v1 default).
+# Contract type: 'mini' (full size, ES=$50/pt) or 'micro' (MES=$5/pt, 1/10 risk).
+contract_type: mini               # v1.5 will test micro
+
+# Sizing method.
 sizing_method: fixed_1
 sizing_params:
   contracts: 1                    # fixed 1 contract per trade
@@ -55,10 +58,13 @@ entry:
 
 # Exit rules.
 exit:
-  method: time_only               # v1: just hold to horizon
-  # Reserved for v1.5+:
-  stop_R: null                    # e.g., -1.0 → exit if down 1R
-  target_R: null                  # e.g., +2.0 → exit if up 2R
+  method: time_only               # hold to horizon unless stop hit first
+  # v1.5: per-trade stop loss in $ PER CONTRACT. Uses precomputed bar
+  # excursions (out/excursions.parquet) to detect intra-trade stop hits.
+  # null = no stop (pure time-only, the v1 behavior).
+  stop_loss_usd_per_contract: 400
+  # Reserved:
+  target_R: null
   trailing_stop_R: null
 
 # Costs (per round trip, per contract).

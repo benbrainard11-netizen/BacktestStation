@@ -52,8 +52,14 @@ def decide(
     sizing_method: str,
     sizing_params: dict,
     direction_min_gap: float = 0.0,
+    max_contracts: int | None = None,
 ) -> Decision:
-    """Return a Decision for this signal against this account."""
+    """Return a Decision for this signal against this account.
+
+    `max_contracts` overrides firm.max_position_size (for micro-contract
+    runs where the firm cap is in mini-equivalents).
+    """
+    cap = max_contracts if max_contracts is not None else firm.max_position_size
 
     # 2. Not flat
     pred_class = int(np.argmax(p_proba))
@@ -85,13 +91,13 @@ def decide(
         p_proba=p_proba,
         threshold=threshold,
         params=sizing_params,
-        max_position_size=firm.max_position_size,
+        max_position_size=cap,
     )
     if contracts <= 0:
         return Decision(False, "sizing_returned_zero")
 
     # 1. Account-level gate (status, symbol allowed, size cap, daily/DD buffers)
-    ok, reason = account.can_take_trade(symbol, contracts)
+    ok, reason = account.can_take_trade(symbol, contracts, max_contracts=cap)
     if not ok:
         return Decision(False, f"account_gate:{reason}")
 

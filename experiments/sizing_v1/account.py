@@ -268,17 +268,20 @@ class Account:
 
     # ---- Pre-trade gate (called by risk_manager) ----
 
-    def can_take_trade(self, symbol: str, contracts: int) -> tuple[bool, str]:
+    def can_take_trade(self, symbol: str, contracts: int, max_contracts: int | None = None) -> tuple[bool, str]:
         """Pre-trade gate. Returns (allowed, reason_if_not).
 
         risk_manager calls this BEFORE deciding to enter a position.
+        `max_contracts` overrides firm.max_position_size (used for micro
+        contracts, where the firm limit is expressed in mini-equivalents).
         """
+        cap = max_contracts if max_contracts is not None else self.firm.max_position_size
         if self.status != "active":
             return (False, f"account_status={self.status}")
         if symbol not in self.firm.allowed_symbols:
             return (False, f"symbol_not_allowed:{symbol}")
-        if contracts > self.firm.max_position_size:
-            return (False, f"position_size_exceeded:{contracts}>{self.firm.max_position_size}")
+        if contracts > cap:
+            return (False, f"position_size_exceeded:{contracts}>{cap}")
         # Daily loss buffer — don't trade if we're within $300 of daily loss limit
         # (this is a sizing layer choice, can be tuned)
         daily_buffer = 300.0

@@ -43,7 +43,19 @@ from firm_rules import FirmConfig, load_firm_config
 import risk_manager
 
 TICK_SIZES = {"ES.c.0": 0.25, "NQ.c.0": 0.25, "YM.c.0": 1.0, "RTY.c.0": 0.10}
-POINT_VALUES = {"ES.c.0": 50.0, "NQ.c.0": 20.0, "YM.c.0": 5.0, "RTY.c.0": 50.0}
+
+# Mini (full-size) vs Micro contract point values.
+# Micros are 1/10th the dollar value per point (MES=$5 vs ES=$50, etc).
+POINT_VALUES_MINI = {"ES.c.0": 50.0, "NQ.c.0": 20.0, "YM.c.0": 5.0, "RTY.c.0": 50.0}
+POINT_VALUES_MICRO = {"ES.c.0": 5.0, "NQ.c.0": 2.0, "YM.c.0": 0.5, "RTY.c.0": 5.0}
+
+
+def point_values_for(contract_type: str) -> dict[str, float]:
+    if contract_type == "micro":
+        return POINT_VALUES_MICRO
+    if contract_type == "mini":
+        return POINT_VALUES_MINI
+    raise ValueError(f"unknown contract_type: {contract_type!r}")
 
 
 def horizon_min_from_key(h_key: str) -> int:
@@ -71,6 +83,8 @@ class Signal:
 @dataclass
 class OpenPosition:
     symbol: str
+    horizon_key: str
+    signal_ts: pd.Timestamp        # original ts_decision, for excursion lookup
     entry_ts: dt.datetime
     exit_ts: dt.datetime
     direction: int
@@ -144,15 +158,65 @@ def load_signals(strategy_cfg: dict, predictions_dir: Path) -> list[Signal]:
     return signals
 
 
-def trade_pnl_usd(symbol: str, direction: int, contracts: int, entry_price: float, realized_logret: float,
-                  slippage_ticks_per_side: float, commission_usd: float) -> float:
+def trade_pnl_usd(
+    *,
+    symbol: str,
+    direction: int,
+    contracts: int,
+    entry_price: float,
+    realized_logret: float,
+    point_value: float,
+    slippage_ticks_per_side: float,
+    commission_usd: float,
+    stop_loss_usd_per_contract: float | None = None,
+    window_max_high: float | None = None,
+    window_min_low: float | None = None,
+) -> tuple[float, str]:
+    """Compute trade P&L. Returns (pnl_usd, exit_reason).
+
+    If a stop is set AND we have excursion data, check whether the adverse
+    move hit the stop intra-trade. If so, the trade exits at the stop loss
+    (capped downside). Otherwise it exits at the horizon's realized return.
+    """
     tick = TICK_SIZES[symbol]
-    point = POINT_VALUES[symbol]
-    gross_pts = entry_price * (np.exp(realized_logret) - 1.0)
-    gross_usd = gross_pts * point * direction * contracts
-    slippage_usd = (2.0 * slippage_ticks_per_side * tick) * point * contracts
+    slippage_usd = (2.0 * slippage_ticks_per_side * tick) * point_value * contracts
     commission = commission_usd * contracts
-    return float(gross_usd - slippage_usd - commission)
+
+    # Stop check (uses precomputed excursion)
+    if (stop_loss_usd_per_contract is not None
+            and window_max_high is not None and window_min_low is not None
+            and not np.isnan(window_max_high) and not np.isnan(window_min_low)):
+        stop_points = stop_loss_usd_per_contract / point_value
+        if direction == 1:   # long: adverse = how far price fell below entry
+            adverse_points = entry_price - window_min_low
+        else:                # short: adverse = how far price rose above entry
+            adverse_points = window_max_high - entry_price
+        if adverse_points >= stop_points:
+            # Stopped out: lose exactly the stop amount per contract + costs
+            pnl = -stop_loss_usd_per_contract * contracts - slippage_usd - commission
+            return (float(pnl), "stop")
+
+    # Time-only exit at horizon
+    gross_pts = entry_price * (np.exp(realized_logret) - 1.0)
+    gross_usd = gross_pts * point_value * direction * contracts
+    return (float(gross_usd - slippage_usd - commission), "horizon_exit")
+
+
+def load_excursions(path: Path) -> dict[tuple[str, str, int], tuple[float, float]]:
+    """Load excursions.parquet → {(symbol, horizon_key, ts_ns): (max_high, min_low)}.
+
+    Keyed by int64 UTC nanoseconds to avoid Timestamp equality/tz subtleties.
+    """
+    if not path.exists():
+        return {}
+    df = pd.read_parquet(path)
+    df["ts_decision"] = pd.to_datetime(df["ts_decision"], utc=True)
+    lookup: dict[tuple[str, str, int], tuple[float, float]] = {}
+    for row in df.itertuples(index=False):
+        lookup[(row.symbol, row.horizon_key, int(pd.Timestamp(row.ts_decision).value))] = (
+            row.window_max_high, row.window_min_low,
+        )
+    return lookup
 
 
 # ---------------------------------------------------------------------------
@@ -167,6 +231,7 @@ def simulate_account(
     firm: FirmConfig,
     strategy_cfg: dict,
     jitter_seed: int,
+    excursions: dict | None = None,
 ) -> Account:
     """Run one account through the signal stream. Mutates + returns the account."""
     rng = np.random.default_rng(jitter_seed)
@@ -177,6 +242,15 @@ def simulate_account(
     comm = float(costs.get("commission_usd", 1.50))
     dir_gap = float(strategy_cfg.get("direction_filter", {}).get("require_max_minus_runner_up", 0.0))
 
+    contract_type = strategy_cfg.get("contract_type", "mini")
+    point_values = point_values_for(contract_type)
+    exit_cfg = strategy_cfg.get("exit", {})
+    stop_usd = exit_cfg.get("stop_loss_usd_per_contract", None)
+    stop_usd = float(stop_usd) if stop_usd is not None else None
+    excursions = excursions or {}
+    # Firm position cap is in mini-equivalents; micros get 10x the count.
+    effective_max = firm.max_position_size * (10 if contract_type == "micro" else 1)
+
     open_symbols: set[str] = set()
     pending_exits: list[tuple] = []   # heap of (exit_ts, seq, OpenPosition)
     seq = 0
@@ -185,9 +259,16 @@ def simulate_account(
 
     def close_position(pos: OpenPosition) -> None:
         nonlocal trade_counter
-        pnl = trade_pnl_usd(
-            pos.symbol, pos.direction, pos.contracts, pos.entry_price,
-            pos.realized_logret, slip, comm,
+        wmax, wmin = excursions.get(
+            (pos.symbol, pos.horizon_key, int(pd.Timestamp(pos.signal_ts).value)), (None, None)
+        )
+        pnl, reason = trade_pnl_usd(
+            symbol=pos.symbol, direction=pos.direction, contracts=pos.contracts,
+            entry_price=pos.entry_price, realized_logret=pos.realized_logret,
+            point_value=point_values[pos.symbol],
+            slippage_ticks_per_side=slip, commission_usd=comm,
+            stop_loss_usd_per_contract=stop_usd,
+            window_max_high=wmax, window_min_low=wmin,
         )
         trade = Trade(
             trade_id=pos.trade_id,
@@ -199,7 +280,7 @@ def simulate_account(
             entry_price=pos.entry_price,
             exit_price=pos.entry_price * float(np.exp(pos.realized_logret)),
             pnl_usd=pnl,
-            pnl_reason="horizon_exit",
+            pnl_reason=reason,
         )
         if account.status == "active":
             account.on_trade_close(trade)
@@ -227,6 +308,7 @@ def simulate_account(
             account=account, firm=firm, symbol=sig.symbol, horizon_key=sig.horizon_key,
             ts_decision=sig.ts_decision, p_proba=sig.p_proba, threshold=sig.threshold,
             sizing_method=sizing_method, sizing_params=sizing_params, direction_min_gap=dir_gap,
+            max_contracts=effective_max,
         )
         if not decision.take:
             continue
@@ -237,7 +319,9 @@ def simulate_account(
         exit_ts = sig.ts_decision + dt.timedelta(minutes=sig.horizon_minutes)
         trade_counter += 1
         pos = OpenPosition(
-            symbol=sig.symbol, entry_ts=entry_ts, exit_ts=exit_ts,
+            symbol=sig.symbol, horizon_key=sig.horizon_key,
+            signal_ts=pd.Timestamp(sig.ts_decision),
+            entry_ts=entry_ts, exit_ts=exit_ts,
             direction=decision.direction, contracts=decision.contracts,
             entry_price=sig.entry_price, realized_logret=sig.realized_logret,
             trade_id=f"{account.account_id}_T{trade_counter:05d}",
@@ -280,9 +364,14 @@ def main(argv: list[str] | None = None) -> int:
     if signals:
         print(f"  date range: {signals[0].ts_decision.date()} - {signals[-1].ts_decision.date()}")
 
+    excursions = load_excursions(EXPERIMENT_DIR / "out" / "excursions.parquet")
+    print(f"  loaded {len(excursions):,} precomputed excursions"
+          + ("" if excursions else "  (none — stops disabled)"))
+
     sim_start = signals[0].ts_decision.date() if signals else dt.date(2021, 1, 1)
     account = Account(account_id=f"{args.firm}_50k_{args.seed:03d}", firm=firm, sim_start_date=sim_start)
-    simulate_account(account=account, signals=signals, firm=firm, strategy_cfg=strategy_cfg, jitter_seed=args.seed)
+    simulate_account(account=account, signals=signals, firm=firm, strategy_cfg=strategy_cfg,
+                     jitter_seed=args.seed, excursions=excursions)
 
     print(f"\n=== {account.account_id} result ===")
     print(f"  status:                 {account.status}")
