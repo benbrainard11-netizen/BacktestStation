@@ -198,6 +198,18 @@ button {
   border-radius: 22px;
 }
 
+.db-big-metric.good {
+  border-color: rgba(73, 209, 138, 0.24);
+}
+
+.db-big-metric.warn {
+  border-color: rgba(243, 181, 91, 0.3);
+}
+
+.db-big-metric.bad {
+  border-color: rgba(255, 100, 100, 0.32);
+}
+
 .db-big-metric span,
 .db-big-metric small,
 .db-filter span,
@@ -503,6 +515,125 @@ button {
 
 .inline-empty {
   padding: 0;
+}
+
+.warehouse-line-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.warehouse-line-grid div,
+.warehouse-paths div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.warehouse-line-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.warehouse-line-grid span,
+.warehouse-paths span,
+.warehouse-check span,
+.db-mini-table span {
+  color: var(--muted);
+  font-family: "Geist Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.warehouse-line-grid strong,
+.warehouse-paths strong {
+  min-width: 0;
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-warning {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  color: var(--warn);
+  border: 1px solid rgba(243, 181, 91, 0.28);
+  border-radius: 14px;
+  background: var(--warn-soft);
+  font-size: 12px;
+}
+
+.db-mini-table {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.db-mini-table div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.db-mini-table strong {
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+}
+
+.warehouse-checks,
+.warehouse-paths {
+  display: grid;
+  gap: 10px;
+}
+
+.warehouse-check {
+  display: grid;
+  grid-template-columns: 0.85fr 0.65fr;
+  gap: 4px 10px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.warehouse-check.good {
+  border-color: rgba(73, 209, 138, 0.22);
+}
+
+.warehouse-check.warn {
+  border-color: rgba(243, 181, 91, 0.28);
+}
+
+.warehouse-check.bad {
+  border-color: rgba(255, 100, 100, 0.3);
+}
+
+.warehouse-check strong {
+  text-align: right;
+}
+
+.warehouse-check small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.warehouse-small-bars {
+  margin-top: 14px;
 }
 
 .eyebrow,
@@ -936,7 +1067,8 @@ h1 {
   }
 
   .metric-row,
-  .db-filter-bar {
+  .db-filter-bar,
+  .warehouse-line-grid {
     grid-template-columns: 1fr;
   }
 

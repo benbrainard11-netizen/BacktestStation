@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { DatabaseBrowser } from "@/components/DatabaseBrowser";
+import { DataWarehouseMonitor } from "@/components/DataWarehouseMonitor";
 import { OpsMonitor } from "@/components/OpsMonitor";
 
 type StationView = "database" | "ops";
@@ -10,8 +10,8 @@ type StationView = "database" | "ops";
 const VIEWS: { key: StationView; label: string; helper: string }[] = [
   {
     key: "database",
-    label: "Research Database",
-    helper: "events, features, labels, R2",
+    label: "Data Warehouse",
+    helper: "raw, local, R2, jobs",
   },
   {
     key: "ops",
@@ -48,7 +48,7 @@ export function StationDashboard() {
           </div>
         </div>
       </div>
-      {view === "database" ? <DatabaseBrowser /> : <OpsMonitor />}
+      {view === "database" ? <DataWarehouseMonitor /> : <OpsMonitor />}
     </>
   );
 }
