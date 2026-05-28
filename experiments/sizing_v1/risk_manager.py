@@ -1,24 +1,98 @@
 """Take/skip decision — the gatekeeper.
 
-Given a model signal and an account, decide:
-  - SKIP if: account inactive, FLAT prediction, confidence < threshold,
-            close to DLL, close to trailing DD floor, in news blackout,
-            consistency rule would be violated.
-  - TAKE otherwise, with size from sizing.py.
+Given a model signal + an account, decide whether to enter a trade and at
+what size. This is the most safety-critical module: bad decisions = blown
+accounts.
 
-This is THE most important module for v1 because mistakes here = blown accounts.
+Decision order (skip on first failure):
+  1. Account must be active (account.can_take_trade handles status/symbol/size/buffers)
+  2. Prediction must not be FLAT
+  3. Confidence (max prob) must clear the cell threshold
+  4. Direction-asymmetry filter (max - runner_up >= configured gap)
+  5. News blackout (v1 stub: never blocks)
+  6. Symbol must have no open position already (one-per-symbol, enforced by simulator)
 
-See PLAN.md §6 for the full decision flow.
+Returns a Decision describing take/skip + reason + sizing.
 
-NOT YET IMPLEMENTED.
+See PLAN.md §6.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 
-def main() -> int:
-    raise NotImplementedError("risk_manager.py is a stub.")
+import numpy as np
+
+from account import Account
+from firm_rules import FirmConfig, is_news_blackout
+from sizing import size_position
+
+CLASS_FLAT = 0
+CLASS_UP = 1
+CLASS_DOWN = 2
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+@dataclass(frozen=True)
+class Decision:
+    take: bool
+    reason: str
+    direction: int = 0       # +1 long, -1 short, 0 none
+    contracts: int = 0
+
+
+def decide(
+    *,
+    account: Account,
+    firm: FirmConfig,
+    symbol: str,
+    horizon_key: str,
+    ts_decision,
+    p_proba: np.ndarray,             # [p_flat, p_up, p_down]
+    threshold: float,
+    sizing_method: str,
+    sizing_params: dict,
+    direction_min_gap: float = 0.0,
+) -> Decision:
+    """Return a Decision for this signal against this account."""
+
+    # 2. Not flat
+    pred_class = int(np.argmax(p_proba))
+    if pred_class == CLASS_FLAT:
+        return Decision(False, "flat_prediction")
+
+    # 3. Confidence threshold
+    conf = float(p_proba.max())
+    if conf < threshold:
+        return Decision(False, f"below_threshold:{conf:.3f}<{threshold:.2f}")
+
+    # 4. Direction asymmetry: max class must beat runner-up by min gap
+    if direction_min_gap > 0:
+        sorted_p = np.sort(p_proba)[::-1]
+        gap = float(sorted_p[0] - sorted_p[1])
+        if gap < direction_min_gap:
+            return Decision(False, f"direction_gap_too_small:{gap:.3f}<{direction_min_gap:.2f}")
+
+    # 5. News blackout (v1 stub)
+    if is_news_blackout(firm, ts_decision):
+        return Decision(False, "news_blackout")
+
+    # Direction
+    direction = 1 if pred_class == CLASS_UP else -1
+
+    # Size
+    contracts = size_position(
+        method=sizing_method,
+        p_proba=p_proba,
+        threshold=threshold,
+        params=sizing_params,
+        max_position_size=firm.max_position_size,
+    )
+    if contracts <= 0:
+        return Decision(False, "sizing_returned_zero")
+
+    # 1. Account-level gate (status, symbol allowed, size cap, daily/DD buffers)
+    ok, reason = account.can_take_trade(symbol, contracts)
+    if not ok:
+        return Decision(False, f"account_gate:{reason}")
+
+    return Decision(True, "take", direction=direction, contracts=contracts)
