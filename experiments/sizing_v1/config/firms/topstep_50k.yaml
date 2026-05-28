@@ -1,65 +1,76 @@
-# Topstep Trading Combine, $50K account.
-# Public rules verified vs topstep.com docs (subject to confirmation).
+# Topstep $50K FUNDED account (post-eval).
+# User-stated rules 2026-05-28, verify against Topstep docs before live use.
 #
-# Topstep is the canonical, best-documented firm. Use this as the template
-# for other firm configs.
+# We're simulating funded-phase mechanics directly (not the Trading Combine
+# evaluation). The rationale: funded is where revenue is generated, and if
+# the strategy clears funded-phase payouts, eval is implied (looser rules,
+# one-shot target).
 
 firm_name: topstep
 account_size: 50000
-evaluation_type: combine    # vs personal-funded
+evaluation_type: funded    # was: combine — we skip the eval and sim funded
 notes: |
-  Topstep Trading Combine is the standard evaluation product. Pass it to
-  qualify for a funded account. We're modeling the $50K Combine here.
+  Funded account, post-eval. Simulated mechanics:
+  - Trailing DD trails EOD high water by $2k UNTIL EOD balance exceeds
+    starting + $2k = $52k. Then floor locks at starting balance ($50k).
+  - Payout eligibility requires 5+ winning days (≥$200 net P&L each day)
+    AND total profit ≥ $3k.
+  - When eligible, take a payout = half of profits (balance − starting),
+    capped at $5k. After payout, balance = balance − payout_amount.
+  - Account blown if daily loss limit OR trailing floor breached.
 
-# Daily Loss Limit (DLL).
-daily_loss_limit: 1000
-daily_loss_intraday: true     # DLL checked intraday — most retail futures prop firms
-                              # close your account same-day if hit
-
-# Trailing Drawdown / Max Loss Limit.
-# Topstep's MLL trails your end-of-day balance HIGH WATER up to the starting
-# balance, then locks at the starting balance. So if you grow to $52K, MLL
-# floor = $50K (locked). You can lose down to but not below that.
+# ---------- Trailing drawdown ----------
 trailing_drawdown: 2000
-trailing_drawdown_locks_at_starting_balance: true
-trailing_drawdown_resets_daily: false
-trailing_drawdown_uses_eod: true    # EOD balance used for water mark, not intraday peak
+trailing_dd_uses_eod: true             # tracks EOD balance, not intraday
+trailing_dd_lock_behavior: |
+  floor = max_eod_balance_to_date - 2000
+  IF max_eod_balance_to_date >= 52000:
+    floor = 50000 (locked permanently for this account)
+trailing_dd_lock_threshold: 52000      # EOD balance that triggers the lock
+trailing_dd_locked_value: 50000        # where it locks (= starting balance)
 
-# Profit Target.
-profit_target: 3000           # need +$3K to pass
+# ---------- Daily loss limit ----------
+daily_loss_limit: 1000                 # Topstep $50K funded; can adjust
+daily_loss_intraday: true              # checked intraday
 
-# Consistency Rule.
-consistency_rule_pct: 30      # at funded stage only — no single day can be >30% of total profit
-consistency_rule_applies_at_eval: false
-consistency_rule_applies_at_funded: true
+# ---------- Payout rules ----------
+payout_min_winning_days: 5
+payout_winning_day_threshold_usd: 200  # daily P&L must be ≥ this to count
+payout_profit_threshold: 3000          # total profit (balance - starting) must be ≥ this
+payout_amount_method: half_of_profits  # take 0.5 × (balance - starting)
+payout_cap_usd: 5000                   # capped at this — was historically $5k,
+                                       # current Topstep is more like $2-3k
+                                       # user chose $5k for broader test
+payout_balance_after: keep_remainder   # balance = balance - payout
+                                       # (does NOT reset to $50k — keeps excess
+                                       # above starting+cap as buffer)
+payout_resets_winning_day_counter: true   # 5-day counter resets after payout
 
-# Min activity.
-min_trade_days: 5             # 5 distinct trading days minimum to pass
-min_trade_count_per_day: 0
+# ---------- Consistency rule ----------
+consistency_rule_pct: 50               # no single day > 50% of total profit
+consistency_rule_applies_at: funded    # always applies at this phase
 
-# News / event restrictions.
-news_blackout_minutes_before: 0     # Topstep allows news trading on Combine
-news_blackout_minutes_after: 0
-events_blocked: []
-
-# Eval window.
-max_eval_days: 0              # 0 = no time limit on Topstep Combine
-
-# Contract limits.
-max_position_size: 5          # max contracts per symbol concurrent on $50K
-max_total_position: 5         # same
+# ---------- Symbols / position ----------
+max_position_size: 5
+max_total_position: 5
 allowed_symbols:
   - ES.c.0
   - NQ.c.0
   - YM.c.0
   - RTY.c.0
-  # CME equity index futures only for v1; Topstep allows broader set
 
-# Reset / restart.
-allow_reset: true
-reset_cost_usd: 99
+# ---------- News ----------
+news_blackout_minutes_before: 0        # Topstep allows news trading
+news_blackout_minutes_after: 0
+events_blocked: []
 
-# Economics (milking-math inputs).
-eval_fee_usd: 165             # monthly subscription cost approx
-funded_account_value_usd: 1000   # rough resale / operate value of a passed funded account
-                                  # (CONFIRM with user — varies)
+# ---------- Simulation horizon ----------
+sim_max_days: 365                      # simulate up to a year per account
+                                       # (or until blown)
+
+# ---------- Economics ----------
+# Funded phase doesn't pay eval fee — we already "passed" (assumed).
+# Some firms charge monthly subscription on funded; Topstep does not.
+monthly_subscription_usd: 0
+eval_fee_usd: 0                        # not paid in this simulation
+funded_account_value_usd: null         # not relevant — we measure $/payout directly

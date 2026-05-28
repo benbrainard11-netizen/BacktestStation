@@ -1,25 +1,27 @@
 # Sizing v1 — Locked Plan
 
 **Status:** scaffolded, no simulator built yet
-**Version:** 1
+**Version:** 1 (funded-phase, locked 2026-05-28)
 **Branch:** `experiments/sizing-v1`
-**Created:** 2026-05-28
 
-The sizing/risk layer that converts `experiments/milk-v1` model probabilities into per-account contract counts, simulates prop firm evaluation accounts, and reports the actual milking metric: **percent of accounts that pass.**
+The sizing/risk layer that converts `experiments/milk-v1` model probabilities into per-account contract counts, simulates prop firm **funded** accounts (post-eval), and reports the actual milking metric: **total $/account/year via payouts.**
 
-This is the upstream-of-money layer. The model is signal; the sizing layer is the business.
+**Why funded-phase first:** funded is where revenue is generated. If the strategy clears funded payouts under stricter rules (consistency + payout caps + trailing DD), eval is implied. Eval is a one-shot $165 fee; funded is recurring weekly/monthly cash flow. We measure the actual cash-flow rate directly.
+
+The model is signal; this layer is the business.
 
 ---
 
 ## Decision
 
-Build a multi-account simulator that:
+Build a multi-account funded-phase simulator that:
 1. Reads LightGBM ensemble predictions from `experiments/tsfm_milk_v0/out/predictions/lightgbm_ensemble/`
-2. For each (firm × account) combo, walks forward through walk-forward fold test windows
+2. For each (firm × N=100 funded accounts), walks forward through walk-forward fold test windows
 3. At each predicted signal, decides: trade or skip, what direction, how many contracts
-4. Tracks account state (daily P&L, drawdown, total P&L, profit target progress)
-5. Enforces per-firm rules in real-time
-6. Reports per-firm pass rate, expected dollar value per account, and the milking math
+4. Tracks account state (daily P&L, EOD trailing floor, winning days, payout eligibility)
+5. Triggers payouts when conditions met (5+ winning days ≥$200 AND profit ≥$3k)
+6. Continues until account blown or simulation period ends (default: 365 days)
+7. Reports total $/account, payouts per account, time-to-first-payout, blown-account rate
 
 ---
 
@@ -76,60 +78,53 @@ experiments/sizing_v1/config/
 
 ---
 
-## §3. Per-firm rule schema
+## §3. Per-firm rule schema (funded phase)
 
-Each firm gets a YAML in `config/firms/`. Universal schema:
+Each firm gets a YAML in `config/firms/`. See `topstep_50k.yaml` for the
+canonical example; below is the schema, locked for v1 funded-phase sim:
 
 ```yaml
 firm_name: topstep
-account_size: 50000          # USD
-evaluation_account_type: combine    # combine | personal-funded | etc.
+account_size: 50000          # starting balance
+evaluation_type: funded      # funded phase (skip eval entirely)
 
-# Daily loss limit (intraday + EOD).
-daily_loss_limit: 1000       # account closes for the day if hit
-daily_loss_intraday: true    # most firms enforce intraday; some only at EOD
-
-# Trailing drawdown (account-killing).
+# Trailing DD: trails EOD high water by $2k UNTIL balance exceeds starting + $2k.
+# Then locks permanently at starting balance.
 trailing_drawdown: 2000
-trailing_drawdown_locks_at_starting_balance: true   # Topstep style: stops trailing at account start
-trailing_drawdown_resets_daily: false               # Apex style: resets daily; not common
+trailing_dd_uses_eod: true
+trailing_dd_lock_threshold: 52000     # EOD balance that triggers the lock
+trailing_dd_locked_value: 50000       # where it locks (= starting balance)
 
-# Profit target (to pass evaluation).
-profit_target: 3000
+# Daily loss limit (intraday).
+daily_loss_limit: 1000
+
+# Payout rules (funded-phase specific).
+payout_min_winning_days: 5
+payout_winning_day_threshold_usd: 200   # day P&L ≥ this counts as a "winning day"
+payout_profit_threshold: 3000           # total profit ≥ this to be eligible
+payout_amount_method: half_of_profits
+payout_cap_usd: 5000                    # per-payout cap (user-chosen $5k for v1)
+payout_balance_after: keep_remainder    # balance = balance − payout (no reset)
+payout_resets_winning_day_counter: true # counter resets after each payout
 
 # Consistency rule.
-consistency_rule_pct: 30     # no single day can exceed 30% of total profit
-consistency_rule_applies_at_funded: true   # most: only at funded stage
+consistency_rule_pct: 50                # no single day > 50% of total profit
+                                        # (funded phase always applies)
 
-# Min activity.
-min_trade_days: 5            # must trade on at least N distinct days
-min_trade_count: 0           # some firms: no min count, just days
-
-# News / event restrictions.
-news_blackout_minutes_before: 0    # 0 = no restriction
-news_blackout_minutes_after: 0     # most retail-accessible firms allow news
-events_blocked: []                  # FOMC, CPI, NFP, etc. — empty = none
-
-# Eval window.
-max_eval_days: 30            # must complete eval within this many calendar days
-                              # 0 = no time limit (e.g., Topstep personal eval)
-
-# Contract limits.
-max_position_size: 5         # max contracts per symbol concurrent
-max_total_position: 10       # max contracts across all symbols
+# Symbols.
 allowed_symbols: [ES.c.0, NQ.c.0, YM.c.0, RTY.c.0]
+max_position_size: 5
 
-# Reset / restart.
-allow_reset: true            # can buy a reset if you blow the eval
-reset_cost_usd: 80           # what reset costs
+# News.
+news_blackout_minutes_before: 0
+news_blackout_minutes_after: 0
 
-# Economics (used in milking-math summary).
-eval_fee_usd: 165            # cost to start an eval
-funded_account_value_usd: 1000   # rough $ value of a passed funded account
-                                  # (resale value or expected operate value)
+# Sim horizon.
+sim_max_days: 365            # simulate one year per account (or until blown)
 ```
 
-We'll start with Topstep $50K Combine as the canonical example. Other firms get TBD fields where I don't know the exact value — to be filled in by user / friend.
+Topstep $50K Combine is the canonical example. Other firms get the same
+schema with their specific numbers — user/friend to fill in v1.5.
 
 ---
 
@@ -166,34 +161,51 @@ exit_params:
 
 ---
 
-## §5. Account state
+## §5. Account state (funded phase)
 
 Per account, the simulator tracks:
 
 ```
-account_id              str         "topstep_50k_account_001"
-firm_config             str         "topstep_50k.yaml"
-account_balance         float       starts at account_size, evolves with P&L
-day_start_balance       float       at start of each trading day
-day_high_water          float       intraday high water mark
-day_pnl                 float       balance - day_start_balance
-account_high_water      float       all-time peak of account_balance
-trailing_dd_floor       float       account_high_water - trailing_dd
-                                    (locks if rule applies)
+account_id                    str       "topstep_50k_account_001"
+firm_config                   str       "topstep_50k.yaml"
+account_balance               float     starts at 50000, evolves with P&L
+day_start_balance             float     reset each trading day at session open
+day_pnl                       float     balance - day_start_balance
+eod_balance_high_water        float     max EOD balance seen so far
+trailing_dd_floor             float     computed from eod_high_water OR locked at 50000
+trailing_dd_is_locked         bool      true once eod_balance crossed lock_threshold
 
-n_trade_days            int         distinct dates with ≥ 1 trade
-trade_log               list[Trade] every trade with entry/exit/contracts/pnl
+winning_days_count            int       distinct days where day_pnl ≥ winning_day_threshold
+                                        (resets to 0 after each payout)
+total_payouts_received        float     cumulative cash collected via payouts
+total_payouts_count           int       how many payouts taken
+payouts_log                   list      each payout: ts, amount, balance_before, balance_after
 
-status                  str         "active" | "blown_daily" | "blown_dd" |
-                                    "passed" | "expired"
-blown_reason            str | None  human-readable reason if not active
+n_trade_days                  int       distinct dates with ≥ 1 trade
+trade_log                     list      every trade
+
+status                        str       "active" | "blown_daily" | "blown_dd" | "completed"
+blown_reason                  str|None  reason if not active
 ```
 
 At every signal arrival, before deciding to trade, the simulator asks:
 - Is account status "active"?
 - Would this trade's size exceed `max_position_size`?
-- Would this trade place us at risk of breaching `trailing_dd_floor` after one max-loss?
+- Are we within `daily_loss_limit` plus a safety buffer?
+- Is `account_balance − one_max_loss_estimate > trailing_dd_floor`?
 - Are we inside a `news_blackout` window?
+
+At each EOD close:
+- Update `day_pnl` from intraday balance change
+- If day_pnl ≥ winning_day_threshold: increment winning_days_count
+- Update `eod_balance_high_water`
+- Recompute `trailing_dd_floor` (may lock now)
+- If `winning_days_count ≥ payout_min_winning_days` AND `balance − account_size ≥ payout_profit_threshold`:
+  - Trigger payout: amount = min(0.5 × (balance − account_size), payout_cap_usd)
+  - balance −= amount
+  - total_payouts_received += amount
+  - winning_days_count = 0  (counter resets)
+  - Log the payout
 
 ---
 
@@ -273,64 +285,68 @@ Accounts are independent — they don't share P&L. The N=100 measures the **dist
 
 ---
 
-## §9. Output metrics (§9 is what makes us money)
+## §9. Output metrics (the actual cash-flow numbers)
 
-For each firm:
-
-```
-n_accounts:           100
-n_passed:             54
-n_blown_daily:        12
-n_blown_dd:           19
-n_expired:            15
-pass_rate:            54%
-
-mean_balance_at_end:  $51,200
-median_balance:       $50,800
-p25_balance:          $49,100
-p75_balance:          $52,400
-worst_balance:        $48,000 (lost an account)
-best_balance:         $54,300 (passed easily)
-
-mean_days_to_pass:    18 days
-median_days_to_pass:  16 days
-
-mean_trades_per_account:  87
-median_trades_per_account: 79
-```
-
-And the **milking math**:
+For each firm, simulated over `sim_max_days` (default 365):
 
 ```
-For 100 accounts at Topstep $50K Combine:
-  Total eval fees paid:         100 × $165 = $16,500
-  Passes:                       54
-  Funded account value:         54 × $1,000 = $54,000
-  Net per 100 evals:            $54,000 - $16,500 = +$37,500
-  Expected $/eval:              +$375
-  Break-even pass rate:         165/1000 = 16.5%
+n_accounts:                       100
+n_alive_at_end:                   ?
+n_blown_daily:                    ?
+n_blown_dd:                       ?
 
-If we run 1,000 evals over a year:
-  Expected gross:               $375 × 1000 = $375,000
-  Operating cost (your time, resets, etc.): TBD
+Total $ collected across all accounts:    ?
+Mean $/account over sim period:           ?
+Median $/account:                          ?
+P25 / P75 / worst / best $:                ?
+
+Mean payouts per account:                 ?
+Median time to first payout (days):       ?
+Median time between subsequent payouts:    ?
+Mean account lifespan in days (alive):    ?
+Mean account lifespan in days (blown):    ?
+
+Mean trades per account:                  ?
+Mean winning days per account:            ?
 ```
 
-That's the actual milkable math. Pass rate is what matters.
+And the **revenue rate math**:
+
+```
+For Topstep $50K, 100 funded accounts over 12 months:
+  Total $ collected:           $X
+  Mean per-account annual rate: $X / 100 = $Y/account/year
+  Mean monthly revenue:         $Y / 12 = $Z/account/month
+
+If 50% of accounts get blown within the year:
+  Effective N at year-end: 50
+  Ongoing monthly run-rate from survivors: 50 × $Z = $W/month sustained
+
+Break-even threshold against operating costs:
+  Eval cost per account: $165 (one-shot, before funded phase)
+  Monthly subscription:  $0 (Topstep) — verify per firm
+  Effective net per account = mean_$/account - $165
+```
+
+That's the actual milkable cash-flow math. **Total $/account/year is the
+headline.** Pass rate is no longer the metric since we skip the eval phase
+in v1.
 
 ---
 
-## §10. Ship / kill criteria
+## §10. Ship / kill criteria (funded phase)
 
-**Ship to next iteration if:**
-- At least one firm × strategy combo has pass rate ≥ 50%
-- Expected $ per eval > 0 across at least 2 firms
+**Ship to next iteration if (median across 100 simulated Topstep accounts):**
+- Mean $/account/year > $2,000 (i.e., 1+ successful payouts per account on average)
+- Account-blown rate < 60% over 12-month sim
+- At least one payout reached on > 30% of accounts
 - No simulation bugs (results reproducible, no lookahead detected)
-- Mean days-to-pass ≤ firm.max_eval_days for at least one firm
 
 **Kill / rework if:**
-- All firms show pass rate < 25%  (the math doesn't work)
-- Mean days-to-pass > eval deadline (system can't generate trades fast enough)
-- Trailing DD breaches > 40% of accounts (system has tail risk)
+- Mean $/account/year ≤ $0 (system bleeds money)
+- Account-blown rate > 80% (tail risk too high)
+- Median time to first payout > 90 days (system too slow)
+- Consistency rule violation rate > 20% (sizing too aggressive)
 
 ---
 
