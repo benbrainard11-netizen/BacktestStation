@@ -1,5 +1,5 @@
-import { OpsMonitor } from "@/components/OpsMonitor";
+import { StationDashboard } from "@/components/StationDashboard";
 
 export default function HomePage() {
-  return <OpsMonitor />;
+  return <StationDashboard />;
 }
