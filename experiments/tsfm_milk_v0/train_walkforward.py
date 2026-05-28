@@ -156,6 +156,33 @@ def make_forecaster(model_name: str) -> Forecaster:
     if model_name == "lightgbm":
         from baseline_lightgbm import LightGBMBaselineForecaster
         return LightGBMBaselineForecaster(n_estimators=200, last_window=60, learning_rate=0.05)
+    if model_name == "lightgbm_tuned":
+        from baseline_lightgbm import LightGBMBaselineForecaster
+        import yaml
+        tuned_yaml = THIS_FILE.parent / "config" / "tuned_lightgbm_hps.yaml"
+        if not tuned_yaml.exists():
+            raise FileNotFoundError(
+                f"{tuned_yaml} not found. Run tune_lightgbm.py first to produce it."
+            )
+        cfg = yaml.safe_load(tuned_yaml.read_text(encoding="utf-8"))
+        tuned = cfg.get("horizons", {})
+        last_window = int(cfg.get("feature_flatten_window", 60))
+        return LightGBMBaselineForecaster(last_window=last_window, tuned_hps_by_horizon=tuned)
+    if model_name == "lightgbm_ensemble":
+        from baseline_lightgbm_ensemble import LightGBMEnsembleForecaster
+        import yaml
+        tuned_yaml = THIS_FILE.parent / "config" / "tuned_lightgbm_hps.yaml"
+        tuned = {}
+        last_window = 60
+        if tuned_yaml.exists():
+            cfg = yaml.safe_load(tuned_yaml.read_text(encoding="utf-8"))
+            tuned = cfg.get("horizons", {})
+            last_window = int(cfg.get("feature_flatten_window", 60))
+        return LightGBMEnsembleForecaster(
+            n_seeds=5,
+            last_window=last_window,
+            tuned_hps_by_horizon=tuned,
+        )
     if model_name == "transformer":
         from transformer_forecaster import TransformerForecaster
         return TransformerForecaster(max_epochs=8, batch_size=256, learning_rate=1e-3)

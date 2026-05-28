@@ -58,7 +58,13 @@ def _flatten_features(inputs: np.ndarray, last_window: int = 60) -> np.ndarray:
 
 
 class LightGBMBaselineForecaster(Forecaster):
-    """One LightGBM 3-class classifier per (symbol, horizon)."""
+    """One LightGBM 3-class classifier per (symbol, horizon).
+
+    Per-horizon hyperparameter overrides can be supplied via the
+    `tuned_hps_by_horizon` dict (keyed by HORIZON_KEYS). When present, the
+    per-horizon dict replaces the constructor defaults for that horizon.
+    Schema matches tune_lightgbm.py's output.
+    """
 
     def __init__(
         self,
@@ -67,17 +73,59 @@ class LightGBMBaselineForecaster(Forecaster):
         n_estimators: int = 200,
         learning_rate: float = 0.05,
         num_leaves: int = 31,
+        min_child_samples: int = 20,
+        reg_alpha: float = 0.0,
+        reg_lambda: float = 0.0,
+        feature_fraction: float = 1.0,
+        bagging_fraction: float = 1.0,
+        bagging_freq: int = 0,
         device: str = "cpu",
         random_state: int = 42,
+        tuned_hps_by_horizon: dict | None = None,
     ) -> None:
         self.last_window = last_window
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.num_leaves = num_leaves
+        self.min_child_samples = min_child_samples
+        self.reg_alpha = reg_alpha
+        self.reg_lambda = reg_lambda
+        self.feature_fraction = feature_fraction
+        self.bagging_fraction = bagging_fraction
+        self.bagging_freq = bagging_freq
         self.device = device
         self.random_state = random_state
+        self.tuned_hps_by_horizon = tuned_hps_by_horizon or {}
         # _models[horizon][symbol_idx] = trained model
         self._models: dict[str, list] = {}
+
+    def _params_for_horizon(self, h_key: str) -> dict:
+        """Return LightGBM kwargs for one horizon, applying tuned overrides if present."""
+        base = {
+            "objective": "multiclass",
+            "num_class": len(CLASS_CODES),
+            "n_estimators": self.n_estimators,
+            "learning_rate": self.learning_rate,
+            "num_leaves": self.num_leaves,
+            "min_child_samples": self.min_child_samples,
+            "reg_alpha": self.reg_alpha,
+            "reg_lambda": self.reg_lambda,
+            "feature_fraction": self.feature_fraction,
+            "bagging_fraction": self.bagging_fraction,
+            "bagging_freq": self.bagging_freq,
+            "device": self.device,
+            "random_state": self.random_state,
+            "n_jobs": -1,
+            "verbose": -1,
+        }
+        tuned = self.tuned_hps_by_horizon.get(h_key)
+        if tuned and isinstance(tuned, dict):
+            override = tuned.get("best_params", tuned)  # accept either flat or nested
+            for k, v in override.items():
+                if k == "last_window":
+                    continue
+                base[k] = v
+        return base
 
     @property
     def name(self) -> str:
@@ -136,17 +184,8 @@ class LightGBMBaselineForecaster(Forecaster):
                         eval_set = [(X_val[mask_v], y_val[mask_v].astype(np.int32))]
                         eval_names = ["val"]
 
-                clf = lgb.LGBMClassifier(
-                    objective="multiclass",
-                    num_class=n_classes,
-                    n_estimators=self.n_estimators,
-                    learning_rate=self.learning_rate,
-                    num_leaves=self.num_leaves,
-                    device=self.device,
-                    random_state=self.random_state,
-                    n_jobs=-1,
-                    verbose=-1,
-                )
+                params = self._params_for_horizon(h)
+                clf = lgb.LGBMClassifier(**params)
                 clf.fit(
                     X_train_s, y_train,
                     eval_set=eval_set,

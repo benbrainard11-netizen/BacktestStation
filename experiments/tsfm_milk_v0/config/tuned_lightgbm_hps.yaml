@@ -1,0 +1,75 @@
+generated_at_utc: '2026-05-28T00:00:07.741227+00:00'
+tuned_on_fold: '4'
+n_trials_per_horizon: 50
+feature_flatten_window: 60
+horizons:
+  h_15m:
+    best_params:
+      n_estimators: 216
+      learning_rate: 0.06630130696968908
+      num_leaves: 23
+      min_child_samples: 94
+      reg_alpha: 0.20469673607711572
+      reg_lambda: 0.7024984532498374
+      feature_fraction: 0.9896537252327436
+      bagging_fraction: 0.7604789976571527
+      last_window: 60
+    best_val_auc: 0.5830531776434327
+    n_trials: 50
+    tuned_on_fold: '4'
+  h_30m:
+    best_params:
+      n_estimators: 161
+      learning_rate: 0.07397222168530121
+      num_leaves: 16
+      min_child_samples: 70
+      reg_alpha: 0.754094801795372
+      reg_lambda: 0.7264882847058652
+      feature_fraction: 0.8782190672863694
+      bagging_fraction: 0.7370158073565823
+      last_window: 60
+    best_val_auc: 0.580393502323879
+    n_trials: 50
+    tuned_on_fold: '4'
+  h_60m:
+    best_params:
+      n_estimators: 521
+      learning_rate: 0.08341106432362087
+      num_leaves: 18
+      min_child_samples: 98
+      reg_alpha: 0.8324426408004217
+      reg_lambda: 0.21233911067827616
+      feature_fraction: 0.5909124836035503
+      bagging_fraction: 0.5917022549267169
+      last_window: 60
+    best_val_auc: 0.5634193122083956
+    n_trials: 50
+    tuned_on_fold: '4'
+  h_90m:
+    best_params:
+      n_estimators: 395
+      learning_rate: 0.07304832070580011
+      num_leaves: 121
+      min_child_samples: 36
+      reg_alpha: 0.9758889788007988
+      reg_lambda: 0.30498064192676555
+      feature_fraction: 0.5694064187762938
+      bagging_fraction: 0.8792430452119125
+      last_window: 60
+    best_val_auc: 0.5600718083711667
+    n_trials: 50
+    tuned_on_fold: '4'
+  h_240m:
+    best_params:
+      n_estimators: 636
+      learning_rate: 0.16125880633976522
+      num_leaves: 179
+      min_child_samples: 32
+      reg_alpha: 0.6155317245893467
+      reg_lambda: 0.20053072941749409
+      feature_fraction: 0.6618368754426652
+      bagging_fraction: 0.973548349895087
+      last_window: 60
+    best_val_auc: 0.5365821669627625
+    n_trials: 50
+    tuned_on_fold: '4'
