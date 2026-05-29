@@ -7,6 +7,7 @@ The V1 strategy candidate is now implemented as a real MBP-1 research/backtest h
 Code:
 
 - `backend/app/research/nq_session_sweep_reaction_v1.py`
+- `backend/app/research/nq_session_sweep_reaction_v1_chunked.py`
 - `backend/app/research/nq_session_sweep_reaction_v1_detection.py`
 - `backend/app/research/nq_session_sweep_reaction_v1_execution.py`
 - `backend/app/research/nq_session_sweep_reaction_v1_output.py`
@@ -15,6 +16,7 @@ Code:
 - `backend/app/research/nq_session_sweep_reaction_v1_types.py`
 - `backend/app/research/nq_session_sweep_reaction_v1_utils.py`
 - `backend/app/cli/nq_session_sweep_reaction_v1.py`
+- `backend/app/cli/nq_session_sweep_reaction_v1_chunked.py`
 - `backend/tests/test_nq_session_sweep_reaction_v1.py`
 
 Spec:
@@ -152,6 +154,17 @@ For a real study, use warmup and keep range sanity on:
 ```
 
 `data/` is gitignored, so generated outputs stay local.
+
+For larger MBP-1 windows, prefer the chunked runner so one giant MBP-1
+DataFrame is not loaded all at once:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.cli.nq_session_sweep_reaction_v1_chunked `
+  --start 2026-04-01 `
+  --end 2026-05-01 `
+  --warmup-days 45 `
+  --output-dir ..\data\backtests\nq_session_sweep_reaction_v1_april_2026
+```
 
 ## Output Files
 

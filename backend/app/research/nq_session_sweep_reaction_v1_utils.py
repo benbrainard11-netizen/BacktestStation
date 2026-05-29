@@ -124,7 +124,7 @@ def to_datetime(value) -> dt.datetime:
         ts = ts.tz_localize("UTC")
     else:
         ts = ts.tz_convert("UTC")
-    return ts.to_pydatetime()
+    return ts.to_pydatetime(warn=False)
 
 
 def row_ts(row) -> dt.datetime:
