@@ -31,6 +31,7 @@ except Exception:
     pass
 
 SYM = "ES.c.0"
+PEERS = ["NQ.c.0", "RTY.c.0", "YM.c.0"]  # cross-index peers; their OFI gets signed in ES's break dir
 TICK = 0.25
 MBP1_DIR = Path("D:/data/raw/databento/mbp-1/symbol=ES.c.0")
 START, END = "2025-04-01", "2026-06-01"
@@ -69,6 +70,20 @@ def cks_ofi_inc(bp, bs, ap, as_) -> np.ndarray:
     return e
 
 
+def peer_ofi_stream(sym: str, day: str, nxt: str):
+    """A peer index's CKS OFI stream (DatetimeIndex, ofi array) for the day -> cross-index features."""
+    d = read_mbp1(symbol=sym, start=day, end=nxt, columns=["ts_event", "bid_px", "ask_px", "bid_sz", "ask_sz"])
+    if len(d) < 100:
+        return None
+    bp, ap = d["bid_px"].to_numpy(float), d["ask_px"].to_numpy(float)
+    bs, as_ = d["bid_sz"].to_numpy(float), d["ask_sz"].to_numpy(float)
+    ok = np.isfinite(bp) & np.isfinite(ap) & (bp > 0) & (ap > 0)
+    if ok.sum() < 100:
+        return None
+    ts = pd.DatetimeIndex(pd.to_datetime(d["ts_event"], utc=True))[ok]
+    return ts, cks_ofi_inc(bp[ok], bs[ok], ap[ok], as_[ok])
+
+
 def label_touch(mid: np.ndarray, i0: int, k1: int, L: float, dr: int):
     """Triple-barrier first-hit over mid[i0:k1]. break=through level (dir), hold=revert. None=timeout."""
     seg = mid[i0:k1]
@@ -85,19 +100,29 @@ def label_touch(mid: np.ndarray, i0: int, k1: int, L: float, dr: int):
 
 def process_day(day: str, pdh: float, pdl: float) -> list[dict]:
     nxt = (dt.date.fromisoformat(day) + dt.timedelta(days=1)).isoformat()
-    d = read_mbp1(symbol=SYM, start=day, end=nxt, columns=["ts_event", "bid_px", "ask_px", "bid_sz", "ask_sz"])
+    d = read_mbp1(symbol=SYM, start=day, end=nxt,
+                  columns=["ts_event", "bid_px", "ask_px", "bid_sz", "ask_sz", "action", "side", "size"])
     if len(d) < 100:
         return []
     ts = pd.to_datetime(d["ts_event"], utc=True)
     bp, ap = d["bid_px"].to_numpy(float), d["ask_px"].to_numpy(float)
     bs, as_ = d["bid_sz"].to_numpy(float), d["ask_sz"].to_numpy(float)
+    act, sd, sz = d["action"].to_numpy(), d["side"].to_numpy(), d["size"].to_numpy(float)
     ok = np.isfinite(bp) & np.isfinite(ap) & (bp > 0) & (ap > 0)
     if ok.sum() < 100:
         return []
     ts, bp, ap, bs, as_ = ts[ok], bp[ok], ap[ok], bs[ok], as_[ok]
+    act, sd, sz = act[ok], sd[ok], sz[ok]
     mid = (bp + ap) / 2.0
     ofi = cks_ofi_inc(bp, bs, ap, as_)
+    # signed aggressor trade size per row (validated: side 'B'=buy +size, 'A'=sell -size; 0 on non-trades)
+    strade = np.where(act == "T", np.where(sd == "B", 1.0, np.where(sd == "A", -1.0, 0.0)) * sz, 0.0)
     tsi = pd.DatetimeIndex(ts)
+    peers = {}  # cross-index OFI streams; a missing peer-day -> that feature defaults to 0
+    for p in PEERS:
+        r = peer_ofi_stream(p, day, nxt)
+        if r is not None:
+            peers[p.split(".")[0].lower()] = r
     rows = []
     for L, role in ((pdh, "PDH"), (pdl, "PDL")):
         in_band = np.abs(mid - L) <= EPS
@@ -111,12 +136,21 @@ def process_day(day: str, pdh: float, pdl: float) -> list[dict]:
             dr = 1 if mid[ib] < L else -1
             jo = int(tsi.searchsorted(t0 + W_OFI, side="right"))
             of = float(ofi[i0:jo].sum()) * dr
+            svol = float(strade[i0:jo].sum()) * dr  # net aggressor trade flow in the break direction
+            jw = max(jo, i0 + 1)  # depth/queue imbalance over the same window (>=1 row)
+            bw, aw = float(bs[i0:jw].mean()), float(as_[i0:jw].mean())
+            qimb = (((bw - aw) / (bw + aw)) if (bw + aw) > 0 else 0.0) * dr  # +ve = depth favors break dir
             k1 = int(tsi.searchsorted(t0 + HORIZON, side="right"))
             lab = label_touch(mid, jo, k1, L, dr)  # outcome measured AFTER the OFI window = no overlap/lookahead
             if lab is None:
                 continue
             last_t = t0
-            rows.append({"ts": t0, "level": role, "dir": dr, "ofi_signed": of, "label": lab})
+            xi = {"nq_ofi": 0.0, "rty_ofi": 0.0, "ym_ofi": 0.0}  # peer OFI in same window, signed in ES dir
+            for pk, (ptsi, pofi) in peers.items():
+                a, b = int(ptsi.searchsorted(t0)), int(ptsi.searchsorted(t0 + W_OFI, side="right"))
+                xi[f"{pk}_ofi"] = float(pofi[a:b].sum()) * dr
+            rows.append({"ts": t0, "level": role, "dir": dr, "ofi_signed": of, "qimb_signed": qimb,
+                         "svol_signed": svol, **xi, "label": lab})
     return rows
 
 
@@ -153,11 +187,12 @@ def main(n_days: int | None) -> int:
     print("  break rate by signed-OFI tercile:")
     print(df.groupby(q, observed=True)["label"].agg(["mean", "count"]).round(3).to_string())
 
-    frame = df.rename(columns={"ofi_signed": "signal", "label": "outcome"})[["signal", "outcome"]]
     print()
-    print_result(forward_test(frame, name="ofi_signed->break[ES]", kind="continuous",
-                              oos_start=OOS_START, min_effect=0.05, expect_sign=1))
-    print("\n(go/no-go: OOS spearman clearly + and clears 0.05 => event-time flow predicts the resolution.)")
+    for feat in ("ofi_signed", "qimb_signed", "svol_signed", "nq_ofi", "rty_ofi", "ym_ofi"):
+        fr = df.rename(columns={feat: "signal", "label": "outcome"})[["signal", "outcome"]]
+        print_result(forward_test(fr, name=f"{feat}->break[ES]", kind="continuous",
+                                  oos_start=OOS_START, min_effect=0.05, expect_sign=1))
+    print("\n(each OOS spearman + and clears 0.05 => that feature predicts the resolution.)")
     return 0
 
 

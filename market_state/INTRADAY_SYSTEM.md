@@ -79,3 +79,16 @@ add_orderflow_structure()` (context layer only) · train/eval `training.py:train
 3. Tier-2 MBO-depth upgrade on the ~5mo overlap; ablate vs Tier-1.
 4. Gamma conditioner (interaction); ablate.
 5. Live scenario output: today's zones + P(hold)/P(break) + the tell.
+
+## Data / feature wishlist (Ben, 2026-06-03) — GATED by free ablation tests; build the model first
+- **Cross-index features (FREE — all 4 indexes' mbp-1/mbo/tbbo already on disk):** lead-lag, divergence (SMT as a
+  clean feature, NOT a chart pattern), cross-index OFI / relative strength at the touch. A feature group, ablated.
+- **Correlation regime (FREE):** indexes together (risk-on/macro) vs diverging (idiosyncratic) — a conditioner
+  alongside vol + gamma. Reuse sync_regime (Kritzman absorption).
+- **GEX divergence across the complex (GATED BUY ~$75/underlier EOD):** NDX/RUT/DJX options -> per-index daily GEX,
+  then cross-index gamma correlation/divergence as a conditioner. BUY TRIGGER: only after the FREE single-index
+  SPX-GEX conditioner (Stage 4) shows a pulse. Gamma is 0-for-5 standalone — gate the spend.
+- **Intraday 0DTE OPRA (EXPENSIVE — DEFER):** trade-based intraday GEX is sharper per the research, but the daily
+  0DTE/pinning version already tested null twice. Revisit ONLY if the daily-GEX conditioner clearly earns lift.
+- DISCIPLINE: every item is a CANDIDATE feature judged by ablation vs the single-asset OFI baseline. The model
+  (Stage 2) turns each "should I buy X" into a free test. Don't buy ahead of the test.
