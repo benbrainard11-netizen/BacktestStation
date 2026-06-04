@@ -68,7 +68,10 @@ def main() -> int:
     df = pd.read_parquet(EVENTS)
     df.index = pd.to_datetime(df.index, utc=True)
     df["day"] = df.index.tz_convert("America/New_York").normalize().tz_localize(None)
-    print(f"events n={len(df)} ({df['day'].nunique()} days)\n")
+    lev = pd.get_dummies(df["level"], prefix="lv").astype(float)  # let the model SCORE by level type
+    df = pd.concat([df, lev], axis=1)
+    levcols = list(lev.columns)
+    print(f"events n={len(df)} ({df['day'].nunique()} days); level types: {levcols}\n")
 
     print("(1) THRESHOLD SWEEP -- OFI-only OOS AUC by break threshold (day-block bootstrap):")
     for y in TARGETS:
@@ -81,18 +84,19 @@ def main() -> int:
         m, lo, hi = _boot(te, y, lambda yy, idx: roc_auc_score(yy, p[idx]))
         print(f"   {y} (break_rate {d[y].mean():.2f}, OOS n={len(te)}):  OFI AUC {m:.3f} [{lo:.3f}, {hi:.3f}]")
 
-    print(f"\n(2) CONFLUENCE ABLATION at {PRIMARY} -- does the orthogonal feature add over OFI?")
+    print(f"\n(2) LEVEL-SCORING + CONFLUENCE at {PRIMARY} -- does knowing the LEVEL TYPE (or confluence) add over OFI?")
     d = df.dropna(subset=[PRIMARY])
     tr, te = d[d.index < OOS_START], d[d.index >= OOS_START]
-    sets = {"OFI": ["ofi_signed"], "OFI+confl": ["ofi_signed", "confl"], "confl only (ctrl)": ["confl"]}
+    sets = {"OFI": ["ofi_signed"], "OFI+level": ["ofi_signed"] + levcols,
+            "OFI+confl+level": ["ofi_signed", "confl"] + levcols, "level only (ctrl)": levcols}
     probs = {n: oos_p(tr, te, f, PRIMARY) for n, f in sets.items()}
     for n in sets:
         m, lo, hi = _boot(te, PRIMARY, lambda yy, idx, pp=probs[n]: roc_auc_score(yy, pp[idx]))
         print(f"   {n:18} AUC {m:.3f} [{lo:.3f}, {hi:.3f}]")
-    pf, pb = probs["OFI+confl"], probs["OFI"]
+    pf, pb = probs["OFI+level"], probs["OFI"]
     dm, dlo, dhi = _boot(te, PRIMARY, lambda yy, idx: roc_auc_score(yy, pf[idx]) - roc_auc_score(yy, pb[idx]))
-    verdict = "REAL -- confluence adds (CI excludes 0)" if dlo > 0 else "WITHIN NOISE -- confluence adds nothing"
-    print(f"\n   DELTA (OFI+confl - OFI) = {dm:+.3f} [{dlo:+.3f}, {dhi:+.3f}]  -> {verdict}")
+    verdict = "REAL -- scoring by level type adds (CI excludes 0)" if dlo > 0 else "WITHIN NOISE -- level-scoring adds nothing"
+    print(f"\n   DELTA (OFI+level - OFI) = {dm:+.3f} [{dlo:+.3f}, {dhi:+.3f}]  -> {verdict}")
     return 0
 
 
