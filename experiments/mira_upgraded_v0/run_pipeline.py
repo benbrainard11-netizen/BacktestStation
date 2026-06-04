@@ -41,10 +41,11 @@ def _patched_specs(*, bars, rth, session_date, prior_date, level_families, openi
 ble._build_level_specs = _patched_specs
 
 
-def main(start: str, end: str) -> int:
+def main(start: str, end: str, out_name: str = "events_upgraded.parquet") -> int:
     args = argparse.Namespace(
         symbols=["ES.c.0"], start=start, end=end, data_root=None,
-        level_families=["pdh_pdl", "daily_gap"], opening_range_minutes=30,
+        level_families=["pdh_pdl", "previous_week", "overnight", "premarket", "opening_range", "daily_gap"],
+        opening_range_minutes=30,
         smt_features="", smt_db="", smt_source="db", no_smt_state=True, no_smt_mtf=True,
         volume_profile_db="", no_volume_profile=True, atlas_predictions=None,
         out=str(Path(__file__).parent / "out"), max_events=None,
@@ -55,7 +56,10 @@ def main(start: str, end: str) -> int:
     if events is None or events.empty:
         print("no events produced.")
         return 0
-    print(f"\nEVENTS n={len(events)}")
+    outp = Path(args.out)
+    outp.mkdir(parents=True, exist_ok=True)
+    events.to_parquet(outp / out_name)
+    print(f"\nEVENTS n={len(events)}  -> {outp / out_name}")
     if "level_family" in events.columns:
         print("by family:\n" + events["level_family"].value_counts().to_string())
     outcome_cols = [c for c in events.columns
@@ -72,4 +76,5 @@ def main(start: str, end: str) -> int:
 if __name__ == "__main__":
     s = sys.argv[1] if len(sys.argv) > 1 else "2026-04-06"
     e = sys.argv[2] if len(sys.argv) > 2 else "2026-04-10"
-    raise SystemExit(main(s, e))
+    out_name = sys.argv[3] if len(sys.argv) > 3 else "events_upgraded.parquet"
+    raise SystemExit(main(s, e, out_name))
