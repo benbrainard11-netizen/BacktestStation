@@ -27,10 +27,11 @@ TARGETS = [1.0, 1.5, 2.0, 2.5, 3.0]
 TOPQ = 0.67
 
 
-def wf_gate(df: pd.DataFrame, feats: list[str], target: float):
-    """Walk-forward: per fold train gate on (seq_r@target > 0), select top33% OOS. Returns sel/oos masks + R."""
+def wf_gate(df: pd.DataFrame, feats: list[str], target: float, r=None):
+    """Walk-forward: per fold train gate on (R@target > 0), select top33% OOS. Returns sel/oos masks + R.
+    r defaults to seq_r (sweep-reclaim) but any setup can pass its own per-event R array (setup-agnostic gate)."""
     import lightgbm as lgb
-    r = seq_r(df, target)
+    r = seq_r(df, target) if r is None else np.asarray(r)
     day = df["day"].to_numpy()
     dd = df["day"].to_numpy()
     sel = np.zeros(len(df), bool)
