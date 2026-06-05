@@ -42,6 +42,25 @@ def seq_r_continue(df: pd.DataFrame, target_r: float) -> np.ndarray:
     return np.where(win, target_r, -1.0) - cost_r
 
 
+def _double_manip_opp(df: pd.DataFrame, window_min: int = 120) -> np.ndarray:
+    """TWO-SIDED PURGE: a reclaim preceded by an OPPOSITE-side sweep in the same session within window_min
+    (highs grabbed, then lows -> reverse). The classic both-sides liquidity raid before the real move."""
+    recl = _reclaimed(df)
+    t = pd.to_datetime(df["touch_ts_utc"]).to_numpy()
+    sd = df["session_date"].astype(str).to_numpy()
+    side = df["smt_anchor_side"].to_numpy()
+    out = np.zeros(len(df), bool)
+    for s in np.unique(sd):
+        sel = np.where(sd == s)[0]
+        order = np.argsort(t[sel])
+        so, to, sido = sel[order], t[sel][order], side[sel][order]
+        for k in range(1, len(so)):
+            dt = (to[k] - to[:k]) / np.timedelta64(1, "m")
+            if ((sido[:k] != sido[k]) & (dt > 0) & (dt <= window_min)).any():   # prior OPPOSITE-side sweep
+                out[so[k]] = True
+    return out & recl
+
+
 def _reclaimed(df: pd.DataFrame) -> np.ndarray:
     return df["sweep.5m.ever_reclaimed"].fillna(0).to_numpy() > 0
 
@@ -54,10 +73,37 @@ def _fam(name: str):
     return lambda df: df["level_family"].to_numpy() == name
 
 
+def _double_manip(df: pd.DataFrame, window_min: int = 90) -> np.ndarray:
+    """DOUBLE-MANIPULATION: a reclaim preceded by a SAME-SIDE sweep in the same session within window_min, where
+    THIS sweep runs DEEPER (a 2nd, deeper grab of the same liquidity) -> then reverse. The genuine 2-stage pattern."""
+    recl = _reclaimed(df)
+    t = pd.to_datetime(df["touch_ts_utc"]).to_numpy()
+    sd = df["session_date"].astype(str).to_numpy()
+    side = df["smt_anchor_side"].to_numpy()
+    ext = df["sweep.5m.sweep_extreme_price"].to_numpy(float)
+    out = np.zeros(len(df), bool)
+    for s in np.unique(sd):
+        sel = np.where(sd == s)[0]
+        order = np.argsort(t[sel])
+        so, to, sido, exo = sel[order], t[sel][order], side[sel][order], ext[sel][order]
+        for k in range(1, len(so)):
+            dt = (to[k] - to[:k]) / np.timedelta64(1, "m")
+            prior = (sido[:k] == sido[k]) & (dt > 0) & (dt <= window_min)     # same-side prior sweep in window
+            if not prior.any():
+                continue
+            pe = exo[:k][prior]
+            deeper = (exo[k] < np.nanmin(pe)) if sido[k] == "low" else (exo[k] > np.nanmax(pe))
+            if deeper:                                                        # this grab ran past the 1st
+                out[so[k]] = True
+    return out & recl
+
+
 # registry: name -> (which-events mask, per-event R function). Each setup = its own entry/direction/geometry.
 SETUPS = {
     "sweep_reclaim": (_reclaimed, seq_r),            # REVERSE: reclaim entry (fill-verified)
     "sweep_continue": (_all, seq_r_continue),         # TREND: break entry
     "gap_fill": (_fam("daily_gap"), seq_r),           # TAG entry on gap levels (all touches: fill -> reverse)
     "smt_fill": (_fam("fvg"), seq_r),                 # TAG entry on FVG fills (all touches; SMT gate = the divergence)
+    "double_manip": (_double_manip, seq_r),           # REVERSE after a same-side DEEPER 2nd grab
+    "double_opp": (_double_manip_opp, seq_r),          # REVERSE after a two-sided purge (opp side grabbed first)
 }
