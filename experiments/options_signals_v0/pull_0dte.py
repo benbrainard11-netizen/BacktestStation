@@ -47,13 +47,20 @@ def _parse(j: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def bs_gamma(S, K, T, sig):
+def bs_greeks(S, K, T, sig):
+    """Black-Scholes gamma, vanna (dDelta/dVol), charm (dDelta/dTime) from IV. r=q=0."""
     T = np.maximum(T, 5 / 525600.0)
     sig = np.maximum(sig, 1e-4)
+    sqT = np.sqrt(T)
     with np.errstate(all="ignore"):
-        d1 = (np.log(S / K) + 0.5 * sig * sig * T) / (sig * np.sqrt(T))
-        g = np.exp(-0.5 * d1 * d1) / np.sqrt(2 * np.pi) / (S * sig * np.sqrt(T))
-    return np.where(np.isfinite(g), g, 0.0)
+        d1 = (np.log(S / K) + 0.5 * sig * sig * T) / (sig * sqT)
+        d2 = d1 - sig * sqT
+        phi = np.exp(-0.5 * d1 * d1) / np.sqrt(2 * np.pi)
+        gamma = phi / (S * sig * sqT)
+        vanna = -phi * d2 / sig
+        charm = phi * d2 / (2.0 * T)
+    fin = lambda x: np.where(np.isfinite(x), x, 0.0)  # noqa: E731
+    return fin(gamma), fin(vanna), fin(charm)
 
 
 def pull_day(root: str, day: int):
@@ -69,16 +76,21 @@ def pull_day(root: str, day: int):
         return None
     S, K, iv = (m["underlying_price"].to_numpy(float), m["strike"].to_numpy(float), m["implied_vol"].to_numpy(float))
     T = np.maximum(CLOSE_MS - m["ms_of_day"].to_numpy(float), 60000) / YEAR_MS
-    m["gamma"] = bs_gamma(S, K, T, iv)
+    gam, van, cha = bs_greeks(S, K, T, iv)
+    m["gamma"], m["vanna"], m["charm"] = gam, van, cha
     m = m.sort_values("ms_of_day")
     m["cumvol"] = m.groupby(["strike", "right"])["volume"].cumsum()
     sign = np.where(m["right"].astype(str).str.upper().str[0] == "C", 1.0, -1.0)
-    m["gex"] = m["gamma"] * m["cumvol"] * S * S * 0.01 * MULT * sign
-    m["gw"] = m["gamma"] * m["cumvol"]
+    pos = m["cumvol"].to_numpy(float) * sign * MULT                  # signed dealer position proxy
+    m["gex"] = m["gamma"].to_numpy(float) * pos * S * S * 0.01       # dealer GEX
+    m["vex"] = m["vanna"].to_numpy(float) * pos                      # net dealer vanna exposure
+    m["cex"] = m["charm"].to_numpy(float) * pos                      # net dealer charm exposure
+    m["gw"] = m["gamma"].to_numpy(float) * m["cumvol"].to_numpy(float)
     rows = []
     for ms, grp in m.groupby("ms_of_day"):
         gw = grp.groupby("strike")["gw"].sum()
         rows.append({"date": int(day), "ms_of_day": int(ms), "net_gex": float(grp["gex"].sum()),
+                     "net_vanna": float(grp["vex"].sum()), "net_charm": float(grp["cex"].sum()),
                      "pin": float(gw.idxmax()) if gw.max() > 0 else np.nan,
                      "spot": float(grp["underlying_price"].iloc[0])})
     return pd.DataFrame(rows)
