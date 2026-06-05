@@ -91,6 +91,38 @@ def fvg_levels(session_date: dt.date, bars: pd.DataFrame, tf: str = "15min",
     return specs[-max_n:]
 
 
+def wick_levels(session_date: dt.date, bars: pd.DataFrame, tfs=("30min", "60min"),
+                min_wick_atr: float = 0.6, max_n: int = 3) -> list[LevelSpec]:
+    """Rejection blocks / HTF wicks: a candle with a large REJECTING wick -> its body edge is a reversal level.
+    Upper wick -> resistance at body-top; lower wick -> support at body-bottom. Known at candle close."""
+    if bars is None or bars.empty:
+        return []
+    b = bars.copy()
+    b["ts"] = pd.to_datetime(b["ts_event"], utc=True)
+    open_et = _et_ts(session_date, v0.RTH_START)
+    win = b[(b["ts"] >= open_et - pd.Timedelta(hours=24)) & (b["ts"] < open_et)]
+    if len(win) < 5:
+        return []
+    search = v0._to_utc_timestamp(open_et)
+    specs: list[LevelSpec] = []
+    for tf in tfs:
+        c = win.set_index("ts").resample(tf).agg(
+            o=("open", "first"), h=("high", "max"), l=("low", "min"), cl=("close", "last")).dropna()
+        if len(c) < 3 or not ((c["h"] - c["l"]).median() > 0):
+            continue
+        atr = float((c["h"] - c["l"]).median())
+        for ts_i, r in c.iterrows():
+            bhi, blo, body = max(r.o, r.cl), min(r.o, r.cl), abs(r.cl - r.o)
+            known = v0._to_utc_timestamp(ts_i + pd.Timedelta(tf))
+            if (r.h - bhi) >= min_wick_atr * atr and (r.h - bhi) > body:        # bearish rejection (upper wick)
+                specs.append(_spec("wick", "rejection", bhi, "resistance", "high",
+                                   known=known, search=search, hi=r.h, lo=bhi))
+            if (blo - r.l) >= min_wick_atr * atr and (blo - r.l) > body:        # bullish rejection (lower wick)
+                specs.append(_spec("wick", "rejection", blo, "support", "low",
+                                   known=known, search=search, hi=blo, lo=r.l))
+    return specs[-max_n:]
+
+
 def _rth_by_day() -> dict:
     b = read_bars(symbol=SYM, timeframe="1m", start="2025-04-01", end="2026-06-01")
     b = b.assign(ts_event=pd.to_datetime(b["ts_event"], utc=True))

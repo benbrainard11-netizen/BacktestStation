@@ -22,7 +22,7 @@ for _p in ["live_engine/vendor/bs_mira/mira_v1", "live_engine/vendor/bs_mira/mir
            str(Path(__file__).resolve().parent)]:
     sys.path.insert(0, str(RT / _p) if not _p.startswith(str(RT)) else _p)
 import build_level_events as ble  # noqa: E402  (Mira v1, read-only)
-from level_families import fvg_levels, gap_levels  # noqa: E402  (my new families)
+from level_families import fvg_levels, gap_levels, wick_levels  # noqa: E402  (my new families)
 
 # --- monkeypatch: Mira's spec registry ALSO emits my gap levels (no engine file touched) ---
 _orig_specs = ble._build_level_specs
@@ -37,6 +37,8 @@ def _patched_specs(*, bars, rth, session_date, prior_date, level_families, openi
         specs += gap_levels(session_date, pri, cur)
     if "fvg" in level_families:
         specs += fvg_levels(session_date, bars)
+    if "wick" in level_families:
+        specs += wick_levels(session_date, bars)
     return specs
 
 
@@ -46,7 +48,7 @@ ble._build_level_specs = _patched_specs
 def main(start: str, end: str, out_name: str = "events_upgraded.parquet", symbol: str = "ES.c.0") -> int:
     args = argparse.Namespace(
         symbols=[symbol], start=start, end=end, data_root=None,
-        level_families=["pdh_pdl", "previous_week", "overnight", "premarket", "opening_range", "daily_gap", "fvg"],
+        level_families=["pdh_pdl", "previous_week", "overnight", "premarket", "opening_range", "daily_gap", "fvg", "wick"],
         opening_range_minutes=30,
         smt_features="", smt_db="", smt_source="db", no_smt_state=True, no_smt_mtf=True,
         volume_profile_db="", no_volume_profile=True, atlas_predictions=None,
