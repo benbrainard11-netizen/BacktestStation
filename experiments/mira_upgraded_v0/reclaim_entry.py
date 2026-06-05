@@ -25,10 +25,20 @@ HORIZONS, TARGET_R = ["15m", "60m", "120m"], 2.0
 BUFFER, COST_USD, PTV, MIN_RISK, N_BOOT = 1.0, 30.0, 50.0, 2.0, 1500
 
 
+# per-symbol microstructure: (point_value_$, round-turn cost_$ = 2 ticks + $1.50, tick_size_pts)
+SPEC = {"ES.c.0": (50.0, 26.5, 0.25), "NQ.c.0": (20.0, 11.5, 0.25),
+        "YM.c.0": (5.0, 11.5, 1.0), "RTY.c.0": (50.0, 11.5, 0.10)}
+DEF = (50.0, 26.5, 0.25)
+
+
 def _geom(df: pd.DataFrame, target_r: float):
-    depth = np.maximum(df["sweep.5m.max_through_pts"].to_numpy(float), MIN_RISK)   # level -> extreme = sweep depth
-    risk = depth + BUFFER                                                          # tight stop just past extreme
-    return depth + target_r * risk, COST_USD / (risk * PTV)                        # target (from extreme), cost in R
+    sym = df["symbol"].to_numpy()
+    ptv = np.array([SPEC.get(s, DEF)[0] for s in sym])
+    cost = np.array([SPEC.get(s, DEF)[1] for s in sym])
+    tick = np.array([SPEC.get(s, DEF)[2] for s in sym])
+    depth = np.maximum(df["sweep.5m.max_through_pts"].to_numpy(float), 8 * tick)   # min risk = 8 ticks
+    risk = depth + 2 * tick                                                        # tight stop = extreme + 2 ticks
+    return depth + target_r * risk, cost / (risk * ptv)                            # target (from extreme), cost in R
 
 
 def seq_r(df: pd.DataFrame, target_r: float) -> np.ndarray:
