@@ -30,11 +30,25 @@ MULT = 100                                                          # index opti
 OUT = Path(__file__).resolve().parent / "out"
 
 
-def _get(path: str, **params) -> pd.DataFrame:
+def _raw(path: str, **params) -> dict:
     r = requests.get(f"{BASE}/{path}", params=params, timeout=120)
     r.raise_for_status()
-    j = r.json()
-    return pd.DataFrame(j["response"], columns=j["header"]["format"])
+    return r.json()
+
+
+def _parse_bulk(j: dict) -> pd.DataFrame:
+    """Theta bulk response -> flat rows. Each item = {contract:{strike,right,expiration}, ticks:[[...]]};
+    header.format names the tick columns; strike is in 1/1000 dollars."""
+    fmt = j["header"]["format"]
+    rows = []
+    for item in j.get("response", []):
+        c = item.get("contract", {})
+        strike, right, exp = c.get("strike", 0) / 1000.0, c.get("right"), c.get("expiration")
+        for tick in item.get("ticks", []):
+            d = dict(zip(fmt, tick))
+            d["strike"], d["right"], d["expiration"] = strike, right, exp
+            rows.append(d)
+    return pd.DataFrame(rows)
 
 
 def _ymd(d) -> int:
@@ -45,23 +59,24 @@ def pull_chain(index: str, start, end, max_dte_days: int = 400) -> pd.DataFrame:
     """All EOD greeks + OI for `index` over [start, end], expirations from start out to start+max_dte (skip far LEAPS)."""
     root = ROOT[index]
     s, e = _ymd(start), _ymd(end)
-    exps = _get("list/expirations", root=root)["date"].astype(int)
-    exps = [x for x in exps if x >= s and x <= _ymd(pd.Timestamp(end) + pd.Timedelta(days=max_dte_days))]
-    print(f"  {index}: {len(exps)} expirations in window")
-    parts, shown = [], False
+    all_exps = [int(x) for x in _raw("list/expirations", root=root)["response"]]
+    exps = [x for x in all_exps if x >= s and x <= _ymd(pd.Timestamp(end) + pd.Timedelta(days=max_dte_days))]
+    print(f"  {index}: {len(exps)} expirations in window (max_dte {max_dte_days}d)")
+    parts = []
     for k, exp in enumerate(exps):
         try:
-            g = _get("bulk_hist/option/eod_greeks", root=root, exp=int(exp), start_date=s, end_date=e)
-            oi = _get("bulk_hist/option/open_interest", root=root, exp=int(exp), start_date=s, end_date=e)
+            g = _parse_bulk(_raw("bulk_hist/option/eod_greeks", root=root, exp=exp, start_date=s, end_date=e))
+            oi = _parse_bulk(_raw("bulk_hist/option/open_interest", root=root, exp=exp, start_date=s, end_date=e))
         except Exception:
             continue
-        if not shown:
-            print(f"  greeks cols: {list(g.columns)}\n  OI cols: {list(oi.columns)}")   # verify field names on run 1
-            shown = True
-        keys = [c for c in ("date", "strike", "right") if c in g.columns and c in oi.columns]
-        oicol = "open_interest" if "open_interest" in oi.columns else oi.columns[-1]
-        parts.append(g.merge(oi[keys + [oicol]].rename(columns={oicol: "open_interest"}), on=keys, how="inner"))
-        if k % 50 == 0:
+        if g.empty or oi.empty:
+            continue
+        m = g.merge(oi[["date", "strike", "right", "expiration", "open_interest"]],
+                    on=["date", "strike", "right", "expiration"], how="inner")
+        keep = [c for c in ("date", "strike", "right", "expiration", "gamma", "underlying_price", "open_interest")
+                if c in m.columns]
+        parts.append(m[keep])
+        if k % 40 == 0 and k:
             time.sleep(0.05)
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
@@ -97,8 +112,9 @@ def main() -> int:
     index = sys.argv[1] if len(sys.argv) > 1 else "SPX"
     start = sys.argv[2] if len(sys.argv) > 2 else "2020-01-01"
     end = sys.argv[3] if len(sys.argv) > 3 else "2026-06-01"
+    max_dte = int(sys.argv[4]) if len(sys.argv) > 4 else 400
     print(f"pulling {index} ({ROOT[index]}) {start}..{end} from Theta Terminal ({BASE}) ...")
-    chain = pull_chain(index, start, end)
+    chain = pull_chain(index, start, end, max_dte_days=max_dte)
     if chain.empty:
         print("no data -- is Theta Terminal running + subscribed? check the printed field names vs the code.")
         return 1
