@@ -22,7 +22,15 @@ for _p in ["live_engine/vendor/bs_mira/mira_v1", "live_engine/vendor/bs_mira/mir
            str(Path(__file__).resolve().parent)]:
     sys.path.insert(0, str(RT / _p) if not _p.startswith(str(RT)) else _p)
 import build_level_events as ble  # noqa: E402  (Mira v1, read-only)
-from level_families import fvg_levels, gap_levels, wick_levels  # noqa: E402  (my new families)
+from level_families import fvg_levels, gamma_wall_levels, gap_levels, wick_levels  # noqa: E402  (my new families)
+
+GAMMA_PATH = RT / "experiments" / "options_signals_v0" / "out" / "gamma_walls_2025.parquet"
+try:
+    _gw = pd.read_parquet(GAMMA_PATH)
+    _gw.index = pd.to_datetime(_gw.index).date
+    _GAMMA = _gw["wall"].to_dict()
+except Exception:  # noqa: BLE001
+    _GAMMA = {}
 
 # --- monkeypatch: Mira's spec registry ALSO emits my gap levels (no engine file touched) ---
 _orig_specs = ble._build_level_specs
@@ -39,6 +47,9 @@ def _patched_specs(*, bars, rth, session_date, prior_date, level_families, openi
         specs += fvg_levels(session_date, bars)
     if "wick" in level_families:
         specs += wick_levels(session_date, bars)
+    if "gamma" in level_families and session_date in _GAMMA:
+        cur = rth[rth["session_date"].eq(session_date)].copy()
+        specs += gamma_wall_levels(session_date, float(_GAMMA[session_date]), cur)
     return specs
 
 
@@ -49,6 +60,8 @@ def main(start: str, end: str, out_name: str = "events_upgraded.parquet", symbol
     args = argparse.Namespace(
         symbols=[symbol], start=start, end=end, data_root=None,
         level_families=["pdh_pdl", "previous_week", "overnight", "premarket", "opening_range", "daily_gap", "fvg", "wick"],
+        # "gamma" wiring available but PARKED: walls are magnets near spot -> rarely cleanly swept (~1 event/2wk).
+        # The gamma value is REGIME (pos_gamma sign), not a swept level. See gamma-regime conditioner instead.
         opening_range_minutes=30,
         smt_features="", smt_db="", smt_source="db", no_smt_state=True, no_smt_mtf=True,
         volume_profile_db="", no_volume_profile=True, atlas_predictions=None,
