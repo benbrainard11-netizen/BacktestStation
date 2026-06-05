@@ -1,14 +1,13 @@
-"""ThetaData GEX puller -> daily dealer-gamma levels (zero-gamma flip, call/put walls, total GEX) per index.
+"""ThetaData GEX puller -> daily dealer-gamma levels (zero-gamma, call/put walls, total GEX) per index.
 
-For each trading day: pull EOD per-strike GAMMA (bulk_hist/option/eod_greeks) + OPEN INTEREST, compute dealer GEX
-by strike, derive the zero-gamma flip + the call/put walls. Output: out/gex_levels_<index>.parquet -> feeds the
-cross-asset GEX-divergence test and the gamma-regime conditioner.
+STREAMS expirations and accumulates per-(date,strike) dealer GEX so it stays memory-safe over many years.
+Dealer GEX per option = OI * gamma * spot^2 * 0.01 * 100, calls +, puts - (customers long, dealers short).
+Output: out/gex_levels_<index>.parquet -> feeds the cross-asset GEX-divergence test + the regime conditioner.
 
-REQUIRES: ThetaData sub + Theta Terminal running on 127.0.0.1:25510. The v2 endpoints are confirmed from the docs;
-a couple FIELD NAMES (gamma / underlying_price / open_interest / strike / right / date) may need a tweak on first
-run -- they print on the first call so we can fix in 1 line. The GEX math itself is standard and solid.
+REQUIRES: Theta Terminal running on 127.0.0.1:25510 (v2 API) with an active OPTION.PRO subscription.
+NOTE: zero_gamma is a cumulative-crossing proxy (TODO: proper IV re-pricing); total_gex + walls are exact.
 
-Run: backend/.venv/Scripts/python.exe experiments/options_signals_v0/gex_pull.py SPX 2020-01-01 2026-06-01
+Run: backend/.venv/Scripts/python.exe experiments/options_signals_v0/gex_pull.py SPX 2025-05-01 2026-06-06 [max_dte_days]
 """
 from __future__ import annotations
 
@@ -25,8 +24,8 @@ except ImportError:
     requests = None
 
 BASE = "http://127.0.0.1:25510/v2"
-ROOT = {"SPX": "SPXW", "NDX": "NDXP", "RUT": "RUTW", "DJX": "DJX"}   # weekly/0DTE index-option roots
-MULT = 100                                                          # index option contract multiplier
+ROOT = {"SPX": "SPXW", "NDX": "NDXP", "RUT": "RUTW", "DJX": "DJX"}   # active weekly/0DTE index-option roots
+MULT = 100
 OUT = Path(__file__).resolve().parent / "out"
 
 
@@ -55,14 +54,15 @@ def _ymd(d) -> int:
     return int(pd.Timestamp(d).strftime("%Y%m%d"))
 
 
-def pull_chain(index: str, start, end, max_dte_days: int = 400) -> pd.DataFrame:
-    """All EOD greeks + OI for `index` over [start, end], expirations from start out to start+max_dte (skip far LEAPS)."""
+def pull_gex_levels(index: str, start, end, max_dte_days: int = 90) -> pd.DataFrame:
+    """Stream all expirations active in the window; accumulate dealer GEX by (date, strike); derive daily levels."""
     root = ROOT[index]
     s, e = _ymd(start), _ymd(end)
     all_exps = [int(x) for x in _raw("list/expirations", root=root)["response"]]
     exps = [x for x in all_exps if x >= s and x <= _ymd(pd.Timestamp(end) + pd.Timedelta(days=max_dte_days))]
-    print(f"  {index}: {len(exps)} expirations in window (max_dte {max_dte_days}d)")
-    parts = []
+    print(f"  {index} ({root}): {len(exps)} expirations in window, max_dte {max_dte_days}d")
+    accum = None                              # Series, MultiIndex (date, strike) -> summed dealer GEX
+    spot_d: dict[int, float] = {}
     for k, exp in enumerate(exps):
         try:
             g = _parse_bulk(_raw("bulk_hist/option/eod_greeks", root=root, exp=exp, start_date=s, end_date=e))
@@ -73,35 +73,32 @@ def pull_chain(index: str, start, end, max_dte_days: int = 400) -> pd.DataFrame:
             continue
         m = g.merge(oi[["date", "strike", "right", "expiration", "open_interest"]],
                     on=["date", "strike", "right", "expiration"], how="inner")
-        keep = [c for c in ("date", "strike", "right", "expiration", "gamma", "underlying_price", "open_interest")
-                if c in m.columns]
-        parts.append(m[keep])
-        if k % 40 == 0 and k:
-            time.sleep(0.05)
-    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
-
-
-def gex_levels(chain: pd.DataFrame) -> pd.DataFrame:
-    """Dealer GEX per option (calls +, puts -): OI * gamma * spot^2 * 0.01 * 100. Per day -> total / zero-gamma / walls."""
-    right = chain["right"].astype(str).str.upper().str[0]
-    spot = chain["underlying_price"].to_numpy(float)
-    gex = (chain["open_interest"].to_numpy(float) * chain["gamma"].to_numpy(float)
-           * spot * spot * 0.01 * MULT * np.where(right == "C", 1.0, -1.0))
-    chain = chain.assign(gex=gex)
-    rows = []
-    for d, day in chain.groupby("date"):
-        bs = day.groupby("strike")["gex"].sum().sort_index()
-        if bs.empty:
+        if m.empty:
             continue
+        sp = m["underlying_price"].to_numpy(float)
+        sign = np.where(m["right"].astype(str).str.upper().str[0] == "C", 1.0, -1.0)
+        m = m.assign(gex=m["open_interest"].to_numpy(float) * m["gamma"].to_numpy(float) * sp * sp * 0.01 * MULT * sign)
+        g2 = m.groupby(["date", "strike"])["gex"].sum()
+        accum = g2 if accum is None else accum.add(g2, fill_value=0.0)
+        for dt, spv in zip(m["date"].to_numpy(), sp):
+            spot_d[int(dt)] = float(spv)
+        if k and k % 50 == 0:
+            print(f"   ...{k}/{len(exps)} expirations")
+            time.sleep(0.05)
+    if accum is None or accum.empty:
+        return pd.DataFrame()
+
+    rows = []
+    for dt, grp in accum.groupby(level=0):
+        bs = grp.droplevel(0).sort_index()
         st, cum = bs.index.to_numpy(float), bs.cumsum().to_numpy(float)
         flip = np.nan
-        x = np.where(np.diff(np.sign(cum)) != 0)[0]                                  # zero-gamma = cumulative-GEX flip
+        x = np.where(np.diff(np.sign(cum)) != 0)[0]
         if len(x):
             i = x[0]
             flip = float(np.interp(0, [cum[i], cum[i + 1]], [st[i], st[i + 1]])) if cum[i] != cum[i + 1] else st[i]
-        rows.append({"date": int(d), "total_gex": float(bs.sum()), "zero_gamma": flip,
-                     "call_wall": float(bs.idxmax()), "put_wall": float(bs.idxmin()),
-                     "spot": float(day["underlying_price"].iloc[0])})
+        rows.append({"date": int(dt), "total_gex": float(bs.sum()), "zero_gamma": flip,
+                     "call_wall": float(bs.idxmax()), "put_wall": float(bs.idxmin()), "spot": spot_d.get(int(dt), np.nan)})
     return pd.DataFrame(rows).sort_values("date")
 
 
@@ -110,20 +107,19 @@ def main() -> int:
         print("pip install requests")
         return 1
     index = sys.argv[1] if len(sys.argv) > 1 else "SPX"
-    start = sys.argv[2] if len(sys.argv) > 2 else "2020-01-01"
-    end = sys.argv[3] if len(sys.argv) > 3 else "2026-06-01"
-    max_dte = int(sys.argv[4]) if len(sys.argv) > 4 else 400
-    print(f"pulling {index} ({ROOT[index]}) {start}..{end} from Theta Terminal ({BASE}) ...")
-    chain = pull_chain(index, start, end, max_dte_days=max_dte)
-    if chain.empty:
-        print("no data -- is Theta Terminal running + subscribed? check the printed field names vs the code.")
+    start = sys.argv[2] if len(sys.argv) > 2 else "2025-05-01"
+    end = sys.argv[3] if len(sys.argv) > 3 else "2026-06-06"
+    max_dte = int(sys.argv[4]) if len(sys.argv) > 4 else 90
+    print(f"pulling {index} {start}..{end} from Theta Terminal ({BASE}) ...")
+    lv = pull_gex_levels(index, start, end, max_dte)
+    if lv.empty:
+        print("no data -- is the Terminal running + subscribed?")
         return 1
-    lv = gex_levels(chain)
     OUT.mkdir(parents=True, exist_ok=True)
     p = OUT / f"gex_levels_{index.lower()}.parquet"
     lv.to_parquet(p)
     print(f"\n{len(lv)} days of GEX levels -> {p}")
-    print(lv.tail(3).to_string(index=False))
+    print(lv.tail(4).to_string(index=False))
     return 0
 
 
