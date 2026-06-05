@@ -20,7 +20,7 @@ except Exception:
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from reclaim_entry import boot, seq_r  # noqa: E402
 
-EV = Path(__file__).resolve().parent / "out" / "events_smt.parquet"
+EV = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent / "out" / "events_smt.parquet"
 FOLDS = [(date(2025, 10, 1), date(2025, 12, 1)), (date(2025, 12, 1), date(2026, 2, 1)),
          (date(2026, 2, 1), date(2026, 4, 1)), (date(2026, 4, 1), date(2026, 6, 1))]
 TARGETS = [1.0, 1.5, 2.0, 2.5, 3.0]
