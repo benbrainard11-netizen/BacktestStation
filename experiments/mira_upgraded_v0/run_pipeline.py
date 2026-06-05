@@ -41,9 +41,9 @@ def _patched_specs(*, bars, rth, session_date, prior_date, level_families, openi
 ble._build_level_specs = _patched_specs
 
 
-def main(start: str, end: str, out_name: str = "events_upgraded.parquet") -> int:
+def main(start: str, end: str, out_name: str = "events_upgraded.parquet", symbol: str = "ES.c.0") -> int:
     args = argparse.Namespace(
-        symbols=["ES.c.0"], start=start, end=end, data_root=None,
+        symbols=[symbol], start=start, end=end, data_root=None,
         level_families=["pdh_pdl", "previous_week", "overnight", "premarket", "opening_range", "daily_gap"],
         opening_range_minutes=30,
         smt_features="", smt_db="", smt_source="db", no_smt_state=True, no_smt_mtf=True,
@@ -77,4 +77,5 @@ if __name__ == "__main__":
     s = sys.argv[1] if len(sys.argv) > 1 else "2026-04-06"
     e = sys.argv[2] if len(sys.argv) > 2 else "2026-04-10"
     out_name = sys.argv[3] if len(sys.argv) > 3 else "events_upgraded.parquet"
-    raise SystemExit(main(s, e, out_name))
+    symbol = sys.argv[4] if len(sys.argv) > 4 else "ES.c.0"
+    raise SystemExit(main(s, e, out_name, symbol))

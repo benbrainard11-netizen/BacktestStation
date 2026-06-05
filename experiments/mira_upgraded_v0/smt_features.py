@@ -68,10 +68,11 @@ def _load(sym, start, end) -> Bars:
     return Bars(b[["high", "low", "close"]].astype(float))
 
 
-def build_smt(events: pd.DataFrame) -> pd.DataFrame:
+def build_smt(events: pd.DataFrame, primary: str = "ES.c.0") -> pd.DataFrame:
     s0 = (pd.to_datetime(events["session_date"]).min() - pd.Timedelta(days=6)).strftime("%Y-%m-%d")
     s1 = (pd.to_datetime(events["session_date"]).max() + pd.Timedelta(days=2)).strftime("%Y-%m-%d")
     bars = {s: _load(s, s0, s1) for s in IDX}
+    partners = [s for s in IDX if s != primary]
     rows = []
     for _, e in events.iterrows():
         t_touch, t_ext = pd.Timestamp(e["touch_ts_utc"]), pd.Timestamp(e["sweep.5m.sweep_extreme_ts_utc"])
@@ -82,8 +83,8 @@ def build_smt(events: pd.DataFrame) -> pd.DataFrame:
             continue
         for refname, r0, r1 in [("pday", t_touch.normalize() - pd.Timedelta(days=1), t_touch.normalize()),
                                 ("h6", t_touch - pd.Timedelta(hours=6), t_touch)]:
-            _, es_ref_t = bars["ES.c.0"].extreme(r0, r1, side)
-            for P in PARTNERS:
+            _, es_ref_t = bars[primary].extreme(r0, r1, side)
+            for P in partners:
                 tag = P.split(".")[0].lower()
                 p_ref, p_ref_t = bars[P].extreme(r0, r1, side)
                 p_in, _ = bars[P].extreme(t_touch, t_ext, side)
@@ -104,9 +105,10 @@ def build_smt(events: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> int:
     ev_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_EV
+    primary = sys.argv[2] if len(sys.argv) > 2 else "ES.c.0"
+    out_path = Path(sys.argv[3]) if len(sys.argv) > 3 else ev_path.with_name("events_smt.parquet")
     ev = pd.read_parquet(ev_path)
-    out = build_smt(ev)
-    out_path = ev_path.with_name("events_smt.parquet")
+    out = build_smt(ev, primary)
     out.to_parquet(out_path)
     sc = [c for c in out.columns if c.startswith("smt.")]
     print(f"events {len(out)}  +{len(sc)} SMT features -> {out_path.name}")
