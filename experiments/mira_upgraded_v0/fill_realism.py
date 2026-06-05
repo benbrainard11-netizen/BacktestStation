@@ -42,16 +42,22 @@ def tick_all(e, ts, px, sym):
     if len(cross) == 0:
         return None
     wa = w[cross[0]:]                                                       # from the reclaim entry forward
-    depth = max(abs(level - extreme), 8 * tick)
+    entry = float(wa[0]) + (tick if long else -tick)                        # honest fill: crossing print + 1 tick slippage
     res = {}
     for buf in BUFS:
-        risk = depth + buf * tick
         if long:
-            stop, target = extreme - buf * tick, level + TARGET * risk
+            stop = extreme - buf * tick
+            risk = entry - stop
+            target = entry + TARGET * risk
             s, t = np.where(wa <= stop)[0], np.where(wa >= target)[0]
         else:
-            stop, target = extreme + buf * tick, level - TARGET * risk
+            stop = extreme + buf * tick
+            risk = stop - entry
+            target = entry - TARGET * risk
             s, t = np.where(wa >= stop)[0], np.where(wa <= target)[0]
+        if risk <= 0:
+            res[buf] = (np.nan, "badrisk")
+            continue
         si = s[0] if len(s) else 10**9
         ti = t[0] if len(t) else 10**9
         if si <= ti and si < 10**9:
@@ -60,7 +66,7 @@ def tick_all(e, ts, px, sym):
             fill, o = target, "target"
         else:
             fill, o = float(wa[-1]), "timeout"
-        pnl = (fill - level) if long else (level - fill)
+        pnl = (fill - entry) if long else (entry - fill)
         res[buf] = (pnl / risk - cost / (risk * ptv), o)
     return res
 
