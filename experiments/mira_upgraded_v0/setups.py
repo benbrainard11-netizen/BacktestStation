@@ -50,8 +50,14 @@ def _all(df: pd.DataFrame) -> np.ndarray:
     return np.ones(len(df), bool)
 
 
-# registry: name -> (which-events mask, per-event R function)
+def _fam(name: str):
+    return lambda df: df["level_family"].to_numpy() == name
+
+
+# registry: name -> (which-events mask, per-event R function). Each setup = its own entry/direction/geometry.
 SETUPS = {
-    "sweep_reclaim": (_reclaimed, seq_r),          # REVERSE (fill-verified)
-    "sweep_continue": (_all, seq_r_continue),       # TREND
+    "sweep_reclaim": (_reclaimed, seq_r),            # REVERSE: reclaim entry (fill-verified)
+    "sweep_continue": (_all, seq_r_continue),         # TREND: break entry
+    "gap_fill": (_fam("daily_gap"), seq_r),           # TAG entry on gap levels (all touches: fill -> reverse)
+    "smt_fill": (_fam("fvg"), seq_r),                 # TAG entry on FVG fills (all touches; SMT gate = the divergence)
 }

@@ -39,11 +39,14 @@ def main() -> int:
         cells = []
         for name, (mask_fn, r_fn) in SETUPS.items():
             sub = df0[mask_fn(df0)].reset_index(drop=True)
-            if len(sub) < 200:
-                cells.append(f"{name}: thin")
+            if len(sub) < 130:
+                cells.append(f"{name}: thin({len(sub)})")
                 continue
             r = r_fn(sub, TARGET)
             sel, oos, _, day = wf_gate(sub, feats, TARGET, r=r)
+            if oos.sum() < 10 or sel.sum() < 5:
+                cells.append(f"{name}: thin-folds({len(sub)})")
+                continue
             bm, bl, bh = boot(r[oos], day[oos])
             gm, gl, gh = boot(r[sel], day[sel])
             flag = "*" if gl > 0 else " "
