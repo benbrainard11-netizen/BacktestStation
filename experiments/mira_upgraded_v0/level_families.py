@@ -61,6 +61,36 @@ def gamma_wall_levels(session_date: dt.date, wall: float, current_rth: pd.DataFr
     return [_spec("gamma_wall", "gex_wall", wall, side, anchor, known=known, search=search, hi=wall, lo=wall)]
 
 
+def fvg_levels(session_date: dt.date, bars: pd.DataFrame, tf: str = "15min",
+               lookback_h: int = 18, max_n: int = 6) -> list[LevelSpec]:
+    """3-candle FVG (imbalance) zones as reversal levels: level = FAR edge (full-fill point), known when the
+    3rd candle closes. Only FVGs formed in the lookback before today's RTH open. Price sweeps in to fill -> reclaim."""
+    if bars is None or bars.empty:
+        return []
+    b = bars.copy()
+    b["ts"] = pd.to_datetime(b["ts_event"], utc=True)
+    open_et = _et_ts(session_date, v0.RTH_START)
+    win = b[(b["ts"] >= open_et - pd.Timedelta(hours=lookback_h)) & (b["ts"] < open_et)]
+    if len(win) < 5:
+        return []
+    c = win.set_index("ts").resample(tf).agg(h=("high", "max"), l=("low", "min")).dropna()
+    if len(c) < 3:
+        return []
+    hh, ll, ts = c["h"].to_numpy(float), c["l"].to_numpy(float), c.index
+    search = v0._to_utc_timestamp(open_et)
+    specs: list[LevelSpec] = []
+    for i in range(1, len(c) - 1):
+        if ll[i + 1] > hh[i - 1]:                      # bullish FVG -> demand void below; far edge = bottom
+            far, near, side, anchor = hh[i - 1], ll[i + 1], "support", "low"
+        elif hh[i + 1] < ll[i - 1]:                    # bearish FVG -> supply void above; far edge = top
+            far, near, side, anchor = ll[i - 1], hh[i + 1], "resistance", "high"
+        else:
+            continue
+        specs.append(_spec("fvg", "fvg_fill", far, side, anchor, known=v0._to_utc_timestamp(ts[i + 1]),
+                           search=search, hi=max(near, far), lo=min(near, far)))
+    return specs[-max_n:]
+
+
 def _rth_by_day() -> dict:
     b = read_bars(symbol=SYM, timeframe="1m", start="2025-04-01", end="2026-06-01")
     b = b.assign(ts_event=pd.to_datetime(b["ts_event"], utc=True))
