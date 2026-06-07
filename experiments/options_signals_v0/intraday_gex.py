@@ -13,6 +13,7 @@ Run: backend/.venv/Scripts/python.exe experiments/options_signals_v0/intraday_ge
 """
 from __future__ import annotations
 
+import bisect
 import sys
 from pathlib import Path
 
@@ -73,11 +74,9 @@ def load_eod_chain(index: str, start, end, dte: int) -> pd.DataFrame:
     if not parts:
         return pd.DataFrame()
     df = pd.concat(parts, ignore_index=True)
-    df = df[df["expiration"].astype(int) >= df["date"].astype(int)].copy()          # drop expired
+    df = df[df["expiration"].astype(int) >= df["date"].astype(int)].copy()          # drop already-expired snapshots
     df["sign"] = np.where(df["right"].astype(str).str.upper().str[0] == "C", 1.0, -1.0)
-    de = pd.to_datetime(df["expiration"].astype(int).astype(str), format="%Y%m%d")
-    dd = pd.to_datetime(df["date"].astype(int).astype(str), format="%Y%m%d")
-    df["cal_days"] = (de - dd).dt.days.clip(lower=0).to_numpy(float)
+    df["exp_dt"] = pd.to_datetime(df["expiration"].astype(int).astype(str), format="%Y%m%d")  # days-to-exp set per trade-date
     return df
 
 
@@ -102,16 +101,23 @@ def intraday_gex(index: str, start, end, dte: int) -> pd.DataFrame:
     if not spf.exists():
         spf = OUT / f"dte0_intraday_{index.lower()}.parquet"       # fallback: 0DTE-chain-derived spot
     sp = pd.read_parquet(spf)[["date", "ms_of_day", "spot"]]
+    cdates = sorted(int(x) for x in chain["date"].unique())
+    cby = {int(d): g for d, g in chain.groupby("date")}
     rows = []
-    for D, cg in chain.groupby("date"):
-        sd = sp[sp["date"].astype(int) == int(D)]
-        if sd.empty:
+    for D in sorted(int(x) for x in sp["date"].unique()):
+        j = bisect.bisect_left(cdates, D) - 1                                       # most recent EOD chain BEFORE D
+        if j < 0:                                                                   # no prior-day chain -> skip (no lookahead)
             continue
+        cg = cby[cdates[j]]                                                         # PRIOR-day OI/IV (known intraday)
+        cg = cg[cg["exp_dt"] >= pd.Timestamp(str(D))]                               # not expired by the trade date
+        if cg.empty:
+            continue
+        sd = sp[sp["date"].astype(int) == D]
         K = cg["strike"].to_numpy(float)[:, None]
         OI = cg["open_interest"].to_numpy(float)[:, None]
         iv = cg["implied_vol"].to_numpy(float)[:, None]
         sgn = cg["sign"].to_numpy(float)[:, None]
-        cal = cg["cal_days"].to_numpy(float)[:, None]
+        cal = (cg["exp_dt"] - pd.Timestamp(str(D))).dt.days.clip(lower=0).to_numpy(float)[:, None]
         S = sd["spot"].to_numpy(float)[None, :]                                     # (1, n_min)
         ms = sd["ms_of_day"].to_numpy(float)[None, :]
         T = (cal + np.clip((CLOSE_MS - ms) / DAY_MS, 0, 1)) / 365.0                 # (n_contract, n_min)
@@ -121,9 +127,10 @@ def intraday_gex(index: str, start, end, dte: int) -> pd.DataFrame:
         prof = np.zeros((len(su), gex.shape[1]))
         np.add.at(prof, np.searchsorted(su, K[:, 0]), gex)                          # collapse to strike profile
         zg = _zero_gamma(su, prof)
-        for j in range(gex.shape[1]):
-            rows.append({"date": int(D), "ms_of_day": int(sd["ms_of_day"].to_numpy()[j]),
-                         "net_gex": float(net[j]), "zero_gamma": float(zg[j]), "spot": float(S[0, j])})
+        msv = sd["ms_of_day"].to_numpy()
+        for jx in range(gex.shape[1]):
+            rows.append({"date": D, "ms_of_day": int(msv[jx]),
+                         "net_gex": float(net[jx]), "zero_gamma": float(zg[jx]), "spot": float(S[0, jx])})
     return pd.DataFrame(rows)
 
 

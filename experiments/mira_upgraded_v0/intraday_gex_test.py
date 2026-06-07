@@ -27,6 +27,28 @@ GEX = Path(__file__).resolve().parents[1] / "options_signals_v0" / "out"
 TARGET = 3.0
 
 
+def _diff_boot(d: pd.DataFrame, name: str, a_mask, b_mask, nb: int = 3000) -> None:
+    """Day-block bootstrap of mean(R|a) - mean(R|b): is the split itself significant (not two noisy groups)?"""
+    r = d["r"].to_numpy()
+    days = d["day"].to_numpy()
+    a = a_mask.fillna(False).to_numpy()
+    b = b_mask.fillna(False).to_numpy()
+    uniq = np.unique(days)
+    di = {x: np.where(days == x)[0] for x in uniq}
+    rng = np.random.default_rng(0)
+    diffs = []
+    for _ in range(nb):
+        idx = np.concatenate([di[x] for x in rng.choice(uniq, len(uniq), True)])
+        ra, rb = r[idx][a[idx]], r[idx][b[idx]]
+        if len(ra) > 5 and len(rb) > 5:
+            diffs.append(ra.mean() - rb.mean())
+    diffs = np.array(diffs)
+    obs = r[a].mean() - r[b].mean()
+    lo, hi = np.percentile(diffs, 5), np.percentile(diffs, 95)
+    flag = "  <== clears 0" if lo > 0 else ("  <== clears 0 (neg)" if hi < 0 else "  (straddles 0)")
+    print(f"   {name:28} {obs:+.2f}  90% CI [{lo:+.2f},{hi:+.2f}]{flag}")
+
+
 def _split(d: pd.DataFrame, label: str, groups) -> None:
     print(label)
     for name, mask in groups:
@@ -68,6 +90,10 @@ def main() -> int:
     print()
     _split(d, "by spot vs zero-gamma flip:",
            [("above flip (>0)", d["zg_side"] > 0), ("below flip (<0)", d["zg_side"] < 0)])
+
+    print("\nday-block bootstrap of the DIFFERENCE (is the split real, not two noisy groups?):")
+    _diff_boot(d, "short-gamma - long-gamma", d["g_net_gex"] < 0, d["g_net_gex"] >= 0)
+    _diff_boot(d, "below-flip - above-flip", d["zg_side"] < 0, d["zg_side"] > 0)
 
     # decision test: does intraday GEX add to the proven SMT-TF gate?
     print("\nSMT-TF gate, with vs without intraday-GEX features (walk-forward OOS):")
