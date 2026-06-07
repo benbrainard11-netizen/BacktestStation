@@ -124,13 +124,20 @@ def intraday_gex(index: str, start, end, dte: int) -> pd.DataFrame:
         gex = OI * bs_gamma(S, K, T, iv) * S * S * 0.01 * MULT * sgn                # signed dealer GEX
         net = gex.sum(axis=0)
         su = np.unique(K[:, 0])
+        idx = np.searchsorted(su, K[:, 0])
         prof = np.zeros((len(su), gex.shape[1]))
-        np.add.at(prof, np.searchsorted(su, K[:, 0]), gex)                          # collapse to strike profile
+        np.add.at(prof, idx, gex)                                                   # signed net dealer gamma / strike
+        aprof = np.zeros((len(su), gex.shape[1]))
+        np.add.at(aprof, idx, np.abs(gex))                                          # total gamma concentration / strike
         zg = _zero_gamma(su, prof)
+        cw = su[np.argmax(prof, axis=0)]                                            # call wall  (max +net gamma)
+        pw = su[np.argmin(prof, axis=0)]                                            # put wall   (max -net gamma)
+        pin = su[np.argmax(aprof, axis=0)]                                          # max total gamma strike (the pin)
         msv = sd["ms_of_day"].to_numpy()
         for jx in range(gex.shape[1]):
-            rows.append({"date": D, "ms_of_day": int(msv[jx]),
-                         "net_gex": float(net[jx]), "zero_gamma": float(zg[jx]), "spot": float(S[0, jx])})
+            rows.append({"date": D, "ms_of_day": int(msv[jx]), "net_gex": float(net[jx]),
+                         "zero_gamma": float(zg[jx]), "call_wall": float(cw[jx]), "put_wall": float(pw[jx]),
+                         "pin": float(pin[jx]), "spot": float(S[0, jx])})
     return pd.DataFrame(rows)
 
 
