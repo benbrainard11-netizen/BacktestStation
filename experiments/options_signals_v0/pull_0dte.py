@@ -67,11 +67,8 @@ def bs_greeks(S, K, T, sig):
 
 
 def pull_day(root: str, day: int, ivl: int = 60000):
-    try:
-        g = _fetch("bulk_hist/option/greeks", root=root, exp=day, start_date=day, end_date=day, ivl=ivl)
-        v = _fetch("bulk_hist/option/ohlc", root=root, exp=day, start_date=day, end_date=day, ivl=ivl)
-    except Exception:
-        return None
+    g = _fetch("bulk_hist/option/greeks", root=root, exp=day, start_date=day, end_date=day, ivl=ivl)
+    v = _fetch("bulk_hist/option/ohlc", root=root, exp=day, start_date=day, end_date=day, ivl=ivl)  # feed-down raises
     if g.empty or v.empty:
         return None
     m = g.merge(v[["ms_of_day", "strike", "right", "volume"]], on=["ms_of_day", "strike", "right"], how="inner")
@@ -111,9 +108,16 @@ def main() -> int:
     s, e = int(pd.Timestamp(start).strftime("%Y%m%d")), int(pd.Timestamp(end).strftime("%Y%m%d"))
     days = [x for x in _exps(root) if s <= x <= e]
     print(f"{index} ({root}): {len(days)} 0DTE days {start}..{end}  (ivl={ivl}ms)")
-    parts, t0 = [], time.time()
+    parts, t0, fails = [], time.time(), 0
     for k, day in enumerate(days):
-        d = pull_day(root, day, ivl)
+        try:
+            d = pull_day(root, day, ivl)
+        except Exception as ex:                                  # loud breaker -- no silent feed-down skips
+            fails += 1
+            if fails >= 8:
+                raise RuntimeError(f"aborting: {fails} consecutive failures near {day} (feed down? restart + resume): {ex}")
+            continue
+        fails = 0
         if d is not None:
             parts.append(d)
         if k and k % 20 == 0:
