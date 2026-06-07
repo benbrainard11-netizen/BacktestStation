@@ -51,12 +51,17 @@ def load_eod_chain(index: str, start, end, dte: int) -> pd.DataFrame:
     exps = [x for x in _exps(root) if s <= x <= emax]
     print(f"  {index} ({root}): {len(exps)} expirations span the window (<= {dte}d out)")
     parts = []
+    fails = 0
     for k, exp in enumerate(exps):
         try:
             g = _fetch("bulk_hist/option/eod_greeks", root=root, exp=exp, start_date=s, end_date=e)
             oi = _fetch("bulk_hist/option/open_interest", root=root, exp=exp, start_date=s, end_date=e)
-        except Exception:
+        except Exception as ex:                                          # loud breaker -- no silent 200-day skips
+            fails += 1
+            if fails >= 8:
+                raise RuntimeError(f"aborting: {fails} consecutive fetch failures near exp {exp} (feed down?): {ex}")
             continue
+        fails = 0
         if g.empty or oi.empty:
             continue
         m = g.merge(oi[["date", "strike", "right", "expiration", "open_interest"]],
@@ -93,7 +98,10 @@ def intraday_gex(index: str, start, end, dte: int) -> pd.DataFrame:
     chain = load_eod_chain(index, start, end, dte)
     if chain.empty:
         return pd.DataFrame()
-    sp = pd.read_parquet(OUT / f"dte0_intraday_{index.lower()}.parquet")[["date", "ms_of_day", "spot"]]
+    spf = OUT / f"spot_intraday_{index.lower()}.parquet"           # lean one-contract spot (preferred)
+    if not spf.exists():
+        spf = OUT / f"dte0_intraday_{index.lower()}.parquet"       # fallback: 0DTE-chain-derived spot
+    sp = pd.read_parquet(spf)[["date", "ms_of_day", "spot"]]
     rows = []
     for D, cg in chain.groupby("date"):
         sd = sp[sp["date"].astype(int) == int(D)]

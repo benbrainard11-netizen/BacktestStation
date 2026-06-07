@@ -49,7 +49,7 @@ def main() -> int:
 
     g = pd.read_parquet(GEX / "intraday_gex_spx.parquet")
     g["gdt"] = (pd.to_datetime(g["date"].astype(int).astype(str), format="%Y%m%d")
-                + pd.to_timedelta(g["ms_of_day"].astype(int), unit="ms"))      # naive ET
+                + pd.to_timedelta(g["ms_of_day"].astype(int), unit="ms")).astype("datetime64[ns]")  # naive ET
     g = g.sort_values("gdt")
     # latest-known GEX at/just-before the entry minute -- strictly no-lookahead, robust to 5-min spacing
     d = pd.merge_asof(df.sort_values("t"), g[["gdt", "net_gex", "zero_gamma", "spot"]],
