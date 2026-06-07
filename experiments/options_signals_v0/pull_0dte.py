@@ -66,10 +66,10 @@ def bs_greeks(S, K, T, sig):
     return fin(gamma), fin(vanna), fin(charm)
 
 
-def pull_day(root: str, day: int):
+def pull_day(root: str, day: int, ivl: int = 60000):
     try:
-        g = _fetch("bulk_hist/option/greeks", root=root, exp=day, start_date=day, end_date=day, ivl=60000)
-        v = _fetch("bulk_hist/option/ohlc", root=root, exp=day, start_date=day, end_date=day, ivl=60000)
+        g = _fetch("bulk_hist/option/greeks", root=root, exp=day, start_date=day, end_date=day, ivl=ivl)
+        v = _fetch("bulk_hist/option/ohlc", root=root, exp=day, start_date=day, end_date=day, ivl=ivl)
     except Exception:
         return None
     if g.empty or v.empty:
@@ -107,12 +107,13 @@ def main() -> int:
     start = sys.argv[2] if len(sys.argv) > 2 else "2025-05-01"
     end = sys.argv[3] if len(sys.argv) > 3 else "2026-06-06"
     root = ROOT[index]
+    ivl = int(sys.argv[4]) if len(sys.argv) > 4 else 60000
     s, e = int(pd.Timestamp(start).strftime("%Y%m%d")), int(pd.Timestamp(end).strftime("%Y%m%d"))
     days = [x for x in _exps(root) if s <= x <= e]
-    print(f"{index} ({root}): {len(days)} 0DTE days {start}..{end}")
+    print(f"{index} ({root}): {len(days)} 0DTE days {start}..{end}  (ivl={ivl}ms)")
     parts, t0 = [], time.time()
     for k, day in enumerate(days):
-        d = pull_day(root, day)
+        d = pull_day(root, day, ivl)
         if d is not None:
             parts.append(d)
         if k and k % 20 == 0:
