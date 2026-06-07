@@ -39,6 +39,9 @@ def build() -> pd.DataFrame:
         ["date", "ms_of_day", "ngN", "zero_gamma", "call_wall", "put_wall", "pinN"]]
     df = (d0.merge(nt, on=["date", "ms_of_day"], how="inner")
           .sort_values(["date", "ms_of_day"]).reset_index(drop=True))
+    ivp = GEX / "iv_intraday_spx.parquet"                                 # vol surface (level + skew), optional
+    if ivp.exists():
+        df = df.merge(pd.read_parquet(ivp)[["date", "ms_of_day", "atm_iv", "skew"]], on=["date", "ms_of_day"], how="left")
     df["atr"] = df["date"].map(_atr(df[["date", "spot"]]))
     df = df[df["atr"] > 0].reset_index(drop=True)
 
@@ -54,6 +57,11 @@ def build() -> pd.DataFrame:
         for k, b in BARS.items():
             df[f"d{col}_{k}"] = df.groupby("date")[col].diff(b) / sc      # Δ over last k min, normalized, within-day
 
+    if "atm_iv" in df.columns:                                          # vol-surface flow (already in vol units)
+        for col in ["atm_iv", "skew"]:
+            for k, b in BARS.items():
+                df[f"d{col}_{k}"] = df.groupby("date")[col].diff(b)
+        df["iv_open"] = df["atm_iv"] - df.groupby("date")["atm_iv"].transform("first")   # IV move since the open
     df["tod"] = df["ms_of_day"] / 3_600_000.0
     df["min_to_close"] = (CLOSE_MS - df["ms_of_day"]) / 60_000.0
     for k, b in BARS.items():

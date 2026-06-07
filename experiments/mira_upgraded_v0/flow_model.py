@@ -30,6 +30,7 @@ BASE_VOL = BASE + ["rv_15", "rv_30", "rv_60"]                  # + recent realiz
 FLOW = ["d_zg", "d_pin0", "d_pinN", "d_cw", "d_pw", "ng0_sign", "ngN_sign", "ng0_n", "nv_n", "nc_n", "ngN_n",
         "dng0_15", "dng0_30", "dng0_60", "dnv_15", "dnv_30", "dnv_60", "dnc_15", "dnc_30", "dnc_60",
         "dngN_15", "dngN_30", "dngN_60"]
+IV = ["atm_iv", "skew", "datm_iv_15", "datm_iv_30", "datm_iv_60", "dskew_15", "dskew_30", "dskew_60", "iv_open"]
 
 
 def wf(df: pd.DataFrame, feats: list[str], target: str) -> np.ndarray:
@@ -88,13 +89,15 @@ def main() -> int:
     print(f"=== DIRECTION (target {TARGET}) -- OOS corr + sign-following sim (ATR, costed) ===")
     evalp("price/time only", df, wf(df, BASE, TARGET), TARGET)
     evalp("+ options flow", df, wf(df, BASE + FLOW, TARGET), TARGET)
-    evalp("options flow ONLY", df, wf(df, FLOW, TARGET), TARGET)
+    evalp("+ flow + IV surface", df, wf(df, BASE + FLOW + IV, TARGET), TARGET)
 
     vt = "fwdrange_60"
-    print(f"\n=== VOLATILITY (target {vt}) -- the natural GEX hypothesis; OOS corr + hi/lo-3rd realized range ===")
-    vol_eval("price/time/recentvol", df, wf(df, BASE_VOL, vt), vt)
+    print(f"\n=== VOLATILITY (target {vt}) -- OOS corr + hi/lo-3rd realized range ===")
+    vol_eval("price/recentvol", df, wf(df, BASE_VOL, vt), vt)
     vol_eval("+ options flow", df, wf(df, BASE_VOL + FLOW, vt), vt)
-    vol_eval("options flow ONLY", df, wf(df, FLOW, vt), vt)
+    vol_eval("+ IV surface (no flow)", df, wf(df, BASE_VOL + IV, vt), vt)
+    vol_eval("+ flow + IV surface", df, wf(df, BASE_VOL + FLOW + IV, vt), vt)
+    vol_eval("IV surface ONLY", df, wf(df, IV, vt), vt)
     print("\nREAD: vol -- '+flow' corr clearly > 'price/recentvol' (and hi/lo-3rd range spread widens) = the gamma flow "
           "predicts forward range beyond vol-clustering. That's the regime signal (expansion vs contraction) for setup "
           "selection -- the usable form of the options data, even though direction is null.")
