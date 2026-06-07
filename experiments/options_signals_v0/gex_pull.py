@@ -23,6 +23,9 @@ try:
 except ImportError:
     requests = None
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from theta_store import expirations as _exps, fetch as _fetch  # noqa: E402  (local raw-cache layer on D:)
+
 BASE = "http://127.0.0.1:25510/v2"
 ROOT = {"SPX": "SPXW", "NDX": "NDXP", "RUT": "RUTW", "DJX": "DJX"}   # active weekly/0DTE index-option roots
 MULT = 100
@@ -58,15 +61,15 @@ def pull_gex_levels(index: str, start, end, max_dte_days: int = 90) -> pd.DataFr
     """Stream all expirations active in the window; accumulate dealer GEX by (date, strike); derive daily levels."""
     root = ROOT[index]
     s, e = _ymd(start), _ymd(end)
-    all_exps = [int(x) for x in _raw("list/expirations", root=root)["response"]]
+    all_exps = _exps(root)
     exps = [x for x in all_exps if x >= s and x <= _ymd(pd.Timestamp(end) + pd.Timedelta(days=max_dte_days))]
     print(f"  {index} ({root}): {len(exps)} expirations in window, max_dte {max_dte_days}d")
     accum = None                              # Series, MultiIndex (date, strike) -> summed dealer GEX
     spot_d: dict[int, float] = {}
     for k, exp in enumerate(exps):
         try:
-            g = _parse_bulk(_raw("bulk_hist/option/eod_greeks", root=root, exp=exp, start_date=s, end_date=e))
-            oi = _parse_bulk(_raw("bulk_hist/option/open_interest", root=root, exp=exp, start_date=s, end_date=e))
+            g = _fetch("bulk_hist/option/eod_greeks", root=root, exp=exp, start_date=s, end_date=e)
+            oi = _fetch("bulk_hist/option/open_interest", root=root, exp=exp, start_date=s, end_date=e)
         except Exception:
             continue
         if g.empty or oi.empty:
