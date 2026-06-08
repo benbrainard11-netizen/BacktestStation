@@ -65,10 +65,18 @@ def _r2_status() -> dict:
         client, bucket = make_s3_client()
         obj = client.get_object(Bucket=bucket, Key="_inventory.json")
         inv = json.loads(obj["Body"].read())
+        parts = inv.get("partitions")
+        n_parts = (
+            len(parts)
+            if isinstance(parts, list)
+            else parts
+            if isinstance(parts, int)
+            else len(inv.get("files") or [])
+        )
         return {
             "bucket": bucket,
             "generated_at": inv.get("generated_at"),
-            "partitions": inv.get("partitions") or len(inv.get("files", []) or []),
+            "partitions": n_parts,
         }
     except Exception as exc:  # noqa: BLE001
         return {"error": f"{type(exc).__name__}: {exc}"}
