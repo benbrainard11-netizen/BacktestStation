@@ -112,4 +112,4 @@ def test_schema_version_string() -> None:
 
 
 def test_all_schemas_registered() -> None:
-    assert set(SCHEMA_BY_NAME.keys()) == {"tbbo", "mbp-1", "ohlcv-1m"}
+    assert set(SCHEMA_BY_NAME.keys()) == {"tbbo", "mbp-1", "mbo", "ohlcv-1m"}
