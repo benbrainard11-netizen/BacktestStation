@@ -14,6 +14,7 @@ If you're adding a new schema, edit this file FIRST, get the shape right on pape
 ├── processed/                              derived parquet, regenerable from raw
 │   ├── tbbo/symbol={X}/date={Y}/part-000.parquet
 │   ├── mbp-1/symbol={X}/date={Y}/part-000.parquet
+│   ├── mbo/symbol={X}/date={Y}/part-000.parquet
 │   └── bars/timeframe=1m/symbol={X}/date={Y}/part-000.parquet
 ├── manifests/                              per-file metadata + integrity hashes
 └── logs/
@@ -61,7 +62,7 @@ Every parquet file embeds a `bs.*` metadata block in its footer (see `parquet_mi
 | `bs.generator.version` | bumped on producer-behavior changes (currently `2`) |
 | `bs.generator.timestamp` | when this parquet was written |
 | `bs.row_count` | row count for fast list-without-load |
-| `bs.schema.name` | one of `tbbo`, `mbp-1`, `ohlcv-1m` |
+| `bs.schema.name` | one of `tbbo`, `mbp-1`, `mbo`, `ohlcv-1m` |
 | `bs.schema.version` | bumped on schema changes (currently `1`) |
 | `bs.ts_event.min` | first ts in the file (ISO-format) |
 | `bs.ts_event.max` | last ts in the file |
@@ -119,6 +120,10 @@ Readers (`app.data.read_*`) check `bs.schema.version` and refuse to load future-
 
 **Gotcha:** the bid_px/ask_px columns are the book state AFTER the event in MBP-1 (vs at-the-trade in TBBO). Don't conflate them across schemas.
 
+## Schema: MBO (Market By Order)
+
+`bs.schema.name = "mbo"`. Every **order-level** event — individual add / modify / cancel / trade — the strict superset that MBP-1 and TBBO aggregate away. This is the schema for order-flow features that need per-order adds/cancels (e.g. the live gate's `bookproxy` thin-side cancel/add signals), which cannot be reconstructed from aggregate L1. Conventions match MBP-1 (`ts_event`/`ts_recv`/`symbol`/`action`/`side`/`price`/`size`/`flags`/`sequence`) plus a per-order `order_id`. The exact pinned columns live in `backend/app/data/schema.py` (`SCHEMA_BY_NAME["mbo"]`). Top-of-book L1 is reconstructable from MBO, so MBO can stand in for MBP-1 wherever only the BBO is needed.
+
 ## Schema: OHLCV-1m bars
 
 `bs.schema.name = "ohlcv-1m"`. Derived from MBP-1 or TBBO trade rows by `parquet_mirror._compute_1m_bars`.
@@ -169,3 +174,4 @@ Schema changes:
 | Date | From → To | Schemas affected | What changed |
 |---|---|---|---|
 | 2026-04-25 | n/a → `1` | tbbo, mbp-1, ohlcv-1m | Initial spec doc; pins existing v1 schemas |
+| 2026-06-08 | n/a | mbo | Added MBO (market-by-order) schema — order-level events for order-flow features; superset of MBP-1, L1 reconstructable. Columns pinned in `schema.py`. |
