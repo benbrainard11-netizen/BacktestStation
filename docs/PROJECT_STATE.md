@@ -20,7 +20,7 @@ Mira live bot (own repo, nested here); **InsyncAPP** = the trading platform (wit
 - **Data warehouse** (`D:\data` + `backend/app/ingest`,`data`) — Databento DBN → Hive parquet; live
   ingester + historical puller + gap-filler + R2 mirror. `data/meta.sqlite` (~40 GB, 29 tables) holds
   run/research metadata.
-- **Replay** — per-day chart replay + trade replay (TBBO + 1m/5m/15m/30m), ET axis.
+- **Tick/bar replay** — the engine replays MBP-1 / bars to drive sims (the UI replay viewer went with the frontend).
 - **Prop-firm Monte Carlo** (`backend/app/services` + `experiments/sizing_v1`) — fleet sims across firms/accounts.
 - **Feature detectors** (`backend/app/research/features/*`) — order flow, volume profile, HTF/SMT, etc.
 
@@ -57,6 +57,8 @@ Mira live bot (own repo, nested here); **InsyncAPP** = the trading platform (wit
   worktree, and gitignored `data/strategy_lab_*` bundles. (Build caches left in place by choice.)
 - **Docs culled to minimalist** — ~216 stale docs deleted (recoverable in git); `REPO_GUIDE.md` added;
   these 3 core docs rewritten to the 3-layer model.
+- **Backend-only reshape** — removed the web SPA + CRUD API (`frontend/`, `app/api`, most `app/schemas`,
+  frontend-only services); `main.py` now serves a read-only status page. The lab is backend + tools, run via CLI/Python.
 
 ---
 

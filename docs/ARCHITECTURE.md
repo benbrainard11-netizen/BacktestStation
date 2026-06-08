@@ -44,8 +44,8 @@ Flow: **research/test here → graduate a winner into its own live repo → plug
 
 ```
 +----------------+      +-----------------+      +--------------------+
-|  Next.js UI    | <--> |  FastAPI        | <--> |  SQLite (meta)     |
-|  (local research)| REST|  (Python 3.12)  |      |  Parquet (data)    |
+|  status page   | <--> |  FastAPI        | <--> |  SQLite (meta)     |
+|  (read-only /) | HTTP |  (status only)  |      |  Parquet (data)    |
 +----------------+      +--------+--------+      |  DuckDB (query)    |
                                  |               +--------------------+
                                  v
@@ -59,10 +59,10 @@ Flow: **research/test here → graduate a winner into its own live repo → plug
                        +-------------------+
 ```
 
-- Frontend ↔ backend over REST (a local research UI, not the production platform — that's InsyncAPP).
+- The only HTTP surface is the read-only status page (`/`, `/api/status`, `/health`); there is no web app. Tools run via CLI / Python.
 - Backend orchestrates engine, ingest, storage, and services.
 - The engine is a **pure library** (no DB, no HTTP) — unit-testable in isolation, runnable in a notebook.
-- Shared types: Pydantic → `shared/openapi.json` → generated `frontend/lib/api/generated.ts`. Never hand-written twice; regenerate with `bash scripts/generate-types.sh`.
+- No frontend or TS type-gen (removed 2026-06-08). Pydantic schemas remain only for the engine config + research events.
 
 ---
 
@@ -72,24 +72,21 @@ Flow: **research/test here → graduate a winner into its own live repo → plug
 BacktestStation/
 ├── backend/
 │   ├── app/
-│   │   ├── api/         FastAPI routers (one per resource)
+│   │   ├── main.py      FastAPI app: read-only status page (no CRUD API)
 │   │   ├── engine/ backtest/   pure event/bar engine + bracket-order broker + runner
 │   │   ├── strategies/ strategy ports (dumb: events in, signals out)
 │   │   ├── ingest/     Databento DBN -> Hive parquet (historical, live, gap-filler, R2 upload)
 │   │   ├── storage/ data/      warehouse readers, schema, partitioning
 │   │   ├── db/         SQLAlchemy models + guarded migrations (meta.sqlite)
-│   │   ├── schemas/    Pydantic — single source of truth for the API + TS types
+│   │   ├── schemas/    Pydantic: research_events only (API schemas removed)
 │   │   ├── services/   drift monitor, prop-firm sim, dataset scanner, R2
 │   │   ├── features/ research/ order-flow / volume-profile / HTF detectors
 │   │   └── cli/        operational CLIs
 │   └── tests/          engine determinism, lookahead harness, MBP-1 race, drift, …
-├── frontend/           Next.js + Tauri local research UI
-├── shared/openapi.json generated, committed
 ├── experiments/        research lines (see _INDEX.md) — cross-reference by path, don't move
 ├── market_state/       the broad market-state model (greenfield, validation-first)
 ├── live_engine/        SEPARATE repo (Mira live bot) nested here
 ├── client/bsdata/      external warehouse reader (R2-then-local-cache)
-├── strategy_lab/        export / publication helpers
 ├── scripts/            launch + scheduled-task + ops scripts
 ├── docs/               this folder (minimalist — see REPO_GUIDE.md)
 └── data/               gitignored: meta.sqlite + staging (RAW data lives on D:\data)
