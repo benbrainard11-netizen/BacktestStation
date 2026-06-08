@@ -1,11 +1,7 @@
 @echo off
 setlocal
-
-REM One-click launcher for BacktestStation.
-REM Runs the Tauri desktop shell which spawns Next.js dev (port 3000)
-REM and the FastAPI backend sidecar on uvicorn (port 8000).
-
-REM Operate from the directory containing this file regardless of cwd.
+REM BacktestStation launcher -- backend + status page only (no frontend SPA).
+REM Serves the read-only status dashboard at http://127.0.0.1:8000
 cd /d "%~dp0"
 
 if not exist "backend\.venv\Scripts\activate.bat" (
@@ -19,22 +15,13 @@ if not exist "backend\.venv\Scripts\activate.bat" (
   exit /b 1
 )
 
-if not exist "frontend\node_modules" (
-  echo.
-  echo [start.bat] Frontend node_modules missing. Run once:
-  echo     cd frontend
-  echo     npm install
-  echo.
-  exit /b 1
-)
-
 call backend\.venv\Scripts\activate.bat
 if errorlevel 1 (
   echo [start.bat] Failed to activate venv at backend\.venv
   exit /b 1
 )
 
-cd frontend
-npm run tauri:dev
+cd backend
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 endlocal
