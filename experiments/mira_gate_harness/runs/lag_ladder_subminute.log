@@ -1,0 +1,23 @@
+trigger stream: 723
+
+  == lag decay, OOS (jan+holdout) — deployed policy (trigger-anchored 10m touch) ==
+    lag_min filled  fill%   win% meanR/fill     sumR  R/trig
+        0.0    177  99.4%  49.7%     +0.364    +64.4  +0.244
+        0.1    173  98.9%  45.1%     +0.268    +46.4  +0.176
+        0.2    172  98.9%  41.3%     +0.144    +24.8  +0.094
+        0.3    171  98.3%  39.2%     +0.089    +15.3  +0.058
+        0.5    170  97.1%  37.1%     +0.061    +10.3  +0.039
+        0.8    166  97.1%  32.5%     -0.044     -7.3  -0.028
+        1.0    164  96.5%  32.3%     -0.084    -13.7  -0.052
+
+  == lag decay, train (in-sample) — deployed policy (trigger-anchored 10m touch) ==
+    lag_min filled  fill%   win% meanR/fill     sumR  R/trig
+        0.0    342  99.4%  62.0%     +0.674   +230.4  +0.502
+        0.1    336  98.5%  53.3%     +0.447   +150.2  +0.327
+        0.2    335  98.2%  50.1%     +0.379   +127.0  +0.277
+        0.3    331  97.9%  45.9%     +0.266    +88.1  +0.192
+        0.5    326  96.7%  46.3%     +0.286    +93.3  +0.203
+        0.8    323  96.7%  43.7%     +0.256    +82.7  +0.180
+        1.0    318  96.7%  43.4%     +0.133    +42.3  +0.092
+
+per-trigger results -> C:\Users\benbr\BacktestStation\experiments\mira_gate_harness\runs\lag_ladder_results_subminute.parquet

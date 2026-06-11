@@ -1,0 +1,63 @@
+un-deduped gated no-YM trigger stream: 723 ({'jan_oos': 164, 'oos_holdout': 100, 'train': 459})
+[G1] n=480 (need >=400)  fill-set agreement 100.0% (need >=98)  matched |dR|<=0.02: 100.0% of 480 (need >=98)  max|dR|=0.0000
+lag pool: n=211 median=4.9m p90=13.0m; sampled per-trigger, shared across policies
+  [ideal_lag0] filled 519/723 sumR +294.9
+  [live_current] filled 374/723 sumR -46.7
+  [window20] filled 458/723 sumR -45.3
+  [window30] filled 467/723 sumR -54.1
+  [rearm10] filled 468/723 sumR -60.4
+  [market_arm] filled 558/723 sumR -123.0
+
+  == OOS (jan_oos + oos_holdout) — THE DECISION TABLE ==
+    policy          trigs blocked filled   win% meanR/fill     sumR  R/trig risk_pts p50
+    ideal_lag0        264      86    177  49.7%     +0.364    +64.4  +0.244         4.50
+    live_current      264      64    129  30.2%     -0.262    -33.8  -0.128         5.00
+    window20          264      77    158  33.5%     -0.142    -22.4  -0.085         5.25
+    window30          264      81    158  33.5%     -0.152    -24.0  -0.091         5.32
+    rearm10           264      77    160  33.1%     -0.160    -25.6  -0.097         5.25
+    market_arm        264      68    196  33.2%     -0.222    -43.4  -0.165         3.75
+
+  == jan_oos (OOS) ==
+    policy          trigs blocked filled   win% meanR/fill     sumR  R/trig risk_pts p50
+    ideal_lag0        164      57    106  51.9%     +0.459    +48.6  +0.296         4.22
+    live_current      164      40     80  31.2%     -0.243    -19.4  -0.118         5.00
+    window20          164      48    100  34.0%     -0.147    -14.7  -0.089         5.00
+    window30          164      51     98  34.7%     -0.127    -12.4  -0.076         5.25
+    rearm10           164      47    100  33.0%     -0.176    -17.6  -0.107         5.00
+    market_arm        164      43    121  36.4%     -0.131    -15.8  -0.097         3.50
+
+  == oos_holdout (OOS) ==
+    policy          trigs blocked filled   win% meanR/fill     sumR  R/trig risk_pts p50
+    ideal_lag0        100      29     71  46.5%     +0.223    +15.8  +0.158         4.60
+    live_current      100      24     49  28.6%     -0.293    -14.3  -0.143         5.00
+    window20          100      29     58  32.8%     -0.134     -7.8  -0.078         5.42
+    window30          100      30     60  31.7%     -0.193    -11.6  -0.116         5.65
+    rearm10           100      30     60  33.3%     -0.134     -8.0  -0.080         5.65
+    market_arm        100      25     75  28.0%     -0.368    -27.6  -0.276         4.25
+
+  == train (IN-SAMPLE — context only) ==
+    policy          trigs blocked filled   win% meanR/fill     sumR  R/trig risk_pts p50
+    ideal_lag0        459     115    342  62.0%     +0.674   +230.4  +0.502         4.90
+    live_current      459      94    245  33.5%     -0.053    -13.0  -0.028         6.50
+    window20          459     113    300  33.7%     -0.076    -22.8  -0.050         6.00
+    window30          459     118    309  33.0%     -0.097    -30.1  -0.065         6.25
+    rearm10           459     109    308  32.1%     -0.113    -34.8  -0.076         6.00
+    market_arm        459      97    362  29.3%     -0.220    -79.6  -0.173         5.00
+
+  Paired symbol-day block bootstrap, OOS only: delta total R vs live_current (95% CI):
+    window20       delta=  +11.3R  CI95=[   -8.8,   +33.0]  not significant
+    window30       delta=   +9.7R  CI95=[   -9.5,   +29.9]  not significant
+    rearm10        delta=   +8.1R  CI95=[  -11.8,   +29.2]  not significant
+    market_arm     delta=   -9.7R  CI95=[  -36.2,   +16.4]  not significant
+    ideal_lag0     delta=  +98.2R  CI95=[  +54.7,  +141.6]  SIGNIFICANT
+
+  Monthly R/trigger (all windows; Feb-May in-sample):
+    month       ideal_lag0 live_current     window20     window30      rearm10   market_arm
+    2026-01         +0.343       -0.119       -0.082       -0.075       -0.111       -0.153
+    2026-02         +0.610       +0.146       +0.110       +0.104       +0.111       +0.147
+    2026-03         +0.475       +0.068       +0.019       -0.041       -0.023       -0.089
+    2026-04         +0.210       -0.178       -0.210       -0.191       -0.263       -0.388
+    2026-05         +0.447       -0.243       -0.177       -0.173       -0.161       -0.364
+    2026-06         +0.286       +0.134       +0.167       +0.034       +0.136       +0.012
+
+per-trigger results -> C:\Users\benbr\BacktestStation\experiments\mira_gate_harness\runs\entry_sweep_v2_results.parquet
