@@ -60,7 +60,7 @@ audit:
     consistency: best day < 50% of target ($1,500) to pass — gating, not failing
     min_days: 2
     max_contracts: 5 minis / 50 micros
-  overnight: "flat by 3:10 PM CT close only — holding overnight WITHIN Globex session allowed (unique among the six)"
+  overnight: "flat by 3:10 PM CT (= 4:10 PM ET — earliest cutoff of the six, tied w/ MFFU). Within-session holds (incl. through the night) allowed — SAME structure as all six firms; only the daily cutoff time differs"
   copy_policy: "own accounts, max 5 XFAs; copier auto-disabled during payout processing"
   payout_split: "90/10 from dollar one (accounts after 2026-01-12)"
   automation: allowed
