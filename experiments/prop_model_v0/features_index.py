@@ -102,11 +102,35 @@ def build(sym: str = SYM) -> pd.DataFrame:
         ext = pd.read_parquet(ext_p).reindex(columns=pan.columns)
         pan = pd.concat([pan, ext[ext.index > pan.index.max()]]).sort_index()
     pan = pan.reindex(f.index)
+    # self structural position (scale-free)
+    self_pos20 = (d["c"] - d["l"].rolling(20).min()) / (
+        d["h"].rolling(20).max() - d["l"].rolling(20).min()
+    ).replace(0, np.nan)
+    self_hi20 = d["c"] / d["c"].rolling(20).max() - 1
+    self_ma50 = d["c"] / d["c"].rolling(50).mean() - 1
     for p_ in peers:
         tag = p_.split(".")[0].lower()
         f[f"x_{tag}_1"] = pan[p_]
         f[f"x_{tag}_5"] = pan[p_].rolling(5).sum()
         f[f"x_{tag}_corr20"] = ret.rolling(20).corr(pan[p_])
+        # relative-STRUCTURE block (xs_): each asset's position vs its own concepts,
+        # DIFFERENCED across assets — the SMT/divergence intuition as features.
+        # Peer pseudo-price from cumulated returns (position metrics are scale-free).
+        pp = (1 + pan[p_].fillna(0)).cumprod().where(pan[p_].notna())
+        p_pos20 = (pp - pp.rolling(20).min()) / (
+            pp.rolling(20).max() - pp.rolling(20).min()
+        ).replace(0, np.nan)
+        p_hi20 = pp / pp.rolling(20).max() - 1
+        p_ma50 = pp / pp.rolling(50).mean() - 1
+        f[f"xs_{tag}_div_pos20"] = self_pos20 - p_pos20
+        f[f"xs_{tag}_div_hi20"] = self_hi20 - p_hi20
+        f[f"xs_{tag}_div_ma50"] = self_ma50 - p_ma50
+        f[f"xs_{tag}_self_hi_alone"] = (
+            (self_hi20 > -0.001) & (p_hi20 < -0.005)
+        ).astype(float)
+        f[f"xs_{tag}_peer_hi_alone"] = (
+            (p_hi20 > -0.001) & (self_hi20 < -0.005)
+        ).astype(float)
     # ---- GEX / options-surface block (ES/SPX only; row D-1 per rule A7) ----
     if sym != "ES.c.0":
         return _finish(f, d, m, sym)
