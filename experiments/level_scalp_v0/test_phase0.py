@@ -208,6 +208,24 @@ def test_exit_trade_stop_wins_ties_and_uses_observed_quote():
     assert ex2["exit"] == "target" and ex2["ev_s1"] == 8.0
 
 
+def test_define_ts_uses_running_evidence_only():
+    from defender_events import define_ts_for_order
+
+    base = pd.Timestamp("2026-02-02 15:00:00")
+    rows = [{"ts": base, "action": "A", "size": 5.0}]
+    for i in range(1, 26):  # 25 fills of 4, every 10s
+        rows.append(
+            {"ts": base + pd.Timedelta(seconds=10 * i), "action": "F", "size": 4.0}
+        )
+    ev = pd.DataFrame(rows)
+    # thresholds: min_filled=60 crosses at fill 15 (t=150s); n>=20 at fill 20 (t=200s);
+    # reload 3x disp(5)=15 crosses early; life>=60s crosses at t=70s relative to first
+    # fill (t=10s). Binding constraint = n_fills -> ts_define = fill #20 at +200s.
+    assert define_ts_for_order(ev, min_filled=60.0) == base + pd.Timedelta(seconds=200)
+    # an order that never reaches 20 fills is never defined:
+    assert define_ts_for_order(ev.iloc[:15], min_filled=60.0) is None
+
+
 def test_roll_poison_contains_june_2025_roll_week():
     p = roll_poison_days("2025-05-01", "2025-12-31")
     import datetime as dt
