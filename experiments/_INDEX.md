@@ -6,7 +6,7 @@ Active lines are KEPT IN PLACE (they cross-reference each other by hardcoded pat
 ## Active (in build)
 | dir | what | status |
 |---|---|---|
-| `level_scalp_v0` | level-reaction scalp study: touch atlas → maker (queue-model) vs taker execution physics | 🔨 scaffolded 2026-06-11 — Phase 0 |
+| `level_scalp_v0` | level-reaction scalp study: touch atlas → maker (queue-model) execution physics | ❌ **NULL at registered spec (2026-06-12)** — real gross reaction at ES/RTY levels, but adverse selection + stop gap-through eat it (−2.7t/fill net on honest MBO fills); holdout never read; keeper: retest/overshoot table, behind-you fill harness, constitution. Successor avenues documented in report/phase1_mode_a.md |
 
 ## Validated edges (real, survived honest testing)
 | dir | what | verdict |

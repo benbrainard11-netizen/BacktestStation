@@ -5,12 +5,20 @@ short-horizon reaction is reliably positive after honest fills and stressed per-
 costs — tradeable as scalps (small tick targets, minutes-scale holds), entered either by
 a resting limit at the level (maker) or an event-trigger after the touch (taker)?
 
-**Status:** Phase 0 (touch atlas) — scaffolded 2026-06-11, no code yet. PLAN v0.2 after a
-3-lens adversarial review ([report/plan_review_2026-06-11.md](report/plan_review_2026-06-11.md))
-caught 8 blockers in v0.1 (level validity, oracle placement, MBO book warm-up, toothless
-kill gates, holdout budget, NQ spread reality, exit-side fills, queue circularity).
-**Spec:** [PLAN.md](PLAN.md) — FREEZES at first atlas run (touch constants, primary cells,
-fill rules); later changes spawn a successor judged on new calendar data only.
+**Status: NULL at the registered spec — parked 2026-06-12.** Phase 0 atlas found a real
+gross reaction at ES/RTY levels (4/8 pre-registered cells cleared the maker wall,
+[atlas_v0.md](report/atlas_v0.md)); Phase 1 honest-fill confirmation
+([phase1_mode_a.md](report/phase1_mode_a.md)) killed it: adverse selection is near-total
+(the touches that don't fill you are the perfect rejections; E[react|no-fill]=+8.0 vs
+E[react|filled]≈0) and stop gap-through adds ~2 ticks/stop → net −2.7 ticks/fill pooled.
+**The holdout (2026-04→06) was NEVER read — both lifetime shots intact.** Successor
+avenues (placement-at-creation queue seat, wider stops, fill-as-continuation-signal,
+Mode B deep-target asia) are documented in the Phase 1 diagnosis; any successor is a new
+spec per the PLAN post-null clause.
+**Spec:** [PLAN.md](PLAN.md) — frozen at the 2026-06-11 atlas run.
+**Keeper artifacts regardless of verdict:** the retest/overshoot table (atlas_v0), the
+constitution + harness (valid_from levels, behind-you fill rule, selection-aware boot),
+[MECHANISMS.md](MECHANISMS.md), and the external research reconciliation.
 **External research:** [deep_research_prompt.md](deep_research_prompt.md) — copyable
 prompt for GPT-5.5-Pro / Claude deep research on level types + queue-fill modeling.
 

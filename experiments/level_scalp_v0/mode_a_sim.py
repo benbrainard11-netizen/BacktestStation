@@ -190,12 +190,14 @@ def exit_trade(
     return out
 
 
-def run_cell(cfg: dict, poison) -> pd.DataFrame:
+def run_cell(cfg: dict, poison, max_days: int | None = None) -> pd.DataFrame:
     sym, tick = cfg["symbol"], TICK[cfg["symbol"]]
     start, end = MANIFEST["window"]
     inst_all = build_instances(sym, start, end, poison)
     inst_all = inst_all[inst_all["family"].isin(cfg["families"])]
     days = sorted(d for d in inst_all["trading_day"].unique() if d not in poison)
+    if max_days:
+        days = days[:max_days]  # pilot only — full runs pass None
     rows: list[dict] = []
     t0w = time.time()
     for i, d in enumerate(days):
@@ -309,6 +311,7 @@ def main() -> int:
         )
     ap = argparse.ArgumentParser()
     ap.add_argument("cells", nargs="*", default=None)
+    ap.add_argument("--days", type=int, default=None, help="pilot: first N days only")
     a = ap.parse_args()
     start, end = MANIFEST["window"]
     guard_window(start, end, allow_confirmation=True)
@@ -317,9 +320,12 @@ def main() -> int:
     for cfg in MANIFEST["cells"]:
         if a.cells and cfg["id"] not in a.cells:
             continue
-        df = run_cell(cfg, poison)
+        df = run_cell(cfg, poison, max_days=a.days)
         if df.empty:
             raise RuntimeError(f"{cfg['id']}: 0 placements — refusing to write")
+        if a.days:
+            print(f"{cfg['id']} PILOT: {len(df)} placements (not written)")
+            continue
         df.to_parquet(OUT / f"phase1_mode_a_{cfg['id']}.parquet")
         write_manifest(
             OUT / f"phase1_mode_a_{cfg['id']}.manifest.json",
