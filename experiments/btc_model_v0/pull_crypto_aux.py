@@ -79,8 +79,35 @@ def pull_spot() -> None:
     print(f"spot: {len(s)} rows {s['ts'].min()} -> {s['ts'].max()}")
 
 
+def pull_klines(market: str, interval: str, start: str, name: str) -> None:
+    """Generic monthly-kline puller (spot or um futures)."""
+    frames = []
+    kcols = ["open_time", "open", "high", "low", "close", "volume", "close_time",
+             "qvol", "n", "tbv", "tqv", "ig"]
+    base = f"{BASE}/{market}/monthly/klines/BTCUSDT/{interval}"
+    for m in months(start, "2026-06"):
+        df = fetch_zip_csv(f"{base}/BTCUSDT-{interval}-{m}.zip")
+        if df is None:
+            continue
+        df = df.iloc[:, :12]
+        df.columns = kcols
+        ot = pd.to_numeric(df["open_time"], errors="coerce")
+        unit = "us" if ot.iloc[0] > 1e14 else "ms"
+        frames.append(pd.DataFrame({"ts": pd.to_datetime(ot, unit=unit, utc=True),
+                                    "close": pd.to_numeric(df["close"], errors="coerce")}))
+    s = pd.concat(frames).dropna().sort_values("ts").reset_index(drop=True)
+    s.to_parquet(OUT / f"{name}.parquet")
+    print(f"{name}: {len(s)} rows {s['ts'].min()} -> {s['ts'].max()}")
+
+
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
-    pull_funding()
-    pull_spot()
+    which = sys.argv[1] if len(sys.argv) > 1 else "all"
+    if which in ("all", "funding"):
+        pull_funding()
+    if which in ("all", "spot"):
+        pull_spot()
+    if which in ("all", "aux2"):
+        pull_klines("futures/um", "1d", "2019-09", "perp_1d")
+        pull_klines("spot", "1h", "2017-08", "spot_1h")
     print("done")

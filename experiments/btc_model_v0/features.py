@@ -103,6 +103,10 @@ def build(d: pd.DataFrame, m: pd.DataFrame) -> pd.DataFrame:
     # cross-asset block from the VALIDATED daily panel (lake 1d resample has a known bug)
     pan = pd.read_parquet(REPO / "experiments" / "sync_regime_v0" / "out" / "daily_returns.parquet")
     pan.index = pd.DatetimeIndex(pan.index).tz_localize(None).normalize()
+    ext_p = MODULE / "data" / "panel_ext.parquet"
+    if ext_p.exists():  # tail built by extend_panel.py (validated artifact untouched)
+        ext = pd.read_parquet(ext_p).reindex(columns=pan.columns)
+        pan = pd.concat([pan, ext[ext.index > pan.index.max()]]).sort_index()
     pan = pan.reindex(f.index)
     for p in PEERS:
         pr = pan[p]
@@ -141,6 +145,24 @@ def build(d: pd.DataFrame, m: pd.DataFrame) -> pd.DataFrame:
         f["basis"] = basis
         f["basis_z30"] = (basis - basis.rolling(30).mean()) / basis.rolling(30).std()
         f["basis_chg5"] = basis.diff(5)
+    # tight same-day basis: spot's 21:00 UTC hourly close always precedes the
+    # 18:00 ET (22-23 UTC) futures close -> legal same-day pairing
+    if (aux / "spot_1h.parquet").exists():
+        s1 = pd.read_parquet(aux / "spot_1h.parquet")
+        s1 = s1[s1["ts"].dt.hour == 21]
+        s21 = s1.set_index(s1["ts"].dt.tz_localize(None).dt.normalize())["close"]
+        s21 = s21.reindex(f.index)
+        bt = d["c"] / s21 - 1
+        f["basis_t"] = bt
+        f["basis_t_z30"] = (bt - bt.rolling(30).mean()) / bt.rolling(30).std()
+        f["basis_t_chg5"] = bt.diff(5)
+    # perp premium vs spot (leverage-demand proxy; prior-day legs like `basis`)
+    if (aux / "perp_1d.parquet").exists():
+        pp = pd.read_parquet(aux / "perp_1d.parquet")
+        pc = pp.set_index(pp["ts"].dt.tz_localize(None).dt.normalize())["close"]
+        prem = (pc / sc - 1).reindex(f.index).ffill(limit=3).shift(1)
+        f["perp_prem"] = prem
+        f["perp_prem_z30"] = (prem - prem.rolling(30).mean()) / prem.rolling(30).std()
 
     # ---- labels (y_ prefix = the ONLY forward-looking columns) ----
     f["y_fwd1"] = ret.shift(-1)
