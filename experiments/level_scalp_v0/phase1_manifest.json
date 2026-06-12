@@ -1,7 +1,7 @@
 {
   "stage": "phase1_mode_a",
   "pinned_utc": "2026-06-11",
-  "committed_sha": null,
+  "committed_sha": "908c3882",
   "window": ["2026-01-01", "2026-03-31"],
   "note": "Pinned BEFORE any CONFIRMATION read (PLAN Phase 1 procedure). One headline config per surviving primary cell; no config selection on the confirmation window. committed_sha filled at commit time; the run script refuses to start while it is null.",
   "fill_rules": {
