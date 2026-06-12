@@ -28,8 +28,8 @@ sys.path.insert(0, str(REPO / "backend"))
 from app.data.reader import read_bars  # noqa: E402
 
 ET = ZoneInfo("America/New_York")
-SYM = "ES.c.0"
-PEERS = ["NQ.c.0", "GC.c.0", "6E.c.0", "ZN.c.0"]
+SYM = "ES.c.0"  # default target; build(sym=...) parameterizes
+ALL_PEERS = ["ES.c.0", "NQ.c.0", "GC.c.0", "6E.c.0", "ZN.c.0"]
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -37,8 +37,8 @@ except Exception:  # noqa: BLE001
     pass
 
 
-def load_es_minutes() -> pd.DataFrame:
-    b = read_bars(symbol=SYM, timeframe="1m", start="2015-01-01", end="2026-06-10")
+def load_es_minutes(sym: str = SYM) -> pd.DataFrame:
+    b = read_bars(symbol=sym, timeframe="1m", start="2015-01-01", end="2026-06-10")
     ts = pd.to_datetime(b["ts_event"], utc=True).dt.tz_convert(ET)
     df = pd.DataFrame(
         {
@@ -58,8 +58,9 @@ def load_es_minutes() -> pd.DataFrame:
     return df
 
 
-def build() -> pd.DataFrame:
-    m = load_es_minutes()
+def build(sym: str = SYM) -> pd.DataFrame:
+    peers = [p for p in ALL_PEERS if p != sym]
+    m = load_es_minutes(sym)
     g = m.groupby("td")
     d = g.agg(
         o=("o", "first"),
@@ -101,12 +102,14 @@ def build() -> pd.DataFrame:
         ext = pd.read_parquet(ext_p).reindex(columns=pan.columns)
         pan = pd.concat([pan, ext[ext.index > pan.index.max()]]).sort_index()
     pan = pan.reindex(f.index)
-    for p_ in PEERS:
+    for p_ in peers:
         tag = p_.split(".")[0].lower()
         f[f"x_{tag}_1"] = pan[p_]
         f[f"x_{tag}_5"] = pan[p_].rolling(5).sum()
         f[f"x_{tag}_corr20"] = ret.rolling(20).corr(pan[p_])
-    # ---- GEX / options-surface block (row D-1 only -> day D; rule A7) ----
+    # ---- GEX / options-surface block (ES/SPX only; row D-1 per rule A7) ----
+    if sym != "ES.c.0":
+        return _finish(f, d, m, sym)
     gx = pd.read_parquet(
         REPO / "experiments" / "options_signals_v0" / "out" / "gex_levels_spx.parquet"
     )
@@ -124,7 +127,12 @@ def build() -> pd.DataFrame:
     f["gx_total_z20"] = (lg - lg.rolling(20).mean()) / lg.rolling(20).std()
     f["gx_width_chg5"] = f["gx_width"].diff(5)
     f["gx_pos_chg1"] = f["gx_pos_in_range"].diff(1)
+    return _finish(f, d, m, sym)
 
+
+def _finish(
+    f: pd.DataFrame, d: pd.DataFrame, m: pd.DataFrame, sym: str
+) -> pd.DataFrame:
     # ---- labels: next-day path, day-flat (y_ prefix) ----
     rv20 = f["rv_20"]
     mc, mtd = m["c"].to_numpy(float), m["td"].to_numpy()
@@ -156,7 +164,8 @@ def build() -> pd.DataFrame:
     out = MODULE / "data"
     out.mkdir(exist_ok=True)
     f = f.copy()
-    f.to_parquet(out / "features_es.parquet")
+    tag = sym.split(".")[0].lower()
+    f.to_parquet(out / f"features_{tag}.parquet")
     n_feat = len(
         [
             c
@@ -165,11 +174,10 @@ def build() -> pd.DataFrame:
         ]
     )
     print(
-        f"ES matrix: {n_feat} features x {len(f)} days ({f.index.min().date()} -> {f.index.max().date()})"
+        f"{sym} matrix: {n_feat} features x {len(f)} days ({f.index.min().date()} -> {f.index.max().date()})"
     )
     print(
-        f"gex-era rows: {int(f['gx_width'].notna().sum())}; label coverage {f['y_tbR'].notna().mean():.0%}, "
-        f"win rate {(f['y_tbR'] > 0).mean():.0%}"
+        f"label coverage {f['y_tbR'].notna().mean():.0%}, win rate {(f['y_tbR'] > 0).mean():.0%}"
     )
     return f
 
