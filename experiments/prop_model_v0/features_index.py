@@ -37,7 +37,12 @@ except Exception:  # noqa: BLE001
     pass
 
 
+_MIN_CACHE: dict[str, pd.DataFrame] = {}
+
+
 def load_es_minutes(sym: str = SYM) -> pd.DataFrame:
+    if sym in _MIN_CACHE:
+        return _MIN_CACHE[sym]
     b = read_bars(symbol=sym, timeframe="1m", start="2015-01-01", end="2026-06-10")
     ts = pd.to_datetime(b["ts_event"], utc=True).dt.tz_convert(ET)
     df = pd.DataFrame(
@@ -55,6 +60,7 @@ def load_es_minutes(sym: str = SYM) -> pd.DataFrame:
     wd = td.weekday
     td = td + pd.to_timedelta(np.where(wd == 5, 2, np.where(wd == 6, 1, 0)), unit="D")
     df["td"] = pd.DatetimeIndex(td).tz_localize(None).normalize()
+    _MIN_CACHE[sym] = df
     return df
 
 
@@ -92,16 +98,14 @@ def build(sym: str = SYM) -> pd.DataFrame:
     wd = d.index.weekday
     for k in range(5):
         f[f"dow_{k}"] = (wd == k).astype(float)
-    # cross-asset (validated panel + extension)
-    pan = pd.read_parquet(
-        REPO / "experiments" / "sync_regime_v0" / "out" / "daily_returns.parquet"
-    )
-    pan.index = pd.DatetimeIndex(pan.index).tz_localize(None).normalize()
-    ext_p = REPO / "experiments" / "btc_model_v0" / "data" / "panel_ext.parquet"
-    if ext_p.exists():
-        ext = pd.read_parquet(ext_p).reindex(columns=pan.columns)
-        pan = pd.concat([pan, ext[ext.index > pan.index.max()]]).sort_index()
-    pan = pan.reindex(f.index)
+    # cross-asset — peer daily returns on the TD convention (close ~17:00 ET,
+    # strictly before the 18:00 ET open of the label session). Replaces the
+    # UTC-binned sync_regime_v0 panel, whose "day D" close sat at ~19:59 ET —
+    # 2h INSIDE trading day D+1, i.e., inside the label window (lookahead;
+    # caught by adversarial review 2026-06-14).
+    pan = pd.DataFrame(
+        {p_: load_es_minutes(p_).groupby("td")["c"].last().pct_change() for p_ in peers}
+    ).reindex(f.index)
     # self structural position (scale-free)
     self_pos20 = (d["c"] - d["l"].rolling(20).min()) / (
         d["h"].rolling(20).max() - d["l"].rolling(20).min()
