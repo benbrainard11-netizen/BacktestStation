@@ -5,7 +5,18 @@ short-horizon reaction is reliably positive after honest fills and stressed per-
 costs — tradeable as scalps (small tick targets, minutes-scale holds), entered either by
 a resting limit at the level (maker) or an event-trigger after the touch (taker)?
 
-**Status: NULL at the registered spec — parked 2026-06-12.** Phase 0 atlas found a real
+**Status: PARKED 2026-06-12 — three constructions tested honestly, all null; reusable
+harness + one strong successor lead.** Arc: (1) classic-level scalp = NULL (adverse
+selection, [phase1_mode_a.md](report/phase1_mode_a.md)); (2) sim-venue resurrection =
+killed on engine + compliance ([sim_venue_verdict.md](report/sim_venue_verdict.md));
+(3) defender/iceberg family = reaction REAL (+3t pre-registered screen,
+[defender_atlas.md](report/defender_atlas.md)) but uncapturable — resolves in ~7s at a
+price no implementable entry transacts at ([defender_fills.md](report/defender_fills.md),
+[defender_late_taker.md](report/defender_late_taker.md)). **Successor lead (surfaced
+twice independently): the INVERSION — defense-break continuation (through-fills ran 97%
+continuation). Untested.** Holdout 2026-04→06-09 never read; both lifetime shots intact.
+
+**Original framing (2026-06-12 morning):** Phase 0 atlas found a real
 gross reaction at ES/RTY levels (4/8 pre-registered cells cleared the maker wall,
 [atlas_v0.md](report/atlas_v0.md)); Phase 1 honest-fill confirmation
 ([phase1_mode_a.md](report/phase1_mode_a.md)) killed it: adverse selection is near-total
