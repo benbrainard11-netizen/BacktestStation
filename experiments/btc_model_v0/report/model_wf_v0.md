@@ -1,42 +1,42 @@
-# BTC model WF — 90 features, 1739 OOS days
+# BTC model WF — 100 features, 1739 OOS days
 
-control IC: -0.036 | REAL pooled OOS IC: +0.024 | funding-era (2020+) IC: +0.014
+control IC: -0.023 | REAL pooled OOS IC: +0.018 | funding-era (2020+) IC: +0.008
 
-decile trades: n=342 | mean net R +0.006 | week-block p5 -0.132 | p25 -0.049
+decile trades: n=342 | mean net R -0.083 | week-block p5 -0.216 | p25 -0.145
 
 by side:
        count   mean
 side               
-long     171  0.185
-short    171 -0.174
+long     171  0.038
+short    171 -0.205
 
 by year:
       count   mean
 year              
-2019     21  0.050
-2020     53 -0.251
-2021     51  0.504
-2022     48 -0.061
-2023     51 -0.343
-2024     54 -0.122
-2025     51  0.135
-2026     13  0.658
+2019     20  0.078
+2020     52 -0.259
+2021     51  0.104
+2022     47 -0.198
+2023     53 -0.246
+2024     53 -0.278
+2025     50  0.113
+2026     16  0.590
 
 top-15 importances (full-fit, descriptive):
-sess_us_pm_5     246
-sess_asia_5      197
-sess_us_pm       190
-rv_60            182
-basis_chg5       181
-x_es_1           167
-ma_200_slope     162
-park_5           162
-basis_t          161
-sess_asia        157
-sess_europe      156
-rv_5             154
-ret_10           153
-sess_europe_5    152
-x_zn_5           147
+sess_us_pm_5    225
+sess_us_pm      180
+sess_asia_5     163
+xc_corr20       163
+basis_chg5      161
+x_cl_1          158
+x_es_1          154
+ma_10           141
+ret_10          139
+sess_asia       139
+basis_t         139
+ret_1           137
+ma_50           135
+ma_200_slope    130
+vol_z           130
 
 DISCLOSED: 2025-06+ unsealed by btc_edge_v0; WF = evidence, forward data = confirmation.

@@ -55,11 +55,13 @@ def week_boot_p(vals, weeks, q, seed=0):
     return float(np.percentile(means, q))
 
 
-def run_wf(X: pd.DataFrame, y: pd.Series, shuffle_target: bool) -> pd.Series:
-    """Out-of-sample predictions across all folds."""
+def run_wf(X: pd.DataFrame, y: pd.Series, shuffle_target: bool):
+    """OOS predictions + fold ids across all folds."""
     preds = pd.Series(np.nan, index=X.index)
+    fold_id = pd.Series(-1, index=X.index)
     dates = X.index
     start = MIN_TRAIN
+    fid = 0
     rng = np.random.default_rng(42)
     while start + 1 < len(dates):
         test_idx = np.arange(start, min(start + TEST_D, len(dates)))
@@ -75,8 +77,22 @@ def run_wf(X: pd.DataFrame, y: pd.Series, shuffle_target: bool) -> pd.Series:
         model = lgb.LGBMRegressor(**PARAMS)
         model.fit(X.iloc[train_idx][ok.to_numpy()], ytr)
         preds.iloc[test_idx] = model.predict(X.iloc[test_idx])
+        fold_id.iloc[test_idx] = fid
+        fid += 1
         start += TEST_D
-    return preds
+    return preds, fold_id
+
+
+def fold_ic(pred: pd.Series, y: pd.Series, folds: pd.Series, mask) -> float:
+    """Mean of per-fold spearman ICs — immune to cross-fold trend coupling
+    (pooled IC picks up shared nonstationarity; every shuffled control came
+    out NEGATIVE pooled, which was the tell)."""
+    ics = []
+    for f in sorted(folds[mask].unique()):
+        m = mask & (folds == f)
+        if m.sum() >= 30:
+            ics.append(spearmanr(pred[m], y[m]).statistic)
+    return float(np.nanmean(ics)) if ics else np.nan
 
 
 def trade_eval(pred: pd.Series, df: pd.DataFrame) -> pd.DataFrame:
@@ -110,23 +126,23 @@ def main() -> int:
     print(f"matrix: {len(feats)} features x {len(f)} days")
 
     print("\n[1/2] NEGATIVE CONTROL (shuffled targets)...")
-    pc = run_wf(X, y, shuffle_target=True)
+    pc, fc = run_wf(X, y, shuffle_target=True)
     mc = pc.notna() & y.notna()
-    ic_c = float(spearmanr(pc[mc], y[mc]).statistic)
-    print(f"control pooled OOS IC = {ic_c:+.3f} (must be ~0)")
+    ic_c = fold_ic(pc, y, fc, mc)
+    print(f"control mean-fold OOS IC = {ic_c:+.3f} (must be ~0)")
     if abs(ic_c) > 0.05:
         raise RuntimeError(f"CONTROL SCORED ({ic_c:+.3f}) — harness leaks, aborting")
 
     print("\n[2/2] REAL MODEL...")
-    pr = run_wf(X, y, shuffle_target=False)
+    pr, fr_ = run_wf(X, y, shuffle_target=False)
     mr = pr.notna() & y.notna()
-    ic = float(spearmanr(pr[mr], y[mr]).statistic)
+    ic = fold_ic(pr, y, fr_, mr)
     n_oos = int(mr.sum())
     ic_fund = None
     if "fund_1d" in X.columns:
         sub = mr & X["fund_1d"].notna()
         if sub.sum() > 200:
-            ic_fund = float(spearmanr(pr[sub], y[sub]).statistic)
+            ic_fund = fold_ic(pr, y, fr_, sub)
     tr = trade_eval(pr, f)
     tr["week"] = pd.DatetimeIndex(tr["date"]).to_period("W").astype(str)
     tr["year"] = pd.DatetimeIndex(tr["date"]).year

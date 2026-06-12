@@ -163,6 +163,30 @@ def build(d: pd.DataFrame, m: pd.DataFrame) -> pd.DataFrame:
         prem = (pc / sc - 1).reindex(f.index).ffill(limit=3).shift(1)
         f["perp_prem"] = prem
         f["perp_prem_z30"] = (prem - prem.rolling(30).mean()) / prem.rolling(30).std()
+    # cross-crypto block (the "less arbed" hypothesis in feature form): ETH/BTC
+    # structure + relative funding + ETH lead — all prior-day legs (legal)
+    if (aux / "eth_spot_1d.parquet").exists():
+        es_ = pd.read_parquet(aux / "eth_spot_1d.parquet")
+        ec = es_.set_index(es_["ts"].dt.tz_localize(None).dt.normalize())["close"]
+        ec = ec.reindex(f.index).ffill(limit=3)
+        eth_prev = ec.shift(1)
+        eth_ret = ec.pct_change().shift(1)  # ETH's D-1 return (lead feature)
+        f["xc_eth_ret1"] = eth_ret
+        f["xc_eth_ret5"] = ec.pct_change(5).shift(1)
+        f["xc_eth_ret20"] = ec.pct_change(20).shift(1)
+        ratio = (eth_prev / spot_prev).replace([np.inf, -np.inf], np.nan)
+        f["xc_ratio_mom5"] = ratio.pct_change(5)
+        f["xc_ratio_mom20"] = ratio.pct_change(20)
+        f["xc_ratio_z60"] = (ratio - ratio.rolling(60).mean()) / ratio.rolling(60).std()
+        f["xc_corr20"] = ret.rolling(20).corr(eth_ret)
+    if (aux / "eth_funding.parquet").exists() and "fund_1d" in f.columns:
+        ef = pd.read_parquet(aux / "eth_funding.parquet")
+        efd = ef.set_index("ts")["rate"].resample("1D").sum()
+        efd.index = efd.index.tz_localize(None).normalize()
+        efund = efd.reindex(f.index)
+        f["xc_rel_fund1"] = f["fund_1d"] - efund
+        f["xc_rel_fund7"] = f["fund_7d"] - efund.rolling(7).sum()
+        f["xc_eth_fund_z30"] = (efund - efund.rolling(30).mean()) / efund.rolling(30).std()
 
     # ---- labels (y_ prefix = the ONLY forward-looking columns) ----
     f["y_fwd1"] = ret.shift(-1)
