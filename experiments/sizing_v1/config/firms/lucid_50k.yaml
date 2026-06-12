@@ -1,0 +1,73 @@
+# Lucid Trading $50K — LucidPro sim-funded.
+# AUDITED 2026-06-12; official help-center content via search captures (Intercom
+# blocks direct fetch) + cross-checked secondaries (confidence: mixed).
+
+firm_name: lucid
+account_size: 50000
+evaluation_type: funded
+notes: |
+  LucidPro sim-funded (audited): TRUE EOD trailing — MLL recalcs ONLY at close,
+  intraday/unrealized dips can NEVER breach (gentlest DD mechanics of the six).
+  Locks at start+$100 ($50,100) once EOD HW reaches $52,100. DLL $1,200 is a
+  SOFT breach (flatten + locked for the day, account survives) — the account
+  simulator should treat DLL as day-stop, not blow. Payouts: on-demand once
+  balance > $52,100 buffer, 40% per-cycle consistency, caps $2,000 cycle 1 /
+  $2,500 cycle 2+ (official table; one Jun-2026 tracker claims progressive
+  raise — unconfirmed), min $500, 90/10. NO winning-day minimum. ~5 payouts ->
+  LucidLive eligibility. Eval has NO consistency and 0 min days (1-day pass).
+
+trailing_drawdown: 2000
+trailing_dd_uses_eod: true             # true EOD — intraday breach impossible
+trailing_dd_lock_threshold: 52100
+trailing_dd_locked_value: 50100
+
+daily_loss_limit: 1200                 # SOFT: day-stop, not account-blow (see notes)
+daily_loss_intraday: true
+
+payout_min_winning_days: 0
+payout_winning_day_threshold_usd: 0
+payout_profit_threshold: 2100          # buffer: balance must exceed $52,100
+payout_amount_method: half_of_profits  # conservative proxy; actual = profits above buffer
+payout_cap_usd: 2500                   # cycle-2+ cap (cycle 1 = $2,000)
+payout_balance_after: keep_remainder
+payout_resets_winning_day_counter: true
+
+consistency_rule_pct: 40               # per payout cycle; resets after each payout
+consistency_rule_applies_at: funded
+
+max_position_size: 4                   # 4 minis / 40 micros, eval AND funded
+max_total_position: 4
+allowed_symbols: [ES.c.0, NQ.c.0, YM.c.0, RTY.c.0]
+
+news_blackout_minutes_before: 0        # news trading explicitly allowed
+news_blackout_minutes_after: 0
+events_blocked: []
+
+sim_max_days: 365
+monthly_subscription_usd: 0
+eval_fee_usd: 185                      # one-time list (~50% promo codes common); reset ~$65 (tracker estimate)
+funded_account_value_usd: null
+
+audit:
+  date: 2026-06-12
+  confidence: mixed
+  eval:
+    fee: "$185 one-time list (street ~$92 with verified Jun-2026 codes); reset ~$65 (low confidence)"
+    target: 3000
+    trailing_dd: 2000
+    dd_type: true EOD-only recalc AND breach (intraday dips never breach)
+    daily_loss_limit: 1200 soft (mandatory)
+    consistency: none
+    min_days: 0
+    max_contracts: 4 minis / 40 micros
+  overnight: "auto-flat 4:45 PM ET both stages; overnight only at LucidLive stage"
+  copy_policy: "copiers + automation explicitly permitted on own accounts; 10 eval + 10 total per household"
+  payout_split: "90/10 from dollar one (post-2025-11-28 accounts)"
+  automation: "allowed (subject to microscalping rules: >50% of profits from <=5s holds = flag)"
+  compliance_flags: "microscalping ban (5s/50% auto-flag); 'simulator-specific fills' exploitation ban"
+  sources:
+    - https://support.lucidtrading.com/en/articles/12890029-lucidpro-evaluation-account
+    - https://support.lucidtrading.com/en/articles/12890136-lucidpro-drawdown
+    - https://support.lucidtrading.com/en/articles/12890092-lucidpro-payouts
+    - https://support.lucidtrading.com/en/articles/12890109-lucidpro-consistency-percentage
+    - https://support.lucidtrading.com/en/articles/11404617-maximum-number-of-accounts

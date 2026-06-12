@@ -1,76 +1,71 @@
-# Topstep $50K FUNDED account (post-eval).
-# User-stated rules 2026-05-28, verify against Topstep docs before live use.
-#
-# We're simulating funded-phase mechanics directly (not the Trading Combine
-# evaluation). The rationale: funded is where revenue is generated, and if
-# the strategy clears funded-phase payouts, eval is implied (looser rules,
-# one-shot target).
+# Topstep $50K — XFA (Express Funded Account), Standard payout path.
+# AUDITED 2026-06-12 from official help-center pages (confidence: official-page).
+# Replaces user-stated 2026-05-28 placeholders.
 
 firm_name: topstep
 account_size: 50000
-evaluation_type: funded    # was: combine — we skip the eval and sim funded
+evaluation_type: funded
 notes: |
-  Funded account, post-eval. Simulated mechanics:
-  - Trailing DD trails EOD high water by $2k UNTIL EOD balance exceeds
-    starting + $2k = $52k. Then floor locks at starting balance ($50k).
-  - Payout eligibility requires 5+ winning days (≥$200 net P&L each day)
-    AND total profit ≥ $3k.
-  - When eligible, take a payout = half of profits (balance − starting),
-    capped at $5k. After payout, balance = balance − payout_amount.
-  - Account blown if daily loss limit OR trailing floor breached.
+  XFA funded mechanics (audited): MLL recalcs EOD but breach monitored REAL-TIME
+  incl. unrealized (intraday touch liquidates). Locks at starting balance once
+  reached; AFTER FIRST PAYOUT the MLL floor is $0 net-P&L permanently (= locked
+  at starting balance). DLL is OPTIONAL on XFA (not elected here -> 0).
+  Payouts: 5 winning days >= $150, up to 50% of balance, cap $5,000/request,
+  90/10 split from dollar one. No funded consistency on Standard path (optional
+  40% path raises cap to $6,000). CAVEAT: 50K No-Activation-Fee combines
+  created >= 2026-04-28 carry reduced caps $2,000/$3,000 — this config models
+  the Standard $49/mo + $149 activation path (grandfathered caps).
 
-# ---------- Trailing drawdown ----------
 trailing_drawdown: 2000
-trailing_dd_uses_eod: true             # tracks EOD balance, not intraday
-trailing_dd_lock_behavior: |
-  floor = max_eod_balance_to_date - 2000
-  IF max_eod_balance_to_date >= 52000:
-    floor = 50000 (locked permanently for this account)
-trailing_dd_lock_threshold: 52000      # EOD balance that triggers the lock
-trailing_dd_locked_value: 50000        # where it locks (= starting balance)
+trailing_dd_uses_eod: true             # EOD recalc; breach checked real-time (see notes)
+trailing_dd_lock_threshold: 52000
+trailing_dd_locked_value: 50000
 
-# ---------- Daily loss limit ----------
-daily_loss_limit: 1000                 # Topstep $50K funded; can adjust
-daily_loss_intraday: true              # checked intraday
+daily_loss_limit: 0                    # optional on XFA; modeled as not elected
+daily_loss_intraday: true
 
-# ---------- Payout rules ----------
 payout_min_winning_days: 5
-payout_winning_day_threshold_usd: 200  # daily P&L must be ≥ this to count
-payout_profit_threshold: 3000          # total profit (balance - starting) must be ≥ this
-payout_amount_method: half_of_profits  # take 0.5 × (balance - starting)
-payout_cap_usd: 5000                   # capped at this — was historically $5k,
-                                       # current Topstep is more like $2-3k
-                                       # user chose $5k for broader test
-payout_balance_after: keep_remainder   # balance = balance - payout
-                                       # (does NOT reset to $50k — keeps excess
-                                       # above starting+cap as buffer)
-payout_resets_winning_day_counter: true   # 5-day counter resets after payout
+payout_winning_day_threshold_usd: 150
+payout_profit_threshold: 0             # positive net since last payout; no fixed floor
+payout_amount_method: half_of_profits  # "up to 50% of balance" approximated
+payout_cap_usd: 5000
+payout_balance_after: keep_remainder
+payout_resets_winning_day_counter: true
 
-# ---------- Consistency rule ----------
-consistency_rule_pct: 50               # no single day > 50% of total profit
-consistency_rule_applies_at: funded    # always applies at this phase
+consistency_rule_pct: 100              # none on Standard funded path (100 = never binds)
+consistency_rule_applies_at: funded
 
-# ---------- Symbols / position ----------
-max_position_size: 5
+max_position_size: 5                   # combine 5 minis / 50 micros; XFA scales by balance
 max_total_position: 5
-allowed_symbols:
-  - ES.c.0
-  - NQ.c.0
-  - YM.c.0
-  - RTY.c.0
+allowed_symbols: [ES.c.0, NQ.c.0, YM.c.0, RTY.c.0]
 
-# ---------- News ----------
-news_blackout_minutes_before: 0        # Topstep allows news trading
+news_blackout_minutes_before: 0        # news trading allowed
 news_blackout_minutes_after: 0
 events_blocked: []
 
-# ---------- Simulation horizon ----------
-sim_max_days: 365                      # simulate up to a year per account
-                                       # (or until blown)
+sim_max_days: 365
+monthly_subscription_usd: 49           # eval is a subscription
+eval_fee_usd: 149                      # one-time XFA activation
+funded_account_value_usd: null
 
-# ---------- Economics ----------
-# Funded phase doesn't pay eval fee — we already "passed" (assumed).
-# Some firms charge monthly subscription on funded; Topstep does not.
-monthly_subscription_usd: 0
-eval_fee_usd: 0                        # not paid in this simulation
-funded_account_value_usd: null         # not relevant — we measure $/payout directly
+audit:
+  date: 2026-06-12
+  confidence: official-page
+  eval:
+    fee: "$49/mo subscription (reset = one monthly fee; 1 reset credit per renewal)"
+    target: 3000
+    trailing_dd: 2000
+    dd_type: EOD-recalc, real-time breach incl unrealized; locks at start
+    daily_loss_limit: optional ($1,000 if elected; soft)
+    consistency: best day < 50% of target ($1,500) to pass — gating, not failing
+    min_days: 2
+    max_contracts: 5 minis / 50 micros
+  overnight: "flat by 3:10 PM CT close only — holding overnight WITHIN Globex session allowed (unique among the six)"
+  copy_policy: "own accounts, max 5 XFAs; copier auto-disabled during payout processing"
+  payout_split: "90/10 from dollar one (accounts after 2026-01-12)"
+  automation: allowed
+  sources:
+    - https://help.topstep.com/en/articles/8284197-trading-combine-parameters
+    - https://help.topstep.com/en/articles/8284215-express-funded-account-parameters
+    - https://help.topstep.com/en/articles/8284233-topstep-payout-policy
+    - https://help.topstep.com/en/articles/9208217-topstep-pricing

@@ -1,62 +1,73 @@
-# Apex Trader Funding — $50K account.
-# Numbers TBD by user/friend research. Placeholder values estimated from
-# public marketing; verify before serious sim runs.
+# Apex Trader Funding $50K — 4.0 EOD Trail -> PA (funded).
+# AUDITED 2026-06-12; official help-center + site product JSON via Wayback
+# (live site Cloudflare-gated), cross-checked (confidence: official-page).
+# Replaces TBD placeholders.
 
 firm_name: apex
 account_size: 50000
-evaluation_type: combine
+evaluation_type: funded
 notes: |
-  Apex has multiple account sizes ($25K, $50K, $100K, $150K, $250K).
-  $50K is the most popular size. They market the Trader Funding pricing.
+  Apex 4.0 PA (audited): EOD-recalc trailing $2,000, enforced REAL-TIME next
+  session; locks at start+$100 ($50,100) once EOD HW reaches $52,100. PA DLL
+  scales $1,000 -> $3,000 with profit level (eval DLL pauses the day only).
+  THE DEFINING ECONOMICS: 100% payout split BUT hard ladder — max 6 payouts
+  per PA, caps $1,500/$1,500/$2,000/$2,500/$2,500/$3,000 = $13,000 LIFETIME
+  per PA, then the PA CLOSES and the funnel restarts (new eval + $99
+  activation). Each payout needs 5 qualifying days >= $250 since the last;
+  min balance to request $52,600; 50% soft consistency at request time.
+  4.0 evals: one-time fee, 30-day access window, NO RESETS (re-buy on fail).
 
-# Daily Loss Limit.
-daily_loss_limit: 1500        # TBD — verify
+trailing_drawdown: 2000
+trailing_dd_uses_eod: true             # EOD recalc; real-time enforcement next session
+trailing_dd_lock_threshold: 52100
+trailing_dd_locked_value: 50100
+
+daily_loss_limit: 1000                 # PA L1-L2; scales to 3000 at L4 ($6k+ profit)
 daily_loss_intraday: true
 
-# Trailing Drawdown.
-trailing_drawdown: 2500       # TBD — verify
-trailing_drawdown_locks_at_starting_balance: true
-trailing_drawdown_resets_daily: false
-trailing_drawdown_uses_eod: true
+payout_min_winning_days: 5
+payout_winning_day_threshold_usd: 250
+payout_profit_threshold: 2600          # min balance $52,600 to request
+payout_amount_method: half_of_profits  # proxy; actual caps dominate (see ladder)
+payout_cap_usd: 1500                   # FIRST payout cap; ladder to 3000; $13k lifetime
+payout_balance_after: keep_remainder
+payout_resets_winning_day_counter: true
 
-# Profit Target.
-profit_target: 3000           # TBD — verify
+consistency_rule_pct: 50               # soft — blocks payout button, never fails account
+consistency_rule_applies_at: funded
 
-# Consistency Rule.
-consistency_rule_pct: 30      # Apex has a consistency rule — 5% of total profit (more strict than Topstep)
-                              # ACTUALLY VERIFY THIS — Apex's rule is sometimes
-                              # "no single day > 30% of profit" too
-consistency_rule_applies_at_eval: false
-consistency_rule_applies_at_funded: true
+max_position_size: 4                   # PA scales 2 -> 4 by profit level (eval: 6)
+max_total_position: 4
+allowed_symbols: [ES.c.0, NQ.c.0, YM.c.0, RTY.c.0]
 
-# Min activity.
-min_trade_days: 5
-min_trade_count_per_day: 0
+news_blackout_minutes_before: 0
+news_blackout_minutes_after: 0
+events_blocked: []
 
-# News / event restrictions.
-news_blackout_minutes_before: 2     # Apex restricts trading near major news
-news_blackout_minutes_after: 2
-events_blocked:
-  - FOMC
-  - CPI
-  - NFP
+sim_max_days: 365
+monthly_subscription_usd: 0
+eval_fee_usd: 450                      # 4.0 list; perpetual coupons cut ~80-90% (street ~$45-90)
+funded_account_value_usd: 13000        # hard lifetime extraction cap per PA
 
-# Eval window.
-max_eval_days: 0              # TBD — verify if Apex has a time limit
-
-# Contract limits.
-max_position_size: 10         # Apex allows up to 10 contracts on $50K
-max_total_position: 10
-allowed_symbols:
-  - ES.c.0
-  - NQ.c.0
-  - YM.c.0
-  - RTY.c.0
-
-# Reset.
-allow_reset: true
-reset_cost_usd: 80            # TBD — verify
-
-# Economics.
-eval_fee_usd: 167             # Apex's monthly fee — approximate
-funded_account_value_usd: 1000
+audit:
+  date: 2026-06-12
+  confidence: official-page (via Wayback Mar-May 2026 snapshots)
+  eval:
+    fee: "$450 list one-time (street ~$45-90 w/ codes); 30-day access; NO resets on 4.0"
+    target: 3000
+    trailing_dd: 2000
+    dd_type: EOD recalc 4:59:59 PM ET, real-time enforcement; stops trailing at $53,000 (Rithmic)
+    daily_loss_limit: 1000 (pause-not-fail in eval)
+    consistency: none in eval
+    min_days: 0
+    max_contracts: 6 (eval)
+  overnight: "flat by 4:59 PM ET both stages; no overnight ever"
+  copy_policy: "own accounts, up to 20 active PAs (the fleet-friendliest cap of the six)"
+  payout_split: "100% to trader, ladder-capped $13,000 lifetime per PA, then PA closes"
+  automation: allowed (no HFT / sim-exploitation)
+  watch_items: "metals halted since ~Mar 2026 (secondary); prices/coupons fluctuate weekly"
+  sources:
+    - https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-payouts/
+    - https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-drawdown-explained/
+    - https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/
+    - https://support.apextraderfunding.com/hc/en-us/articles/4406804554779

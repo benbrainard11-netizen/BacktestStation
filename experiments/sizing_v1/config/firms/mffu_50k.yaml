@@ -1,45 +1,69 @@
-# My Funded Futures (MFFU) — $50K account.
-# Numbers TBD by user/friend research.
+# MyFundedFutures $50K — Rapid plan (current flagship; Starter/Expert DISCONTINUED Jul 2025).
+# AUDITED 2026-06-12 from official help-center pages (confidence: official-page).
 
 firm_name: mffu
 account_size: 50000
-evaluation_type: combine
+evaluation_type: funded
 notes: |
-  My Funded Futures (MFFU). Has multiple plans; this is the standard $50K.
+  Rapid sim-funded (audited): INTRADAY-trailing $2,000 from equity high-water
+  (stricter than the EOD-trailing eval!), locks at start+$100. No DLL. Payouts
+  are the firm's selling point: DAILY cadence, eligible 24h after first funded
+  trade, min $500, buffer $2,100 above start must remain, NO winning-day
+  minimums, NO funded consistency, NO documented payout cap, 90/10 split
+  (raised Jan 2026). Eval: EOD-trailing, 50% soft consistency, 2 min days.
+  Funded news rule: must be flat 2 min around T1 releases (only firm of the
+  six with a funded news blackout).
 
-daily_loss_limit: 1250        # TBD
+trailing_drawdown: 2000
+trailing_dd_uses_eod: false            # FUNDED stage is INTRADAY-trailing (eval is EOD)
+trailing_dd_lock_threshold: 52100
+trailing_dd_locked_value: 50100
+
+daily_loss_limit: 0
 daily_loss_intraday: true
 
-trailing_drawdown: 2500       # TBD
-trailing_drawdown_locks_at_starting_balance: true
-trailing_drawdown_resets_daily: false
-trailing_drawdown_uses_eod: true
+payout_min_winning_days: 0
+payout_winning_day_threshold_usd: 0
+payout_profit_threshold: 2100          # $2,100 buffer above start must remain
+payout_amount_method: half_of_profits  # proxy; actual = anything above buffer
+payout_cap_usd: 999999                 # no documented cap on Rapid
+payout_balance_after: keep_remainder
+payout_resets_winning_day_counter: true
 
-profit_target: 3000           # TBD
+consistency_rule_pct: 100              # NONE in funded stage (eval-only 50% soft)
+consistency_rule_applies_at: funded
 
-consistency_rule_pct: 30
-consistency_rule_applies_at_eval: false
-consistency_rule_applies_at_funded: true
-
-min_trade_days: 5
-min_trade_count_per_day: 0
-
-news_blackout_minutes_before: 0
-news_blackout_minutes_after: 0
-events_blocked: []
-
-max_eval_days: 30             # TBD
-
-max_position_size: 5
+max_position_size: 5                   # 5 minis / 50 micros both stages
 max_total_position: 5
-allowed_symbols:
-  - ES.c.0
-  - NQ.c.0
-  - YM.c.0
-  - RTY.c.0
+allowed_symbols: [ES.c.0, NQ.c.0, YM.c.0, RTY.c.0]
 
-allow_reset: true
-reset_cost_usd: 80
+news_blackout_minutes_before: 2        # T1 releases, funded stage only
+news_blackout_minutes_after: 2
+events_blocked: [FOMC, NFP, CPI]
 
-eval_fee_usd: 165
-funded_account_value_usd: 1000
+sim_max_days: 365
+monthly_subscription_usd: 0
+eval_fee_usd: 157                      # one-time list; reset $157
+funded_account_value_usd: null
+
+audit:
+  date: 2026-06-12
+  confidence: official-page
+  eval:
+    fee: "$157 one-time list (Rapid); reset $157; alternates: Flex $153, Pro $227"
+    target: 3000
+    trailing_dd: 2000
+    dd_type: EOD-trailing in EVAL (locks at $50,100); funded switches to INTRADAY trail
+    daily_loss_limit: none
+    consistency: 50% soft, eval only
+    min_days: 2
+    max_contracts: 5 minis / 50 micros
+  overnight: "auto-flat 4:10 PM ET all stages (earliest cutoff of the six)"
+  copy_policy: "own accounts (Tradesyncer preferred); max 5 active sim-funded at 25/50K sizes"
+  payout_split: "90/10 (Jan 2026); daily payouts; live transition at $10K single-day or approval"
+  automation: allowed (no favorable-fill exploitation; same-price stacked limits banned)
+  sources:
+    - https://help.myfundedfutures.com/en/articles/11802636-traders-evaluation-simplified
+    - https://help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look
+    - https://help.myfundedfutures.com/en/articles/13745661-payout-policy-overview-best-and-fastest-prop-firm-payouts
+    - https://help.myfundedfutures.com/en/articles/10771500-copy-trading-at-myfundedfutures
