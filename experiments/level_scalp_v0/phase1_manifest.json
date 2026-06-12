@@ -1,0 +1,33 @@
+{
+  "stage": "phase1_mode_a",
+  "pinned_utc": "2026-06-11",
+  "committed_sha": null,
+  "window": ["2026-01-01", "2026-03-31"],
+  "note": "Pinned BEFORE any CONFIRMATION read (PLAN Phase 1 procedure). One headline config per surviving primary cell; no config selection on the confirmation window. committed_sha filled at commit time; the run script refuses to start while it is null.",
+  "fill_rules": {
+    "headline": "behind_you (MBO: first F on an order_id whose A at my price+side came after my placement)",
+    "lower_bound": "trade_through (MBP-1: trade strictly through level) OR opposite-quote cross",
+    "upper_bound": "visible_queue (replayed displayed queue ahead consumed; hidden depth not counted)",
+    "modify_events_excluded_from_behind_set": "M keeps priority on size-down; including it would be optimistic"
+  },
+  "cells": [
+    {"id": "P3", "symbol": "ES.c.0", "families": ["pdc"], "session_et": ["18:00", "09:30"],
+     "target_ticks": 8, "stop_ticks": 8, "time_stop_min": 30, "proximity_ticks": 8, "extra": null},
+    {"id": "P6", "symbol": "ES.c.0", "families": ["round"], "session_et": ["09:30", "17:00"],
+     "target_ticks": 8, "stop_ticks": 8, "time_stop_min": 30, "proximity_ticks": 8, "extra": null},
+    {"id": "P7", "symbol": "ES.c.0", "families": ["pdh", "pdl", "onh", "onl"], "session_et": ["09:30", "17:00"],
+     "target_ticks": 8, "stop_ticks": 8, "time_stop_min": 30, "proximity_ticks": 8,
+     "extra": "defend_sz_norm>=2 measured at first MBP-1 touch onset after placement (atlas definition)"},
+    {"id": "P8", "symbol": "RTY.c.0", "families": ["round"], "session_et": ["09:30", "17:00"],
+     "target_ticks": 8, "stop_ticks": 8, "time_stop_min": 30, "proximity_ticks": 8, "extra": null}
+  ],
+  "exits": {
+    "target": "exit-side quote crosses target (long: bid>=target) or trade through — rule B15",
+    "stop": "fill at observed opposite quote at first crossing; stress ladder +1/+2/+4 ticks — rule B16",
+    "time_stop": "30min after fill at prevailing opposite quote",
+    "ties": "stop wins"
+  },
+  "lifecycle": "place at first proximity trigger within session window and level validity; one fill max per level instance; cancel at session window end or valid_to; no re-arm after exit (v1)",
+  "costs": {"commission_rt_usd": 3.80, "maker_entry_slip": 0},
+  "decision_rule": "pooled day-block p5 of headline-rule net EV across the 4 cells > 0 AND >=2 of 4 cells individually positive at p25; else Phase 1 verdict = adverse selection eats the atlas edge -> module NULL (holdout never read)"
+}

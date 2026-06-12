@@ -1,0 +1,491 @@
+Level-Reaction Scalping in CME Equity Index
+Futures
+Executive summary
+The strongest public evidence does not support the idea that a naked chart level, by itself, is a durable
+post-2015 retail edge in ES, NQ, YM, or RTY. What is well supported is a narrower claim: salient levels matter
+because they concentrate resting liquidity, stop-losses, benchmark execution, and hedging flows, and
+those flows change the microstructure around the level. In other words, the tradable object is usually not
+the line; it is the interaction between a salient line and queue state, imbalance, hidden liquidity, time of
+day, and options regime. That distinction is the difference between something that survives realistic costs
+and something that dies in a backtest. 
+For a non-colocated retail trader using Rithmic with roughly 5–50 ms latency, the line between “capturable”
+and “HFT-only” sits exactly where you would expect: reactive strategies that depend on being first to
+respond to order-book events, hard-information shocks, or microsecond book changes are largely HFT
+territory, while pre-positioned passive strategies that rest at salient prices before the touch remain
+plausible if they target horizons of tens of seconds to a few minutes and clear a realistic fill/adverse-
+selection hurdle. Speed-sensitive papers show profitable high-frequency technical signals degrade
+materially with 50–200 ms delays; HFTs dominate hard-information processing; and market-makers use
+speed upgrades mainly to reduce adverse selection. 
+Your best research program is therefore not “Which levels bounce?” but “At which pre-computed salient
+levels do I get a favorable combination of fill probability, post-fill drift, and retest behavior after
+conditioning on regime?” The most defensible implementation is an MBO-reconstructed FIFO queue
+model with competing-risk survival estimates for fill, miss, move-away, and adverse selection, calibrated
+separately by level family, time of day, and options regime. The literature supports this modeling direction
+strongly. 
+Ranked level families for reaction trades
+Below is the ranking I would use for reaction trades specifically, not for breakout or magnet trades. Each
+item is labeled as documented with data, practitioner folklore with plausible mechanism, or folklore
+likely false.
+Large resting liquidity at the book, especially when reinforced by absorption or iceberg
+behavior — documented with data. This is the cleanest microstructure evidence base. Queue
+imbalance predicts near-term price moves; support/resistance-type prices coincide with depth
+peaks; and iceberg liquidity changes order-flow and price-impact dynamics. This is fundamentally a 
+reaction setup, but its useful horizon is usually milliseconds to a few seconds, which makes 
+reactive entry fragile for retail. The version that can survive is the one where you post in advance
+1
+2
+3
+1. 
+1
+
+and let the market come to you. Standalone “I saw a big bid so I lifted/didn’t hit” is likely too
+latency-fragile after costs.
+Round numbers and clustered price levels — documented with data. Price clustering is one of
+the oldest robust stylized facts; modern work still finds return predictability tied to round-number
+clustering and limit-order concentration. Mechanistically, these prices can act as barriers before the
+break and generate acceleration after the break, so the same level can be a reaction trade on first
+touch and a continuation trade once it gives way. For CME index futures, the likely mapping is big
+handles, half-handles, and obvious quarter structures around high-attention prices. Usable, but
+probably only with passive pre-placement and confirmation.
+Options strikes and dealer-gamma-conditioned strike behavior — documented with data, but
+mostly for attraction/pinning and regime effects rather than “wall bounce” folklore. Classic
+pinning at strikes on expiration is real in equities; newer 0DTE/SPX work shows that dealer gamma
+state changes whether intraday price action is more reversing or more momentum-like. Positive
+gamma supports reaction trades; negative gamma makes “walls” much less reliable and favors 
+continuation after breach. The caveat is important: public evidence is much stronger for gamma-
+state effects and expiration pinning than for social-media-style “gamma wall” charts. Plain “max
+pain” as an intraday level tool is not a serious primary signal.
+Prior-day high/low, overnight high/low, session extremes, and the opening range — 
+practitioner folklore with plausible mechanism, with indirect academic support but little modern
+peer-reviewed ES/NQ/YM/RTY evidence isolating the first-touch bounce itself. The mechanism is
+strong: these are public focal points where traders cluster orders and stops. But the literature I
+found is stronger on support/resistance depth, stop clustering, and opening-range breakout/
+expansion than on the exact short-horizon bounce expectancy off prior-session extremes. For
+reaction trades, these levels should be treated as candidate locations that need queue/flow
+confirmation rather than as standalone edges. Naive first-touch fades likely fail after costs.
+VWAP and VWAP bands — practitioner folklore with plausible mechanism. VWAP’s importance
+as an institutional benchmark is beyond dispute, and large parent orders are a major reason VWAP
+activity exists. What is not well documented in the primary literature is a stable, modern, short-
+horizon reaction edge from fading or bouncing precisely at intraday VWAP in index futures. The
+more credible interpretation is that VWAP is a benchmark / fair-value anchor / participation
+magnet, not a magical support-resistance line. Standalone VWAP bounce strategies are likely
+overfit after costs.
+Prior swing highs/lows and “liquidity pools” — practitioner folklore with plausible mechanism.
+The mechanism is credible because stop-losses do cluster at salient prior extrema and because
+support/resistance-type levels can coincide with depth peaks. But I did not find a strong public,
+modern, CME-equity-futures paper giving a portable effect size for “prior swing high/low sweep then
+reverse.” This means the concept is reasonable, but the edge must be proven in your own data. 
+Treat as a secondary label, not a primary signal.
+Volume-profile nodes, HVN/LVN/POC — practitioner folklore with plausible mechanism, but the
+weakest rigorous evidence base in your list. Public academic work on “volume profile” in the trader’s
+sense is thin relative to the marketing attention it gets. The intuitive mechanisms are easy to state —
+4
+2. 
+5
+3. 
+6
+4. 
+7
+5. 
+8
+6. 
+9
+7. 
+2
+
+HVN/POC as attraction/acceptance, LVN as fast-transit or rejection — but the public evidence I found
+is nowhere near as strong as for order-book depth, round numbers, or options hedging flows. I
+would not fund a standalone scalping strategy on HVN/LVN/POC without very strong out-of-
+sample proof from your own data.
+What the literature actually says about each level family
+Prior-day high/low/close and overnight/session extremes. The case for these levels is mostly indirect in
+the literature. Kavajecz and Odders-White show that support and resistance levels coincide with peaks in
+depth on the book, which makes the mechanism for bounce-or-break behavior credible. Osler’s work shows
+that salient support/resistance areas are tied to clustered stop-loss and take-profit orders, which explains
+why the same level can behave like support on approach and like fuel once breached. What I did not find is
+a strong modern paper on ES/NQ/YM/RTY that says, “first touch of prior-day high after x overnight path
+yields y ticks over z seconds.” So the defensible label here is practitioner folklore with plausible
+mechanism, not “documented turnkey edge.” 
+Opening range. Academic evidence is meaningfully stronger for opening-range breakout than for
+opening-range reaction fades. Holmberg, Lönnbark, and Lundström report significantly positive returns
+for a mechanical ORB style, but Donninger’s S&P 500 futures paper is the right cold shower: several simple
+published intraday strategies do not work as advertised under realistic assumptions. For your purpose that
+means opening-range boundaries are more defensible as state variables — “are we in expansion or
+failure?” — than as automatically fadeable levels. Post-2015, I would assume any pure OR-fade rule is fragile
+unless it is filtered by time of day, queue state, and options regime. 
+Round numbers. This is one of the best-supported families on your list. Harris documented pervasive price
+clustering. Chiao and coauthors explicitly connect round-price limit-order clustering to excess depth and
+barrier behavior . A later paper by Xiao Zhang reports economically meaningful predictability from daily
+closes just above versus below round thresholds — about 24.6 bps next day and 46.1 bps over the
+following week — and attributes it to limit-order clustering. Osler’s work adds the crucial short-horizon
+nuance: salient round-number support/resistance can produce reversal before the break and 
+acceleration after the break, because stops and take-profits are not arranged symmetrically around the
+level. For index-futures scalping, that means round-number levels are best thought of as bifurcation
+points: early touches can bounce, but once the break starts and stops fire, the trade construction should
+flip from mean reversion to continuation. 
+VWAP and VWAP bands. The academic literature strongly supports VWAP as an institutional execution
+benchmark. Madhavan describes VWAP’s appeal as a forgiving benchmark; Kakade and coauthors note
+that very large institutional trades are one of the main motivations behind VWAP activity; Duffie, Dworczak,
+and Zhu use VWAP as a canonical benchmark-fixing mechanism. None of that automatically implies a
+modern intraday bounce edge at VWAP in ES or NQ. The clean inference is narrower: because benchmarked
+execution and participation algorithms benchmark against VWAP , price can be drawn toward it or treat it
+as a reference around which participation changes. That makes VWAP more credible as an attraction/
+context variable than as a primary reaction level. 
+HVN/LVN/POC and volume profile. Public evidence here is thin. The best charitable interpretation is that
+profile concepts are informal ways of describing previous acceptance and rejection, and therefore
+sometimes proxy for where liquidity providers may be willing to re-engage. But compared with the
+10
+11
+12
+5
+13
+3
+
+literature on depth clustering, queue imbalance, and options hedging, the academic base is weak. In
+practice, if a POC or HVN works, I would expect it to work because it overlaps with something more
+primitive and measurable — clustered depth, round numbers, a prior session extreme, or dealer-hedging
+flow — not because “volume profile” has standalone causal force. 
+Options strikes, pinning, gamma walls, and max pain. Here the literature is real but often misused. Ni,
+Pearson, and Poteshman show that on expiration dates, closing prices of optionable stocks cluster at strike
+prices and that returns are altered by an average of at least 16.5 basis points. A later paper finds that
+monthly pinning remained pervasive after weekly options were introduced, but that pinning was not
+significant on weekly option expiration days, which is already an important reminder that these effects
+change as market structure changes. More recent SPX/0DTE work sharpens the intuition relevant for futures
+traders: dealer gamma is usually positive, positive gamma is associated with lower future intraday
+volatility and stronger reversal, while negative gamma strengthens momentum; a Cboe study estimates
+the maximum impact of options-market-maker gamma at about 3.3 annualized volatility points on a
+daily basis and 6.4 points over 30-minute periods. That supports using your SPX/NDX/RUT/DJX chain data
+to build gamma-state filters and strike salience scores. It does not validate social-media “gamma wall”
+maps as precision trading levels. And “max pain” is a bad place to anchor a serious scalping strategy: even
+where papers find some relation around expiration, the evidence is not the same thing as a robust intraday
+futures level effect. 
+Visible resting liquidity and hidden liquidity. This is the strongest microstructure substrate for a reaction
+trader . Cont, Kukanov, and Stoikov show that short-horizon price changes are mainly driven by order-flow
+imbalance at the best quotes, with a roughly linear relation whose slope is inversely proportional to depth.
+Gould and Bonart find that queue imbalance improves one-tick-ahead prediction materially for large-tick
+stocks, with classification performance improving by about 20–30% there. Kavajecz and Odders-White tie
+technical levels to displayed depth peaks. On hidden liquidity, Zotikov and Antonov show that native and
+synthetic CME icebergs can be detected from message data, and Frey and Sandås show that detected
+iceberg orders materially change order flow and price impact. Two warnings matter for practice. First, 
+reacting after you see the absorption is often too late without HFT-grade speed. Second, visible depth is
+not the same thing as reliable liquidity; CME notes that in a volatile 2025 ES session, volume surged while
+order-book depth fell sharply, which is a direct reminder that “big visible size” can evaporate or mislead. 
+Prior swing highs/lows and stop pools. This is the modern “liquidity pool” meme, but its real content is
+older and plainer: stop orders and take-profits cluster at salient prior prices, and once they trigger they can
+generate price cascades. Osler’s papers are still the foundational evidence here. The problem is portability:
+a stylized fact about stop clustering and trend propagation is not the same as a positive-expectancy ES
+scalp after a sweep of a local high. So the right label is plausible mechanism, evidence gap on portable
+effect size. 
+Recommended queue and fill model from MBO
+With CME-style MBO and FIFO matching, you should move beyond MBP-style probabilistic queue guesses
+and reconstruct the exact displayed FIFO queue at each price, then add a small number of explicit
+uncertainty terms for what MBO still does not give you: your own latency, hidden liquidity, and cancel
+exposure after you decide to pull. CME’s own documentation says MBO shows individual order sizes
+that make up total quantity at a price, including priority in the queue, and that books are built by
+sorting by price and then order priority. CME equity-index futures are FIFO. Your own order assumption
+14
+6
+15
+16
+4
+
+should therefore be brutally simple and realistic: you join the back of the displayed queue at your
+effective arrival time; you do not receive pro-rata privileges; and every cancellation, modification, and
+execution ahead of you must be tracked exactly when the feed allows it. 
+The model I would implement is a competing-risks survival model on top of exact queue
+reconstruction. The structural part comes from queue-reactive theory: within short intervals where the
+reference price is unchanged, model each price level as a state-dependent queue, with intensities for add,
+cancel, and market-order consumption conditional on the current state of the book. Huang, Lehalle, and
+Rosenbaum formalize this queue-reactive view; Cont, Kukanov, and Stoikov provide the core order-flow
+framework; Moallemi and Yuan show why queue position itself has economic value and why adverse
+selection rises with worse position; and newer fill-probability papers show that survival-style models and
+deep survival models outperform simpler benchmarks. 
+Concretely, define the state at order placement as follows: effective arrival time after a sampled send
+latency; queue-ahead size at the chosen price; total size at the level; top-of-book or multi-level imbalance;
+recent market-order intensity; recent cancel intensity; replenishment intensity; spread; local realized
+volatility; time of day; level family label; first-touch versus retest; and options regime variables such as
+nearby-strike open interest, gamma sign, and distance to large strikes. Because you have MBO, you can
+also add event-level features that MBP cannot see: order-age distribution at the level, whether preceding
+cancels were front-loaded, whether visible size replenishes immediately after trades, and whether native or
+synthetic iceberg behavior is present. The MBO literature explicitly finds that MBO data is additive to LOB
+features and useful for short-horizon forecasting. 
+For the target, do not estimate just one fill probability. Estimate a full set of competing events over several
+horizons: fill within 100 ms, 500 ms, 1 s, 5 s, 30 s, 2 min; move-away before fill; price-through without full fill;
+and cancel-before-fill after your cancellation decision plus cancel latency. The survival papers are useful
+precisely because they estimate the distribution of fill times, not just a binary label. Your “placed T
+seconds before touch” study should therefore be event-aligned: for each level touch candidate, insert
+synthetic orders T seconds before the first touch, apply a sampled latency, reconstruct the exact queue
+ahead at arrival, and then roll forward event by event. 
+For a retail order in ES, the most defensible queue assumption is the conservative one: joins last, and is
+advanced only by reductions ahead of it. If you had only MBP , Rigtorp-style probabilistic queue estimation
+or hftbacktest probability queue models would be defensible approximations. Since you have MBO, use
+those only as fallbacks or as stress tests. Your remaining uncertainty is mainly hidden liquidity and your
+actual order-to-exchange and exchange-to-cancel delays. Hidden liquidity should be handled with an
+explicit iceberg/hide multiplier on effective queue-ahead and effective queue-behind, estimated from
+observed replenishment and from detectable iceberg events. 
+For adverse selection, estimate two quantities separately: E[mid move over h | filled] and E[mid move
+over h | touched]. Do not substitute one for the other . The literature is clear that fills are not random.
+Moallemi and Yuan treat adverse selection as a core component of queue value; Albers et al. report a
+negative correlation between maker fill likelihood and post-fill returns; and “The Negative Drift of a Limit
+Order Fill” makes the point directly that fills tend to coincide with adverse price movement. In practice that
+means touched-but-not-filled is your baseline for “level reaction,” while filled is the economically relevant
+outcome. The gap between the two is the tax your fill model must overcome. 
+17
+18
+19
+20
+21
+22
+5
+
+My recommendation is therefore:
+Use exact FIFO replay from MBO for displayed queue.
+Overlay a competing-risks survival model for fill / miss / move-away.
+Include explicit parameters for latency, hidden-liquidity multiplier, cancel latency, time of day, 
+options regime, and level family.
+Evaluate the strategy on fill-conditioned PnL, not touch-conditioned PnL.
+Refit separately by instrument; NQ, ES, RTY, and YM may share architecture but should not share
+coefficients mechanically. 
+Retail-latency economics and what is actually capturable
+At your stated commission schedule, the commission hurdle alone is already meaningful. CME’s contract
+specs imply one ES tick is $12.50, one NQ tick is $5, one RTY tick is $5, and one YM tick is $5. So a $3.80
+round-turn is about 0.30 ES ticks but about 0.76 ticks in NQ, RTY, and YM before you even count spread
+crossing, slippage, or adverse selection. That is one reason the same strategy can look fine in ES and
+mediocre in NQ/RTY/YM even before any alpha difference appears. 
+The speed literature makes the main dividing line very clear . Scholtus and van Dijk find that for profitable
+high-frequency technical rules, a 200 ms delay is enough to reduce performance significantly, and on low-
+volatility days a 50 ms delay already matters. Budish, Cramton, and Shim show why: at sub-second
+horizons, continuous-time markets create mechanical arbitrage rents that mainly reward speed. Sarah
+Zhang’s “Need for Speed” shows HFTs dominate non-HFTs in processing hard information. So if the trade
+requires you to see a book event and then react before others, 5–50 ms is usually not “slow but okay”; it is
+often the wrong game. 
+The setups that remain plausible for you are the latency-robust ones:
+Latency-robust constructions. Resting passive orders placed well ahead of touch at pre-computed levels;
+failed-break or sweep-reversal trades where the entry is already working in queue before the flip is obvious;
+rotation trades in positive-gamma environments where the expected post-fill path is more reverting; and
+trades with holding periods long enough that 5–50 ms is a second-order issue relative to minutes of
+subsequent movement. These rely on salience, queue economics, and regime rather than on being first. 
+Latency-fragile constructions. Reactive book-imbalance trades, reactive absorption trading after the
+absorption is visible, trade-sign burst responses, cash-futures lead-lag responses, news or macro-release
+reactions, and most sub-second “I watched DOM and jumped in” tactics. Queue-imbalance and order-flow
+signals can be powerful, but papers on order-book alpha consistently emphasize very short effective
+horizons. Kolm, Turiel, and Westray find the effective horizon of stock-specific order-book forecasts is about 
+two average price changes, which is another way of saying the horizon is short and decays fast. 
+On the narrow question “can seconds-to-minutes mean-reversion scalps at reference levels clear costs
+without colocation?”, the honest answer from the public record is: sometimes in principle, but probably
+not as a naked ruleset in today’s most liquid index futures. The evidence for simple intraday tactics in
+S&P futures under realistic assumptions is poor; maker fills are negatively selected; and the cost hurdle is
+• 
+• 
+• 
+• 
+• 
+23
+24
+25
+26
+27
+6
+
+nontrivial. Your best chance is a hybrid: pre-specified salient level + passive queue entry + regime filter +
+time-of-day filter + explicit post-fill adverse-selection model. 
+Stops, sweeps, and retests
+The best hard evidence here still comes from Carol Osler . She documents that stop-loss orders cluster at
+salient levels and that they can produce rapid, self-reinforcing price cascades; the response to stop-loss
+orders lasts hours, longer than the response to take-profit orders. She also documents clustering of stop-
+loss and take-profit orders around support/resistance-type prices and round numbers. For a level trader ,
+that has two direct implications. First, stops placed just beyond obvious public levels are where positive-
+feedback flow is most likely to hit. Second, a breach of a salient level is not symmetric: once stops trigger ,
+the trade construction should often switch from reversion logic to continuation logic. 
+That said, I did not find a strong public quantitative paper giving a portable answer to “optimal stop offset
+beyond the level in ES” or “base rate of retest within k ticks after first rejection.” This is a genuine evidence
+gap. The mechanism is supported; the exact calibration is not. For your own research, this is one of the
+highest-value things to estimate from the data you already have: conditional retest rates after a first sweep,
+as a function of time of day, level family, initial overshoot, and options regime. Because you have MBO, you
+can go further and condition on whether the sweep was accompanied by replenishment / iceberg-like
+absorption or by one-sided queue depletion with no refill. That distinction is likely more valuable than the
+raw fact of a sweep. 
+My prior for stop placement is therefore simple and fairly ruthless: for reaction trades at salient levels, a
+stop that sits exactly where public folklore says it should sit is often donating edge to the market. A better
+design is to choose offsets from your own data by minimizing expected loss = stop-hit probability × stop
+size + miss cost + adverse-fill cost, estimated separately by level type. That is an inference from the
+literature, but it is the correct one. 
+Backtest failure modes that will fool you
+The canonical lie is fill-on-touch optimism. Replay systems and bar data often make it look as if touching
+your price means you traded. That is false in FIFO markets unless you are actually at or near the front of the
+queue. HftBacktest’s documentation is explicit that queue position matters, that replay backtesting
+assumes no market impact, and that some fill assumptions — especially around liquidity-taking and partial
+fills — can be unrealistic. Rigtorp’s queue-position note explains why MBP feeds force you into a model; with
+MBO you do not need that excuse. 
+The next lie is ignoring adverse selection. It is not enough to know whether you would have been filled;
+you must know what happens because you were filled. The recent literature is blunt: fill likelihood and post-
+fill returns trade off negatively, and limit-order fills exhibit negative drift. If your backtest counts spread
+capture and ignores post-fill drift, it will overstate PnL exactly where the strategy feels smartest. 
+Then comes latency blindness. Your model must separate signal time, decision time, order-arrival time,
+and cancel-effective time. Scholtus shows even tens of milliseconds can change outcomes in short-horizon
+technical trading. If your backtest lets you cancel on the event that told you to cancel, instead of after
+realistic round-trip delay, you are giving yourself a free option the real market will not honor . 
+28
+29
+30
+31
+32
+33
+34
+7
+
+Another big lie is bar-based last look. Message-level order-book strategies must be tested message by
+message. Event-based LOB simulation papers stress that identifying which LOB events caused the move is
+essential, and Brownian or bar-based approximations do not capture this. If your strategy condition is “price
+touched level and then closed back inside the bar ,” but your order had to exist before that bar closed, the
+backtest has already leaked information. 
+The final lie I would highlight is conditioning on touched levels after the fact. This one is not always
+named in the literature, but it is deadly in level research. If you construct a set of levels using future
+interaction or “valid levels that were respected,” you have imported survivorship and look-ahead into the
+sample definition itself. In your setting, every candidate level must be generated ex ante, timestamped,
+and allowed to fail silently. Anything else is storytelling. This is partly an inference, but it follows directly
+from the event-driven and queue-value literature. 
+What practitioners say works now, what I believe, and what I would
+not bother with
+The practitioner consensus that deserves respect is narrower than the marketing language suggests.
+Recent broker/platform material converges on a sensible idea: prior-day highs/lows, overnight highs/lows,
+and value areas are a roadmap, not “magic prediction lines.” Open-source and practitioner execution tools
+also keep emphasizing order-book imbalance and queue position as the operational variables that
+determine whether a limit order actually pays. That part is consistent with the literature. 
+Where practitioner lore is probably right is on three filters. First, first touch usually beats later touch, not
+because “the market remembers” but because displayed liquidity gets consumed and informed traders
+learn. Second, time of day matters: open, macro-release windows, and the close are not the same game as
+midday rotation. Third, visible absorption is not enough; you need to distinguish genuine replenishment/
+iceberg behavior from fleeting size or spoof-like depth. These are plausible mechanisms, and the iceberg-
+detection literature on CME supports the third point in particular . But public evidence that quantifies these
+exact practitioner slogans in ES/NQ/YM/RTY remains thin. 
+Where practitioner lore is often wrong is in treating visible size as truth. CME’s own discussion of 2025 ES
+conditions shows that volume can surge while order-book depth collapses, which is a clean reminder that
+visible liquidity is not stable liquidity. So “there’s a big bid there” is a necessary observation, not a sufficient
+one. You need its persistence, refill behavior, and post-trade replenishment pattern. 
+My do-not-bother list is short but firm:
+Do not bother with standalone volume-profile bounces. Public academic support is too thin. If HVN/LVN/
+POC adds value, let it earn its place only as a conditioning feature on top of stronger primitives. 
+Do not bother with “max pain” as a primary intraday futures level. Use actual strike open interest,
+same-day maturity structure, and dealer-gamma estimates instead. Classical pinning and recent gamma-
+state work are real; “max pain” retail lore is not the serious version of that idea. 
+35
+36
+37
+38
+39
+40
+41
+8
+
+Do not bother with naked VWAP fades. Keep VWAP as context, not as your main signal. Benchmark
+execution explains why it matters, but the public evidence does not justify believing in a durable standalone
+bounce edge in ES/NQ/YM/RTY after realistic costs. 
+Do not bother with reactive DOM-clicking after you “see” absorption unless you are explicitly studying
+sub-second execution and are willing to lose the speed race most days. If the strategy depends on you
+being faster than the crowd after the event is obvious, the literature says you are playing an HFT game
+without HFT tools. 
+Do not bother with any backtest that uses MBP-style touch assumptions when you already own MBO.
+You have the right data. Use it. Anything less is choosing fiction. 
+Open questions and limitations
+Several things you asked for are genuinely under-documented in the public literature. I did not find a
+strong modern peer-reviewed estimate of the short-horizon bounce expectancy of prior-day highs/lows, 
+overnight highs/lows, or prior swing highs/lows specifically in CME equity-index futures. I also did not
+find a strong public paper quantifying the optimal stop offset beyond a salient level or the base rate of
+retest within k ticks after first rejection in ES/NQ/YM/RTY. Those are exactly the places where your own
+data can create real edge because the public literature does not give away a ready-made answer . 
+The strongest evidence base in your problem sits around queue economics, adverse selection, speed
+sensitivity, order clustering, and options-hedging regimes. If you build the study so those pieces
+dominate and the named “level” is only one feature among them, you will be doing bulletproof work. If you
+build it around mystical lines with optimistic fills, you will be building a very elegant lie. 
+https://academic.oup.com/rfs/article-pdf/17/4/1043/24435929/hhg057.pdf
+https://academic.oup.com/rfs/article-pdf/17/4/1043/24435929/hhg057.pdf
+https://repub.eur .nl/pub/31778/2012-0184.pdf
+https://repub.eur .nl/pub/31778/2012-0184.pdf
+https://arxiv.org/abs/1312.0563
+https://arxiv.org/abs/1312.0563
+https://arxiv.org/abs/1011.6402
+https://arxiv.org/abs/1011.6402
+https://www.acsu.buffalo.edu/~keechung/MGF743/Readings/
+Stock%20price%20clustering%20and%20price%20discreteness.pdf
+https://www.acsu.buffalo.edu/~keechung/MGF743/Readings/Stock%20price%20clustering%20and%20price%20discreteness.pdf
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=519044
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=519044
+https://www.nber .org/system/files/working_papers/w20540/w20540.pdf
+https://www.nber .org/system/files/working_papers/w20540/w20540.pdf
+42
+25
+43
+44
+45
+1 7 11 44
+2 25 34
+3 18
+4 15
+5
+6 41
+8 42
+9
+
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=447361
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=447361
+https://papers.ssrn.com/sol3/Delivery.cfm/6616280.pdf?abstractid=6616280&mirid=1
+https://papers.ssrn.com/sol3/Delivery.cfm/6616280.pdf?abstractid=6616280&mirid=1
+https://ideas.repec.org/a/eee/finlet/v10y2013i1p27-33.html
+https://ideas.repec.org/a/eee/finlet/v10y2013i1p27-33.html
+https://www.cis.upenn.edu/~mkearns/finread/impshort.pdf
+https://www.cis.upenn.edu/~mkearns/finread/impshort.pdf
+https://www.newyorkfed.org/research/staff_reports/sr150.html
+https://www.newyorkfed.org/research/staff_reports/sr150.html
+https://www.cmegroup.com/globex/files/tokyo-customer-forum-2016.pdf
+https://www.cmegroup.com/globex/files/tokyo-customer-forum-2016.pdf
+https://arxiv.org/pdf/2102.08811
+https://arxiv.org/pdf/2102.08811
+https://business.columbia.edu/sites/default/files-efs/citation_file_upload/deep-lob-2021.pdf
+https://business.columbia.edu/sites/default/files-efs/citation_file_upload/deep-lob-2021.pdf
+https://rigtorp.se/2013/06/08/estimating-order-queue-position.html
+https://rigtorp.se/2013/06/08/estimating-order-queue-position.html
+https://business.columbia.edu/faculty/research/model-queue-position-valuation-limit-order-book
+https://business.columbia.edu/faculty/research/model-queue-position-valuation-limit-order-book
+https://www.cmegroup.com/education/courses/introduction-to-futures/tick-movements-understanding-
+how-they-work
+https://www.cmegroup.com/education/courses/introduction-to-futures/tick-movements-understanding-how-they-work
+https://arxiv.org/pdf/1512.03492
+https://arxiv.org/pdf/1512.03492
+https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2488539_code1009018.pdf?
+abstractid=2488539&mirid=1
+https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID2488539_code1009018.pdf?abstractid=2488539&mirid=1
+https://hftbacktest.readthedocs.io/en/latest/order_fill.html
+https://hftbacktest.readthedocs.io/en/latest/order_fill.html
+https://papers.ssrn.com/sol3/Delivery.cfm/5074873.pdf?abstractid=5074873
+https://papers.ssrn.com/sol3/Delivery.cfm/5074873.pdf?abstractid=5074873
+https://arxiv.org/html/2502.17417v1
+https://arxiv.org/html/2502.17417v1
+https://optimusfutures.com/blog/stop-guessing-drawing-key-levels-in-futures-trading-step-by-step/
+https://optimusfutures.com/blog/stop-guessing-drawing-key-levels-in-futures-trading-step-by-step/
+https://downloads.dxfeed.com/articles/CME-Iceberg-Detection-preprint.pdf
+https://downloads.dxfeed.com/articles/CME-Iceberg-Detection-preprint.pdf
+9
+10 14 40
+12
+13
+16 29 30 31
+17 23 43
+19
+20
+21
+22 26 45
+24
+27
+28
+32
+33
+35 36
+37
+38
+10
+
+https://www.cmegroup.com/articles/2025/reassessing-liquidity-beyond-order-book-depth.html
+https://www.cmegroup.com/articles/2025/reassessing-liquidity-beyond-order-book-depth.html
+39
+11
