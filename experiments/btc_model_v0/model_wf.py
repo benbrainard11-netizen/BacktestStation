@@ -122,11 +122,17 @@ def main() -> int:
     mr = pr.notna() & y.notna()
     ic = float(spearmanr(pr[mr], y[mr]).statistic)
     n_oos = int(mr.sum())
+    ic_fund = None
+    if "fund_1d" in X.columns:
+        sub = mr & X["fund_1d"].notna()
+        if sub.sum() > 200:
+            ic_fund = float(spearmanr(pr[sub], y[sub]).statistic)
     tr = trade_eval(pr, f)
     tr["week"] = pd.DatetimeIndex(tr["date"]).to_period("W").astype(str)
     tr["year"] = pd.DatetimeIndex(tr["date"]).year
-    lines = [f"# BTC model WF v0 — {len(feats)} features, {n_oos} OOS days",
-             "", f"control IC: {ic_c:+.3f} | REAL pooled OOS IC: {ic:+.3f}", ""]
+    lines = [f"# BTC model WF — {len(feats)} features, {n_oos} OOS days",
+             "", f"control IC: {ic_c:+.3f} | REAL pooled OOS IC: {ic:+.3f}"
+             + (f" | funding-era (2020+) IC: {ic_fund:+.3f}" if ic_fund is not None else ""), ""]
     if len(tr):
         net = tr["net_r"].to_numpy(float)
         w = tr["week"].to_numpy()

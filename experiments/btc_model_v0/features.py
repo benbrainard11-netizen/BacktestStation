@@ -114,6 +114,34 @@ def build(d: pd.DataFrame, m: pd.DataFrame) -> pd.DataFrame:
     f["x_rs_nq20"] = f["ret_20"] - f["x_nq_20"]
     f["x_riskon"] = f[["x_nq_5", "x_es_5"]].mean(axis=1) - f[["x_gc_5", "x_zn_5"]].mean(axis=1)
 
+    # funding block (documented signal; a UTC day's three funding events at 00/08/16
+    # UTC all precede the 18:00 ET (22-23 UTC) close -> same-day value is legal)
+    aux = MODULE / "data"
+    if (aux / "funding.parquet").exists():
+        fr = pd.read_parquet(aux / "funding.parquet")
+        fd = fr.set_index("ts")["rate"].resample("1D").sum()
+        fd.index = fd.index.tz_localize(None).normalize()
+        fund = fd.reindex(f.index)
+        f["fund_1d"] = fund
+        f["fund_3d"] = fund.rolling(3).sum()
+        f["fund_7d"] = fund.rolling(7).sum()
+        f["fund_30d"] = fund.rolling(30).sum()
+        fz = (fund - fund.rolling(30).mean()) / fund.rolling(30).std()
+        f["fund_z30"] = fz
+        f["fund_ext"] = np.where(fz.abs() > 2, np.sign(fz), 0.0)
+    # basis block: CME futures close vs spot close, both from day D-1 (spot's UTC-day
+    # close prints ~1-2h after the futures close; pairing prior-day values keeps every
+    # input <= decision time — internal asynchrony adds noise, never future info)
+    if (aux / "spot_1d.parquet").exists():
+        sp = pd.read_parquet(aux / "spot_1d.parquet")
+        sc = sp.set_index("ts")["close"]
+        sc.index = sc.index.tz_localize(None).normalize()
+        spot_prev = sc.reindex(f.index).ffill(limit=3).shift(1)
+        basis = d["c"].shift(1) / spot_prev - 1
+        f["basis"] = basis
+        f["basis_z30"] = (basis - basis.rolling(30).mean()) / basis.rolling(30).std()
+        f["basis_chg5"] = basis.diff(5)
+
     # ---- labels (y_ prefix = the ONLY forward-looking columns) ----
     f["y_fwd1"] = ret.shift(-1)
     f["y_fwd3"] = d["c"].pct_change(3).shift(-3)
