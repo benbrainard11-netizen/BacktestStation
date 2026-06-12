@@ -127,6 +127,17 @@ def build(sym: str = SYM) -> pd.DataFrame:
     f["gx_total_z20"] = (lg - lg.rolling(20).mean()) / lg.rolling(20).std()
     f["gx_width_chg5"] = f["gx_width"].diff(5)
     f["gx_pos_chg1"] = f["gx_pos_in_range"].diff(1)
+    # ---- options SURFACE block (raw-cache scan; prior-day row per rule A7) ----
+    sp = MODULE / "data" / "spx_surface.parquet"
+    if sp.exists():
+        ox = pd.read_parquet(sp)
+        ox.index = pd.to_datetime(ox["date"], format="%Y%m%d")
+        ox = ox.drop(columns=["date", "spot"]).sort_index()
+        ox = ox.reindex(f.index).shift(1)  # PRIOR-day surface only
+        for c in ox.columns:
+            f[c] = ox[c]
+        # variance risk premium: implied (annualized) minus realized (annualized)
+        f["ox_vrp"] = f["ox_atm_iv30"] - f["rv_20"] * np.sqrt(252)
     return _finish(f, d, m, sym)
 
 
