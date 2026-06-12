@@ -1,0 +1,36 @@
+population: 3746
+champion train passers: 578  (threshold 0.5818)
+control-masked features: [np.str_('cluster.has_family.previous_rth'), np.str_('cluster.has_level.lol'), np.str_('cluster.level_stack_range_pts'), np.str_('cluster.n_family.asia_session'), np.str_('cluster.n_family.overnight'), np.str_('cluster.n_family.premarket'), np.str_('cluster.n_level.ash'), np.str_('cluster.n_level.loh'), np.str_('cluster.n_level.onl'), np.str_('cluster.n_level.pmh'), np.str_('decision_offset_sec'), np.str_('seq.minutes_since_prior_same_side_sweep'), np.str_('time.abs_minutes_from_10am_et'), np.str_('time.minutes_from_10am_et'), np.str_('trigger.window_pct')]
+
+[masked_bookproxy] mean|dScore|=0.0852  thr=0.5090  passers all-windows: 890 vs champion 921  jaccard=0.207
+[masked_bookproxy] no-YM trigger stream: 557 ({'jan_oos': 137, 'oos_holdout': 45, 'train': 375})
+
+  == masked_bookproxy: lag rungs ==
+    OOS       lag=   0s  n= 182 filled= 124 win=33.1%  meanR/fill= -0.082  R/trig= -0.056
+    OOS       lag=   5s  n= 182 filled= 123 win=30.9%  meanR/fill= -0.171  R/trig= -0.115
+    OOS       lag=  10s  n= 182 filled= 119 win=30.3%  meanR/fill= -0.155  R/trig= -0.102
+    OOS       lag=  30s  n= 182 filled= 111 win=30.6%  meanR/fill= -0.034  R/trig= -0.021
+    OOS       lag=  60s  n= 182 filled= 110 win=32.7%  meanR/fill= -0.049  R/trig= -0.029
+    train(IS) lag=   0s  n= 375 filled= 258 win=44.6%  meanR/fill= +0.257  R/trig= +0.176
+    train(IS) lag=   5s  n= 375 filled= 252 win=42.5%  meanR/fill= +0.129  R/trig= +0.087
+    train(IS) lag=  10s  n= 375 filled= 251 win=40.2%  meanR/fill= +0.118  R/trig= +0.079
+    train(IS) lag=  30s  n= 375 filled= 244 win=39.3%  meanR/fill= +0.085  R/trig= +0.055
+    train(IS) lag=  60s  n= 375 filled= 236 win=39.4%  meanR/fill= +0.029  R/trig= +0.018
+
+[masked_control15] mean|dScore|=0.0055  thr=0.5793  passers all-windows: 921 vs champion 921  jaccard=0.960
+[masked_control15] no-YM trigger stream: 731 ({'jan_oos': 165, 'oos_holdout': 103, 'train': 463})
+
+  == masked_control15: lag rungs ==
+    OOS       lag=   0s  n= 268 filled= 178 win=50.0%  meanR/fill= +0.365  R/trig= +0.243
+    OOS       lag=   5s  n= 268 filled= 174 win=45.4%  meanR/fill= +0.271  R/trig= +0.176
+    OOS       lag=  10s  n= 268 filled= 173 win=41.0%  meanR/fill= +0.141  R/trig= +0.091
+    OOS       lag=  30s  n= 268 filled= 171 win=36.8%  meanR/fill= +0.056  R/trig= +0.036
+    OOS       lag=  60s  n= 268 filled= 165 win=33.3%  meanR/fill= -0.070  R/trig= -0.043
+    train(IS) lag=   0s  n= 463 filled= 345 win=61.4%  meanR/fill= +0.656  R/trig= +0.489
+    train(IS) lag=   5s  n= 463 filled= 338 win=53.3%  meanR/fill= +0.447  R/trig= +0.326
+    train(IS) lag=  10s  n= 463 filled= 337 win=50.1%  meanR/fill= +0.382  R/trig= +0.278
+    train(IS) lag=  30s  n= 463 filled= 327 win=45.9%  meanR/fill= +0.283  R/trig= +0.200
+    train(IS) lag=  60s  n= 463 filled= 318 win=43.1%  meanR/fill= +0.130  R/trig= +0.089
+
+Reference (champion gate, same engine/rungs): runs/lag_ladder_subminute.log — OOS R/trig: 0s +0.244 / 5s +0.176 / 10s +0.094 / 30s +0.039 / 60s -0.052
+per-trigger results -> C:\Users\benbr\BacktestStation\experiments\mira_gate_harness\runs/mask_test_*.parquet
