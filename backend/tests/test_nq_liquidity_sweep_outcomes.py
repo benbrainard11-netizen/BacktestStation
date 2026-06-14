@@ -4,7 +4,10 @@ import datetime as dt
 
 import pandas as pd
 
-from app.research.nq_liquidity_sweep_outcomes_features import process_session_sweeps
+from app.research.nq_liquidity_sweep_outcomes_features import (
+    _imbalance,
+    process_session_sweeps,
+)
 from app.research.nq_liquidity_sweep_outcomes_stats import analyze_sweep_features
 from app.research.nq_liquidity_sweep_outcomes_types import LiquiditySweepStudyConfig
 
@@ -211,6 +214,15 @@ def test_feature_ranking_identifies_deliberately_separable_feature() -> None:
     assert top["auc"] == 1.0
     assert bool(top["knowable_before_entry"]) is True
     assert top["sample_size_total"] == 6
+
+
+def test_imbalance_handles_unsigned_size_columns_without_underflow() -> None:
+    bid = pd.Series([1, 10], dtype="uint64")
+    ask = pd.Series([3, 5], dtype="uint64")
+
+    values = _imbalance(bid, ask).tolist()
+
+    assert values == [-0.5, 1 / 3]
 
 
 def _rank_event(event_id: str, session_date: str, label: str) -> dict[str, object]:

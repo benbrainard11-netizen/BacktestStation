@@ -277,6 +277,8 @@ def _empty_window_features(prefix: str, base: dict[str, object]) -> dict[str, ob
 
 
 def _imbalance(bid: pd.Series, ask: pd.Series) -> pd.Series:
+    bid = pd.to_numeric(bid, errors="coerce").astype("float64")
+    ask = pd.to_numeric(ask, errors="coerce").astype("float64")
     total = bid + ask
     return ((bid - ask) / total.where(total > 0)).dropna()
 
