@@ -1,6 +1,23 @@
 # prop_intraday_resolver_v0
 
-**Status:** SCAFFOLD (created 2026-06-14). Spec + plan + reuse-map + stub skeleton only — **no implementation yet.** Every `.py` here raises `NotImplementedError` and points at the file it should reuse.
+**Status:** ⏸ **PARKED 2026-06-14** (Ben's call) after Phase 1 + Phase 2. The integration-spine thesis was tested end to end; the OFI break signal is a validated *classifier* but is **neither a standalone trade nor a demonstrable conditioner** on available data. Two clean NULLs; low remaining prior. Revivable only with a concrete consumer (see "Final status" below).
+
+### Final status (the arc)
+
+| phase | outcome |
+|---|---|
+| **1** — reproduce the spine | ✅ OFI→break classifier reproduced through the new pipeline, byte-identical to `market_state` (AUC 0.639). Trading-day reader adopted (`report/phase1_reference.md`). |
+| **2a/2b** — multi-head labels | ✅ canonical labeled dataset, 5 guards green, resolved subset byte-identical to Phase 1 (`report/phase2_labels.md`). |
+| **2c** — standalone trade | ❌ **NULL**: OFI is a volatility proxy in R-space (corr ≈ 0), no directional edge after costs. Adversarially verified (`report/phase2c_policy.md`). |
+| **2d** — conditioner on reclaim edge | ⚠️ **INCONCLUSIVE**: touch-OFI shows no robust lift, and the validated +0.5–0.8R reclaim edge isn't present in the available ES-only slice to condition (`report/phase2d_conditioner.md`). |
+
+**Kept deliverables:** the reproduced spine + permanent regression guards (`verify_phase1.py smoke`), the multi-head dataset builder + label discipline, and three documented NULLs that block future wasted builds. The validated OFI classifier already lives in `market_state/intraday/`.
+
+**To revive:** a concrete consumer for the break-classifier (e.g. it gates a *reproduced, complex-wide* reclaim edge), or a tick-level honest-bracket re-sim with confirmation entry. Both are low-prior, real builds — don't restart without one.
+
+---
+
+(Original scaffold intent below — the layers were built in Phase 1/2; conditioner/governor remain stubs since the upstream resolver did not yield a tradeable edge.)
 
 **One-liner:** a thin *integration spine* that wires three things this repo already built but never connected end-to-end, into one prop-firm-aware intraday decision system:
 
