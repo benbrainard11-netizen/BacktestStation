@@ -18,7 +18,6 @@ schema, walk-forward spec, head architecture, and iter-0 MBO validation
 from __future__ import annotations
 
 
-
 def predict_risk(candidate):
     """Predict the risk block for a valid candidate.
 

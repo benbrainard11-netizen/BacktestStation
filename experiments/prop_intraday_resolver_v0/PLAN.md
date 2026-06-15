@@ -28,15 +28,17 @@ Spec, plan, reuse-map, stub skeleton. No model code. ← you are here.
 
 - **Kill:** must reproduce Stage 1's OOS result bit-for-comparable. If the wiring changes the number, the wiring is wrong. No new modeling until this matches. *(Step 1a met this; Step 1b's move was an understood data-correctness fix, not a wiring bug.)*
 
-## Phase 2 — expand events + multi-head resolver
+## Phase 2 — turn the OFI break signal into an executable contract
 
-**Goal:** the net-new modeling. Add overnight H/L, OR H/L, VWAP±bands as event families; add the multi-head outputs.
+Strict order (do NOT jump ahead to features/MBO/model). The signal is validated;
+the question is whether it maps to positive trade economics.
 
-- `events.py`: wire full `levels.py` set; add families one at a time.
-- `labels.py`: extend triple-barrier to `y_hold/y_break/y_chop`, `y_target_before_stop`, `realized_R`, `MAE_R`, `MFE_R`, `time_to_target`, `y_tail`.
-- `resolver.py`: LightGBM multiclass (branch) + binary (target-before-stop) + quantile (MAE_R / expected_R); isotonic calibration per walk-forward fold.
-- **Kill (per family):** a new event family or feature group stays **only if** it beats the OFI-only baseline OOS by a day-block bootstrap delta-CI that clears zero. Families that don't lift are dropped, not "kept for completeness."
-- **Kill (calibration):** predicted-60% bucket must win ≈ 60% OOS, or the probabilities are not tradeable.
+- **2a — freeze canonical dataset + judge (DONE 2026-06-14):** trading-day reader, OFI-only judge (n=2877, AUC 0.639) is the frozen baseline.
+- **2b — multi-head labels (DONE 2026-06-14):** `labels.label_event_multihead` + `dataset.py` build the canonical labeled frame (n=5420; resolved 2877 byte-identical to Phase 1 — chop/timeout additive). 10 heads in two honest frames (branch = level-relative = the judge; economics = entry-relative, 1R = 8-tick barrier). All 5 guards green (`verify_phase2_labels.py`): no-lookahead, determinism, judge-preserved, signal-intact (break-rate 0.278/0.371/0.497 monotone), clean. **Finding: OFI predicts resolution but the naive ±8-tick/30-min trade is `realized_R` ≤ 0 in every tercile — alpha evidence ≠ executable strategy.** See [`report/phase2_labels.md`](report/phase2_labels.md).
+- **2c — policy-geometry audit (NEXT, NOT model training):** can the OFI score alone, via simple pre-registered policies, produce positive OOS `expected_R` after costs? Sweep branch policy (high-OFI=break / low-OFI=fade / mid=no-trade) × entry timing (immediate / acceptance / retest / rejection) × barrier geometry (target/stop/horizon grid). Diagnostics: win rate, avg/median/p25/p75 R, MAE/MFE, target-before-stop, time-to-target/stop, trades/day, daily p95 loss, by hour/side/OFI-quantile. **Split discipline: search on train/val folds, holdout untouched, day-block bootstrap CIs; nothing survives unless OOS `expected_R` clears zero after costs.** Starts with the **key-question diagnostic** (below). If no policy clears zero → document NULL, do not expand features.
+  - **judge_mode vs live_mode (do not mix):** the 2b builder is **judge_mode** (cooldown advances only on resolved → preserves the frozen judge). The 2c economics MUST use **live_mode** (every actionable touch consumes cooldown/position state; chop/timeout consume time+opportunity; no double-counting trades that couldn't coexist live). judge_mode proves plumbing; live_mode proves tradability.
+  - **The key question (gates the path):** is the high-OFI bucket losing because it never gets enough MFE, or because it gets MFE the naive exit fails to capture? Low MFE → labels insufficient for trading (path B). Decent MFE, negative `realized_R` → alpha real, wrapper bad (path A). Diagnostic table: OFI bucket × branch with avg/`p(MFE_R≥0.5)`/`p(MFE_R≥1.0)`, MAE, time-to-MFE/MAE.
+- **after a policy clears zero:** train the multi-head LightGBM resolver (former 2c–2d: multiclass branch + binary target-before-stop + quantile R; isotonic calibration per fold; predicted-60% bucket wins ≈60% OOS), then expand event families one at a time, each earning its seat vs the OFI judge.
 
 ## Phase 3 — conditioner (Type A first)
 

@@ -21,7 +21,6 @@ governor MUST mark-to-market within the day.
 from __future__ import annotations
 
 
-
 def govern(candidate, size_mult, account_state, firm):
     """Final firm-compliant size for a conditioned candidate.
 
