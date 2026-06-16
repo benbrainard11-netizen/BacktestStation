@@ -11,6 +11,7 @@ from app.research.nq_or_high_middle_third_forward import (
     FORWARD_START_EXCLUSIVE,
     run_forward_validation,
 )
+from app.research.nq_or_high_middle_third_monitor import update_monitoring_outputs
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -27,7 +28,13 @@ def main(argv: list[str] | None = None) -> int:
         forward_start_exclusive=args.forward_start_exclusive,
         end=args.end,
     )
-    print(json.dumps(json_safe(result["summary"]), indent=2))
+    monitor = update_monitoring_outputs(result, args.output_dir)
+    print(
+        json.dumps(
+            json_safe({"forward": result["summary"], "monitor": monitor["summary"]}),
+            indent=2,
+        )
+    )
     return 0
 
 

@@ -58,6 +58,7 @@ Current state:
 - Current forward OR-high events: 0
 - Current labeled events: 0
 - Next report: when 25 new OR-high events have accumulated
+- Monitoring milestones: 25, 50, 75, and 100 new OR-high events
 
 Beginner read: there is no future MBP data after the research window yet, so the framework is waiting. Once new opening-range events and MBP data exist, rerunning the CLI will append/recompute the future-only validation set and create milestone reports.
 
@@ -78,6 +79,23 @@ The forward validator writes:
 - `or_high_forward_config.json`
 - `reports/or_high_forward_0025.md`, then `0050`, `0075`, and so on once milestones exist
 
+Append-only monitoring files:
+
+- `or_high_forward_cumulative_events.csv`
+- `or_high_forward_cumulative_attempts.csv`
+- `or_high_forward_cumulative_trades.csv`
+- `or_high_forward_cumulative_equity.csv`
+- `or_high_forward_monitor_milestones.csv`
+- `or_high_forward_monitor_summary.json`
+- `reports/or_high_forward_monitor_0025.md`
+- `reports/or_high_forward_monitor_0025_equity.csv`
+- `reports/or_high_forward_monitor_0050.md`
+- `reports/or_high_forward_monitor_0050_equity.csv`
+- `reports/or_high_forward_monitor_0075.md`
+- `reports/or_high_forward_monitor_0075_equity.csv`
+- `reports/or_high_forward_monitor_0100.md`
+- `reports/or_high_forward_monitor_0100_equity.csv`
+
 Each 25-event milestone reports:
 
 - continuation rate
@@ -86,9 +104,14 @@ Each 25-event milestone reports:
 - holdout net PnL
 - average PnL per trade
 - win rate
+- rolling 25-event win rate
 - profit factor
+- cumulative equity
+- max drawdown
 - walk-forward fold count
 - walk-forward net PnL
+
+The monitor keeps prior cumulative rows first and appends only new `event_id` values. If the same event appears again on a later run, the existing recorded outcome is retained instead of being silently overwritten.
 
 ## How To Run
 
