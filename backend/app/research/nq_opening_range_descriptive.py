@@ -11,6 +11,7 @@ import pandas as pd
 
 from app.data.reader import read_bars
 from app.research.nq_liquidity_sweep_outcomes_sessions import normalize_bars
+from app.research.nq_opening_range_context_validation import build_context_validation
 from app.research.nq_opening_range_descriptive_build import build_events
 from app.research.nq_opening_range_descriptive_stats import (
     baseline_summary,
@@ -67,12 +68,15 @@ def build_opening_range_descriptive_study(
     baseline = baseline_summary(events)
     contexts = context_summary(events)
     consistency = context_consistency(contexts)
+    context_validation, walk_forward = build_context_validation(events)
     monthly = monthly_summary(events)
     result = {
         "events": events,
         "baseline_summary": baseline,
         "context_summary": contexts,
         "context_consistency": consistency,
+        "context_validation": context_validation,
+        "walk_forward_validation": walk_forward,
         "monthly_summary": monthly,
         "config": pd.DataFrame([_config(symbol, start, end, holdout_start, context_deadzone_pts)]),
     }
@@ -90,6 +94,8 @@ def write_opening_range_descriptive_outputs(
         "baseline_summary": "opening_range_descriptive_baseline.csv",
         "context_summary": "opening_range_descriptive_contexts.csv",
         "context_consistency": "opening_range_descriptive_consistency.csv",
+        "context_validation": "opening_range_descriptive_context_validation.csv",
+        "walk_forward_validation": "opening_range_descriptive_walk_forward.csv",
         "monthly_summary": "opening_range_descriptive_monthly.csv",
         "config": "opening_range_descriptive_config.csv",
     }
@@ -107,9 +113,11 @@ def summary_rows(result: dict[str, object]) -> dict[str, object]:
     events = result["events"]
     baseline = result["baseline_summary"]
     consistency = result["context_consistency"]
+    validation = result["context_validation"]
     assert isinstance(events, pd.DataFrame)
     assert isinstance(baseline, pd.DataFrame)
     assert isinstance(consistency, pd.DataFrame)
+    assert isinstance(validation, pd.DataFrame)
     return {
         "sessions": int(len(events)),
         "date_start": str(events["session_date"].min()) if not events.empty else None,
@@ -119,6 +127,18 @@ def summary_rows(result: dict[str, object]) -> dict[str, object]:
             consistency["read"] == "directionally_consistent"
         ].to_dict("records")
         if not consistency.empty
+        else [],
+        "stable_context_validation": validation.loc[
+            validation["read"].isin(
+                [
+                    "stable_improver",
+                    "stable_worsener",
+                    "directionally_consistent_improver",
+                    "directionally_consistent_worsener",
+                ]
+            )
+        ].to_dict("records")
+        if not validation.empty
         else [],
     }
 
@@ -137,6 +157,8 @@ def _config(
         "opening_range": "09:30-10:00 ET",
         "target_distance": "one_opening_range_width",
         "context_deadzone_pts": deadzone,
+        "time_of_break_buckets": "first_15m,15_30m,30_60m,60_120m,after_120m",
+        "walk_forward_method": "expanding monthly train window, next month validation",
         "holdout_start": holdout_start,
     }
 

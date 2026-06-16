@@ -47,6 +47,8 @@ Files:
 - `opening_range_descriptive_baseline.csv`
 - `opening_range_descriptive_contexts.csv`
 - `opening_range_descriptive_consistency.csv`
+- `opening_range_descriptive_context_validation.csv`
+- `opening_range_descriptive_walk_forward.csv`
 - `opening_range_descriptive_monthly.csv`
 - `opening_range_descriptive_config.csv`
 - `opening_range_descriptive_summary.json`
@@ -157,9 +159,10 @@ The opening-range study found descriptive patterns worth future research, especi
 
 The strongest future-research candidates are:
 
-- first OR low break continuation
-- down opening-drive context
-- OR close in the middle or lower third
-- avoiding overconfidence in OR high breaks after strong upper-third opening drives
+- OR close in the middle third
+- avoiding continuation assumptions when the OR closes in the upper third
+- first OR low break continuation as a mild, smaller secondary hint
 
 This is not enough to build a strategy yet. The next step should be a frozen follow-up study that predeclares one or two simple context hypotheses and validates them out of sample.
+
+See `docs/NQ_OPENING_RANGE_CONTEXT_VALIDATION.md` for the stricter holdout and walk-forward context validation.

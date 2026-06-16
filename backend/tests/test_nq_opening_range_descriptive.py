@@ -27,12 +27,20 @@ def test_opening_range_study_labels_first_breaks_and_contexts() -> None:
     events = result["events"]
     baseline = result["baseline_summary"]
     contexts = result["context_summary"]
+    validation = result["context_validation"]
+    walk_forward = result["walk_forward_validation"]
     assert list(events["first_break_side"]) == ["high", "low"]
     assert list(events["outcome_label"]) == [
         "continuation_breakout",
         "failed_breakout_reversal",
     ]
+    assert list(events["time_of_break_bucket"]) == ["first_15m", "first_15m"]
+    assert "opening_drive_alignment" in events.columns
+    assert "overnight_inventory_bucket" in events.columns
     assert "overnight_trend_bucket" in set(contexts["factor"])
+    assert "time_of_break_bucket" in set(contexts["factor"])
+    assert "opening_drive_alignment" in set(validation["factor"])
+    assert "first_15m" in set(walk_forward["category"])
     assert int(baseline.loc[baseline["scope"] == "full", "labeled_count"].iloc[0]) == 2
 
 

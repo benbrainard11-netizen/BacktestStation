@@ -69,6 +69,7 @@ def session_row(
         or_high,
         or_low,
         or_close,
+        str(first["side"]),
         context_deadzone_pts,
     )
     return {
@@ -84,6 +85,8 @@ def session_row(
         "first_break_side": first["side"],
         "first_break_ts": first["ts"],
         "first_break_price": first["price"],
+        "first_break_minutes_after_or_end": break_minutes(first["ts"], or_end),
+        "time_of_break_bucket": break_time_bucket(first["ts"], or_end),
         "continuation_target": outcome["continuation_target"],
         "reversal_target": outcome["reversal_target"],
         "outcome_label": outcome["label"],
@@ -140,24 +143,42 @@ def contexts(
     or_high: float,
     or_low: float,
     or_close: float,
+    first_break_side: str,
     deadzone: float,
 ) -> dict[str, object]:
     overnight = overnight_window(bars, session_date)
     prior_close = prior_rth_close(bars, session_date)
     gap = or_open - prior_close if prior_close is not None else math.nan
     overnight_return = overnight["close"] - overnight["open"] if overnight else math.nan
+    overnight_range = overnight["high"] - overnight["low"] if overnight else math.nan
+    overnight_position = (
+        (or_open - overnight["low"]) / overnight_range
+        if overnight and math.isfinite(overnight_range) and overnight_range > 0
+        else math.nan
+    )
     drive_return = or_close - or_open
     close_position = (or_close - or_low) / (or_high - or_low)
+    overnight_trend_bucket = direction(overnight_return, deadzone)
+    gap_bucket = direction(gap, deadzone)
+    opening_drive_direction = direction(drive_return, deadzone)
     return {
         "overnight_open": overnight["open"] if overnight else None,
+        "overnight_high": overnight["high"] if overnight else None,
+        "overnight_low": overnight["low"] if overnight else None,
         "overnight_close": overnight["close"] if overnight else None,
+        "overnight_range_pts": overnight_range,
+        "rth_open_overnight_position": overnight_position,
+        "overnight_inventory_bucket": inventory_bucket(overnight_position),
         "overnight_trend_pts": overnight_return,
-        "overnight_trend_bucket": direction(overnight_return, deadzone),
+        "overnight_trend_bucket": overnight_trend_bucket,
+        "overnight_trend_alignment": align_to_break(overnight_trend_bucket, first_break_side),
         "prior_rth_close": prior_close,
         "rth_gap_pts": gap,
-        "rth_gap_bucket": direction(gap, deadzone),
+        "rth_gap_bucket": gap_bucket,
+        "gap_alignment": align_to_break(gap_bucket, first_break_side),
         "opening_drive_return_pts": drive_return,
-        "opening_drive_direction": direction(drive_return, deadzone),
+        "opening_drive_direction": opening_drive_direction,
+        "opening_drive_alignment": align_to_break(opening_drive_direction, first_break_side),
         "opening_drive_close_position": close_position,
         "opening_drive_close_bucket": close_bucket(close_position),
     }
@@ -228,6 +249,48 @@ def close_bucket(value: float) -> str:
     if value <= 2 / 3:
         return "middle_third"
     return "upper_third"
+
+
+def inventory_bucket(value: float) -> str:
+    if not math.isfinite(value):
+        return "unknown"
+    if value < 0:
+        return "below_overnight_range"
+    if value > 1:
+        return "above_overnight_range"
+    return close_bucket(value)
+
+
+def align_to_break(direction_bucket: str, first_break_side: str) -> str:
+    if first_break_side not in {"high", "low"}:
+        return "not_applicable"
+    if direction_bucket == "flat":
+        return "neutral"
+    if direction_bucket not in {"up", "down"}:
+        return "unknown"
+    aligned_direction = "up" if first_break_side == "high" else "down"
+    return "aligned" if direction_bucket == aligned_direction else "against"
+
+
+def break_minutes(first_break_ts: object, or_end: dt.datetime) -> float:
+    if first_break_ts is None:
+        return math.nan
+    return (pd.Timestamp(first_break_ts) - pd.Timestamp(or_end)).total_seconds() / 60
+
+
+def break_time_bucket(first_break_ts: object, or_end: dt.datetime) -> str:
+    minutes = break_minutes(first_break_ts, or_end)
+    if not math.isfinite(minutes):
+        return "no_break"
+    if minutes < 15:
+        return "first_15m"
+    if minutes < 30:
+        return "15_30m"
+    if minutes < 60:
+        return "30_60m"
+    if minutes < 120:
+        return "60_120m"
+    return "after_120m"
 
 
 def as_datetime(value: object) -> dt.datetime:

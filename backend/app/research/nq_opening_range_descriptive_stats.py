@@ -9,10 +9,15 @@ from scipy import stats
 LABELS = ("continuation_breakout", "failed_breakout_reversal", "ambiguous", "no_break")
 CONTEXT_FACTORS = (
     "first_break_side",
+    "opening_drive_alignment",
     "overnight_trend_bucket",
+    "overnight_trend_alignment",
+    "overnight_inventory_bucket",
     "rth_gap_bucket",
+    "gap_alignment",
     "opening_drive_direction",
     "opening_drive_close_bucket",
+    "time_of_break_bucket",
 )
 
 
