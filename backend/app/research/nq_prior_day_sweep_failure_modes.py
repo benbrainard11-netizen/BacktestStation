@@ -27,7 +27,12 @@ def run_prior_day_sweep_failure_mode_analysis(
 ) -> dict[str, object]:
     attempts = pd.read_csv(attempts_path)
     events = pd.read_csv(events_path)
-    joined = _prepare_attempts(attempts, events, holdout_start, holdout_end)
+    joined = prepare_prior_day_sweep_attempts(
+        attempts,
+        events,
+        holdout_start,
+        holdout_end,
+    )
     trades = _win_loss_trades(joined)
 
     categorical = categorical_summary(trades)
@@ -45,6 +50,15 @@ def run_prior_day_sweep_failure_mode_analysis(
         "hypotheses": hypothesis_rows,
         "summary": summary,
     }
+
+
+def prepare_prior_day_sweep_attempts(
+    attempts: pd.DataFrame,
+    events: pd.DataFrame,
+    holdout_start: str,
+    holdout_end: str,
+) -> pd.DataFrame:
+    return _prepare_attempts(attempts, events, holdout_start, holdout_end)
 
 
 def write_prior_day_sweep_failure_mode_outputs(
