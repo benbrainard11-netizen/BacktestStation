@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 from pathlib import Path
 
@@ -20,8 +21,12 @@ try:
 except ImportError:
     requests = None
 
-BASE = "http://127.0.0.1:25510/v2"
+BASE = f"http://127.0.0.1:{os.environ.get('THETA_PORT', '25510')}/v2"  # multi-terminal: port per session
 RAW = Path("D:/data/raw/thetadata")          # append-only local raw store (matches the Databento raw convention)
+# Tunable per-pull via env (default = original behavior). A short timeout makes a WEDGED
+# Terminal fail fast so the caller can restart it, instead of hanging ~12 min per request.
+_TIMEOUT = int(os.environ.get("THETA_TIMEOUT", "180"))
+_RETRIES = int(os.environ.get("THETA_RETRIES", "4"))
 
 
 def _parse_bulk(j: dict) -> pd.DataFrame:
@@ -47,9 +52,9 @@ def _parse_flat(j: dict) -> pd.DataFrame:
 def _get(endpoint: str, params: dict) -> dict | None:
     """One network pull with retry. Returns parsed json, None on legit-empty (472/no-data), raises on persistent fail."""
     last = None
-    for attempt in range(4):
+    for attempt in range(_RETRIES):
         try:
-            r = requests.get(f"{BASE}/{endpoint}", params=params, timeout=180)
+            r = requests.get(f"{BASE}/{endpoint}", params=params, timeout=_TIMEOUT)
             if r.status_code == 200:
                 return r.json()
             body = r.text[:100]
@@ -61,7 +66,7 @@ def _get(endpoint: str, params: dict) -> dict | None:
         except requests.RequestException as e:
             last = type(e).__name__
         time.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"{endpoint} failed after 4 tries (feed down?): {last}")
+    raise RuntimeError(f"{endpoint} failed after {_RETRIES} tries (feed down?): {last}")
 
 
 def _cached(endpoint: str, params: dict, parser) -> pd.DataFrame:
@@ -71,6 +76,12 @@ def _cached(endpoint: str, params: dict, parser) -> pd.DataFrame:
     fn = sub / f"{key}.parquet"
     if fn.exists():
         return pd.read_parquet(fn)
+    if os.environ.get("THETA_CACHE_ONLY") == "1":
+        # Offline/derived build (e.g. walls from already-pulled raw): a miss here is a known
+        # vendor gap, not a dead feed. Return empty INSTANTLY instead of hitting -- and hanging
+        # on -- the Terminal (_get retries 4x at a 180s timeout = up to ~12 min per missing key).
+        # Explicit opt-in, default off, so live pulls still raise on a dead feed (CLAUDE.md rule 6).
+        return pd.DataFrame()
     j = _get(endpoint, params)
     if j is None:                                              # legit-empty: don't cache, re-check next run
         return pd.DataFrame()
