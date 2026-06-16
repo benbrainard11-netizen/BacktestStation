@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import datetime as dt
+from pathlib import Path
 
 import pandas as pd
 
+from app.research.nq_prior_day_sweep_strategy_prototype_combine import (
+    combine_prior_day_sweep_strategy_outputs,
+)
 from app.research.nq_prior_day_sweep_strategy_prototype_execution import simulate_bar_variant
 from app.research.nq_prior_day_sweep_strategy_prototype_mbp import simulate_mbp_variant
-from app.research.nq_prior_day_sweep_strategy_prototype_setup import qualifying_events
+from app.research.nq_prior_day_sweep_strategy_prototype_setup import (
+    qualifying_events,
+    variant_rows,
+)
 from app.research.nq_prior_day_sweep_strategy_prototype_types import (
     PriorDaySweepPrototypeConfig,
 )
@@ -108,6 +115,35 @@ def test_mbp_delay_short_enters_after_confirmation_and_hits_target() -> None:
     assert row["exit_reason"] == "target"
 
 
+def test_variant_rows_can_be_frozen_to_selected_ids() -> None:
+    selected = ("first_retest__sweep_extreme__fixed_12",)
+
+    rows = variant_rows(selected)
+
+    assert [row["variant_id"] for row in rows] == list(selected)
+
+
+def test_combine_sharded_outputs_recomputes_frozen_variant_summary(tmp_path) -> None:
+    variant_id = "immediate_sweep__sweep_extreme__fixed_8"
+    shard_1 = tmp_path / "shard_1"
+    shard_2 = tmp_path / "shard_2"
+    shard_1.mkdir()
+    shard_2.mkdir()
+    _write_strategy_shard(shard_1, "e1", variant_id, "2026-01", 100.0)
+    _write_strategy_shard(shard_2, "e2", variant_id, "2026-02", -40.0)
+
+    result = combine_prior_day_sweep_strategy_outputs(
+        [shard_1, shard_2],
+        _config(sequencing_source="mbp1", variant_ids=(variant_id,)),
+    )
+
+    summary = result["variant_summary"]
+    assert isinstance(summary, pd.DataFrame)
+    assert summary["variant_id"].tolist() == [variant_id]
+    assert summary["signals"].tolist() == [2]
+    assert summary["net_pnl"].tolist() == [60.0]
+
+
 def _event(
     event_id: str,
     sweep_side: str,
@@ -169,3 +205,44 @@ def _mbp(rows: list[tuple[str, str, float, float, float]]) -> pd.DataFrame:
     )
     df.index = pd.DatetimeIndex(df["ts_event"])
     return df
+
+
+def _write_strategy_shard(
+    shard: Path,
+    event_id: str,
+    variant_id: str,
+    month: str,
+    pnl: float,
+) -> None:
+    qualified = pd.DataFrame(
+        [
+            {
+                **_qualified_event(event_id, "high", "long"),
+                "month": month,
+                "sweep_ts": pd.Timestamp(f"{month}-06T13:35:00Z"),
+            }
+        ]
+    )
+    attempts = pd.DataFrame(
+        [
+            {
+                "event_id": event_id,
+                "month": month,
+                "sweep_ts": pd.Timestamp(f"{month}-06T13:35:00Z"),
+                "entry_ts": pd.Timestamp(f"{month}-06T13:35:01Z"),
+                "exit_ts": pd.Timestamp(f"{month}-06T13:36:00Z"),
+                "variant_id": variant_id,
+                "entry_method": "immediate_sweep",
+                "stop_method": "sweep_extreme",
+                "target_method": "fixed_8",
+                "status": "filled",
+                "pnl": pnl,
+                "r_multiple": pnl / 160.0,
+            }
+        ]
+    )
+    qualified.to_csv(
+        shard / "prior_day_sweep_strategy_qualified_events.csv",
+        index=False,
+    )
+    attempts.to_csv(shard / "prior_day_sweep_strategy_attempts.csv", index=False)

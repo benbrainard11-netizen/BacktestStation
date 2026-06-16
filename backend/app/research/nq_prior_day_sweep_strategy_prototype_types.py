@@ -42,6 +42,7 @@ class PriorDaySweepPrototypeConfig:
     min_sweep_extreme_stop_pts: float = 6.0
     max_sweep_extreme_stop_pts: float = 30.0
     walk_forward_min_train_months: int = 3
+    variant_ids: tuple[str, ...] = ()
 
     @property
     def slippage_pts(self) -> float:

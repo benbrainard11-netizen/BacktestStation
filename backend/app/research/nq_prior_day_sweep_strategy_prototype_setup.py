@@ -57,14 +57,18 @@ def qualifying_events(
     return out.sort_values(["sweep_ts", "event_id"]).reset_index(drop=True)
 
 
-def variant_rows() -> list[dict[str, str]]:
+def variant_rows(selected_variant_ids: tuple[str, ...] = ()) -> list[dict[str, str]]:
     rows = []
+    selected = set(selected_variant_ids)
     for entry in ENTRY_METHODS:
         for stop in STOP_METHODS:
             for target in TARGET_METHODS:
+                candidate_id = variant_id(entry, stop, target)
+                if selected and candidate_id not in selected:
+                    continue
                 rows.append(
                     {
-                        "variant_id": variant_id(entry, stop, target),
+                        "variant_id": candidate_id,
                         "entry_method": entry,
                         "stop_method": stop,
                         "target_method": target,

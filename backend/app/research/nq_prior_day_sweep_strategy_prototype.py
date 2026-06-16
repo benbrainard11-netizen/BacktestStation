@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.compute as pc
 
 from app.data.reader import read_bars, read_mbp1
 from app.research.nq_liquidity_sweep_outcomes_sessions import normalize_bars, normalize_mbp1
@@ -47,7 +49,7 @@ def run_prior_day_sweep_strategy_prototype(
     )
     attempts = _simulate_attempts(qualified, bars, cfg)
     trades = attempts.loc[attempts["status"] == "filled"].copy()
-    variants = pd.DataFrame(variant_rows())
+    variants = pd.DataFrame(variant_rows(cfg.variant_ids))
     summary = variant_summary(attempts, cfg)
     monthly = monthly_summary(attempts)
     walk = walk_forward_summary(attempts, cfg)
@@ -103,7 +105,7 @@ def _simulate_attempts(
     for event in events.itertuples(index=False):
         event_series = pd.Series(event._asdict())
         session_bars = _session_bars(bars, event_series)
-        for variant in variant_rows():
+        for variant in variant_rows(config.variant_ids):
             rows.append(
                 simulate_bar_variant(
                     event_series,
@@ -123,11 +125,11 @@ def _simulate_mbp_attempts(
 ) -> pd.DataFrame:
     rows = []
     for session_date, group in events.groupby("session_date", sort=True):
-        mbp1 = _load_session_mbp1(session_date, config)
+        mbp1 = _load_session_mbp1(session_date, group, config)
         for event in group.itertuples(index=False):
             event_series = pd.Series(event._asdict())
             session_mbp = _event_mbp_window(mbp1, event_series)
-            for variant in variant_rows():
+            for variant in variant_rows(config.variant_ids):
                 rows.append(
                     simulate_mbp_variant(
                         event_series,
@@ -155,10 +157,11 @@ def _event_mbp_window(mbp1: pd.DataFrame, event: pd.Series) -> pd.DataFrame:
 
 def _load_session_mbp1(
     session_date: str,
+    events: pd.DataFrame,
     config: PriorDaySweepPrototypeConfig,
 ) -> pd.DataFrame:
     day = pd.Timestamp(session_date).date()
-    df = read_mbp1(
+    table = read_mbp1(
         symbol=config.symbol,
         start=day,
         end=day + pd.Timedelta(days=1),
@@ -175,8 +178,25 @@ def _load_session_mbp1(
             "ask_sz",
             "sequence",
         ],
+        as_pandas=False,
     )
+    table = _filter_mbp_table_to_events(table, events)
+    df = table.to_pandas()
     return normalize_mbp1(df)
+
+
+def _filter_mbp_table_to_events(table: pa.Table, events: pd.DataFrame) -> pa.Table:
+    if table.num_rows == 0 or events.empty:
+        return table
+    sweep_ts = pd.to_datetime(events["sweep_ts"], utc=True)
+    start = sweep_ts.min() - pd.Timedelta(minutes=1)
+    end = sweep_ts.max() + pd.Timedelta(minutes=90)
+    ts_type = table.schema.field("ts_event").type
+    mask = pc.and_(
+        pc.greater_equal(table["ts_event"], pa.scalar(start.to_pydatetime(), type=ts_type)),
+        pc.less_equal(table["ts_event"], pa.scalar(end.to_pydatetime(), type=ts_type)),
+    )
+    return table.filter(mask)
 
 
 def _load_events(
