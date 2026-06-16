@@ -130,6 +130,8 @@ def outcome_row(scope: str, factor: str, category: str, frame: pd.DataFrame) -> 
     labeled = frame.loc[frame["outcome_label"].isin([CONTINUATION, REVERSAL])]
     continuations = int((labeled["outcome_label"] == CONTINUATION).sum())
     reversals = int((labeled["outcome_label"] == REVERSAL).sum())
+    rate = continuations / len(labeled) if len(labeled) else None
+    ci_low, ci_high = wilson_interval(continuations, len(labeled))
     return {
         "scope": scope,
         "factor": factor,
@@ -140,7 +142,9 @@ def outcome_row(scope: str, factor: str, category: str, frame: pd.DataFrame) -> 
         "reversals": reversals,
         "ambiguous": int((frame["outcome_label"] == "ambiguous").sum()),
         "no_break": int((frame["outcome_label"] == "no_break").sum()),
-        "continuation_rate": continuations / len(labeled) if len(labeled) else None,
+        "continuation_rate": rate,
+        "continuation_rate_ci_low": ci_low,
+        "continuation_rate_ci_high": ci_high,
     }
 
 
@@ -211,6 +215,20 @@ def profit_factor(wins: pd.Series, losses: pd.Series) -> float | None:
     if gross_loss == 0:
         return None if gross_profit == 0 else float("inf")
     return gross_profit / gross_loss
+
+
+def wilson_interval(
+    successes: int,
+    trials: int,
+    z: float = 1.959963984540054,
+) -> tuple[float | None, float | None]:
+    if trials == 0:
+        return None, None
+    phat = successes / trials
+    denom = 1.0 + z**2 / trials
+    center = (phat + z**2 / (2.0 * trials)) / denom
+    margin = z * ((phat * (1.0 - phat) / trials + z**2 / (4.0 * trials**2)) ** 0.5) / denom
+    return max(0.0, center - margin), min(1.0, center + margin)
 
 
 def json_safe(value: Any) -> Any:
