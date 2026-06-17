@@ -44,6 +44,35 @@ def test_opening_range_study_labels_first_breaks_and_contexts() -> None:
     assert int(baseline.loc[baseline["scope"] == "full", "labeled_count"].iloc[0]) == 2
 
 
+def test_opening_range_study_handles_empty_available_bars() -> None:
+    result = build_opening_range_descriptive_study(
+        pd.DataFrame(
+            columns=[
+                "ts_event",
+                "symbol",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "trade_count",
+                "vwap",
+            ]
+        ),
+        symbol="NQ.c.0",
+        start=dt.date(2026, 6, 1),
+        end=dt.date(2026, 6, 5),
+        holdout_start="2026-05-24",
+    )
+
+    events = result["events"]
+    baseline = result["baseline_summary"]
+    assert events.empty
+    assert "is_holdout" in events.columns
+    assert "opening_drive_close_bucket" in events.columns
+    assert int(baseline.loc[baseline["scope"] == "full", "sessions"].iloc[0]) == 0
+
+
 def _session_rows(
     session_date: dt.date,
     *,

@@ -14,6 +14,49 @@ OR_START_ET = dt.time(9, 30)
 OR_END_ET = dt.time(10, 0)
 RTH_CLOSE_ET = dt.time(16, 0)
 
+EVENT_COLUMNS = [
+    "symbol",
+    "session_date",
+    "opening_range_start_et",
+    "opening_range_end_et",
+    "or_open",
+    "or_high",
+    "or_low",
+    "or_close",
+    "or_range_pts",
+    "first_break_side",
+    "first_break_ts",
+    "first_break_price",
+    "first_break_minutes_after_or_end",
+    "time_of_break_bucket",
+    "continuation_target",
+    "reversal_target",
+    "outcome_label",
+    "outcome_hit_ts",
+    "outcome_error",
+    "overnight_open",
+    "overnight_high",
+    "overnight_low",
+    "overnight_close",
+    "overnight_range_pts",
+    "rth_open_overnight_position",
+    "overnight_inventory_bucket",
+    "overnight_trend_pts",
+    "overnight_trend_bucket",
+    "overnight_trend_alignment",
+    "prior_rth_close",
+    "rth_gap_pts",
+    "rth_gap_bucket",
+    "gap_alignment",
+    "opening_drive_return_pts",
+    "opening_drive_direction",
+    "opening_drive_alignment",
+    "opening_drive_close_position",
+    "opening_drive_close_bucket",
+    "is_holdout",
+    "month",
+]
+
 
 def build_events(
     bars: pd.DataFrame,
@@ -34,7 +77,7 @@ def build_events(
         cur += dt.timedelta(days=1)
     out = pd.DataFrame(rows)
     if out.empty:
-        return out
+        return pd.DataFrame(columns=EVENT_COLUMNS)
     out["is_holdout"] = pd.to_datetime(out["session_date"]) >= pd.Timestamp(holdout_start)
     out["month"] = pd.to_datetime(out["session_date"]).dt.to_period("M").astype(str)
     return out

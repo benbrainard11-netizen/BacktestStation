@@ -122,6 +122,45 @@ cd backend
 
 In the future, point `--events-path` at the updated opening-range descriptive events file that includes sessions after 2026-05-23.
 
+## Live Monitor Command
+
+The live monitor is a one-command wrapper around the frozen workflow. It:
+
+- rebuilds the post-2026-05-23 opening-range descriptive event file from available 1m bars
+- runs the frozen OR-high middle-third MBP validator
+- appends only new OR-high event ids to the cumulative monitor files
+- writes a lightweight live run summary and run history
+
+It does not change strategy rules, thresholds, entries, stops, targets, commissions, slippage, or filters.
+
+Default output paths:
+
+- live OR event file: `data/backtests/nq_opening_range_descriptive_forward_live/opening_range_descriptive_events.csv`
+- cumulative monitor: `data/backtests/nq_or_high_middle_third_forward_validation`
+- live summary: `data/backtests/nq_or_high_middle_third_forward_validation/or_high_live_monitor_summary.json`
+- live run history: `data/backtests/nq_or_high_middle_third_forward_validation/or_high_live_monitor_runs.csv`
+
+Run it manually:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.cli.nq_or_high_middle_third_live
+```
+
+To consume R2, the shell or scheduled job must already have:
+
+```powershell
+$env:BS_DATA_BACKEND="r2"
+$env:BS_R2_BUCKET="bsdata-prod"
+$env:BS_R2_ENDPOINT="<cloudflare-r2-endpoint>"
+$env:BS_R2_ACCESS_KEY="<access-key>"
+$env:BS_R2_SECRET="<secret>"
+```
+
+The command defaults to completed sessions only. If today is June 17 ET, it uses `end=2026-06-17`, which includes sessions through June 16 and avoids scoring a partially finished current session. To include a later finalized date, pass `--end YYYY-MM-DD`.
+
+Beginner read: this is live validation, not live trading. The command checks for new market data, refreshes the input events, and appends unseen OR-high outcomes. If R2 has no new bars or no new MBP-1 partitions yet, the monitor remains dormant.
+
 ## Regime Analysis
 
 A descriptive regime analysis was run on the frozen historical OR-high sample.
