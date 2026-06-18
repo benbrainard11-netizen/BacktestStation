@@ -1,12 +1,21 @@
 # DATA MANIFEST
 
-What local data exists and is ready to test. Last verified **2026-06-14**.
+What local data exists and is ready to test. Last verified **2026-06-17**.
 
 Drives: `D:\data\` holds raw/derived market data (append-only raw; see CLAUDE.md rule 7).
 Derived research artifacts live under `experiments\`.
 
 Python with numpy/pandas/scipy/pyarrow:
 `C:\Users\benbr\BacktestStation\backend\.venv\Scripts\python.exe`
+
+**Universal loader — `data_io.py` (repo root).** One consistent call per dataset; hides the path /
+partition-key / date-format differences. `python data_io.py` prints the menu.
+```python
+from data_io import load_futures, load_stock, load_option_panel, load_walls, load_mbp1, load_mbo, load_aux, datasets
+es  = load_futures("ES.c.0", "2026-06-09")     # futures 1m, one day
+opt = load_option_panel("SPXW", 20250515)       # intraday option panel, one day (IV/greeks/OI)
+w   = load_walls("NDX")                          # daily gamma walls
+```
 
 Index -> future map: **SPX->ES, NDX->NQ, RUT->RTY, DJX->YM**.
 
@@ -160,14 +169,12 @@ Top-8 mega-caps (`experiments\options_signals_v0\out\walls_<t>.parquet`), all 20
 validated vs own close (ratio 1.0000): **NVDA** 860d, **AAPL** 863d, **MSFT** 864d, **TSLA** 864d,
 **GOOGL** 863d, **AMZN** 864d, **META** 863d, **AVGO** 862d.
 
-**Intraday options — ATTEMPTED 2026-06-15, DEFERRED (operational).** Tried indices 5-min/14-day, then
-re-scoped to 15-min/7-day; **both repeatedly wedged the ThetaData terminals** (full-chain intraday
-responses are ~73k-400k rows/fetch; 2 of 3 terminals went down) on a machine that crashed earlier the
-same day. Only a **partial NDX slice (~64 MB)** landed in `bulk_hist_option_greeks` (+the ~280 older
-files) — NOT a usable comprehensive set. Verdict: intraday full-chain is impractical to bulk-pull on the
-current machine, AND nothing consumes it yet. **Pull intraday only as a TINY TARGETED slice (specific
-dates/expirations) when an options-intraday head is actually greenlit** — never as a bulk grind. The
-greeks endpoint has IV+underlying but no gamma column -> compute gamma from IV (bs_gamma) at build time.
+**Intraday options — SOLVED 2026-06-17 (per-contract + quote feed).** The 2026-06-15 wedges were a
+METHOD bug, not a vendor limit: the bulk intraday endpoint (`bulk_hist/option/greeks`) returns the whole
+chain (~73k-400k rows/fetch) and permanently wedges terminals. Fix = pull **PER CONTRACT**
+(`hist/option/quote` with strike+right) which is tiny (~400 rows/contract-day) and never wedges, and use
+the **QUOTE feed** (the greeks feed is recent-only ~2026-05+; quote has full 2025-05+ history). The
+resulting 1-minute intraday options dataset is **§6 below**.
 
 ### Secondary / reference walls (do not use as primary)
 | File | Rows | Range | Schema | Note |
@@ -187,6 +194,93 @@ w["date_dt"] = pd.to_datetime(w["date"], format="%Y%m%d")
 Join walls to a future via the index map (SPX->ES, NDX->NQ, RUT->RTY, DJX->YM) on the trading date.
 
 ---
+
+## 6. Intraday options — 1-minute quotes (per-contract) — added 2026-06-17
+
+Root: `experiments\options_signals_v0\out\intraday_pc\root=<R>\exp=<YYYYMMDD>\<strike1000>_<right>.parquet`
+One file per **contract** (root, expiration, strike, right). Strike in the filename is ×1000 (vendor units).
+Cols: `[date, ms_of_day, strike, right, expiration, bid, ask, bid_size, ask_size, root, exp]`.
+`ms_of_day` is ET-clock milliseconds (34200000 = 09:30); rows are **1-minute** quote bars.
+
+Built by `scoped_intraday_pc.py` (`OPT_EP=hist/option/quote`, `BAND=0.07`, `DTE_MAX=45`, recent-first
+shards). Per Ben's scope: strikes within **±7% of futures spot**, **DTE ≤ 45**, span **2025-05-01 → present**
+(matches the NQ/ES/RTY/YM MBP-1 window). Spot for the band comes from the index future (NQ/ES/RTY/YM).
+
+| Index | Contracts | Size | Expirations |
+|-------|-----------|------|-------------|
+| NDXP | 182,687 | 7,238 MB | 309 |
+| SPXW | 115,908 | 6,263 MB | 309 |
+| RUTW | 65,804 | 2,825 MB | 297 |
+| DJX | 1,362 | 34 MB | 40 (DJX intraday is genuinely thin/illiquid) |
+| **Total** | **~365,761** | **~16.4 GB** | — |
+
+> **NOTE — stored on `C:` (not `D:`).** ~16.4 GB currently under `experiments\...\out\intraday_pc`. This
+> is per-(root,exp,strike,right), NOT yet (root,date)-queryable. The **assembly/BS-invert build** (pending)
+> reshapes it into model-ready per-(root,date) panels — see "Pending build" below.
+
+**What's NOT in the quote files (added by the build):** `underlying_price`, `implied_vol`, `gamma/vanna/charm`.
+Per Ben's scope these are derived: BS-invert IV from the mid quote against the index forward (put-call
+parity / Black-76, reusing the validated `build_walls_ndx` engine — no rates/dividends needed), then
+compute greeks analytically. Quotes + underlying are guarded above all; IV/greeks are recomputable.
+
+## 7. Intraday-band OI (daily open interest companion) — added 2026-06-17
+
+Root: `experiments\options_signals_v0\out\intraday_oi\root=<R>\exp=<YYYYMMDD>.parquet`
+Cols: `[date, strike, right, expiration, open_interest, root]`. OI is **daily** (no intraday variation);
+this is the OI for the same ±7% band / DTE≤45 contracts as §6. Built by `build_intraday_oi.py`
+(`bulk_hist/option/open_interest` per exp over its life window, band-filtered).
+**Pairing rule (Ben's scope): use PRIOR-day OI** when joining to a quote timestamp — leak-clean.
+The OI bulk fetch is moderately heavy, so the puller runs at low concurrency (W2/terminal) to avoid
+saturating terminals. *(In progress 2026-06-17.)*
+
+## 8. Auxiliary EOD data — added 2026-06-17 (`pull_aux_data.py`)
+
+All tiny, EOD-only (index/vol intraday is paywalled → HTTP 471; rates absent on this sub).
+- **Vol indices** `out\vol_indices\<R>.parquet`: VIX, VXN (Nasdaq), VXD (Dow), RVX (Russell), VIX9D, VIX1D, VVIX. EOD OHLC.
+- **Index EOD levels** `out\index_eod\<R>.parquet`: NDX, SPX, RUT, DJX. EOD OHLC (intraday paywalled — use the futures bars in §1 for index intraday).
+- **Dividends** `out\dividends\<T>.parquet`: the 8 mega-caps (NVDA AAPL MSFT TSLA GOOGL AMZN META AVGO).
+
+## 9. Model-ready option panels — BUILT 2026-06-18 (`build_option_panels.py` + `option_greeks.py`)
+
+Root: `D:\data\processed\option_panels\panel\root=<R>\date=<YYYYMMDD>\` — hive-partitioned, queryable
+by (root, date). Assembled from §6 quotes + §7 OI. Columns: `date, ms_of_day, expiration, strike,
+right, bid, ask, bid_size, ask_size, mid, underlying_price, fut_price, fwd_parity, dte, implied_vol,
+gamma, vanna, charm, oi_prior`.
+
+| Root | Rows | Dates | underlying | iv/gamma | oi_prior | Monday oi_prior |
+|------|------|-------|------------|----------|----------|-----------------|
+| NDXP | 695M | 284 | 96.5% | 87.9% | 76.5% | 76.9% |
+| SPXW | 822M | 292 | 94.5% | 88.0% | 83.8% | 85.3% |
+| RUTW | 369M | 286 | 95.1% | 85.8% | 81.0% | 81.4% |
+| DJX  | 4.7M | 265 | 95.7% | 82.4% | 78.2% | 88.4% |
+
+~**1.89B rows**, panel **~93 GB** (+ `panel_byexp` intermediate ~74 GB, safe to delete once panels verified).
+Relocate via `PANEL_BASE` env (defaults to `experiments\...\out`; the build ran with `PANEL_BASE=D:\data\processed\option_panels`).
+
+**Method:** `underlying_price` = per-(date) put-call-parity forward (the build_walls_ndx engine) tracked
+intraday by the index future via `merge_asof` (nearest prior minute); IV bisected from the mid; gamma/
+vanna/charm from `option_greeks` (finite-difference verified — a charm sign bug was caught this way). IV
+is set **NaN when unreliable** (bisection bracket-pinned/saturated to 500%, vega-unidentifiable deep ITM,
+or < 10 min to expiry); greeks are **NaN (not 0.0)** wherever IV is NaN, so GEX sums don't under-count.
+`oi_prior` = OI from the **prior *trading* day** (calendar built from RTH sessions, NOT the 24h futures
+clock — the futures clock includes Sunday Globex dates, which silently nulled every Monday's OI).
+
+**Validated:** greeks vs finite differences; EOD dealer-gamma walls reproduce the daily walls (§5) — SPX
+call+put exact, RUT put exact, spots match < 0.1% on all four. NDX walls are noisier (NDX OI is thin +
+prior-day) — the panel's underlying/IV/gamma are sound; stable NDX wall derivation just needs denser-OI
+handling. The build was hardened against a 12-finding adversarial code review (OI calendar, NaN policy,
+IV saturation, near-expiry charm, futures-gap handling, repartition schema/guards).
+
+**Caveats:** (1) v0 `underlying_price` carries a small whole-day-basis intraday lookahead (the per-day
+parity anchor uses the full day) — make it causal (prior-day basis) before any live/backtest use.
+(2) Strikes limited to the ±7% quote band (§6), so walls beyond ±7% of spot are not visible.
+
+**How to load (queryable by root+date):**
+```python
+import pyarrow.dataset as ds
+dset = ds.dataset(r"D:\data\processed\option_panels\panel\root=SPXW", format="parquet", partitioning="hive")
+df = dset.to_table(filter=ds.field("date") == 20250515).to_pandas()   # one day, all minutes/strikes
+```
 
 ## Vendor ceiling — what's still pullable beyond the cache (probed 2026-06-14, `vendor_probe.py`)
 The vendor (ThetaData) HAS more than was cached; sampling real expirations:
@@ -211,3 +305,8 @@ The vendor (ThetaData) HAS more than was cached; sampling real expirations:
 - `verify_walls_vs_futures.py` — every walls file's `spot` vs its index future; the authoritative trust check.
 - `diag_djx.py` — isolates the DJX band contaminant.
 - `build_walls_selfcompute.py` — reuses the NDX self-compute engine for any root (greeks-less years).
+- `scoped_intraday_pc.py` — per-contract 1-min quote puller (the intraday solve; §6). Per-contract + quote feed = no terminal wedge.
+- `build_intraday_oi.py` — per-exp band OI companion (§7), prior-day pairing intended at build time.
+- `pull_aux_data.py` — vol indices / index EOD / dividends (§8); also probes whether index/vol intraday is allowed (it isn't).
+- `build_option_panels.py` — assembles §6 quotes + §7 OI into the §9 model-ready per-(root,date) panels (IV/greeks/underlying/prior-OI). `PANEL_BASE` env relocates output.
+- `option_greeks.py` — vanna/charm on the validated BS engine, with a finite-difference self-check (`python option_greeks.py`) that aborts the build if any greek is wrong.
