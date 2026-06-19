@@ -32,6 +32,8 @@ _WALLS = {
     "DJX": EXP / "options_signals_v0" / "out" / "walls_djx.parquet",
 }
 _AUX = EXP / "options_signals_v0" / "out"
+_POLY = D / "processed" / "stocks" / "polygon"  # survivorship-clean, adjusted (delisted incl)
+_FLAT = Path(r"E:\data\polygon\flatfiles\us_stocks_sip")  # raw/unadjusted deep history 2016-2026
 
 
 def _hive(path: Path, field: str, value):
@@ -98,6 +100,38 @@ def load_aux(kind: str, name: str) -> pd.DataFrame:
     return pd.read_parquet(_AUX / kind / f"{name}.parquet")
 
 
+def load_polygon_daily(ticker: str | None = None, year: int | None = None) -> pd.DataFrame:
+    """Survivorship-CLEAN US daily bars (Polygon grouped, delisted INCLUDED, split-adjusted), 2016-2026.
+    Whole market per day -> use for breadth / cross-sectional / RS work. ticker=None => every ticker;
+    year=None => all years. cols: ticker, date(int YYYYMMDD), open, high, low, close, volume."""
+    files = sorted(_POLY.glob(f"daily_{year}.parquet")) if year else sorted(_POLY.glob("daily_*.parquet"))
+    df = pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+    return df[df["ticker"] == ticker].reset_index(drop=True) if ticker else df
+
+
+def load_polygon_minute(ticker: str, date: int) -> pd.DataFrame:
+    """Split-adjusted 1-min bars for one (ticker, date=int YYYYMMDD): cols t(ms epoch),o,h,l,c,v.
+    Covers the breakout-setup entry days (delisted incl), reconciled to the adjusted daily basis at
+    build time. Empty frame if that (ticker,date) was never pulled."""
+    f = _POLY / "minute" / f"{ticker}__{int(date)}.parquet"
+    return pd.read_parquet(f) if f.exists() else pd.DataFrame(columns=["t", "o", "h", "l", "c", "v"])
+
+
+def load_polygon_meta() -> pd.DataFrame:
+    """Common-stock reference (ticker, type, active): the active-vs-delisted + ETF/SPAC junk filter."""
+    return pd.read_parquet(_POLY / "meta.parquet")
+
+
+def load_polygon_flat(dataset: str, date: int) -> pd.DataFrame:
+    """RAW (UNADJUSTED) full-market flat file for one day -- deep history 2016-2026, every ticker incl
+    delisted. dataset in {'day','minute'}; date int YYYYMMDD. cols: ticker, volume, open, close, high,
+    low, window_start(ns epoch), transactions. NOTE: unadjusted -- scale to the adjusted basis (fac =
+    adj_daily_open / raw_open) before mixing with the adjusted daily/minute sets."""
+    sub = {"day": "day_aggs_v1", "minute": "minute_aggs_v1"}[dataset]
+    s = str(int(date))
+    return pd.read_csv(_FLAT / sub / s[:4] / s[4:6] / f"{s[:4]}-{s[4:6]}-{s[6:]}.csv.gz", compression="gzip")
+
+
 def datasets() -> None:
     """Print the menu of loaders + a one-line example each."""
     print("data_io loaders (all return a DataFrame):")
@@ -110,6 +144,15 @@ def datasets() -> None:
     print("  load_mbo(symbol, trading_day=None)   full order book    e.g. load_mbo('ES.c.0','2026-06-09')")
     print("  load_walls(index)                    daily gamma walls  e.g. load_walls('NDX')")
     print("  load_aux(kind, name)                 vol/index/divs     e.g. load_aux('vol_indices','VIX')")
+    print("  -- equities (survivorship-clean, delisted incl) --")
+    print("  load_polygon_daily(ticker=None,...)  US daily adj       e.g. load_polygon_daily('NVDA')")
+    print(
+        "  load_polygon_minute(ticker, date)    1m adj entry-day   e.g. load_polygon_minute('NVDA',20240301)"
+    )
+    print("  load_polygon_meta()                  active/delisted ref")
+    print(
+        "  load_polygon_flat(dataset, date)     RAW deep 2016-26   e.g. load_polygon_flat('minute',20180102)"
+    )
     print("\nFull inventory + coverage: docs/DATA_MANIFEST.md")
 
 

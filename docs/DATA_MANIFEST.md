@@ -1,6 +1,6 @@
 # DATA MANIFEST
 
-What local data exists and is ready to test. Last verified **2026-06-17**.
+What local data exists and is ready to test. Last verified **2026-06-19**.
 
 Drives: `D:\data\` holds raw/derived market data (append-only raw; see CLAUDE.md rule 7).
 Derived research artifacts live under `experiments\`.
@@ -12,9 +12,12 @@ Python with numpy/pandas/scipy/pyarrow:
 partition-key / date-format differences. `python data_io.py` prints the menu.
 ```python
 from data_io import load_futures, load_stock, load_option_panel, load_walls, load_mbp1, load_mbo, load_aux, datasets
+from data_io import load_polygon_daily, load_polygon_minute, load_polygon_meta, load_polygon_flat
 es  = load_futures("ES.c.0", "2026-06-09")     # futures 1m, one day
 opt = load_option_panel("SPXW", 20250515)       # intraday option panel, one day (IV/greeks/OI)
 w   = load_walls("NDX")                          # daily gamma walls
+day = load_polygon_daily("NVDA")                 # survivorship-clean US daily (delisted incl, adjusted)
+m1  = load_polygon_minute("NVDA", 20240301)      # adjusted 1m entry-day bars
 ```
 
 Index -> future map: **SPX->ES, NDX->NQ, RUT->RTY, DJX->YM**.
@@ -55,6 +58,37 @@ quarterly / 1-min monthly to dodge the hist/stock/eod 475-on-long-range).
   Verified 2026-06-15 (Phase B 2014-backfill was a no-op). Deep history needs a ThetaData historical-tier
   upgrade ($), or free **Stooq EOD** for daily-only 2014+.
 Universe sourced from the Nasdaq-100 components list (Wikipedia, 2026-06-15).
+
+### Equities — FULL US, survivorship-clean (Polygon/Massive) — added 2026-06-19
+The ThetaData stock set above is active-only and floors at 2023-06. **Polygon flat files** replace it for
+broad equities work: every ticker that ever traded (**delisted INCLUDED**), one file per day, pulled once
+via a **Developer** sub (10-yr download window → 2016-06+) and kept locally. Three layers:
+
+**(a) RAW deep history (unadjusted)** — `E:\data\polygon\flatfiles\us_stocks_sip\{day_aggs_v1,minute_aggs_v1}\YYYY\MM\YYYY-MM-DD.csv.gz`
+- Full US **daily + 1-minute, 2016-06 → 2026**, ~8,100 tickers/day, delisted incl. ~44 GB. Gzipped CSV,
+  cols `ticker,volume,open,close,high,low,window_start(ns),transactions`. **UNADJUSTED** (NVDA 2024-05-01
+  close = 830.41 raw vs 83.04 adjusted). Loader: `load_polygon_flat('day'|'minute', YYYYMMDD)`.
+- The only gap is **pre-2016-06** (beyond the 10-yr Developer floor → HTTP 403). OPRA options + futures
+  flat files exist in the same bucket (`us_options_opra/`, `us_futures_*`) — not yet pulled.
+
+**(b) Adjusted daily (whole market)** — `D:\data\processed\stocks\polygon\daily_<YYYY>.parquet` (**2016-07 → 2026**, 11 yrs, ~25M rows)
+- Split-adjusted grouped-daily, delisted incl (verified: NVDA 2020-10 adjusted 13.61 vs raw 544.58 = the
+  40× post-split factor). cols `ticker, date(int YYYYMMDD), open, high, low, close, volume`. ~8.9k tickers/yr
+  in 2016 → ~13.4k by 2026. Use for breadth / cross-sectional / RS. Loader: `load_polygon_daily(ticker=None, year=None)`.
+- `meta.parquet` (loader `load_polygon_meta()`): 11,814 common-stock tickers (5,298 active + 6,516 delisted)
+  with `type` — the active/delisted + ETF/SPAC junk filter the ThetaData path lacked.
+
+**(c) Adjusted 1-minute, entry-day (for the breakout strategy)** — `D:\data\processed\stocks\polygon\minute\<TICKER>__<YYYYMMDD>.parquet`
+- cols `t(ms epoch), o, h, l, c, v`, **split-adjusted to the (b) basis** (reshaped from the raw flat files
+  by `reshape_minute_from_flatfiles.py`: scale by `fac = adj_daily_open / raw_first_RTH_open`, the same
+  causal open-reconciliation `run_intraday_entry.py` applies — so its load-time fac == 1, no code change).
+- Covers all **182,734 breakout setup (ticker,date) pairs** (2022-2026) from `unified_v0/out/setups.parquet`
+  (164,613 active + 18,121 delisted) — **100.0% coverage** (182,721 present; 13 had zero flat-file ticks),
+  184,239 files in `minute/` total. Verified: NVDA pre-split day-high matches the adjusted daily exactly,
+  and the consumer's load-time reconciliation reads fac == 1.0000 (no double-adjust). Loader: `load_polygon_minute(ticker, date)`.
+- Sources: `download_polygon_flatfiles.py` (S3 bulk → raw), `pull_polygon.py` (REST grouped → adjusted daily
+  + meta), `reshape_minute_from_flatfiles.py` (raw flat → adjusted entry-day minute). S3 creds in env
+  `POLYGON_S3_KEY`/`POLYGON_S3_SECRET`; REST key `POLYGON_API_KEY`.
 
 ---
 
