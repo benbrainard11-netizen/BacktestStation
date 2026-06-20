@@ -1,0 +1,15 @@
+# stock_options_flow_v0 pilot universe — FROZEN 2026-06-19
+# Selection rule: high single-stock options activity / high IV / retail-heavy MID-TIER
+# (return-agnostic — chosen for option liquidity, NOT past returns, so no name-selection look-ahead).
+# Deliberately excludes mega-caps (AAPL/NVDA/etc) — the efficient end where the free feasibility
+# read showed the gamma edge collapses into price structure. The bet is the inefficient tier.
+# + one delisted name (SIVB) to prove the pipeline handles survivorship (options retained to 2024-01).
+PLTR
+SOFI
+RIOT
+MARA
+AFRM
+DKNG
+MSTR
+ROKU
+SIVB
