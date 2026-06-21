@@ -120,3 +120,36 @@ from causal features (incl order flow), leak-checked. The reversion's only remai
 Layer-1 eval-economics shape question. The leak-catch is the case study for why the event-dataset +
 causal-feature discipline matters (variant-spraying would have "deployed" the fake AUC-0.79 model).
 
+## v5 — ALL ASSETS incl. crypto (forced-flow lens), honest per-instrument spreads
+
+User: test across all assets + BTC ("what big players are forced to do"). Built events for crypto
+(BTC/ETH/MBT) + grains/rates (ZS/ZN) added to index+energy, charging each instrument its REAL spread
+(BTC ~8t entry slip, MBT ~7t, ETH ~3t; measured 13–15t round-trip). Forced-flow note: liquidation /
+forced-deleverage cascades show up in the tape as absorption, so the order-flow reversion IS the
+forced-flow test. Per-symbol fade_R (design / holdout):
+
+| sym | revert | fade_med | fade_mean | fade ex-top5% |
+|-----|------:|------:|------:|------:|
+| BTC | .65/.76 | +0.21 | −0.04 / +0.08 | −0.09 / −0.01 |
+| ETH | .63/.69 | +0.20 | −0.08 / −0.02 | −0.12 / −0.06 |
+| MBT | .68/.76 | +0.22 | −0.03 / +0.02 | −0.06 / −0.02 |
+| CL  | .71/.74 | +0.24 | +0.01 / +0.06 | −0.02 / +0.02 |
+| ZS  | .79/.69 | +0.25 | +0.13 / −0.00 | +0.08 / −0.05 |
+| ZN  | .63/.70 | +0.16 | −0.07 / −0.17 | −0.10 / −0.24 |
+| ES/NQ/YM/RTY | .55–.66 | +0.25 | ~0 | negative |
+
+**Findings:** (1) the reversion BEHAVIOR is UNIVERSAL — revert ~⅔ + positive median across EVERY asset
+class (crypto/energy/index/grains/rates); the strongest cross-asset consistency in the whole module.
+(2) But deployable EV (mean, esp. ex-top-5%) is ~0-to-NEGATIVE for ALL 11 once honest spreads are
+charged — no asset escapes. (3) CRYPTO: BTC/MBT reversion ~0/slightly-negative after the real ~8–13t
+spread (the btc_edge_v0 cost wall, re-confirmed via the reversion lens); ETH negative. CL least-bad
+(holdout ex-top5% +0.02). ZS design-positive but holdout-collapsed (overfit). The forced-flow idea is
+a real, universal *behavior* but not a deployable *edge* on any liquid CME asset, crypto included.
+
+## MSTR / crypto-equity probe (the "BTC off MicroStrategy" idea, price level)
+Daily BTC vs MSTR/COIN/MARA/RIOT/IBIT (2023+): contemp corr HIGH (MSTR +0.63) but eq(t)→BTC(t+1) ~0/
+negative (−0.03..−0.06) for all — the proxies move WITH BTC, don't LEAD it (same cross-asset null).
+Only BTC→equity(t+1) is weakly + (proxies catch up to overnight BTC; wrong direction, not tradeable).
+The OPTIONS-gamma / convertible / ETF forced-flow version is UNTESTED (needs MSTR options from Polygon
+OPRA = unpulled; CME BTC options absent) — a data-pull-gated line, prior lowered by the price-level null.
+

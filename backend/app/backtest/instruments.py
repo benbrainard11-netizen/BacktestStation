@@ -36,6 +36,23 @@ INSTRUMENTS: dict[str, InstrumentSpec] = {
     "MES": InstrumentSpec(tick_size=0.25, contract_value=5.0),
     "MYM": InstrumentSpec(tick_size=1.0,  contract_value=0.50),
     "M2K": InstrumentSpec(tick_size=0.10, contract_value=5.0),
+    # NYMEX energy (full-size). CL: 1,000 bbl -> $1000/pt, tick 0.01 = $10.
+    # NG: 10,000 MMBtu -> $10,000/pt, tick 0.001 = $10.
+    "CL":  InstrumentSpec(tick_size=0.01,  contract_value=1000.0),
+    "NG":  InstrumentSpec(tick_size=0.001, contract_value=10000.0),
+    # Micro WTI crude (MCL): 100 bbl -> $100/pt, tick 0.01 = $1. The prop vehicle for CL.
+    "MCL": InstrumentSpec(tick_size=0.01,  contract_value=100.0),
+    # COMEX gold. GC: 100 oz -> $100/pt, tick 0.10 = $10. MGC (micro): 10 oz -> $10/pt, tick 0.10 = $1.
+    "GC":  InstrumentSpec(tick_size=0.10,  contract_value=100.0),
+    "MGC": InstrumentSpec(tick_size=0.10,  contract_value=10.0),
+    # CME crypto. BTC: 5 BTC -> $5/pt, tick 5.0 = $25. ETH: 50 ETH -> $50/pt, tick 0.5 = $25.
+    # MBT (micro BTC): 0.1 BTC -> $0.1/pt, tick 5.0 = $0.50.
+    "BTC": InstrumentSpec(tick_size=5.0,      contract_value=5.0),
+    "ETH": InstrumentSpec(tick_size=0.5,      contract_value=50.0),
+    "MBT": InstrumentSpec(tick_size=5.0,      contract_value=0.1),
+    # Grains/rates. ZS: 5000 bu, 1/4 cent tick = $12.50 (price in cents). ZN: 10y note, 1/64 = $15.625.
+    "ZS":  InstrumentSpec(tick_size=0.25,     contract_value=50.0),
+    "ZN":  InstrumentSpec(tick_size=0.015625, contract_value=1000.0),
 }
 
 

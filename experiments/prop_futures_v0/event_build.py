@@ -30,6 +30,10 @@ OPEN_M, CLOSE_M, CUTOFF_M = 570, 960, 720
 WIN, C_RANGE, C_VOL, SLIP_TICKS = 20, 0.4, 1.0, 1
 DESIGN_END, HOLD_END = "2026-02-14", "2026-06-09"
 LIQUID = ["ES.c.0", "NQ.c.0", "YM.c.0", "RTY.c.0", "CL.c.0", "NG.c.0", "GC.c.0", "ZS.c.0", "ZN.c.0", "6E.c.0"]
+# honest per-symbol entry/stop slip in TICKS (~half the measured round-trip spread). Wide-spread crypto
+# must be charged its real cost — a flat 1-tick would fake an edge the spread eats. From MBP-1: BTC ~15t
+# spread, MBT ~13t, ETH ~5t round-trip; index/energy/grains/rates ~1-2t.
+SLIP_BY_SYM = {"BTC": 8, "MBT": 7, "ETH": 3, "NQ": 1, "YM": 1}
 
 
 def build_events(symbol):
@@ -119,8 +123,8 @@ def build_events(symbol):
             feat["mfe_fade_atr"] = (ph.max() - edge) / a
             feat["mae_fade_atr"] = (edge - pl.min()) / a
             feat["overshoot_atr"] = (wlo - pl.min()) / a
-        # honest terminal R for the two base trades
-        slip = SLIP_TICKS * tick
+        # honest terminal R for the two base trades (per-symbol spread cost)
+        slip = SLIP_BY_SYM.get(symbol.split(".")[0], SLIP_TICKS) * tick
         if up:
             fr = simulate_trade(m, o, h, lo, c, bk, False, long_trig - slip, long_trig + 0.5 * a,
                                 poc, True, slip, spec, CLOSE_M, start_at_entry=True)
