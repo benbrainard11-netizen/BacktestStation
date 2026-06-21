@@ -95,3 +95,28 @@ generator is the variance shape that can profit from the eval asymmetry WITHOUT 
 now a sizing/eval question, not a market-research one. If Layer-1 math can't make a slightly-negative-EV
 generator pay, then prop_futures_v0 is a complete, honest day-flat NULL.
 
+## v4 — event dataset + reverse-vs-continue model (`event_build.py` + `analyze_events.py`)
+
+To "test it many ways" without variant-spraying: built one event table (1,189 accumulation-breakout
+events over 6 liquid symbols ES/NQ/YM/RTY/CL/NG, 13-mo MBP-1, design 856 / holdout 333) with causal
+order-flow features known AT the breakout + outcomes, and modeled **reverse-vs-continue** (logistic).
+
+**LOOK-AHEAD CAUGHT:** the first run included `overshoot_atr` (how far price ran AFTER the breakout — a
+future quantity) in the feature set → faked AUC 0.79 holdout, conditional EV +0.40R, 79% win. That is the
+same future path as the target (small overshoot ≡ it reverted); circular. Removed it (it is an OUTCOME,
+not a feature).
+
+**HONEST result (causal features only):** AUC design 0.596 → **holdout 0.541 (≈ coin flip)**; conditional
+(fade if P(revert)>0.5 else chase) EV **+0.009 holdout** — does NOT beat always-fade (−0.003) or
+always-chase (+0.017). Every causal feature has near-zero IC, INCLUDING all order-flow ones
+(box_absorption +0.01, box_delta_sign −0.07, breakout-bar delta +0.02, flow-alignment +0.02); only
+time-of-day reaches ~0.12 and doesn't generalize. **Order flow does NOT predict the reverse-vs-continue
+resolution out-of-sample.** Entry-timing note: breakouts overshoot ~0.3–0.4 ATR before reverting (edge
+entry isn't badly late), but moot without a directional edge.
+
+**FINAL (accumulation/order-flow line): NULL.** Continuation dead; reversion a real stable ~62%-win
+~0-EV pattern; exits can't tune it positive; and the reverse-vs-continue resolution is unpredictable
+from causal features (incl order flow), leak-checked. The reversion's only remaining possible use is the
+Layer-1 eval-economics shape question. The leak-catch is the case study for why the event-dataset +
+causal-feature discipline matters (variant-spraying would have "deployed" the fake AUC-0.79 model).
+
