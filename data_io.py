@@ -22,16 +22,17 @@ import pandas as pd
 import pyarrow.dataset as ds
 
 D = Path(r"D:\data")
-EXP = Path(__file__).resolve().parent / "experiments"
 
-# derived gamma-wall files live in two experiment dirs; map index -> file
+# All canonical derived data lives in the single data home D:\data\processed (see
+# docs/DATA_MANIFEST.md). Walls + aux were consolidated out of experiments/*/out 2026-06-21.
+_WALLS_DIR = D / "processed" / "walls"
 _WALLS = {
-    "NDX": EXP / "fuhhhhh" / "out" / "walls_ndx.parquet",
-    "SPX": EXP / "fuhhhhh" / "out" / "walls_v2.parquet",
-    "RUT": EXP / "options_signals_v0" / "out" / "walls_rut.parquet",
-    "DJX": EXP / "options_signals_v0" / "out" / "walls_djx.parquet",
+    "NDX": _WALLS_DIR / "walls_ndx.parquet",
+    "SPX": _WALLS_DIR / "walls_v2.parquet",
+    "RUT": _WALLS_DIR / "walls_rut.parquet",
+    "DJX": _WALLS_DIR / "walls_djx.parquet",
 }
-_AUX = EXP / "options_signals_v0" / "out"
+_AUX = D / "processed" / "aux_eod"
 _POLY = D / "processed" / "stocks" / "polygon"  # survivorship-clean, adjusted (delisted incl)
 _FLAT = Path(r"E:\data\polygon\flatfiles\us_stocks_sip")  # raw/unadjusted deep history 2016-2026
 
@@ -91,7 +92,7 @@ def load_mbo(symbol: str, trading_day: str | None = None) -> pd.DataFrame:
 
 def load_walls(index: str) -> pd.DataFrame:
     """Daily dealer-gamma walls for an index ('NDX'/'SPX'/'RUT'/'DJX'), or a single stock ticker."""
-    f = _WALLS.get(index.upper(), _AUX / f"walls_{index.lower()}.parquet")
+    f = _WALLS.get(index.upper(), _WALLS_DIR / f"walls_{index.lower()}.parquet")
     return pd.read_parquet(f)
 
 

@@ -2,8 +2,12 @@
 
 What local data exists and is ready to test. Last verified **2026-06-19**.
 
-Drives: `D:\data\` holds raw/derived market data (append-only raw; see CLAUDE.md rule 7).
-Derived research artifacts live under `experiments\`.
+Drives: **`D:\data\` is the single data home** — raw (append-only; CLAUDE.md rule 7) plus all
+canonical derived data under `D:\data\processed\` (`bars`, `stocks`, `option_panels`, **`walls`**,
+**`aux_eod`**). `E:\data\` holds the giant Polygon/OPRA flat files by drive-size. **Access everything
+through `data_io.py` — never hard-code a path.** (Walls + aux were consolidated out of
+`experiments\*\out\` into the home 2026-06-21; the experiment-dir copies remain only as the builders'
+local working output and are not canonical.)
 
 Python with numpy/pandas/scipy/pyarrow:
 `C:\Users\benbr\BacktestStation\backend\.venv\Scripts\python.exe`
@@ -182,10 +186,13 @@ Median spot/future ratio shown; "clean %" = days within 8% of the future.
 
 | Index | File | Rows (days) | Date range | Status (vs future) |
 |-------|------|-------------|------------|--------------------|
-| NDX | `experiments\fuhhhhh\out\walls_ndx.parquet` | **2091** | 20180119..20260612 | **FULL HISTORY (2018+)**; 99.6% clean (ratio 0.998), 9 thin-day parity outliers |
-| SPX | `experiments\fuhhhhh\out\walls_v2.parquet` | **2337** | 20170103..20260610 | **2017+, 2021 gap filled** (year-aware filter); 100% clean (ratio 0.999) |
-| DJX | `experiments\options_signals_v0\out\walls_djx.parquet` | **1543** | 20180129..20260609 | **2018+** (greeks backfilled 2018-2023); 100% clean (ratio 0.9995) after YM-anchor; 2018 & 2024 thin (early OI) |
-| RUT | `experiments\options_signals_v0\out\walls_rut.parquet` | **2118** | 20180102..20260610 | **2018+, gapless** (self-compute 2018-2023 + vendor greeks 2024+); 100% clean (ratio 0.999) |
+| NDX | `D:\data\processed\walls\walls_ndx.parquet` | **2091** | 20180119..20260612 | **FULL HISTORY (2018+)**; 99.6% clean (ratio 0.998), 9 thin-day parity outliers |
+| SPX | `D:\data\processed\walls\walls_v2.parquet` | **2337** | 20170103..20260610 | **2017+, 2021 gap filled** (year-aware filter); 100% clean (ratio 0.999) |
+| DJX | `D:\data\processed\walls\walls_djx.parquet` | **1543** | 20180129..20260609 | **2018+** (greeks backfilled 2018-2023); 100% clean (ratio 0.9995) after YM-anchor; 2018 & 2024 thin (early OI) |
+| RUT | `D:\data\processed\walls\walls_rut.parquet` | **2118** | 20180102..20260610 | **2018+, gapless** (self-compute 2018-2023 + vendor greeks 2024+); 100% clean (ratio 0.999) |
+
+Access via `load_walls("NDX")` etc. (single-stock walls: `load_walls("NVDA")`). Builders below still
+write to `experiments\*\out\`; copy fresh builds into `D:\data\processed\walls\` to publish them.
 
 Builders:
 - SPX: `experiments\fuhhhhh\build_walls_v2.py` (vendor greeks -> net dealer gamma). SPX band [1800,8500], excluding [1800,3000) only for year>=2024 (that sub-band is RUT then) -> covers SPX 2017+ where it traded below 3000.
@@ -270,9 +277,9 @@ saturating terminals. *(In progress 2026-06-17.)*
 ## 8. Auxiliary EOD data — added 2026-06-17 (`pull_aux_data.py`)
 
 All tiny, EOD-only (index/vol intraday is paywalled → HTTP 471; rates absent on this sub).
-- **Vol indices** `out\vol_indices\<R>.parquet`: VIX, VXN (Nasdaq), VXD (Dow), RVX (Russell), VIX9D, VIX1D, VVIX. EOD OHLC.
-- **Index EOD levels** `out\index_eod\<R>.parquet`: NDX, SPX, RUT, DJX. EOD OHLC (intraday paywalled — use the futures bars in §1 for index intraday).
-- **Dividends** `out\dividends\<T>.parquet`: the 8 mega-caps (NVDA AAPL MSFT TSLA GOOGL AMZN META AVGO).
+- **Vol indices** `D:\data\processed\aux_eod\vol_indices\<R>.parquet` (`load_aux('vol_indices',R)`): VIX, VXN (Nasdaq), VXD (Dow), RVX (Russell), VIX9D, VIX1D, VVIX. EOD OHLC.
+- **Index EOD levels** `D:\data\processed\aux_eod\index_eod\<R>.parquet` (`load_aux('index_eod',R)`): NDX, SPX, RUT, DJX. EOD OHLC (intraday paywalled — use the futures bars in §1 for index intraday).
+- **Dividends** `D:\data\processed\aux_eod\dividends\<T>.parquet` (`load_aux('dividends',T)`): the 8 mega-caps (NVDA AAPL MSFT TSLA GOOGL AMZN META AVGO).
 
 ## 9. Model-ready option panels — BUILT 2026-06-18 (`build_option_panels.py` + `option_greeks.py`)
 
