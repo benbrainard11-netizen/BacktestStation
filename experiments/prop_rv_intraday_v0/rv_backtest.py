@@ -63,13 +63,13 @@ def simulate(m, sa, sb, entry=ENTRY, exit_thr=EXIT):
         for i in range(n):
             if pos == 0:
                 if not np.isnan(z[i]) and abs(z[i]) > entry:
-                    pos = -1 if z[i] > 0 else 1; e_sp = sp[i]; e_i = i
+                    pos = -1 if z[i] > 0 else 1; e_sp = sp[i]; e_i = i; e_z = z[i]
             else:
                 if (not np.isnan(z[i]) and abs(z[i]) < exit_thr) or (i - e_i >= MAX_HOLD) or (i == n - 1):
                     pnl = pos * (sp[i] - e_sp) * sa.contract_value - cost
                     trades.append({"date": int(pd.Timestamp(date).strftime("%Y%m%d")),
                                    "pnl": pnl, "gross": pos * (sp[i] - e_sp) * sa.contract_value,
-                                   "cost": cost, "held": i - e_i})
+                                   "cost": cost, "held": i - e_i, "entry_z": abs(e_z)})
                     pos = 0
     return pd.DataFrame(trades)
 
