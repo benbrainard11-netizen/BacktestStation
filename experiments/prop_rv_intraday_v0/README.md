@@ -31,11 +31,18 @@ and the goal Ben stated: *automate a futures strat.*
   low-frequency, small-$, thin holdout n — verdict hinges on OOS significance + generalization to a
   PORTFOLIO of pairs (`expand.py`).
 
-## Status
-- [x] diagnostic + honest backtest + threshold sweep (CL-BZ promising, OOS+ at high z).
-- [~] **expansion** (`expand.py`): same construction across index/rates/energy cointegrated pairs +
-  OOS bootstrap — does it generalize (a scalable portfolio) or is CL-BZ a lucky single?
-- [ ] if it generalizes: pre-register one config, holdout read, then live wiring.
+## Status — DONE 2026-06-20: NULL (cost-killed, does not generalize)
+- [x] diagnostic + honest backtest + threshold sweep (CL-BZ looked promising, OOS+ at high z).
+- [x] **expansion (`expand.py`): NULL.** Across 17 index/rates/energy cointegrated pairs at the
+  pre-registered |z|>3.0: **ZERO generalizers** (none design+ AND holdout+ AND bootstrap P>0>0.8).
+  CL-BZ (the only design-positive pair, +$17) has **holdout −$3, bootstrap P(>0)=0.13** — not
+  significant; the "+$8 at |z|>4" was one pair's tail noise. Index pairs negative both splits (low cost
+  didn't save them); rates catastrophic (win 0-7%, cost ≫ Treasury-spread move); the few design-positive
+  flukes sign-flip across splits. **VERDICT: intraday RV reversion is statistically real (survived the
+  look-ahead fix) but economically dead** — two bid-asks for a small spread move — and doesn't
+  generalize. The bootstrap + cross-pair expansion correctly prevented shipping CL-BZ as an edge.
+- **Durable:** the causal RV harness (`prepare`/`simulate`/`split_stats`, look-ahead-fixed) + the
+  honest 2-leg cost model + the cross-pair/bootstrap discipline.
 
 Python: `backend/.venv/Scripts/python.exe`. Specs (CL/BZ/ZN/ZF/ZB/ZT/HO/RB + index) in
 `backend/app/backtest/instruments.py`.
