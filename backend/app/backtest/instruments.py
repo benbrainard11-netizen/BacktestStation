@@ -53,6 +53,14 @@ INSTRUMENTS: dict[str, InstrumentSpec] = {
     # Grains/rates. ZS: 5000 bu, 1/4 cent tick = $12.50 (price in cents). ZN: 10y note, 1/64 = $15.625.
     "ZS":  InstrumentSpec(tick_size=0.25,     contract_value=50.0),
     "ZN":  InstrumentSpec(tick_size=0.015625, contract_value=1000.0),
+    "ZF":  InstrumentSpec(tick_size=0.0078125, contract_value=1000.0),  # 5y note, 1/4 of 1/32 = $7.8125
+    "ZB":  InstrumentSpec(tick_size=0.03125,  contract_value=1000.0),  # 30y bond, 1/32 = $31.25
+    "ZT":  InstrumentSpec(tick_size=0.0078125, contract_value=2000.0),  # 2y note, $200k face -> $2000/pt
+    # ICE Brent (Databento BZ): 1000 bbl -> $1000/pt, tick 0.01 = $10 (same economics as CL).
+    "BZ":  InstrumentSpec(tick_size=0.01,     contract_value=1000.0),
+    # NYMEX products: 42,000 gal -> $420/pt (=$42000 per $1), tick 0.0001 = $4.20.
+    "HO":  InstrumentSpec(tick_size=0.0001,   contract_value=42000.0),
+    "RB":  InstrumentSpec(tick_size=0.0001,   contract_value=42000.0),
 }
 
 
