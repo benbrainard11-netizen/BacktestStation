@@ -37,7 +37,13 @@ the only honest way to use options data here — and it's genuinely useful for s
   range, but adds incremental range info). Modest but genuine — survived the "is it just VIX" check that
   kills most options signals. **The honest core read: gamma regime → expected RANGE (size/expectation),
   not direction.**
-- [ ] add SPX/RUT replication; vol-regime join (VIX term structure); intraday GEX trajectory (the "1h
-  gamma" evolution) + 0DTE pin tile; package the honest regime reads as market-state tiles for the assist.
+- [x] **Multi-timeframe (`build_mtf.py`) + GENERALIZATION (2026-06-21):** gamma regime → projected range
+  at 1h/4h/EOD, computed at intraday decision times, **holds on NDX, SPX, AND RUT.** All three: short-gamma
+  ~1.3-1.8× the range, additive over vol every horizon, STRONGER intraday (0DTE concentrates). SPX strongest
+  (corr −0.49/partial −0.31, deepest 0DTE market), NDX mid, RUT weakest — strength tracks options depth =
+  real effect. Tables in out/mtf_{NDXP,SPXW,RUTW}.csv. **The validated core market-state read.**
+- [ ] remaining tool pieces: vol-regime join (VIX term structure VIX1D/VIX/VIX9D + VVIX); 0DTE pin +
+  zero-gamma/walls levels tile; intraday GEX trajectory; package as a single `market_state(index, time)`
+  readout → tiles for the InsyncApp assist (honest CONTEXT labels).
 
 Python: `backend/.venv/Scripts/python.exe`. Panels: `D:\data\processed\option_panels\panel\root=<R>`.
