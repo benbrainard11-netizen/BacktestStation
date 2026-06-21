@@ -73,3 +73,21 @@ Thumbs.db
 
 # Local machine-specific launcher.
 /start_server.ps1
+
+# Local virtualenvs of any suffix (e.g. backend/.venv-ml) — the bare `.venv/`
+# rule above doesn't catch suffixed names.
+.venv*/
+
+# Codex agent scratch.
+.codex/
+
+# Claude local per-machine settings override (shared .claude/ config stays tracked).
+.claude/settings.local.json
+
+# Experiment run outputs (regenerable; `out/` is already ignored above).
+experiments/**/runs/
+
+# Stray local logs / pids / error dumps from research runs.
+*.log
+*.err
+*.pid
