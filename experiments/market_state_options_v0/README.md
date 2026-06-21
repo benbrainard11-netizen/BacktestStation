@@ -42,8 +42,11 @@ the only honest way to use options data here — and it's genuinely useful for s
   ~1.3-1.8× the range, additive over vol every horizon, STRONGER intraday (0DTE concentrates). SPX strongest
   (corr −0.49/partial −0.31, deepest 0DTE market), NDX mid, RUT weakest — strength tracks options depth =
   real effect. Tables in out/mtf_{NDXP,SPXW,RUTW}.csv. **The validated core market-state read.**
-- [ ] remaining tool pieces: vol-regime join (VIX term structure VIX1D/VIX/VIX9D + VVIX); 0DTE pin +
-  zero-gamma/walls levels tile; intraday GEX trajectory; package as a single `market_state(index, time)`
-  readout → tiles for the InsyncApp assist (honest CONTEXT labels).
+- [x] **PACKAGED readout (`market_state.py`, 2026-06-21):** one call `market_state(index, date, time)` →
+  gamma regime + PROJECTED 1h/4h/EOD range (regression range~trailing+GEX per decision bucket) + levels
+  (zero-gamma/call-put walls/0DTE pin) + 0DTE expected-move + **vol regime** (VIX level + VIX1D/VIX/VIX9D
+  term structure + VVIX, prior-day causal) + honest narrative. Works NDX/SPX/RUT, all causal, CONTEXT-only.
+- [ ] (optional next) intraday GEX trajectory tile; wire into the InsyncApp assist + fix the reversal tile
+  to show OOS 64% (not in-sample 67.6%).
 
 Python: `backend/.venv/Scripts/python.exe`. Panels: `D:\data\processed\option_panels\panel\root=<R>`.
