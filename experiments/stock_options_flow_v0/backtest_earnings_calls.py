@@ -61,11 +61,10 @@ def load_chain(t):
         return pd.DataFrame()
     return pd.concat(parts, ignore_index=True).drop_duplicates(["date", "exp", "strike", "right"])
 
-NINE = ["SOFI", "AFRM", "RIOT", "ROKU", "DKNG", "PLTR", "MARA", "SIVB", "MSTR"]
-FEAT = ROOT / "experiments" / "stock_strategies_v0" / "earnings_gap_v0" / "out" / "features.parquet"
+EVENT_LIST = HERE / "out" / "event_list_top30.parquet"   # Step-A: top-30 liquid up-gap events (ticker, date, gap, x20)
 WIN_LO, WIN_HI = 20230101, 20260301      # options-cache window
-H_MAX = 10                               # shorter hold -> far less coverage bias on monthlies-only data
-DTE_LO, DTE_HI = 16, 45                  # wider entry-day DTE band (must clear the hold before expiry)
+H_MAX = 20                               # PEAD drift horizon (call exits at expiry if that's sooner)
+DTE_LO, DTE_HI = 15, 49                  # match pull_events coverage; exp must outlive the hold (filtered in call_trade)
 
 
 def call_trade(chain_idx, dates, D, exitD, spot, otm):
@@ -92,10 +91,8 @@ def call_trade(chain_idx, dates, D, exitD, spot, otm):
 
 
 def run(otm):
-    ev = pd.read_parquet(FEAT)
-    ev = ev[ev["ticker"].isin(NINE)].copy()
-    ev["entry_i"] = pd.to_datetime(ev["entry_dt"]).dt.strftime("%Y%m%d").astype(int)
-    ev["exit_i"] = pd.to_datetime(ev["exit_dt"]).dt.strftime("%Y%m%d").astype(int)
+    ev = pd.read_parquet(EVENT_LIST)             # ticker, date (gap day), gap, x20
+    ev["entry_i"] = ev["date"].astype(int)        # enter at the gap day's close (post IV-crush)
     ev = ev[(ev["entry_i"] >= WIN_LO) & (ev["entry_i"] <= WIN_HI)].reset_index(drop=True)
     rows = []
     for t in sorted(ev["ticker"].unique()):
@@ -113,10 +110,6 @@ def run(otm):
             D = int(cand[0])
             i = int(np.where(dates == D)[0][0])
             exitD = int(dates[min(i + H_MAX, len(dates) - 1)])
-            if int(e["exit_i"]) < exitD:                      # respect the strategy's own exit if sooner
-                c2 = dates[dates >= e["exit_i"]]
-                if len(c2):
-                    exitD = int(min(exitD, c2[0]))
             spot = float(spot_by.get(D, np.nan))
             if not np.isfinite(spot) or exitD <= D:
                 continue
@@ -142,7 +135,7 @@ def main():
     for otm in (0.0, 0.05):
         df = run(otm)
         tag = "ATM call" if otm == 0 else "+5% OTM call"
-        print(f"\n################ EARNINGS up-gap PEAD as a {tag} ({len(df)} events, 8 names, 2023-26) ################")
+        print(f"\n################ EARNINGS up-gap PEAD as a {tag} ({len(df)} events, {df['ticker'].nunique()} names, 2023-26) ################")
         if df.empty:
             print("  no usable events (option coverage gap)"); continue
         print(stats("CALL ret/premium", df["call_ret"]))

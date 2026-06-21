@@ -25,7 +25,7 @@ import numpy as np
 
 from account import Account
 from firm_rules import FirmConfig, is_news_blackout
-from sizing import size_position
+from sizing import POINT_VALUE, size_position
 
 CLASS_FLAT = 0
 CLASS_UP = 1
@@ -53,11 +53,13 @@ def decide(
     sizing_params: dict,
     direction_min_gap: float = 0.0,
     max_contracts: int | None = None,
+    atr: float | None = None,
 ) -> Decision:
     """Return a Decision for this signal against this account.
 
     `max_contracts` overrides firm.max_position_size (for micro-contract
-    runs where the firm cap is in mini-equivalents).
+    runs where the firm cap is in mini-equivalents). `atr` (index points) is
+    required for vol_targeted sizing; without it vol_targeted falls back to 1 lot.
     """
     cap = max_contracts if max_contracts is not None else firm.max_position_size
 
@@ -85,13 +87,24 @@ def decide(
     # Direction
     direction = 1 if pred_class == CLASS_UP else -1
 
-    # Size
+    # Size — build the risk context (drawdown headroom is the binding prop constraint)
+    dd_components = [account.balance - account.trailing_dd_floor]
+    daily_limit = getattr(firm, "daily_loss_limit", 0) or 0
+    if daily_limit > 0:
+        dd_components.append(daily_limit + account.day_pnl_low_water)   # day_pnl_low_water <= 0
+    ctx = {
+        "atr": atr,
+        "point_value": POINT_VALUE.get(symbol),
+        "dd_buffer": max(0.0, min(dd_components)),
+        "balance": account.balance,
+    }
     contracts = size_position(
         method=sizing_method,
         p_proba=p_proba,
         threshold=threshold,
         params=sizing_params,
         max_position_size=cap,
+        ctx=ctx,
     )
     if contracts <= 0:
         return Decision(False, "sizing_returned_zero")

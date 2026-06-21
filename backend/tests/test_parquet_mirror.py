@@ -32,10 +32,15 @@ def _fake_dbn_store(symbols_to_rows: dict[str, int]) -> MagicMock:
                     "ts_event": base_ts + pd.Timedelta(seconds=i),
                     "ts_recv": base_ts + pd.Timedelta(seconds=i),
                     "symbol": sym,
+                    "rtype": 160,
                     "action": "T",
                     "side": "A",
                     "price": 21000.0 + i,
                     "size": 1,
+                    "channel_id": 0,
+                    "order_id": i + 1,
+                    "flags": 0,
+                    "ts_in_delta": 0,
                     "bid_px_00": 20999.5,
                     "ask_px_00": 21000.5,
                     "bid_sz_00": 5,
@@ -200,6 +205,49 @@ def test_mirror_idempotent(data_root: Path) -> None:
     assert second.skipped_unchanged == 1
 
 
+def test_mirror_idempotent_for_mbo_without_bars_dependency(data_root: Path) -> None:
+    dbn = data_root / "raw" / "historical" / "GLBX.MDP3-mbo-2026-01-01-ES.c.0.dbn"
+    _write_old_dbn(dbn)
+    fake_store = _fake_dbn_store({"ES.c.0": 2})
+
+    with patch.object(
+        parquet_mirror.db.DBNStore, "from_file", return_value=fake_store
+    ):
+        first = parquet_mirror.mirror_warehouse(data_root)
+        second = parquet_mirror.mirror_warehouse(data_root)
+
+    assert first.converted_partitions == 1
+    assert not _hive_bars_path(data_root, "ES.c.0", "2026-01-01").exists()
+    assert second.converted_partitions == 0
+    assert second.skipped_unchanged == 1
+
+
+def test_mirror_raw_only_skips_derived_bars(data_root: Path) -> None:
+    dbn = data_root / "raw" / "historical" / "GLBX.MDP3-mbp-1-2026-03-15-NQ.c.0.dbn"
+    _write_old_dbn(dbn)
+    fake_store = _fake_dbn_store({"NQ.c.0": 2})
+
+    with patch.object(
+        parquet_mirror.db.DBNStore, "from_file", return_value=fake_store
+    ):
+        first = parquet_mirror.mirror_warehouse(
+            data_root,
+            schemas={"mbp-1"},
+            emit_bars=False,
+        )
+        second = parquet_mirror.mirror_warehouse(
+            data_root,
+            schemas={"mbp-1"},
+            emit_bars=False,
+        )
+
+    assert first.converted_partitions == 1
+    assert _hive_raw_path(data_root, "mbp-1", "NQ.c.0", "2026-03-15").exists()
+    assert not _hive_bars_path(data_root, "NQ.c.0", "2026-03-15").exists()
+    assert second.converted_partitions == 0
+    assert second.skipped_unchanged == 1
+
+
 def test_rebuild_flag_forces_re_emit(data_root: Path) -> None:
     dbn = data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn"
     _write_old_dbn(dbn)
@@ -240,6 +288,48 @@ def test_mirror_skips_unrecognized_filenames(data_root: Path) -> None:
 
     assert result.skipped_unrecognized == 1
     assert result.converted_partitions == 0
+
+
+def test_mirror_filters_schema_and_date_before_reading(data_root: Path) -> None:
+    tbbo = data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn"
+    old_mbp1 = data_root / "raw" / "historical" / "GLBX.MDP3-mbp-1-2026-03-14.dbn"
+    wanted_mbp1 = data_root / "raw" / "historical" / "GLBX.MDP3-mbp-1-2026-03-15.dbn"
+    _write_old_dbn(tbbo)
+    _write_old_dbn(old_mbp1)
+    _write_old_dbn(wanted_mbp1)
+
+    fake_store = _fake_dbn_store({"NQ.c.0": 1})
+    with patch.object(
+        parquet_mirror.db.DBNStore, "from_file", return_value=fake_store
+    ) as mock:
+        result = parquet_mirror.mirror_warehouse(
+            data_root,
+            schemas={"mbp-1"},
+            start=pd.Timestamp("2026-03-15").date(),
+            end=pd.Timestamp("2026-03-15").date(),
+        )
+
+    assert result.scanned == 3
+    assert result.skipped_filtered == 2
+    assert result.converted_partitions == 2
+    mock.assert_called_once()
+    assert _hive_raw_path(data_root, "mbp-1", "NQ.c.0", "2026-03-15").exists()
+    assert not _hive_raw_path(data_root, "tbbo", "NQ.c.0", "2026-04-24").exists()
+
+
+def test_mirror_filters_symbols_for_legacy_multi_symbol_dbn(data_root: Path) -> None:
+    dbn = data_root / "raw" / "live" / "GLBX.MDP3-tbbo-2026-04-24.dbn"
+    _write_old_dbn(dbn)
+    fake_store = _fake_dbn_store({"NQ.c.0": 2, "ES.c.0": 2})
+
+    with patch.object(
+        parquet_mirror.db.DBNStore, "from_file", return_value=fake_store
+    ):
+        result = parquet_mirror.mirror_warehouse(data_root, symbols={"NQ.c.0"})
+
+    assert result.converted_partitions == 2
+    assert _hive_raw_path(data_root, "tbbo", "NQ.c.0", "2026-04-24").exists()
+    assert not _hive_raw_path(data_root, "tbbo", "ES.c.0", "2026-04-24").exists()
 
 
 def test_mirror_handles_empty_dbn(data_root: Path) -> None:

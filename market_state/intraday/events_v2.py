@@ -36,7 +36,8 @@ except Exception:
 
 W_OFI, HORIZON, COOLDOWN = pd.Timedelta("2s"), pd.Timedelta("30min"), pd.Timedelta("15min")
 ATR_WIN = 14
-TOL = 0.05  # touch tolerance = TOL * ATR
+TOL = 0.01  # touch tol = TOL*ATR (~2 ticks). MUST be << the break thresholds (MULTS) or the touch band and
+# the hold/break barriers overlap -> mechanical "hold" bias on the approach side. Distinct = a clean test.
 MULTS = [0.05, 0.10, 0.15, 0.20, 0.30]  # break/hold thresholds in * ATR (robustness sweep); y10 is primary
 LINES = ["pdh", "pdl", "onh", "onl", "pwc"]
 OUT = Path("market_state/out")

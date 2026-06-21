@@ -27,7 +27,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from theta_store import expirations as _exps, fetch as _fetch  # noqa: E402  (local raw-cache layer on D:)
 
 BASE = "http://127.0.0.1:25510/v2"
-ROOT = {"SPX": "SPXW", "NDX": "NDXP", "RUT": "RUTW", "DJX": "DJX"}   # active weekly/0DTE index-option roots
+ROOT = {"SPX": "SPXW", "NDX": "NDXP", "RUT": "RUTW", "DJX": "DJX",   # active weekly/0DTE index-option roots
+        "GLD": "GLD", "SLV": "SLV"}                                   # metal ETF proxies (gold/silver walls)
 MULT = 100
 OUT = Path(__file__).resolve().parent / "out"
 

@@ -1,0 +1,455 @@
+Cross-Asset Order-Flow Divergence Forecasting for
+Futures
+Core judgment
+The evidence-backed part of your thesis is not “cross-asset divergence” in the loose retail sense. It is a much
+narrower proposition: short-lived, lagged, cross-asset predictability exists after you convert each
+asset’s book into a depth-aware pressure process, remove the common flow factor inside the
+complex, align instruments in event time, and only trade when the price relationship itself is still
+structurally intact. The academic support is strongest for event-based OFI, multi-level OFI, queue
+imbalance, microprice, and short-horizon lagged cross-asset OFI; it is much weaker for generic
+contemporaneous cross-impact stories, and essentially absent in the serious literature for the chart-pattern
+layer as a standalone alpha source. 
+Two skeptical conclusions matter . First, raw contemporaneous cross-impact is probably not your edge.
+Once order flow is integrated across levels and common order-flow components are modeled, a large
+fraction of apparent cross-impact disappears; in one multi-asset impact study, additional cross-impact
+terms explain less than 1% of impact beyond idiosyncratic OFI plus a common market flow factor . What
+remains useful is lagged cross-asset OFI, and even that decays rapidly. Second, static book snapshots are
+too slow a representation. The useful horizon is much closer to event time than to a fixed 15–60 minute
+bar horizon; Kolm, Turiel, and Westray explicitly report an effective horizon of roughly two average price
+changes for stock-specific forecasts from LOB data. 
+For your current data mix, the highest-probability research path is a hybrid stack: engineered
+microstructure features as the hard baseline, gradient boosting as the benchmark model on aggregated
+pair and complex features, and a compact LOB-aware sequence encoder only where raw MBO exists and
+genuinely adds incremental OOS value. The literature is supportive of deep models on raw LOB states, but
+benchmark studies also show large performance drops on new data and across datasets, including worse
+transfer from stock-style benchmarks to futures-style data. That is exactly the setting where large “global”
+architectures get overhyped. 
+Divergence signals that are worth your research budget
+Highest-priority signals
+Integrated multi-level OFI divergence should be near the top of the list. Best-level OFI is already strong,
+but multiple studies show that order flow deeper in the book adds explanatory and forecasting power when
+handled properly. Xu, Gould, and Howison find that out-of-sample fit improves as additional price levels are
+added to MLOFI, while Cont, Cucuringu, and Zhang show that an integrated OFI built from several top levels
+explains impact better than best-level OFI alone. For your use case, the signal is not just “asset A OFI minus
+asset B OFI,” but depth-normalized, lag-aligned integrated OFI residuals within a complex. 
+1
+2
+3
+4
+1
+Idiosyncratic-versus-common flow divergence is the single missing construct that most often gets
+overlooked by discretionary order-flow researchers. Capponi and Cont show that much of what looks like
+cross-impact can instead be explained by common order-flow components across assets, with idiosyncratic
+OFI plus a marketwide OFI factor doing most of the work. In plain terms: if ES and NQ are both being
+carried by the same common flow factor , “divergence” is mostly fake unless one contract’s idiosyncratic
+pressure materially disagrees with the complex factor . That makes residualization against a complex-level
+flow factor a first-class feature, not a cleanup step. 
+Queue depletion hazard and microprice divergence are strongly supported at very short horizons.
+Queue imbalance at the best bid and ask has significant predictive power for the direction of the next mid-
+price move, especially in large-tick settings, and Stoikov’s microprice framework treats fair short-term value
+as an expectation of future mid-price conditional on book state rather than simply a weighted midpoint.
+Cartea, Donnelly, and Jaimungal further show that volume imbalance predicts the sign of the next market
+order and immediate post-order price changes. That gives you a very actionable cross-asset construction:
+compare microprice-to-mid dislocation or next-move hazard across members of a complex, rather than
+comparing raw price alone. 
+Lagged cross-asset OFI spillovers are real, but fragile. Cont, Cucuringu, and Zhang find that lagged cross-
+asset OFIs improve forecasts of future returns, but that the effect is concentrated at short horizons and
+decays quickly. Garrison, Jain, and Paddrik find a positive but short-lived relationship in cross-asset order-
+flow activity between SPY and E-mini futures, with cross-asset market order flow becoming especially
+relevant during volatile periods. Rosenberg and Traub show that futures order flow can contain incremental
+information for spot returns and even lead spot prices in some FX settings. The implication is blunt: if your
+divergence only works on a minute bar without precise lag alignment, assume it is contaminated. 
+Secondary but evidence-backed signals
+Resiliency and replenishment asymmetry deserve more attention than they get. Large defines resiliency
+as the speed and probability with which the book refills after shocks, and Lo and Hall quantify liquidity
+replenishment through impulse responses in high-frequency VARs. If one asset absorbs repeated
+aggressive flow and refills almost immediately while its peer thins or fails to refill, that divergence is
+microstructurally meaningful. This is especially relevant to your “one asset holds while the correlated one
+runs” thesis: the holding asset is often not merely “stuck”; it is expressing higher same-side replenishment
+intensity. 
+Book-shape asymmetry is useful, but less universally robust than OFI. Several papers document predictive
+content in the slope or supply schedule of the order book for future trade prices, volatility, and speed of
+trading. This matters cross-asset because two contracts can show similar top-level imbalance while having
+very different depth elasticity behind the touch. The tradeable form is not raw slope; it is the difference in
+price-pressure-per-unit-flow implied by each asset’s current book shape. I would rank this below MLOFI
+and microprice, but above most discretionary structure heuristics. 
+Hidden-liquidity and refill asymmetry are real, especially in futures, but the evidence is narrower and
+more product-specific. Avellaneda, Reed, and Stoikov explicitly model hidden liquidity at level I and show
+that best-quote information improves prediction of the next price move when hidden liquidity is accounted
+for . On CME, iceberg detection and prediction research shows that native and synthetic iceberg activity can
+5
+6
+7
+8
+9
+2
+be inferred from discrepancies between visible resting volume and realized trade size or refill behavior . That
+makes “visible absorption” too crude: the stronger feature is absorption conditional on probable latent
+reserve liquidity. 
+Useful, but easier to overhype
+Order-flow surprise relative to a self-exciting baseline is promising but still more niche. Taranto et al.
+show that price impact is better modeled when one separates the predictable component of order flow
+from the unexpected one, and newer Hawkes-based work forecasts the near-term distribution of OFI by
+modeling lagged dependence in bid and ask event flows. In your framework, the right object is not raw OFI
+but unexpected OFI, especially cross-asset unexpected OFI. I would treat this as a second-wave refinement
+after the simpler residualized MLOFI and microprice stack is fully explored. 
+A futures-specific exploratory signal is divergence between outright flow and implied/spread-derived
+liquidity contribution. CME’s matching documentation shows that implied and outright sources interact in
+the allocation and priority process, and that many products are not simple FIFO books. That does not yet
+amount to broad empirical proof of alpha, but it does mean that for rates, grains, and spread-heavy
+products, outright visible-book pressure can be misleading unless you model the implied side of the
+market. This is structurally plausible, but I would label it exploratory rather than evidence-backed. 
+Building the features so they survive out of sample
+The canonical starting point remains the Cont–Kukanov–Stoikov event-based OFI, because it explicitly
+includes limit orders, market orders, and cancellations, rather than collapsing everything to signed
+traded volume. In their stylized block-book setup, price changes depend on the net imbalance of these
+three order types, and in the empirical regressions price changes are well explained by OFI with a
+coefficient that scales inversely with depth. That last point matters for cross-asset work: raw OFI is not
+comparable across instruments unless you normalize by local impact or depth. 
+For multi-level construction, Xu, Gould, and Howison provide a clean template. At each event time , define
+side-specific level- queue changes piecewise according to whether the level price improves, stays the
+same, or worsens. Their MLOFI entry is then the sum over events of ,
+and  collapses to standard OFI. The practical translation is straightforward: build a level vector, not
+a scalar; then compress it with ridge, PCA, or a learned linear layer into an integrated OFI that is more
+stable than naively throwing all levels into OLS. 
+Queue imbalance should be treated as a hazard variable, not a durable directional signal. Gould and
+Bonart define queue imbalance at time  as the normalized difference between best bid and ask queue
+sizes, , and show significant predictive power for the next mid-price move. Cartea,
+Donnelly, and Jaimungal show related volume-imbalance measures predict the sign of the next market
+order and immediate price changes. But this edge is strongest at one-tick or next-event horizons, stronger
+in large-tick assets, and should be expected to decay quickly once you aggregate too coarsely. 
+For microprice, keep two versions. The first is the standard “naive” microprice, equivalently a queue-
+weighted quote or  under fixed spread. The second is Stoikov’s more principled
+microprice as the limit of expected future midprices under a Markov transition model on imbalance states.
+10
+11
+12
+13
+τ 
+n
+m
+e (τ ) =m n ΔW (τ )−m n ΔV (τ )m n
+M=1
+14
+t
+I(t) = 
+n (b ,t)+n (a ,t)b t a t
+n (b ,t)−n (a ,t)b t a t
+15
+M +t s (I −t t 0.5)
+3
+The naive version is cheap and robust; the estimated version is better interpreted as a state-conditioned
+fair value. What matters for your thesis is not either one in isolation, but the cross-asset gap between
+microprice pressure and observed relative-price movement. 
+The decay problem is real, and the way around it is mostly representational, not magical. You should prefer 
+event time to fixed wall-clock windows whenever possible; use multiple short exponential kernels rather
+than a single trailing sum; normalize OFI by an impact proxy such as inverse depth or a rolling local ;
+and define some horizons in number of price changes rather than only seconds or minutes. That advice is
+directly consistent with the literature: Cont et al. link impact to inverse depth, Cont et al. find lagged cross-
+asset OFI decays rapidly, and Kolm et al. place the useful forecast horizon at roughly two average price
+changes. 
+The robust/fragile split is fairly clear . Robust: event-based OFI, integrated multi-level OFI, queue imbalance
+as a next-event hazard, microprice gap, replenishment intensity, and common-factor residualization. 
+Fragile: CVD or signed volume without book context, static book snapshots on minute bars, raw
+contemporaneous cross-impact coefficients, and universal feature sets that ignore matching algorithm
+differences. The literature keeps returning to the same lesson: prices react to the whole book event
+process, not just prints. 
+Defining cross-asset asymmetry so it is stationary and tradeable
+The right construction is a residualized pressure mismatch, not a raw price divergence. A workable recipe
+is:
+where  is learned from integrated OFI, microprice gap, queue hazard, replenishment asymmetry, and
+perhaps hidden-liquidity flags, all intraday-seasonality-adjusted and depth-normalized. Then estimate a
+complex-level common factor  and define idiosyncratic pressure
+Capponi and Cont’s results make this residualization step more than cosmetic: without it, you are confusing
+complex-level flow with genuine divergence. 
+For a pair inside a complex, define the divergence on lag-aligned idiosyncratic pressure:
+with  estimated from high-frequency lead-lag methods that properly handle asynchrony. Huth and
+Abergel use the Hayashi–Yoshida cross-correlation estimator specifically to avoid artificial lead-lag from
+asynchronous trading, and Hoffmann, Rosenbaum, and Yoshida provide a consistent lead-lag estimator for
+non-synchronous data based on a modified Hayashi–Yoshida framework. In practice, if  is unstable or
+flips sign across rolling windows, that is not a nuisance parameter problem—it is a do-not-trade flag. 
+To make the signal stationary, do not forecast outright price. Forecast the resolution of an unresolved
+relative move. One clean formulation is: normalize the cointegration or spread residual , then look
+16
+ β^i−1
+17
+18
+z (t) =i local pressure score from asset i
+z 
+i
+f 
+t
+u(t) =i z (t)−i λf .i t
+19
+D (t) =ij u(t)−i β u (t−ij j ),τ^ij
+τ^ij
+τ^ij
+20
+s (t)ij
+4
+for states where  and  disagree in sign or magnitude. For example, if asset  has already moved
+but asset  still shows stronger idiosyncratic upward pressure and the spread residual has not yet
+normalized, the trade is on the residual adjustment, not on “direction.” This is exactly where cointegration
+and microstructure meet. Cross-asset order flow has documented short-lived predictive value, but the
+structural relationship between prices must still be intact. 
+For complexes with more than two contracts, pairwise construction alone will leave money on the table and
+produce redundant tests. A better object is a complex graph or factor model: one flow factor , one or two
+latent idiosyncratic factors, and then pair-specific residuals only where they add explanatory power . That is
+consistent with the commonality results in multi-asset market impact and with evidence that cross-asset
+order-flow effects intensify in volatile periods rather than remaining constant. I would strongly prefer a
+sparse complex-level representation over an explosion of pairwise hand-built divergences. 
+Model classes and the real value of time-series foundation models
+What should be the hard baseline
+For engineered cross-asset microstructure features, gradient boosting should be your hard benchmark.
+This is not because trees are elegant. It is because on medium-sized tabular problems, tree ensembles
+remain extremely competitive and often outperform generic deep tabular approaches, especially when
+features are already high-level and irregular . With one year of MBP-1 across 28 symbols and only about 120
+days of MBO on four index contracts, you are still much closer to “medium, structured, heterogeneous
+tabular” than to the data regime where giant end-to-end attention models obviously dominate. 
+What should be the deep baseline
+For raw LOB or event-stream inputs, the evidence still favors LOB-aware compact architectures over
+generic sequence maximalism. DeepLOB established that convolutional filters plus temporal modeling can
+extract robust predictive structure from raw LOB states and generalize across instruments better than many
+earlier approaches. Transformer-based LOB models can outperform earlier architectures on some
+benchmarks, but broader benchmark work also shows that many models degrade substantially on new
+data and that rankings can change between stock-style and futures-style datasets. In other words: a
+transformer can win, but not because it is a transformer; it wins when its inductive bias matches the book. 
+A sensible architecture for your problem is hierarchical and multi-resolution: an asset-level event encoder
+at the native clock, pooling to short regular intervals such as 250 ms, 1 s, and 5 s, followed by sparse cross-
+asset fusion inside each complex. That fusion can be attention-based, graph-based, or even a learned linear
+mixer; the most important design choice is sparsity by complex and lag-awareness, not global attention
+across everything. That is an inference from the literature rather than an established theorem, but it is
+strongly aligned with what the evidence does show: cross-asset effects are local, short-lived, and dominated
+by common factors plus a few idiosyncratic residual relationships. 
+TCN versus transformer versus Mamba
+If I had to choose one deep starting point for this exact use case, I would start with a TCN or DeepLOB-
+style convolutional encoder, not a large transformer and not Mamba. TCNs are empirically strong generic
+D (t)ij s (t)ij j
+i
+21
+22
+23
+24
+25
+5
+sequence models with long effective memory and clean optimization. Transformers for LOBs are credible,
+but benchmark evidence does not support assuming they are universally better in realistic OOS settings.
+Mamba and related selective state-space models are computationally attractive for long sequences, but the
+evidence base specific to financial microstructure forecasting remains thin relative to convolutional and
+transformer LOB models. At the moment, Mamba is a reasonable experiment, not the default. 
+Honest assessment of Chronos, TimesFM, Moirai, and TTM
+The official TSFM papers are impressive on broad regular-grid forecasting benchmarks. Chronos learns via
+value tokenization and language-model style training; TimesFM is a decoder-only forecasting model trained
+on a very large corpus; Moirai tackles cross-frequency and any-variate forecasting; TTM is a tiny pretrained
+multivariate model designed for efficient transfer . On their home turf—generic time-series forecasting—
+they are serious models. 
+But the finance-specific evidence is much less flattering for the generic, off-the-shelf story. A recent
+comprehensive finance study finds that off-the-shelf TSFMs perform poorly in zero-shot and fine-tuning
+settings on financial returns, while TSFMs pretrained from scratch on financial data achieve substantial
+gains. A separate multivariate finance study finds that pretrained TTM can be sample-efficient and can beat
+naive baselines on some tasks such as equity spread prediction and volatility forecasting, but specialized
+models still match or exceed it in two of three tasks. That is the honest center of gravity right now: domain-
+specific pretraining helps; generic zero-shot finance miracles do not. 
+On financial microstructure or spread-resolution tasks, I would treat generic TSFMs as auxiliary
+baselines, not core production models. Use them, if at all, on regularly sampled derived series such as
+one-second or one-minute pressure residuals, spread residuals, or complex flow factors. Do not expect
+them to ingest raw event-time MBO and suddenly discover edge. Their architectures and training corpora
+were designed for broad forecasting corpora, not native message-by-message auction dynamics. Emerging
+dedicated LOB foundation models such as LOBERT are interesting, but they are early and not yet evidence-
+backed the way OFI, queue imbalance, and classical LOB models are. 
+If you insist on a TSFM experiment, the least self-deceptive setup is: fine-tune TTM or Moirai on stationary
+spread and pressure residual series, compare against GBDT and compact local sequence models, and
+judge only after costs and actual holdout periods. Zero-shot should be treated as a calibration curiosity, not
+an alpha thesis. 
+Labeling the objective and gating the regime
+For your target, the cleanest formulation is a competing-risks first-touch label. The classic triple-barrier
+method is still the right conceptual starting point because it is path-aware and naturally encodes take-profit,
+stop, and timeout. But for a cross-asset divergence trade, the upper barrier should not just be a symmetric
+return multiple. It should be the first touch of an ex ante liquidity objective defined at time : a pre-
+existing spread reversion band, a session-to-date profile level, a visible book objective, or a current
+microprice-implied fair-value zone. If you already know the side from the divergence sign, the label should
+mostly answer: did the trade resolve to the objective before adverse excursion, timeout, or regime
+break?
+26
+27
+28
+29
+30
+t
+31
+6
+There are two caveats. First, triple-barrier logic has been widely adopted, but newer critiques point out that
+it can behave badly when implemented on fixed-resolution bars rather than on the true path. That matters
+enormously for your use case. If the objective is a liquidity draw, tick or event-path labeling is
+mandatory; bar-high/bar-low approximations are much too crude around microstructure horizons. Second,
+meta-labeling is useful only if the primary side model already has merit. The practitioner and empirical
+literature around meta-labeling is consistent on that point: it is a filter and sizing layer , not a way to rescue a
+bad primary signal. 
+Your no-lookahead requirement means the liquidity objective must be frozen using only information
+available at decision time. Previous-session volume profile levels are safe; full-session levels are not.
+Current-session HVN/LVN or POC can be used only if computed from flow accumulated up to now, not from
+later prints. The same logic applies to any “liquidity draw” target: the target level can move only if the
+trading rule would also have allowed it to move in real time. For cross-asset models, this usually means the
+objective layer should be a deterministic function of the present and past state, with all future path
+uncertainty delegated to the label outcome itself. 
+For regime gating, I would separate qualification from monitoring. Qualification is the offline question: is
+there a long-run relation at all? Here, cointegration tests that allow breaks, such as Gregory–Hansen, are
+more appropriate than naive stationary-spread screening because they explicitly allow for regime shift in
+slope or intercept. Monitoring is the online question: has the relation broken now? Wagner and Wied
+develop a residual-based monitoring procedure for structural change in cointegrating relationships, and
+related work extends monitoring from stationarity-to-spurious transitions and to broader sequential
+monitoring of cointegrating regressions. These methods are much closer to the problem you actually have
+than a rolling correlation threshold. 
+In real time, I would monitor at least four objects: the cointegration residual; the hedge ratio or loading
+vector; the lead-lag estimate; and the variance of the idiosyncratic flow residuals. For the online detector
+itself, BOCPD, CUSUM, and MOSUM are the practical workhorses. BOCPD gives a posterior over run length
+and is attractive when you want a probabilistic break score; CUSUM and MOSUM remain efficient for small
+shifts in mean or parameter constancy and are easy to implement as hard gates. If any of those objects
+destabilize, cut the signal or downweight it. That is how you avoid the “fade a dying relationship” failure
+mode. 
+The failure modes that usually kill these models out of sample
+The first killer is fake lead-lag from clocks, liquidity, and synchronization choices. The Epps effect and
+asynchronous sampling can make correlations collapse or generate artificial leadership. Huth and Abergel
+explicitly prefer Hayashi–Yoshida because it bypasses asynchrony and artificial liquidity lead-lag, and
+Hoffmann, Rosenbaum, and Yoshida formalize lead-lag estimation under non-synchronous sampling. If you
+align everything on minute bars or previous-tick interpolation, you can manufacture a beautiful signal that
+is nothing but timestamp bias. 
+The second killer is mistaking common flow for divergence. This is the most important conceptual trap in
+cross-asset order-flow work. If you do not separate common complex flow from idiosyncratic pressure, you
+are not predicting relative resolution—you are usually just measuring the same complex-wide shove twice.
+Capponi and Cont’s results are a direct warning here, and Cont, Cucuringu, and Zhang add that lagged
+effects exist but are short-lived. If you fit a large model to raw pairwise interactions without residualization,
+32
+33
+34
+35
+20
+7
+it will often discover unstable cross-impact coefficients that disappear when the common factor is handled
+properly. 
+The third killer is product-specific queue semantics. CME MBO gives queue position and full depth, but
+matching rules vary materially. Some products are FIFO-like; others use top-order plus pro-rata logic;
+residual allocation can revert to FIFO; implied and outright sources interact in the same price level. A queue-
+imbalance or cancel/add feature learned on one matching rule will not mean the same thing on another .
+The signal layer therefore needs product metadata: matching algorithm, implied order participation, top-
+order behavior , and whether your fill model even makes sense under the product’s allocation logic. 
+The fourth killer is visible-book naivety in the presence of hidden or synthetic liquidity. Icebergs,
+reserve replenishment, and implied spread-generated liquidity make visible size an incomplete state
+description. CME-specific iceberg detection work shows native and synthetic iceberg activity can be inferred,
+which is precisely why visible absorption by itself is not enough. In futures complexes with meaningful
+implied activity, the book you see is only part of the liquidity process you are trading against. 
+The fifth killer is intraday nonstationarity you treat as noise instead of structure. Commodity futures
+work shows intraday price impact varies materially, with higher volume and lower impact around
+settlement, and cross-asset order-flow relations strengthen during volatile periods. Macro-news work
+shows simultaneous high-frequency response across stock, bond, and FX futures to real-time
+announcements. If your model pretends that 10:02 a.m. and the minute before settlement are the same
+microstructure state, it will average away precisely the conditions under which cross-asset divergence
+matters most. 
+The sixth killer is contract and venue migration around roll or thin-liquidity states. Price discovery in
+futures depends on where informed flow actually trades; thinly traded futures can be poor discovery
+venues, and the dominant venue can shift over time with transparency and liquidity conditions. Ready and
+Ready explicitly work with near-to-maturity high-volume contracts, and Rosenberg and Traub show the
+dominant information share can shift between futures and spot over time as transparency changes. Cross-
+asset pressure comparisons are therefore only meaningful if the contracts being compared are the
+contracts where discovery is actually occurring. 
+The final killer is execution asymmetry masquerading as alpha. CME itself notes that exact queue
+position is valuable for trades requiring resting orders in multiple instruments to manage execution risk. In
+cross-asset futures trading, legging risk, queue aging, pro-rata allocation, and implied-source interactions
+can turn a predictive signal into a negative-expectancy strategy if the execution model is naive. For this class
+of strategy, the fill model is part of the alpha model. 
+The research agenda that looks most defensible from the literature is therefore narrow and concrete: start
+with event-time, multi-level, depth-normalized local pressure; strip out the complex common flow
+factor; align assets with Hayashi–Yoshida-style lag estimation; predict objective resolution, not outright
+direction; and gate aggressively on cointegration and parameter stability. That is the part of cross-asset
+order-flow divergence that is evidence-backed. Everything else should be assumed guilty until it beats that
+baseline after costs. 
+19
+36
+37
+38
+39
+40
+41
+8
+https://www.smallake.kr/wp-content/uploads/2016/05/Kukanov.pdf
+https://www.smallake.kr/wp-content/uploads/2016/05/Kukanov.pdf
+https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID3706390_code1114.pdf?
+abstractid=3706390&mirid=1&type=2
+https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID3706390_code1114.pdf?abstractid=3706390&mirid=1&type=2
+https://arxiv.org/abs/2207.08815
+https://arxiv.org/abs/2207.08815
+https://arxiv.org/pdf/1907.06230
+https://arxiv.org/pdf/1907.06230
+https://arxiv.org/pdf/1512.03492
+https://arxiv.org/pdf/1512.03492
+https://arxiv.org/abs/2112.13213
+https://arxiv.org/abs/2112.13213
+https://www.researchgate.net/publication/
+222686812_Measuring_the_resiliency_of_an_electronic_limit_order_book_Journal_of_Financial_Markets_10_1-25
+https://www.researchgate.net/publication/
+222686812_Measuring_the_resiliency_of_an_electronic_limit_order_book_Journal_of_Financial_Markets_10_1-25
+https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID1787625_code1522600.pdf?abstractid=1787625
+https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID1787625_code1522600.pdf?abstractid=1787625
+https://pages.stern.nyu.edu/~jreed/papers/paper06.pdf
+https://pages.stern.nyu.edu/~jreed/papers/paper06.pdf
+https://arxiv.org/abs/1602.02735
+https://arxiv.org/abs/1602.02735
+https://cmegroupclientsite.atlassian.net/wiki/spaces/EPICSANDBOX/pages/457218479
+https://cmegroupclientsite.atlassian.net/wiki/spaces/EPICSANDBOX/pages/457218479
+https://static1.squarespace.com/static/54fccb5be4b07e462fdd0ca4/t/
+58b5d5192e69cf2b8c0d3e06/1488311578377/Microprice_BBG.pdf
+https://static1.squarespace.com/static/54fccb5be4b07e462fdd0ca4/t/58b5d5192e69cf2b8c0d3e06/1488311578377/
+Microprice_BBG.pdf
+https://arxiv.org/pdf/1111.7103
+https://arxiv.org/pdf/1111.7103
+https://arxiv.org/abs/1808.03668
+https://arxiv.org/abs/1808.03668
+https://arxiv.org/abs/1803.01271
+https://arxiv.org/abs/1803.01271
+https://arxiv.org/abs/2403.07815
+https://arxiv.org/abs/2403.07815
+[2511.18578] Re(Visiting) Time Series Foundation Models in Finance
+https://arxiv.org/abs/2511.18578
+1 13 17 18
+2 5 19 22
+3 23
+4 14 41
+6 15
+7 21 25
+8
+9
+10
+11
+12
+16
+20
+24
+26
+27
+28 29
+9
+https://arxiv.org/abs/2401.03955
+https://arxiv.org/abs/2401.03955
+https://mlfinpy.readthedocs.io/en/latest/Labelling.html
+https://mlfinpy.readthedocs.io/en/latest/Labelling.html
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6519542
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6519542
+https://www.sciencedirect.com/science/article/pii/0304407669416857
+https://www.sciencedirect.com/science/article/pii/0304407669416857
+https://arxiv.org/abs/0710.3742
+https://arxiv.org/abs/0710.3742
+https://www.cmegroup.com/articles/faqs/market-by-order-mbo.html
+https://www.cmegroup.com/articles/faqs/market-by-order-mbo.html
+https://downloads.dxfeed.com/articles/CME-Iceberg-Detection-preprint.pdf
+https://downloads.dxfeed.com/articles/CME-Iceberg-Detection-preprint.pdf
+https://ou.edu/content/dam/price/Finance/energyfinanceconference/2019/ready-ready.pdf
+https://ou.edu/content/dam/price/Finance/energyfinanceconference/2019/ready-ready.pdf
+30
+31 33
+32
+34
+35
+36 40
+37
+38 39
+10

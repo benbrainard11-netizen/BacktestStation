@@ -36,18 +36,40 @@ except Exception:  # noqa: BLE001
     pass
 
 
-def day_draws(p: float, win_r: float, n: int, risk: float, paths: int, days: int):
-    k = RNG.binomial(n, p, size=(paths, days))
-    pnl = (k * win_r - (n - k)) * risk
-    worst = -(n - k) * risk  # losses-first running minimum
-    best = k * win_r * risk  # wins-first running maximum
-    return pnl, worst, best
+def day_draws(p, win_r, n, risk, paths, days, dll=0.0, dll_soft=False):
+    """Trade-grain day outcomes with an HONEST DLL stop.
+
+    Walk the n trades in sequence; once cumulative PnL <= -dll, stop OPENING new trades —
+    the crossing trade still completes at full risk (a soft DLL caps new entries, it cannot
+    liquidate an in-flight trade at exactly -dll). soft DLL -> day ends, account alive; hard
+    DLL -> account blows. dll<=0 -> take all n trades. Returns day_pnl, worst (intraday min),
+    best (intraday max), hard_blow — all shape (paths, days).
+
+    This replaces the old day-grain clip (worst=losses-first + day_pnl=-dll), which refunded
+    the overshoot and manufactured fake positive drift from a zero-edge strategy.
+    """
+    wins = RNG.random((paths, days, n)) < p
+    tr = np.where(wins, win_r * risk, -risk)               # per-trade PnL
+    cum = np.cumsum(tr, axis=2)                             # within-day cumulative
+    if dll and dll > 0:
+        crossed = cum <= -dll
+        any_cross = crossed.any(axis=2)
+        idx = np.where(any_cross, np.argmax(crossed, axis=2), n - 1)   # last trade taken
+        day_pnl = np.take_along_axis(cum, idx[..., None], axis=2)[..., 0]
+        taken = np.arange(n)[None, None, :] <= idx[..., None]
+        cum_t = np.where(taken, cum, np.nan)
+        worst = np.nanmin(cum_t, axis=2)
+        best = np.nanmax(cum_t, axis=2)
+        hard_blow = any_cross & (not dll_soft)
+        return day_pnl, worst, best, hard_blow
+    return (cum[..., -1], np.min(cum, axis=2), np.max(cum, axis=2),
+            np.zeros((paths, days), bool))
 
 
 def eval_sim(spec: dict, p, win_r, n, risk) -> tuple[float, float]:
     """Returns (pass_prob, mean_days_per_attempt)."""
     e = spec["eval"]
-    pnl, worst, _ = day_draws(p, win_r, n, risk, N_PATHS, e["max_days"])
+    pnl, worst, _, hard = day_draws(p, win_r, n, risk, N_PATHS, e["max_days"], e["dll"], e["dll_soft"])
     bal = np.full(N_PATHS, START)
     hw = bal.copy()
     alive = np.ones(N_PATHS, bool)
@@ -58,15 +80,10 @@ def eval_sim(spec: dict, p, win_r, n, risk) -> tuple[float, float]:
         a = alive & ~passed
         if not a.any():
             break
-        day_pnl = pnl[:, d].copy()
-        if (
-            e["dll"] > 0
-        ):  # soft DLL FLATTENS at -dll (day over, upside gone); hard blows
-            hit = a & (worst[:, d] <= -e["dll"])
-            if e["dll_soft"]:
-                day_pnl[hit] = -e["dll"]
-            else:
-                alive[hit] = False
+        day_pnl = pnl[:, d]  # soft DLL already baked into pnl/worst by day_draws (trade-grain)
+        if e["dll"] > 0 and not e["dll_soft"]:           # hard DLL -> blow on the crossing trade
+            alive[a & hard[:, d]] = False
+            a = alive & ~passed
         floor = np.where(hw - e["dd"] > START - e["dd"], hw - e["dd"], START - e["dd"])
         if e["dd_mode"] in ("eod_rt", "intraday"):
             alive[a & (bal + worst[:, d] <= floor)] = False
@@ -90,16 +107,18 @@ def eval_sim(spec: dict, p, win_r, n, risk) -> tuple[float, float]:
     )
 
 
-def funded_sim(spec: dict, p, win_r, n, risk) -> float:
-    """Expected trader-side payout total over the funded account's life (<=252d)."""
+def funded_sim(spec: dict, p, win_r, n, risk, diag: bool = False):
+    """Expected trader-side payout total over the funded account's life (<=252d).
+    diag=True -> return a dict of operational stats (payout speed, blow rate) instead."""
     f = spec["funded"]
     po = f["payout"]
-    pnl, worst, best = day_draws(p, win_r, n, risk, N_PATHS, FUNDED_DAYS)
+    pnl, worst, best, hard = day_draws(p, win_r, n, risk, N_PATHS, FUNDED_DAYS, f["dll"], f["dll_soft"])
     bal = np.full(N_PATHS, START)
     hw = bal.copy()
     alive = np.ones(N_PATHS, bool)
     paid = np.zeros(N_PATHS)
     n_payouts = np.zeros(N_PATHS, int)
+    first_pay = np.full(N_PATHS, -1)             # day of first payout (-1 = none)
     win_days = np.zeros(N_PATHS, int)
     cyc_prof = np.zeros(N_PATHS)
     cyc_best = np.zeros(N_PATHS)
@@ -107,13 +126,9 @@ def funded_sim(spec: dict, p, win_r, n, risk) -> float:
     for d in range(FUNDED_DAYS):
         if not alive.any():
             break
-        day_pnl = pnl[:, d].copy()
-        if f["dll"] > 0:
-            hit = alive & (worst[:, d] <= -f["dll"])
-            if f["dll_soft"]:
-                day_pnl[hit] = -f["dll"]  # flattened at the breach — upside gone
-            else:
-                alive[hit] = False
+        day_pnl = pnl[:, d]  # soft DLL already baked in (trade-grain); no day-clip refund
+        if f["dll"] > 0 and not f["dll_soft"]:           # hard DLL -> blow on the crossing trade
+            alive[alive & hard[:, d]] = False
         if f["dd_mode"] == "intraday":
             hw = np.maximum(hw, bal + best[:, d])
         floor = np.where(locked, f["lock_floor"], hw - f["dd"])
@@ -150,6 +165,7 @@ def funded_sim(spec: dict, p, win_r, n, risk) -> float:
             take = elig & (amt >= po["min_payout"])
             paid[take] += amt[take] * f["split"]
             bal[take] -= amt[take]
+            first_pay[take & (first_pay < 0)] = d
             n_payouts[take] += 1
             win_days[take] = 0
             cyc_prof[take] = 0.0
@@ -160,6 +176,16 @@ def funded_sim(spec: dict, p, win_r, n, risk) -> float:
                 alive &= ~(
                     take & (n_payouts >= po["lifetime_payouts"])
                 )  # account closes
+    if diag:
+        got = n_payouts >= 1
+        return {
+            "paid_mean": float(paid.mean()),
+            "p_any_payout": float(got.mean()),
+            "days_to_first_payout": float(first_pay[got].mean()) if got.any() else float("nan"),
+            "mean_payouts": float(n_payouts.mean()),
+            "blow_no_payout": float(((~alive) & (n_payouts == 0)).mean()),
+            "paid_array": paid,        # per-account trader-side payout distribution (for fleet sim)
+        }
     return float(paid.mean())
 
 
@@ -196,6 +222,11 @@ def campaign_ev(firm: str, p, win_r, n, risk) -> dict:
 
 
 def main() -> int:
+    # REGRESSION GUARD (the soft-DLL bug): an honest DLL must NOT manufacture drift from a
+    # zero-edge strategy. The old day-grain clip produced ~+$216/day here. Trade-grain -> ~0.
+    dp, _, _, _ = day_draws(0.5, 1.0, 2, 900.0, 20000, 1, dll=1200.0, dll_soft=True)
+    assert abs(float(dp.mean())) < 15.0, f"zero-edge drift ${dp.mean():.1f}/day — soft-DLL bug regressed"
+
     # the honest question: what does a fixed edge level pay, per firm, at optimal
     # shape/risk? edge_r = p*win_R - (1-p) pinned at 0 / +0.05 / +0.10 per trade.
     edge_levels = [0.0, 0.05, 0.10]

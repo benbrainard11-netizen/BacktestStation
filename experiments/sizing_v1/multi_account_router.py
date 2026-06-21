@@ -36,7 +36,7 @@ sys.path.insert(0, str(EXPERIMENT_DIR))
 
 from account import Account
 from firm_rules import load_firm_config
-from simulator import Signal, load_signals, simulate_account
+from simulator import Signal, load_signals, simulate_account, load_excursions
 
 
 def staggered_start_dates(signal_dates: list[dt.date], sim_max_days: int, n_accounts: int) -> list[dt.date]:
@@ -60,7 +60,8 @@ def slice_signals(signals: list[Signal], start: dt.date, sim_max_days: int) -> l
     return [s for s in signals if start <= s.ts_decision.date() < end]
 
 
-def run_firm(firm_name: str, strategy_cfg: dict, signals: list[Signal], n_accounts: int, out_dir: Path) -> list[dict]:
+def run_firm(firm_name: str, strategy_cfg: dict, signals: list[Signal], n_accounts: int, out_dir: Path,
+             excursions: dict | None = None) -> list[dict]:
     firm_path = EXPERIMENT_DIR / "config" / "firms" / f"{firm_name}_50k.yaml"
     firm = load_firm_config(firm_path)
     sim_max_days = firm.sim_max_days
@@ -78,7 +79,8 @@ def run_firm(firm_name: str, strategy_cfg: dict, signals: list[Signal], n_accoun
         if not sub:
             continue
         account = Account(account_id=f"{firm_name}_50k_{i:03d}", firm=firm, sim_start_date=start)
-        simulate_account(account=account, signals=sub, firm=firm, strategy_cfg=strategy_cfg, jitter_seed=1000 + i)
+        simulate_account(account=account, signals=sub, firm=firm, strategy_cfg=strategy_cfg,
+                         jitter_seed=1000 + i, excursions=excursions)
 
         rec = {
             "account_id": account.account_id,
@@ -152,13 +154,17 @@ def main(argv: list[str] | None = None) -> int:
     signals = load_signals(strategy_cfg, preds_dir)
     print(f"  {len(signals):,} signals loaded")
 
+    excursions = load_excursions(EXPERIMENT_DIR / "out" / "excursions.parquet")
+    print(f"  {len(excursions):,} precomputed excursions"
+          + ("" if excursions else "  (none — stops disabled)"))
+
     firms = args.firms
     if args.all_firms:
         firms = [p.stem.replace("_50k", "") for p in sorted((EXPERIMENT_DIR / "config" / "firms").glob("*_50k.yaml"))]
 
     all_summaries = []
     for firm_name in firms:
-        results = run_firm(firm_name, strategy_cfg, signals, args.n_accounts, out_dir)
+        results = run_firm(firm_name, strategy_cfg, signals, args.n_accounts, out_dir, excursions=excursions)
         summary = summarize(firm_name, results)
         all_summaries.append(summary)
 

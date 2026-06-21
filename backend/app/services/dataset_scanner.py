@@ -49,7 +49,9 @@ HASH_SIZE_LIMIT_BYTES = 100 * 1024 * 1024  # 100 MB
 
 _DBN_RE = re.compile(
     r"^(?P<dataset>[A-Z]+\.[A-Z0-9]+)-(?P<schema>[a-z0-9-]+)-"
-    r"(?P<date>\d{4}-\d{2}-\d{2})\.dbn(\.zst)?$"
+    r"(?P<date>\d{4}-\d{2}-\d{2})"
+    r"(?:-(?P<symbol>[A-Za-z0-9._]+))?"   # per-symbol files: ...-DATE-ZF.c.0.dbn (match the mirror's regex)
+    r"\.dbn(\.zst)?$"
 )
 # Hive-partitioned raw parquet:
 #   raw/databento/{schema}/symbol={symbol}/date={YYYY-MM-DD}/part-NNN.parquet

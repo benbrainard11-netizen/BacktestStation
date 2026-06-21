@@ -30,6 +30,7 @@ import datetime as dt
 import logging
 import re
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -129,6 +130,7 @@ class MirrorResult:
     converted_partitions: int = 0  # one per (symbol, output kind)
     skipped_recent: int = 0
     skipped_unchanged: int = 0
+    skipped_filtered: int = 0
     skipped_unrecognized: int = 0
     errors: list[str] = field(default_factory=list)
 
@@ -194,7 +196,14 @@ def _bars_partition_path(
 
 
 def mirror_warehouse(
-    data_root: Path, *, rebuild: bool = False
+    data_root: Path,
+    *,
+    rebuild: bool = False,
+    schemas: Iterable[str] | None = None,
+    start: dt.date | None = None,
+    end: dt.date | None = None,
+    symbols: Iterable[str] | None = None,
+    emit_bars: bool = True,
 ) -> MirrorResult:
     """Walk raw DBN tree, emit Hive parquet + bars + manifests.
 
@@ -203,14 +212,34 @@ def mirror_warehouse(
         rebuild: if True, ignores up-to-date check and re-emits every
             DBN. Useful for migrating from the legacy layout or after
             a schema/generator-version bump.
+        schemas: optional schema allow-list, e.g. {"mbp-1"}.
+        start: optional inclusive DBN date lower bound.
+        end: optional inclusive DBN date upper bound.
+        symbols: optional symbol allow-list. Per-symbol DBNs are filtered
+            from their filename; legacy multi-symbol DBNs are filtered
+            after reading.
+        emit_bars: if False, write only raw schema parquet and skip derived
+            1m bars.
     """
     result = MirrorResult()
     if not data_root.exists():
         result.errors.append(f"data_root does not exist: {data_root}")
         return result
 
+    schema_filter = set(schemas or []) or None
+    symbol_filter = set(symbols or []) or None
+
     logger = _setup_logging(data_root)
-    logger.info(f"mirror starting; data_root={data_root} rebuild={rebuild}")
+    logger.info(
+        "mirror starting; data_root=%s rebuild=%s schemas=%s start=%s end=%s symbols=%s emit_bars=%s",
+        data_root,
+        rebuild,
+        sorted(schema_filter) if schema_filter else None,
+        start,
+        end,
+        sorted(symbol_filter) if symbol_filter else None,
+        emit_bars,
+    )
 
     cutoff = dt.datetime.now(dt.timezone.utc).timestamp() - SKIP_RECENT_SEC
 
@@ -230,6 +259,26 @@ def mirror_warehouse(
                 logger.debug(f"unrecognized DBN filename: {dbn_path.name}")
                 continue
 
+            schema_name = m.group("schema")
+            date_obj = dt.date.fromisoformat(m.group("date"))
+            filename_symbol = m.group("symbol")
+            if schema_filter is not None and schema_name not in schema_filter:
+                result.skipped_filtered += 1
+                continue
+            if start is not None and date_obj < start:
+                result.skipped_filtered += 1
+                continue
+            if end is not None and date_obj > end:
+                result.skipped_filtered += 1
+                continue
+            if (
+                symbol_filter is not None
+                and filename_symbol is not None
+                and filename_symbol not in symbol_filter
+            ):
+                result.skipped_filtered += 1
+                continue
+
             mtime = dbn_path.stat().st_mtime
             if mtime > cutoff:
                 result.skipped_recent += 1
@@ -238,7 +287,13 @@ def mirror_warehouse(
 
             try:
                 converted = _process_one_dbn(
-                    dbn_path, m, data_root, logger, rebuild=rebuild
+                    dbn_path,
+                    m,
+                    data_root,
+                    logger,
+                    rebuild=rebuild,
+                    symbols=symbol_filter,
+                    emit_bars=emit_bars,
                 )
                 if converted == 0:
                     result.skipped_unchanged += 1
@@ -255,6 +310,7 @@ def mirror_warehouse(
         f"converted_partitions={result.converted_partitions} "
         f"skipped_recent={result.skipped_recent} "
         f"skipped_unchanged={result.skipped_unchanged} "
+        f"skipped_filtered={result.skipped_filtered} "
         f"skipped_unrecognized={result.skipped_unrecognized} "
         f"errors={len(result.errors)}"
     )
@@ -271,6 +327,8 @@ def _process_one_dbn(
     logger: logging.Logger,
     *,
     rebuild: bool,
+    symbols: set[str] | None,
+    emit_bars: bool,
 ) -> int:
     """Convert one DBN to parquet partitions + bars + manifest.
 
@@ -289,6 +347,7 @@ def _process_one_dbn(
     """
     schema_name = matched.group("schema")
     date_str = matched.group("date")
+    filename_symbol = matched.group("symbol")
     date_obj = dt.date.fromisoformat(date_str)
     dbn_mtime = dbn_path.stat().st_mtime
 
@@ -330,10 +389,18 @@ def _process_one_dbn(
         dbn_path=dbn_path,
         dbn_mtime=dbn_mtime,
         rebuild=rebuild,
+        emit_bars=emit_bars,
     )
+
+    # Only filter groups for legacy multi-symbol DBNs. Per-symbol files
+    # are already filtered from the filename; their row-level symbol can
+    # be a resolved contract instead of the continuous request symbol.
+    group_symbol_filter = symbols if filename_symbol is None else None
 
     # Pass 1: resolved-contract partitions.
     for symbol, group in df.groupby(sym_col):
+        if group_symbol_filter is not None and str(symbol) not in group_symbol_filter:
+            continue
         outs, warns, dups, mono = _emit_partitions_for_symbol(
             symbol=str(symbol), group=group, **common
         )
@@ -347,6 +414,8 @@ def _process_one_dbn(
     # partition.
     cont_df = df.assign(__continuous=df[sym_col].map(_continuous_symbol))
     cont_df = cont_df[cont_df["__continuous"].notna()]
+    if group_symbol_filter is not None:
+        cont_df = cont_df[cont_df["__continuous"].isin(group_symbol_filter)]
     if not cont_df.empty:
         for cont_sym, group in cont_df.groupby("__continuous"):
             group = group.drop(columns=["__continuous"]).copy()
@@ -409,6 +478,7 @@ def _emit_partitions_for_symbol(
     dbn_path: Path,
     dbn_mtime: float,
     rebuild: bool,
+    emit_bars: bool,
 ) -> tuple[list[ManifestOutput], list[str], int, bool]:
     """Write raw + bars partitions for a single symbol's rows.
 
@@ -420,13 +490,16 @@ def _emit_partitions_for_symbol(
     outputs: list[ManifestOutput] = []
     raw_path = _raw_partition_path(data_root, schema_name, symbol, date_obj)
     bars_path = _bars_partition_path(data_root, symbol, date_obj)
+    emits_bars = emit_bars and schema_name in {"tbbo", "mbp-1", "ohlcv-1m"}
 
     if (
         not rebuild
         and raw_path.exists()
-        and bars_path.exists()
         and raw_path.stat().st_mtime >= dbn_mtime
-        and bars_path.stat().st_mtime >= dbn_mtime
+        and (
+            not emits_bars
+            or (bars_path.exists() and bars_path.stat().st_mtime >= dbn_mtime)
+        )
     ):
         return outputs, [], 0, True
 
@@ -468,7 +541,9 @@ def _emit_partitions_for_symbol(
     )
 
     bars_df: "pd.DataFrame | None" = None
-    if schema_name in {"tbbo", "mbp-1"}:
+    if not emit_bars:
+        bars_df = None
+    elif schema_name in {"tbbo", "mbp-1"}:
         bars_df = _compute_1m_bars(raw_df, symbol)
     elif schema_name == "ohlcv-1m":
         bars_df = _ohlcv_dbn_to_bars(raw_df, symbol)
@@ -689,6 +764,15 @@ def _attach_metadata(
 # --- CLI ---------------------------------------------------------------
 
 
+def _split_filter_values(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    out: list[str] = []
+    for value in values:
+        out.extend(part.strip() for part in value.split(",") if part.strip())
+    return out or None
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Mirror DBN files to Hive-partitioned parquet + 1m bars."
@@ -698,12 +782,39 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="ignore the up-to-date check and re-emit every DBN",
     )
+    p.add_argument(
+        "--schemas",
+        nargs="+",
+        default=None,
+        help="only mirror these schemas, e.g. --schemas mbp-1 tbbo",
+    )
+    p.add_argument("--start", type=dt.date.fromisoformat, default=None)
+    p.add_argument("--end", type=dt.date.fromisoformat, default=None)
+    p.add_argument(
+        "--symbols",
+        nargs="+",
+        default=None,
+        help="only mirror these symbols; comma-separated is also accepted",
+    )
+    p.add_argument(
+        "--raw-only",
+        action="store_true",
+        help="write only raw schema parquet; skip derived 1m bars",
+    )
     return p.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
-    result = mirror_warehouse(_data_root(), rebuild=args.rebuild)
+    result = mirror_warehouse(
+        _data_root(),
+        rebuild=args.rebuild,
+        schemas=_split_filter_values(args.schemas),
+        start=args.start,
+        end=args.end,
+        symbols=_split_filter_values(args.symbols),
+        emit_bars=not args.raw_only,
+    )
     return 0 if not result.errors else 1
 
 

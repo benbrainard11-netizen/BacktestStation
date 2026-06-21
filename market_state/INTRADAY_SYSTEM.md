@@ -92,3 +92,17 @@ add_orderflow_structure()` (context layer only) · train/eval `training.py:train
   0DTE/pinning version already tested null twice. Revisit ONLY if the daily-GEX conditioner clearly earns lift.
 - DISCIPLINE: every item is a CANDIDATE feature judged by ablation vs the single-asset OFI baseline. The model
   (Stage 2) turns each "should I buy X" into a free test. Don't buy ahead of the test.
+
+## Level set + product end-goal (Ben, 2026-06-03)
+SO FAR ONLY PDH/PDL ARE BUILT. Expand to the full objective set: PDH/PDL, overnight H/L, session VWAP,
+opening-range H/L, round numbers, and OPENING GAPS (weekly Fri-close->Mon-open; daily prior-close->open; RTH
+prior-RTH-close->RTH-open) -- gaps are magnet/fill levels + "unfilled gap above/below" is a context feature.
+VPOC later (heavier). Plus CONFLUENCE = how many level types coincide within a few ticks at a touch = the
+ORTHOGONAL feature (structural info OFI lacks; `OFI x confluence` is the untested combo). All judged by the
+ruler; could be null (research: level families are "attention anchors, microstructure decides").
+END-GOAL (the product Ben wants): the engine knows ALL zones -> displays a couple BULLISH (support) + BEARISH
+(resistance) zones near price on a chart -> when price reaches one, outputs P(hold)/P(break) -> MBO order flow
+(OFI) at the touch is the live CONFIRMATION/tell. The chart is the FRONT-END, built LAST, only once the
+probabilities are trustworthy. The engine (zones -> probability -> OFI confirmation) is the hard validated part;
+the display just reads off it. STATUS: OFI = modest validated edge (AUC ~0.60); levels+confluence = the
+orthogonal bet to strengthen it (in progress).

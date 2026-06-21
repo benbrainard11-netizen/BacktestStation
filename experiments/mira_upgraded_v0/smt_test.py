@@ -31,9 +31,10 @@ def main() -> int:
     df["fam"] = pd.factorize(df["level_family"])[0]
     smt = [c for c in df.columns if c.startswith("smt.")]
     mbo = [c for c in df.columns if c.startswith("mbo.")]
-    oos = df[df["day"] >= OOS_START]
+    OOS_SMT = pd.Timestamp("2026-01-01").date()       # SMT is price-based -> train all 2025, test 2026 (5mo, ~3x OOS)
+    oos = df[df["day"] >= OOS_SMT]
     bm, bl, bh = boot(oos["r"].to_numpy(), oos["day"].to_numpy())
-    print(f"reclaimed n={len(df)}  OOS n={len(oos)}  baseline R {bm:+.2f}[{bl:+.2f},{bh:+.2f}]\n")
+    print(f"reclaimed n={len(df)}  OOS(2026, SMT) n={len(oos)}  baseline R {bm:+.2f}[{bl:+.2f},{bh:+.2f}]\n")
 
     print("(1) divergence FILTERS -- does the literal setup beat baseline? (OOS R [day-block CI], n):")
     filters = {
@@ -56,8 +57,9 @@ def main() -> int:
     print("\n(2) POOLED gate -- structure first, then MBO enhancement (OOS R [CI], gated subset):")
     import lightgbm as lgb
 
-    def gate(feats: list[str], label: str) -> None:
-        tr, te = df[df["day"] < OOS_START], df[df["day"] >= OOS_START]
+    def gate(feats: list[str], label: str, base: pd.DataFrame | None = None, split=OOS_SMT) -> None:
+        b = df if base is None else base
+        tr, te = b[b["day"] < split], b[b["day"] >= split]
         g = lgb.LGBMClassifier(n_estimators=200, num_leaves=15, learning_rate=0.03, min_child_samples=25,
                                reg_lambda=1.0, random_state=0, verbose=-1)
         g.fit(tr[feats].to_numpy(), (tr["r"] > 0).astype(int).to_numpy())
@@ -69,9 +71,10 @@ def main() -> int:
             cells.append(f"{lab} {mm:+.2f}[{ll:+.2f},{hh:+.2f}]n{int(tk.sum())}")
         print(f"   {label} " + "  ".join(cells))
 
-    gate(smt + ["fam"], "SMT+fam ")
-    gate(mbo + ["fam"], "MBO+fam ")
-    gate(smt + mbo + ["fam"], "SMT+MBO ")
+    mp = df[df["mbo.pre_60s.n_events"].notna()] if "mbo.pre_60s.n_events" in df.columns else df
+    gate(smt + ["fam"], "SMT+fam (25->26)  ")           # full-year power
+    gate(mbo + ["fam"], "MBO+fam (26 split) ", mp, OOS_START)   # MBO era only
+    gate(smt + mbo + ["fam"], "SMT+MBO (26 split) ", mp, OOS_START)
     print("\nREAD: a filter or gate subset with CI clearly > the flat baseline = structural divergence is real; "
           "SMT+MBO > SMT alone = MBO enhances (your architecture).")
     return 0

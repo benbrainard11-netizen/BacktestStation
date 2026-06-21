@@ -98,6 +98,7 @@ class Account:
     payouts: list[Payout] = field(init=False, default_factory=list)
     trades: list[Trade] = field(init=False, default_factory=list)
     trade_days: set[dt.date] = field(init=False, default_factory=set)
+    daily_pnl_history: list[float] = field(init=False, default_factory=list)  # per payout-cycle (consistency rule)
 
     status: AccountStatus = field(init=False, default="active")
     blown_reason: str | None = field(init=False, default=None)
@@ -146,7 +147,8 @@ class Account:
             self.winning_days_count += 1
         if self.balance > self.eod_balance_high_water:
             self.eod_balance_high_water = self.balance
-        # Payout check
+        self.daily_pnl_history.append(self.day_pnl)
+        # Payout check (consistency rule gates inside)
         self._try_payout(d)
         # EOD breach check (in case earlier EOD HW update created a higher floor
         # OR balance is below current floor without an intraday close)
@@ -219,6 +221,12 @@ class Account:
             return
         if self.profit_above_starting < self.firm.payout_profit_threshold:
             return
+        # Consistency rule: a single day can't exceed X% of total profit. Tail-driven
+        # strategies (profit from a few big days) get blocked here until profit balances.
+        pct = self.firm.consistency_rule_pct
+        if 0 < pct < 100 and self.daily_pnl_history:
+            if max(self.daily_pnl_history) > (pct / 100.0) * self.profit_above_starting:
+                return
 
         if self.firm.payout_amount_method == "half_of_profits":
             amount = min(self.profit_above_starting * 0.5, self.firm.payout_cap_usd)
@@ -255,6 +263,7 @@ class Account:
 
         if self.firm.payout_resets_winning_day_counter:
             self.winning_days_count = 0
+        self.daily_pnl_history.clear()  # start a fresh consistency cycle after payout
 
     # ---- Finalization ----
 
@@ -319,25 +328,14 @@ def _self_test() -> int:
             pnl_usd=pnl, pnl_reason="horizon_exit",
         )
 
-    # Day 1 — +$250 winning day
-    acc.on_trade_close(trade(dt.date(2026, 1, 5), 15, 250.0, "T1"))
-    acc.on_eod(dt.date(2026, 1, 5))
-    print(f"  day 1 EOD: balance=${acc.balance:.0f}, day_pnl=$250 (set day before close), "
-          f"winning_days={acc.winning_days_count}, EOD HW=${acc.eod_balance_high_water:.0f}, "
-          f"floor=${acc.trailing_dd_floor:.0f}")
-
-    # Day 2 — +$300
-    acc.on_trade_close(trade(dt.date(2026, 1, 6), 15, 300.0, "T2"))
-    acc.on_eod(dt.date(2026, 1, 6))
-    # Day 3 — +$500
-    acc.on_trade_close(trade(dt.date(2026, 1, 7), 15, 500.0, "T3"))
-    acc.on_eod(dt.date(2026, 1, 7))
-    # Day 4 — +$350
-    acc.on_trade_close(trade(dt.date(2026, 1, 8), 15, 350.0, "T4"))
-    acc.on_eod(dt.date(2026, 1, 8))
-    # Day 5 — +$1700 (pushes us above $3k profit + lock threshold)
-    acc.on_trade_close(trade(dt.date(2026, 1, 9), 15, 1700.0, "T5"))
-    acc.on_eod(dt.date(2026, 1, 9))
+    # 5 balanced winning days of +$700 (total $3,500; max day 700 <= 50% of profit,
+    # so the consistency rule is satisfied and the payout fires)
+    for i in range(5):
+        d = dt.date(2026, 1, 5 + i)
+        acc.on_trade_close(trade(d, 15, 700.0, f"T{i+1}"))
+        acc.on_eod(d)
+    print(f"  after 5x +$700: balance=${acc.balance:.0f}, EOD HW=${acc.eod_balance_high_water:.0f}, "
+          f"floor=${acc.trailing_dd_floor:.0f}, payouts={len(acc.payouts)}")
 
     print(f"\nAfter 5 winning days:")
     print(f"  balance=${acc.balance:.0f}")

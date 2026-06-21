@@ -91,3 +91,7 @@ experiments/**/runs/
 *.log
 *.err
 *.pid
+backend/scripts/logs/
+
+# Large local research data caches (regenerable; never commit).
+experiments/mira_gate_harness/data/
