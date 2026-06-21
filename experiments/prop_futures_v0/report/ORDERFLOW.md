@@ -38,3 +38,41 @@ noise; (2) the **retest-continuation** entry (user's full spec) was not tested o
 favoring **reversion** (YM's only positive-median cell was fading the flow), echoing RTY gap_fade.
 Caveat: more constructions = more multiple-comparison exposure; any further push needs a fresh OOS
 plan and ideally more tape, not just re-cutting these 13 months.
+
+## v2 — continuation vs reversion, with a fresh design/holdout split (`of_accum_v2.py`)
+
+Did it right (user: "do it right, test both ways"). Same absorption-box detection; added the box volume
+POC; design = 2025-05..2026-02-14, holdout = 2026-02-15..2026-06-09 (read once). Three day-flat strats:
+cont_flow (continuation in flow dir), rev_fade (fade the breakout back to POC), rev_vsflow (fade only
+against-flow breakouts). Honest fills; fades check the entry bar (start_at_entry=True) so the breakout
+bar's overshoot can stop them.
+
+**Pooled (4 index futures):**
+| strat | design net_R | holdout net_R | win% | median | ex-top5% |
+|-------|------:|------:|----:|------:|------:|
+| cont_flow | +0.069 | **−0.016** | 46% | −0.35 | −0.15 |
+| rev_fade | −0.052 | −0.019 | **62%** | **+0.30** | −0.06 |
+| rev_vsflow | −0.049 | **−0.001** | **66%** | **+0.34** | −0.05 |
+
+**Findings:**
+1. **CONTINUATION = DEAD.** RTY design +0.358 → holdout −0.058; inconsistent across the complex; pooled
+   holdout negative. Chasing the accumulation breakout does not work. Final.
+2. **REVERSION = a REAL, STABLE pattern (net slightly negative as built).** Fading the accumulation-box
+   breakout back to the POC is right **62–66%** with a **+0.30..+0.34 median**, and it is consistent
+   across ALL 4 instruments AND design↔holdout (not a single-window/single-instrument artifact like
+   everything before). The MEAN is ~−0.02..−0.05R only because the ~⅓ real breakouts run to the stop and
+   outweigh the many small fade-wins. rev_vsflow (trapped-aggressor fade) is ~breakeven OOS (−0.001).
+
+**Significance.** This is the first construction in the whole module that is (a) directionally
+consistent across the complex and (b) stable in/out of sample. The signal (accumulation breakouts revert
+~2/3 of the time) is genuine. It is NOT deployable as-built (slightly negative EV), but its **shape —
+high win rate, smooth, ~0 EV — is exactly the "controllable-variance, not-negative-expectancy generator"
+that prop_model_v0 Layer-1 needs** for variance-shaping the eval (profit from the eval asymmetry without
+a market edge). The expectancy gap is an exit-geometry problem (rare big losses), which is tunable — BUT
+the holdout is now spent, and the consistent slight-negativity warns against assuming a tune fixes it.
+
+**Disciplined next step (NOT done):** to develop the exit honestly needs MORE TAPE (pull more MBP-1
+history on the 247 box, or forward-test), not re-cutting these 13 months. Then either (a) find an
+exit/stop geometry that makes EV robustly ≥0 on fresh data, or (b) feed the ~0-EV high-win generator
+into the Layer-1 eval-economics model. Don't optimize exits on the spent holdout.
+

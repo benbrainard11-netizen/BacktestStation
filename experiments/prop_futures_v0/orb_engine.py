@@ -111,19 +111,23 @@ def _rth_day_ranges(df: pd.DataFrame, open_m: int, close_m: int) -> pd.Series:
     return (g["high"].max() - g["low"].min())
 
 
-def simulate_trade(m, o, hi, lo, cl, ei, is_long, entry, stop, target, use_target, slip_px, spec, close_m):
+def simulate_trade(m, o, hi, lo, cl, ei, is_long, entry, stop, target, use_target, slip_px, spec,
+                   close_m, start_at_entry=False):
     """Honest day-flat trade management (CLAUDE.md rule 8). Shared by run_orb and families.py.
 
     Manages from the bar AFTER entry (ei+1) to the last RTH bar (< close_m). Single bar touching
     BOTH stop and target -> conservative STOP. Stop slips adversely; target is a resting limit (no
     slip); EOD flatten at the last RTH close. Returns a trade dict, or None if risk is degenerate.
-    The entry bar is skipped (OHLC can't order the intrabar path) — verified not load-bearing.
+    The entry bar is skipped (OHLC can't order the intrabar path) — verified not load-bearing for
+    breakout entries. For a FADE entered AT a breakout level with a tight stop just beyond, the
+    breakout bar can blow through the stop intrabar, so pass start_at_entry=True to check the entry
+    bar's range too (honest — does not flatter the fade).
     """
     eod_idx = np.flatnonzero(m < close_m)
     last_i = eod_idx[-1] if len(eod_idx) else ei
     exit_price = None
     reason = None
-    for j in range(ei + 1, last_i + 1):
+    for j in range(ei if start_at_entry else ei + 1, last_i + 1):
         stop_hit = lo[j] <= stop <= hi[j]
         tgt_hit = use_target and (lo[j] <= target <= hi[j])
         if stop_hit and tgt_hit:
