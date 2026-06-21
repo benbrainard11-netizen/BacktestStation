@@ -32,7 +32,8 @@ from gex_pull import _ymd  # noqa: E402
 
 WALLS = ROOT / "experiments" / "options_signals_v0" / "out"
 START, END, WINDOW = "2023-01-01", "2026-06-30", 35
-HOLDOUT_START = 20250701       # SEALED
+HOLDOUT_START = 20250701       # SEALED boundary
+HOLDOUT_READ = os.environ.get("HOLDOUT_READ") == "1"  # =1 reads >= boundary (the ONE registered verdict)
 H = 5                          # holding period, trading days
 DTE_LO, DTE_HI = 15, 45        # so D+H stays inside the chosen expiration's life
 ATM_TOL = 0.06                 # strike within 6% of spot counts as ATM-candidate
@@ -91,7 +92,8 @@ def straddle_trades(t: str) -> pd.DataFrame:
 
     rows = []
     for i, D in enumerate(dates):
-        if D >= HOLDOUT_START or D not in gex:
+        in_window = (D >= HOLDOUT_START) if HOLDOUT_READ else (D < HOLDOUT_START)
+        if not in_window or D not in gex:
             continue
         # exit date = H trading positions later, within the cached date grid
         if i + H >= len(dates):

@@ -14,6 +14,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import os
+
 import numpy as np
 import pandas as pd
 
@@ -26,7 +28,8 @@ from feasibility_megacap import ic, load_vix, resid_on_baseline  # noqa: E402
 
 WALLS = ROOT / "experiments" / "options_signals_v0" / "out"
 FLOW = HERE / "out"
-HOLDOUT_START = 20250701  # SEALED. Nothing >= this is read here. Registered verdict runs separately, once.
+HOLDOUT_START = 20250701  # SEALED boundary.
+HOLDOUT_READ = os.environ.get("HOLDOUT_READ") == "1"  # =1 reads >= boundary (the ONE registered verdict)
 UNIVERSE = [ln.strip() for ln in (HERE / "universe_pilot.txt").read_text().splitlines()
             if ln.strip() and not ln.startswith("#")]
 
@@ -46,7 +49,7 @@ def panel(t: str, vix: pd.DataFrame) -> pd.DataFrame:
         fl = pd.read_parquet(ff).drop(columns=["ticker"], errors="ignore")
         df = df.merge(fl, on="date", how="left", suffixes=("", "_f"))
     df = df.sort_values("date").reset_index(drop=True)
-    df = df[df["date"] < HOLDOUT_START]                      # HARD SEAL
+    df = df[df["date"] >= HOLDOUT_START] if HOLDOUT_READ else df[df["date"] < HOLDOUT_START]  # SEAL / verdict
     if len(df) < 80:
         return pd.DataFrame()
     r = pd.Series(np.log(df["close"]).diff().to_numpy(), index=df.index)
