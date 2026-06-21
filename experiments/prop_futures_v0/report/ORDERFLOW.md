@@ -76,3 +76,22 @@ history on the 247 box, or forward-test), not re-cutting these 13 months. Then e
 exit/stop geometry that makes EV robustly ≥0 on fresh data, or (b) feed the ~0-EV high-win generator
 into the Layer-1 eval-economics model. Don't optimize exits on the spent holdout.
 
+## v3 — exit-geometry sweep on the reversion (`of_accum_v3.py`). RESULT: exit tuning does NOT rescue EV.
+
+User accepted the spent-holdout risk to tune the exit. Swept stop_buf {0.3,0.5}*ATR × target
+{POC, 1.5R, 3R, ride-to-close} = 8 configs on the reversion fade, pooled over the 4 index futures.
+**Every config is design-NEGATIVE (−0.035 to −0.120) and none is positive on both splits.** The "let
+winners run" hypothesis FAILED: R-multiple and ride targets dropped the win rate to ~37–48% with no mean
+improvement, because **the reversion winners do not run past the POC** — price reverts to the volume POC
+and then stalls/reverses. The POC IS the natural target; capping there preserves the 58–65% win rate but
+the mean stays slightly negative (the ~⅓ real breakouts run full to the stop). Best design (ride_sb0.5
+−0.035) → holdout −0.017, per-instrument mixed (RTY −0.02, ES −0.07, NQ +0.08, YM −0.04).
+
+**CONCLUSION (order-flow accumulation, final):** continuation is dead; reversion is a GENUINE, stable,
+cross-instrument, in/out-of-sample-consistent **high-win (~62%) ~0-to-slightly-negative-EV generator**
+that **cannot be tuned positive via exit geometry.** It is NOT a standalone market edge. Its only live
+use is the **Layer-1 eval-economics route** (`prop_model_v0` + `sizing_v1`): a high-win, smooth, ~0-EV
+generator is the variance shape that can profit from the eval asymmetry WITHOUT a market edge — that is
+now a sizing/eval question, not a market-research one. If Layer-1 math can't make a slightly-negative-EV
+generator pay, then prop_futures_v0 is a complete, honest day-flat NULL.
+
