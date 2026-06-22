@@ -10,10 +10,13 @@ import pandas as pd
 from app.data.reader import read_bars
 from app.research.nq_liquidity_sweep_outcomes_sessions import ET, et_datetime, normalize_bars
 from app.research.nq_opening_range_descriptive_build import OR_END_ET, OR_START_ET, window
-from app.research.nq_opening_range_mbp_execution import MbpWindowLoader
 from app.research.nq_opening_range_mbp_execution_sequence import first_break
 from app.research.nq_opening_range_mbp_execution_types import ENTRY_STYLES, EntryStyle
 from app.research.nq_or_high_middle_third_forward import FROZEN_COMMIT, PROTOTYPE_ID
+from app.research.nq_or_high_middle_third_paper_data import (
+    bars_status,
+    load_live_event_window,
+)
 from app.research.nq_or_high_middle_third_paper_execution import position_for_style
 from app.research.nq_or_high_middle_third_paper_io import config_json, write_outputs
 from app.research.nq_or_high_middle_third_paper_types import (
@@ -32,8 +35,14 @@ def run_paper_monitor_once(
     now_utc = utc_now(now)
     session = date_value(session_date) if session_date is not None else now_utc.astimezone(ET).date()
     try:
+        data_status = bars_status(cfg.symbol, session)
         context = load_or_context(cfg, session, now_utc)
-        mbp1 = load_live_mbp_window(cfg, session, now_utc) if context else pd.DataFrame()
+        mbp1, event_status = (
+            load_live_mbp_window(cfg, session, now_utc)
+            if context
+            else (pd.DataFrame(), empty_event_status())
+        )
+        data_status = data_status | event_status
         snapshot = evaluate_snapshot(
             cfg,
             session,
@@ -42,6 +51,7 @@ def run_paper_monitor_once(
             mbp1,
             missing_context_state=missing_context_state(session, now_utc),
         )
+        snapshot["data_status"] = data_status
     except Exception as exc:
         snapshot = error_snapshot(cfg, session, now_utc, exc)
     write_outputs(snapshot, cfg)
@@ -93,12 +103,17 @@ def load_live_mbp_window(
     cfg: PaperMonitorConfig,
     session_date: dt.date,
     now_utc: dt.datetime,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, dict[str, object]]:
     start = et_datetime(session_date, OR_END_ET)
     end = min_dt(et_datetime(session_date, cfg.execution.rth_close_et), now_utc)
     if end <= start:
-        return pd.DataFrame()
-    return MbpWindowLoader(cfg.symbol).load_window(session_date, start, end)
+        return pd.DataFrame(), empty_event_status()
+    return load_live_event_window(
+        symbol=cfg.symbol,
+        session_date=session_date,
+        start=start,
+        end=end,
+    )
 
 
 def evaluate_snapshot(
@@ -161,6 +176,7 @@ def base_snapshot(
         "positions": positions,
         "contexts": contexts,
         "signals": [],
+        "data_status": {},
         "paper_account": {
             "today_pnl": pnl,
             "today_r": pnl / risk if risk else 0.0,
@@ -181,6 +197,8 @@ def signal_rows(context: dict[str, object], positions: list[dict[str, object]]) 
 def signal_from_context(context: dict[str, object]) -> dict[str, object]:
     return {
         "signal_id": f"{context['event_id']}:or_high_break",
+        "event_id": context.get("event_id"),
+        "session_date": context.get("session_date"),
         "ts": context.get("first_break_ts"),
         "side": "long",
         "price": context.get("first_break_price"),
@@ -192,6 +210,8 @@ def signal_from_context(context: dict[str, object]) -> dict[str, object]:
 def primary_signal(position: dict[str, object], context: dict[str, object]) -> dict[str, object]:
     return {
         "signal_id": f"{position['paper_trade_id']}:entry",
+        "event_id": position.get("event_id"),
+        "session_date": position.get("session_date"),
         "ts": position.get("entry_ts") or context.get("first_break_ts"),
         "side": "long",
         "price": position.get("entry_price") or context.get("first_break_price"),
@@ -208,6 +228,18 @@ def error_snapshot(
 ) -> dict[str, object]:
     snap = base_snapshot(cfg, session_date, now_utc, "error", [], [])
     return snap | {"last_error": f"{type(exc).__name__}: {exc}"}
+
+
+def empty_event_status() -> dict[str, object]:
+    return {
+        "preferred_schema": "mbp-1",
+        "fallback_schema": "tbbo",
+        "event_schema_used": None,
+        "event_rows": 0,
+        "event_latest_ts": None,
+        "event_data_available": False,
+        "errors": [],
+    }
 
 
 def primary_position(

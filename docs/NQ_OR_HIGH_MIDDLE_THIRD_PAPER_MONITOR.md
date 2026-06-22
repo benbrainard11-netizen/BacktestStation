@@ -46,6 +46,31 @@ cd backend
 
 Leave that terminal open during the session. Stop it with `Ctrl+C`.
 
+## Auto Session Mode
+
+For the normal paper-trading day, use:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.cli.nq_or_high_middle_third_paper_monitor --auto-session --poll-seconds 30 --stop-after-report
+```
+
+This mode:
+
+- polls throughout the session
+- detects when new 1m bars or event data arrive
+- runs the existing DBN-to-parquet mirror automatically on local warehouse machines
+- skips the mirror automatically when `BS_DATA_BACKEND=r2`
+- writes a daily report after the 16:00 ET close
+
+If the live Databento DBN ingester is already running on the same machine, the auto mirror step can convert mature DBN chunks into read-side parquet. If this machine is only reading R2, the monitor cannot create new Databento data itself; it waits for R2 to receive updated partitions and reports missing data honestly.
+
+To disable the mirror even in auto-session mode:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.cli.nq_or_high_middle_third_paper_monitor --auto-session --no-auto-mirror
+```
+
 ## Output Files
 
 Default folder:
@@ -59,6 +84,8 @@ Files:
 - `paper_snapshots.jsonl` - append-only run snapshots
 - `paper_signals.jsonl` - append-only signal log
 - `paper_closed_trades.jsonl` - append-only closed paper trades
+- `reports/paper_daily_YYYY-MM-DD.md` - end-of-day beginner report
+- `reports/paper_daily_YYYY-MM-DD.json` - machine-readable daily report
 
 The monitor also writes:
 
@@ -77,6 +104,8 @@ It answers:
 - Which frozen entry style would have entered?
 - Was the trade open, stopped, targeted, or forced flat?
 - Did the live behavior match the historical research assumptions?
+- Was data missing or delayed?
+- Was the live monitor using MBP-1 or TBBO fallback data?
 
 It does not answer:
 
@@ -86,9 +115,20 @@ It does not answer:
 
 Those come later, after this shadow paper monitor behaves cleanly.
 
+## Live Data Truth
+
+The historical research was MBP-1 based. The repo's live Databento ingester is TBBO based. The paper monitor therefore prefers MBP-1 if today's partition exists and falls back to TBBO when that is the live data available.
+
+Every heartbeat and daily report records `event_schema_used`, so the result is not mislabeled.
+
 ## Data Requirement
 
-The monitor needs current 1-minute bars and MBP-1 records available through the existing BacktestStation data reader.
+The monitor needs current 1-minute bars plus event data available through the existing BacktestStation data reader.
+
+Preferred event data:
+
+- MBP-1, if today's partition exists
+- TBBO fallback, if live TBBO is the available real-time feed
 
 If the data pipeline is delayed, the monitor will stay in a waiting state such as:
 
