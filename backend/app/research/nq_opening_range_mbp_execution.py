@@ -136,6 +136,14 @@ class MbpWindowLoader:
         date_value = dt.date.fromisoformat(session_date)
         start = et_datetime(date_value, dt.time(10, 0))
         end = et_datetime(date_value, dt.time(16, 0))
+        return self.load_window(date_value, start, end)
+
+    def load_window(
+        self,
+        date_value: dt.date,
+        start: dt.datetime,
+        end: dt.datetime,
+    ) -> pd.DataFrame:
         table = self._read_window(date_value, start, end)
         if table.num_rows == 0:
             return empty_mbp_frame()
