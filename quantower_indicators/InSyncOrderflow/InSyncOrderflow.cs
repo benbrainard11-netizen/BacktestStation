@@ -386,7 +386,7 @@ namespace InSyncOrderflow
                 }
 
                 // REAL MBO icebergs/absorption (per-asset: NQ/ES/RTY) — backend detector off the Rithmic order-by-order feed
-                if (ShowMboIce && gkey != null)
+                if ((ShowMboIce || ShowMboWalls || ShowTraps || BubblesOnlyAtWalls) && gkey != null)   // fetch walls/traps/icebergs if ANY consumer needs them (not just ShowMboIce)
                 {
                     try
                     {
@@ -426,7 +426,7 @@ namespace InSyncOrderflow
                     }
                     catch { /* keep previous icebergs */ }
                 }
-                else if (gkey == null) _iceflow = new IceFlow[0];
+                else if (gkey == null) { _iceflow = new IceFlow[0]; _mbowalls = new MboWall[0]; _traps = new TrapLevel[0]; }   // unsupported symbol -> clear ALL MBO arrays (no stale walls/traps on CL/GC etc.)
 
                 if ((!ShowExhaustion && !ShowRegime) || !IsNqChart()) { _exh = new ExhState(); _fires = new Fire[0]; return; }
 
@@ -588,7 +588,7 @@ namespace InSyncOrderflow
             if (ShowMboWalls && mw != null && mw.Length > 0)
             {
                 double px0 = 0; try { if (Count > 0) px0 = Close(0); } catch { }
-                foreach (var w in mw)
+                if (px0 > 0) foreach (var w in mw)   // need a reference price to color support/resistance; skip until bars load (avoids all-orange mislabel)
                 {
                     int y = Y(w.Price);
                     if (y == int.MinValue || y < rect.Top || y > rect.Bottom) continue;
@@ -693,10 +693,10 @@ namespace InSyncOrderflow
                 {
                     int x = X(p.Time), y = Y(p.Price);
                     if (x == int.MinValue || y == int.MinValue || x < rect.Left || x > rect.Right) continue;
-                    if (BubblesOnlyAtWalls)
+                    if (BubblesOnlyAtWalls && mw != null && mw.Length > 0)   // only gate when wall data exists; no walls -> don't suppress bubbles
                     {
                         bool atWall = false;
-                        if (mw != null) foreach (var w in mw) if (Math.Abs(w.Price - p.Price) <= wallTol) { atWall = true; break; }
+                        foreach (var w in mw) if (Math.Abs(w.Price - p.Price) <= wallTol) { atWall = true; break; }
                         if (!atWall) continue;   // not a wall hit -> no bubble (kills per-trade noise)
                     }
                     Color c = p.Buy ? ColorTranslator.FromHtml("#22c55e") : (p.Sell ? ColorTranslator.FromHtml("#ef4444") : Color.Gray);
