@@ -64,6 +64,8 @@ namespace InSyncOrderflow
         public bool BubblesOnlyAtWalls = true; // a print only draws a bubble if it traded AT a resting wall (kills per-trade noise)
         [InputParameter("Show trapped traders", 31)]
         public bool ShowTraps = true;          // levels where aggressive traders are offside (red=trapped longs/resist, green=trapped shorts/support)
+        [InputParameter("Show wall fill/cancel histogram", 32)]
+        public bool ShowFlow = true;           // bottom strip: green ▲ = wall fill / red ▼ = wall cancel, per minute
         [InputParameter("Show exhaustion model + fires", 9)]
         public bool ShowExhaustion = true;
         [InputParameter("Show regime banner", 10)]
@@ -94,6 +96,9 @@ namespace InSyncOrderflow
         public int LevelMaxAgeMin = 30;
 
         private static readonly HttpClient Http = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
+        private static readonly HttpClient HttpStream = new HttpClient { Timeout = TimeSpan.FromSeconds(35) };   // long-poll the live MBO stream (server holds ~25s)
+        private Thread _streamThread;
+        private CancellationTokenSource _streamCts;   // per-thread cancel: OnClear cancels THIS thread's token (incl. its in-flight GET); OnInit makes a NEW one so a prior thread can't be un-stopped
         private readonly Font _font = new Font("Segoe UI", 8f);
         private readonly Font _fontB = new Font("Segoe UI", 8f, FontStyle.Bold);
         private readonly Font _fontReg = new Font("Segoe UI", 9f, FontStyle.Bold);
@@ -102,6 +107,7 @@ namespace InSyncOrderflow
         private Timer _exhTimer;
         private int _domBusy;
         private int _exhBusy;
+        private int _modelTick;
         private int _exhCount;
 
         private readonly object _lock = new object();
@@ -115,6 +121,8 @@ namespace InSyncOrderflow
         private volatile IceFlow[] _iceflow = new IceFlow[0];
         private volatile MboWall[] _mbowalls = new MboWall[0];
         private volatile TrapLevel[] _traps = new TrapLevel[0];
+        private volatile FlowBar[] _flow = new FlowBar[0];
+        private volatile FillMark[] _fillmarks = new FillMark[0];
         private int _gammaTick;
 
         private double _bookScale;                                   // EWMA of the median resting size -> per-asset book scale
@@ -137,13 +145,19 @@ namespace InSyncOrderflow
                 Symbol.NewLast += OnNewLast;       // executed trades (tape)
             }
             _domTimer = new Timer(_ => DomTick(), null, 400, 400);
-            _exhTimer = new Timer(_ => ExhTick(), null, 0, 3000);
+            _exhTimer = new Timer(_ => ExhTick(), null, 0, 250);   // 250ms tick: file-poll FALLBACK for MBO + the ~3s model fetch (every 12th)
+            _streamCts = new CancellationTokenSource();
+            var stok = _streamCts.Token;
+            _streamThread = new Thread(() => StreamLoop(stok)) { IsBackground = true, Name = "InSyncOrderflowStream" };
+            _streamThread.Start();   // PRIMARY MBO path: real-time long-poll stream
         }
 
         protected override void OnClear()
         {
             _domTimer?.Dispose(); _domTimer = null;
             _exhTimer?.Dispose(); _exhTimer = null;
+            try { _streamCts?.Cancel(); } catch { }   // cancels this thread's loop AND its in-flight long-poll GET -> exits promptly, no zombie, no UI block
+            _streamCts = null; _streamThread = null;
             if (Symbol != null)
             {
                 Symbol.NewLevel2 -= OnNewLevel2;
@@ -348,6 +362,90 @@ namespace InSyncOrderflow
             if (size > lv.MaxSize) lv.MaxSize = size;
         }
 
+        // parse one detector payload (from the file poll OR the live stream — same shape) into the render arrays
+        private void ParseMboPayload(JsonElement r)
+        {
+            var ilist = new List<IceFlow>();
+            if (r.TryGetProperty("events", out var ievs) && ievs.ValueKind == JsonValueKind.Array)
+                foreach (var ev in ievs.EnumerateArray())
+                {
+                    double? px = Dbl(ev, "price"); double? tms = Dbl(ev, "ts_ms");
+                    if (!px.HasValue || !tms.HasValue) continue;
+                    var sd = (Str(ev, "side") ?? "").ToUpperInvariant();
+                    var kd = (Str(ev, "kind") ?? "").ToLowerInvariant();
+                    ilist.Add(new IceFlow { Time = DateTimeOffset.FromUnixTimeMilliseconds((long)tms.Value).UtcDateTime, Price = px.Value, Absorbed = Dbl(ev, "absorbed") ?? 0, IsBid = sd.StartsWith("B"), Iceberg = kd == "iceberg", Sweep = kd == "sweep", Pull = kd == "pull" });
+                }
+            _iceflow = ilist.OrderByDescending(z => z.Absorbed).Take(60).ToArray();
+            var wlist = new List<MboWall>();
+            if (r.TryGetProperty("walls", out var wevs) && wevs.ValueKind == JsonValueKind.Array)
+                foreach (var w in wevs.EnumerateArray())
+                {
+                    double? wp = Dbl(w, "price"); double wsz = Dbl(w, "size") ?? 0;
+                    if (!wp.HasValue || wsz <= 0) continue;
+                    wlist.Add(new MboWall { Price = wp.Value, Size = wsz, Orders = (int)(Dbl(w, "orders") ?? 0), Filled = (int)(Dbl(w, "filled") ?? 0), Cancelled = (int)(Dbl(w, "cancelled") ?? 0), Side = Str(w, "side") });
+                }
+            _mbowalls = wlist.ToArray();
+            var tlist = new List<TrapLevel>();
+            if (r.TryGetProperty("traps", out var tevs) && tevs.ValueKind == JsonValueKind.Array)
+                foreach (var t in tevs.EnumerateArray())
+                {
+                    double? tpp = Dbl(t, "price"); double tvv = Dbl(t, "vol") ?? 0;
+                    if (!tpp.HasValue || tvv <= 0) continue;
+                    double? ttms = Dbl(t, "ts_ms");
+                    tlist.Add(new TrapLevel { Price = tpp.Value, Vol = (int)tvv, IsLong = (Str(t, "kind") ?? "") == "trap_long", Time = ttms.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds((long)ttms.Value).UtcDateTime : default });
+                }
+            _traps = tlist.ToArray();
+            var flist = new List<FlowBar>();
+            if (r.TryGetProperty("flow", out var flarr) && flarr.ValueKind == JsonValueKind.Array)
+                foreach (var fb in flarr.EnumerateArray())
+                {
+                    double? fts = Dbl(fb, "ts_ms");
+                    if (!fts.HasValue) continue;
+                    double bff = Dbl(fb, "bull_fill") ?? -1, sff = Dbl(fb, "sell_fill") ?? -1, tff = Dbl(fb, "fill") ?? 0;
+                    if (bff < 0 && sff < 0) { bff = tff; sff = 0; }   // old backend w/o side split -> all into bull bucket
+                    else { if (bff < 0) bff = 0; if (sff < 0) sff = 0; }
+                    flist.Add(new FlowBar { Time = DateTimeOffset.FromUnixTimeMilliseconds((long)fts.Value).UtcDateTime, BullFill = bff, SellFill = sff, Fill = bff + sff, Cancel = Dbl(fb, "cancel") ?? 0 });
+                }
+            _flow = flist.ToArray();
+            var fmlist = new List<FillMark>();
+            if (r.TryGetProperty("fillmarks", out var fmarr) && fmarr.ValueKind == JsonValueKind.Array)
+                foreach (var fmj in fmarr.EnumerateArray())
+                {
+                    double? mts = Dbl(fmj, "ts_ms"); double? mpx = Dbl(fmj, "price");
+                    if (!mts.HasValue || !mpx.HasValue) continue;
+                    fmlist.Add(new FillMark { Time = DateTimeOffset.FromUnixTimeMilliseconds((long)mts.Value).UtcDateTime, Price = mpx.Value, Side = Str(fmj, "side"), Filled = (int)(Dbl(fmj, "filled") ?? 0) });
+                }
+            _fillmarks = fmlist.ToArray();
+        }
+
+        // LIVE STREAM: long-poll /iceberg-flow/wait — returns the instant the detector publishes a change,
+        // so walls/fills update in ~real time (no fixed poll interval). Self-healing: any error just re-polls.
+        private void StreamLoop(CancellationToken tok)
+        {
+            long seq = 0; string lastRoot = null;
+            while (!tok.IsCancellationRequested)
+            {
+                try
+                {
+                    if (!(ShowMboIce || ShowMboWalls || ShowTraps || BubblesOnlyAtWalls)) { Thread.Sleep(500); continue; }
+                    string gkey = GammaKey();
+                    if (gkey == null) { Thread.Sleep(500); continue; }
+                    string root = gkey.Split('.')[0];
+                    if (root != lastRoot) { seq = 0; lastRoot = root; }   // chart symbol changed -> start fresh
+                    string url = BackendUrl.TrimEnd('/') + "/api/monitor/iceberg-flow/wait?symbol=" + Uri.EscapeDataString(root) + "&since=" + seq + "&timeout=25";
+                    string json = HttpStream.GetStringAsync(url, tok).GetAwaiter().GetResult();   // tok cancels the in-flight GET when OnClear fires
+                    if (tok.IsCancellationRequested) break;
+                    using var doc = JsonDocument.Parse(json);
+                    var rt = doc.RootElement;
+                    long ns = (long)(Dbl(rt, "seq") ?? seq);
+                    if (ns == seq) continue;   // long-poll timed out with no change -> immediately re-poll
+                    seq = ns;
+                    ParseMboPayload(rt);
+                }
+                catch { if (!tok.IsCancellationRequested) Thread.Sleep(800); }   // detector/backend restart or hiccup -> back off, then reconnect
+            }
+        }
+
         private void ExhTick()
         {
             if (Interlocked.Exchange(ref _exhBusy, 1) == 1) return;
@@ -356,7 +454,7 @@ namespace InSyncOrderflow
                 // GAMMA profile (per-asset: NQ/ES/RTY) — runs BEFORE the NQ gate, slow cadence (~24s)
                 string gkey = GammaKey();
                 if (gkey == null) _gamma = new GammaState();
-                else if (_gammaTick++ % 8 == 0)
+                else if (_gammaTick++ % 96 == 0)   // ~24s at the 250ms tick
                 {
                     try
                     {
@@ -393,41 +491,13 @@ namespace InSyncOrderflow
                         string root = gkey.Split('.')[0];
                         string ijson = Http.GetStringAsync(BackendUrl.TrimEnd('/') + "/api/monitor/iceberg-flow?symbol=" + Uri.EscapeDataString(root)).GetAwaiter().GetResult();
                         using var idoc = JsonDocument.Parse(ijson);
-                        var ilist = new List<IceFlow>();
-                        if (idoc.RootElement.TryGetProperty("events", out var ievs) && ievs.ValueKind == JsonValueKind.Array)
-                            foreach (var ev in ievs.EnumerateArray())
-                            {
-                                double? px = Dbl(ev, "price"); double? tms = Dbl(ev, "ts_ms");
-                                if (!px.HasValue || !tms.HasValue) continue;
-                                var sd = (Str(ev, "side") ?? "").ToUpperInvariant();
-                                var kd = (Str(ev, "kind") ?? "").ToLowerInvariant();
-                                ilist.Add(new IceFlow { Time = DateTimeOffset.FromUnixTimeMilliseconds((long)tms.Value).UtcDateTime, Price = px.Value, Absorbed = Dbl(ev, "absorbed") ?? 0, IsBid = sd.StartsWith("B"), Iceberg = kd == "iceberg", Sweep = kd == "sweep" });
-                            }
-                        _iceflow = ilist.OrderByDescending(z => z.Absorbed).Take(60).ToArray();
-                        var wlist = new List<MboWall>();
-                        if (idoc.RootElement.TryGetProperty("walls", out var wevs) && wevs.ValueKind == JsonValueKind.Array)
-                            foreach (var w in wevs.EnumerateArray())
-                            {
-                                double? wp = Dbl(w, "price"); double wsz = Dbl(w, "size") ?? 0;
-                                if (!wp.HasValue || wsz <= 0) continue;
-                                wlist.Add(new MboWall { Price = wp.Value, Size = wsz, Orders = (int)(Dbl(w, "orders") ?? 0) });
-                            }
-                        _mbowalls = wlist.ToArray();
-                        var tlist = new List<TrapLevel>();
-                        if (idoc.RootElement.TryGetProperty("traps", out var tevs) && tevs.ValueKind == JsonValueKind.Array)
-                            foreach (var t in tevs.EnumerateArray())
-                            {
-                                double? tpp = Dbl(t, "price"); double tvv = Dbl(t, "vol") ?? 0;
-                                if (!tpp.HasValue || tvv <= 0) continue;
-                                double? ttms = Dbl(t, "ts_ms");
-                                tlist.Add(new TrapLevel { Price = tpp.Value, Vol = (int)tvv, IsLong = (Str(t, "kind") ?? "") == "trap_long", Time = ttms.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds((long)ttms.Value).UtcDateTime : default });
-                            }
-                        _traps = tlist.ToArray();
+                        ParseMboPayload(idoc.RootElement);
                     }
                     catch { /* keep previous icebergs */ }
                 }
-                else if (gkey == null) { _iceflow = new IceFlow[0]; _mbowalls = new MboWall[0]; _traps = new TrapLevel[0]; }   // unsupported symbol -> clear ALL MBO arrays (no stale walls/traps on CL/GC etc.)
+                else if (gkey == null) { _iceflow = new IceFlow[0]; _mbowalls = new MboWall[0]; _traps = new TrapLevel[0]; _flow = new FlowBar[0]; _fillmarks = new FillMark[0]; }   // unsupported symbol -> clear ALL MBO arrays (no stale data on CL/GC etc.)
 
+                if (_modelTick++ % 12 != 0) return;   // MBO above refreshes every 250ms tick; the heavier model/state fetch only needs ~3s
                 if ((!ShowExhaustion && !ShowRegime) || !IsNqChart()) { _exh = new ExhState(); _fires = new Fire[0]; return; }
 
                 // 1) current state: reversal + regime
@@ -515,9 +585,19 @@ namespace InSyncOrderflow
             return t.ToString("h:mmt").ToLowerInvariant();
         }
 
+        // wall book side -> -1 bid/bull-limit (teal), +1 ask/sell-limit (orange), 0 unknown (neutral gray).
+        // uses the real MBO side; only falls back to price-relative when side is genuinely missing.
+        private static int WallSide(string side, double price, double px0)
+        {
+            if (side == "B") return -1;
+            if (side == "A") return 1;
+            if (px0 > 0) return price < px0 ? -1 : 1;
+            return 0;
+        }
+
         public override void OnPaintChart(PaintChartEventArgs args)
         {
-            var rs = _state; var exh = _exh; var fires = _fires; var ice = _iceflow; var mw = _mbowalls; var tps = _traps;
+            var rs = _state; var exh = _exh; var fires = _fires; var ice = _iceflow; var mw = _mbowalls; var tps = _traps; var fl = _flow; var fm2 = _fillmarks;
             bool isNq = IsNqChart();   // model overlay (fires / rev-watch / model band) is valid on NQ only
             var windows = CurrentChart?.Windows;
             if (windows == null || args.WindowIndex < 0 || args.WindowIndex >= windows.Count()) return;
@@ -528,10 +608,35 @@ namespace InSyncOrderflow
             int Y(double px) { try { return (int)conv.GetChartY(px); } catch { return int.MinValue; } }
             int X(DateTime t) { try { return (int)conv.GetChartX(t); } catch { return int.MinValue; } }
 
+            // PULLED-PER-MINUTE STRIP — bottom: red bars = total wall size CANCELLED (pulled) each minute. Fills now print on the candles as +N/-N.
+            if (ShowFlow && fl != null && fl.Length > 0)
+            {
+                int sH = Math.Min(70, Math.Max(40, rect.Height / 7));
+                int sTop = rect.Bottom - sH;
+                int baseY = rect.Bottom - 3;
+                int hmax = sH - 16;
+                double mxc = 1;
+                foreach (var b in fl) if (b.Cancel > mxc) mxc = b.Cancel;
+                int bw = 4;
+                { int x0 = X(fl[0].Time); int x1 = X(fl[0].Time.AddMinutes(1)); if (x0 != int.MinValue && x1 != int.MinValue) bw = Math.Max(2, Math.Min(16, (int)(Math.Abs(x1 - x0) * 0.6))); }
+                using (var bgs = new SolidBrush(Color.FromArgb(150, 8, 12, 20)))
+                    gr.FillRectangle(bgs, rect.Left, sTop, rect.Width, sH);
+                using (var rf = new SolidBrush(ColorTranslator.FromHtml("#ef4444")))
+                    foreach (var b in fl)
+                    {
+                        int x = X(b.Time);
+                        if (x == int.MinValue || x < rect.Left - bw || x > rect.Right + bw) continue;
+                        int ch = (int)(b.Cancel / mxc * hmax);
+                        if (ch > 0) gr.FillRectangle(rf, x - bw / 2, baseY - ch, bw, ch);
+                    }
+                using (var lb = new SolidBrush(Color.FromArgb(185, 200, 210, 220)))
+                    gr.DrawString("pulled / min — wall size cancelled (red)", _font, lb, rect.Left + 4, sTop + 2);
+            }
+
             Color magenta = ColorTranslator.FromHtml("#e879f9");
 
             // walls / icebergs / absorption
-            if (ShowWalls && rs.Walls != null)
+            if (false && ShowWalls && rs.Walls != null)   // DECLUTTER: old MBP heuristic walls/abs/ice ticks OFF (flip false->true to restore)
             {
                 foreach (var w in rs.Walls)
                 {
@@ -568,7 +673,7 @@ namespace InSyncOrderflow
             }
 
             // FOOTPRINTS — spent absorption/iceberg levels that price hasn't invalidated yet ("where size was positioned")
-            if (ShowWalls && rs.GhostLevels != null)
+            if (false && ShowWalls && rs.GhostLevels != null)   // DECLUTTER: old footprints OFF (flip false->true to restore)
             {
                 foreach (var g in rs.GhostLevels)
                 {
@@ -584,31 +689,49 @@ namespace InSyncOrderflow
                 }
             }
 
-            // REAL MBO resting WALLS — biggest resting orders as levels (teal=support below price / orange=resistance above)
+            // REAL MBO resting WALLS — line + "wall <size> ×<orders>" label, colored by BOOK SIDE (teal=bid/bull-limit, orange=ask/sell-limit).
             if (ShowMboWalls && mw != null && mw.Length > 0)
             {
                 double px0 = 0; try { if (Count > 0) px0 = Close(0); } catch { }
-                if (px0 > 0) foreach (var w in mw)   // need a reference price to color support/resistance; skip until bars load (avoids all-orange mislabel)
+                foreach (var w in mw)
                 {
                     int y = Y(w.Price);
                     if (y == int.MinValue || y < rect.Top || y > rect.Bottom) continue;
-                    bool support = px0 > 0 && w.Price < px0;
-                    Color c = support ? ColorTranslator.FromHtml("#2dd4bf") : ColorTranslator.FromHtml("#fb923c");
-                    float th = (float)Math.Max(1.5, Math.Min(5, w.Size / 50.0));
-                    int x0 = rect.Right - 260;
-                    using (var pen = new Pen(Color.FromArgb(140, c), th))
+                    int sd = WallSide(w.Side, w.Price, px0);   // -1 bid/bull, +1 ask/sell, 0 unknown (real MBO book side)
+                    Color c = sd < 0 ? ColorTranslator.FromHtml("#2dd4bf") : sd > 0 ? ColorTranslator.FromHtml("#fb923c") : ColorTranslator.FromHtml("#9aa4af");
+                    float th = (float)Math.Max(1.5, Math.Min(6, w.Size / 40.0));   // thicker line = bigger wall
+                    int x0 = rect.Right - 210;
+                    using (var pen = new Pen(Color.FromArgb(125, c), th))
                         gr.DrawLine(pen, x0, y, rect.Right, y);
                     string wl = "wall " + w.Size.ToString("0") + (w.Orders > 0 ? " ×" + w.Orders : "");
-                    var wls = gr.MeasureString(wl, _font);
-                    using (var bg = new SolidBrush(Color.FromArgb(190, 0, 0, 0)))
-                        gr.FillRectangle(bg, x0 - 2, y - 14, wls.Width + 4, 13);
+                    using (var bg = new SolidBrush(Color.FromArgb(170, 0, 0, 0)))
+                        gr.FillRectangle(bg, x0 - 2, y - 13, gr.MeasureString(wl, _font).Width + 4, 13);
                     using (var br = new SolidBrush(c))
-                        gr.DrawString(wl, _font, br, x0, y - 14);
+                        gr.DrawString(wl, _font, br, x0, y - 13);
+                }
+            }
+
+            // FILL MARKERS — on the candle that filled a wall: +N teal (bid/bull-limit hit) / -N orange (ask/sell-limit hit), drawn at the wall price
+            if (ShowMboWalls && fm2 != null && fm2.Length > 0)
+            {
+                double px0 = 0; try { if (Count > 0) px0 = Close(0); } catch { }
+                foreach (var f in fm2)
+                {
+                    int x = X(f.Time), y = Y(f.Price);
+                    if (x == int.MinValue || y == int.MinValue || x < rect.Left || x > rect.Right || y < rect.Top || y > rect.Bottom) continue;
+                    int s2 = WallSide(f.Side, f.Price, px0);
+                    string lbl = (s2 < 0 ? "+" : s2 > 0 ? "-" : "") + f.Filled;
+                    Color c = s2 < 0 ? ColorTranslator.FromHtml("#2dd4bf") : s2 > 0 ? ColorTranslator.FromHtml("#fb923c") : ColorTranslator.FromHtml("#9aa4af");
+                    float w2 = gr.MeasureString(lbl, _font).Width;
+                    using (var bg = new SolidBrush(Color.FromArgb(165, 0, 0, 0)))
+                        gr.FillRectangle(bg, x - w2 / 2 - 1, y - 7, w2 + 2, 13);
+                    using (var br = new SolidBrush(c))
+                        gr.DrawString(lbl, _font, br, x - w2 / 2, y - 7);
                 }
             }
 
             // TRAPPED traders — aggressive size now offside (red = trapped longs / overhead supply, green = trapped shorts / demand below)
-            if (ShowTraps && tps != null && tps.Length > 0)
+            if (false && ShowTraps && tps != null && tps.Length > 0)   // DECLUTTER: trapped-trader lines OFF (flip false->true to restore)
             {
                 DateTime nowT = default; try { if (Count > 0) nowT = Time(0); } catch { }
                 foreach (var tp in tps)
@@ -658,6 +781,17 @@ namespace InSyncOrderflow
                             gr.DrawString("SWEEP " + iv.Absorbed.ToString("0"), _fontB, br2, x + rr + 3, y - 7);
                         continue;
                     }
+                    if (iv.Pull)
+                    {
+                        // wall PULLED (cancelled, not eaten) = hollow ghost ring. support pulled=red(bearish) / resistance pulled=green(bullish)
+                        Color pc = iv.IsBid ? ColorTranslator.FromHtml("#ef4444") : ColorTranslator.FromHtml("#22c55e");
+                        int rr = r + 2;
+                        using (var pen = new Pen(Color.FromArgb(210, pc), 1.6f) { DashStyle = DashStyle.Dash })
+                            gr.DrawEllipse(pen, x - rr, y - rr, rr * 2, rr * 2);
+                        using (var br2 = new SolidBrush(pc))
+                            gr.DrawString("pull " + iv.Absorbed.ToString("0"), _font, br2, x + rr + 3, y - 7);
+                        continue;
+                    }
                     Color c = iv.IsBid ? ColorTranslator.FromHtml("#2dd4bf") : ColorTranslator.FromHtml("#fb923c");
                     if (iv.Iceberg)
                     {
@@ -686,7 +820,7 @@ namespace InSyncOrderflow
             }
 
             // aggressive prints (triangles at time/price)
-            if (ShowPrints && rs.Prints != null)
+            if (false && ShowPrints && rs.Prints != null)   // DECLUTTER: aggressive-print bubbles OFF (flip false->true to restore)
             {
                 double wallTol = (Symbol?.TickSize ?? 0.25) * 1.5;   // a print "hits" a wall if within ~1 tick of it
                 foreach (var p in rs.Prints)
@@ -946,9 +1080,11 @@ namespace InSyncOrderflow
         private sealed class Ghost { public double Price, PeakSize, PeakEaten; public bool IsBid, Iceberg, Absorption; public int AgeSec; }
         private sealed class Mark { public double Price, PeakSize, PeakEaten; public bool IsBid, Iceberg, Absorption, LiveNow; public DateTime LastActive; }
         private sealed class GammaState { public bool Ok; public double Flip, CallWall, GexNeg, MaxPain, PanelPx; }
-        private sealed class IceFlow { public DateTime Time; public double Price, Absorbed; public bool IsBid, Iceberg, Sweep; }
-        private sealed class MboWall { public double Price, Size; public int Orders; }
+        private sealed class IceFlow { public DateTime Time; public double Price, Absorbed; public bool IsBid, Iceberg, Sweep, Pull; }
+        private sealed class MboWall { public double Price, Size; public int Orders, Filled, Cancelled; public string Side; }
         private sealed class TrapLevel { public double Price; public int Vol; public bool IsLong; public DateTime Time; }
+        private sealed class FlowBar { public DateTime Time; public double Fill, Cancel, BullFill, SellFill; }
+        private sealed class FillMark { public DateTime Time; public double Price; public string Side; public int Filled; }
         private sealed class Print { public DateTime Time; public double Price, Size; public bool Buy, Sell; }
         private sealed class Fire { public DateTime Time; public double Price, Prob, Exhaust; public int LegDir; public bool Fired; public string Strength; }
         private sealed class RenderState

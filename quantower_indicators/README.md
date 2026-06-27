@@ -4,10 +4,12 @@ Custom C# Quantower indicators that overlay InSync order-flow + market-state ont
 They read the local monitor API on `127.0.0.1:9100` (gamma/options levels, exhaustion model)
 and the chart's own Rithmic L2/tape (order flow).
 
-- **InSyncOrderflow** — real MBO order flow: resting **walls** (with order count `×N`),
-  **absorption/iceberg** (aggressor-colored: teal = bid/buyer-absorbing, orange = ask/seller-absorbing),
-  **sweeps**, **trapped traders** (red = trapped longs / green = trapped shorts), trade bubbles
-  (gated to wall hits), exhaustion-model overlay (NQ), and a market-state panel (gamma + vol).
+- **InSyncOrderflow** — real MBO order flow: resting **walls** (`wall <size> ×<orders>`, teal = bid/bull-limit /
+  orange = ask/sell-limit), **on-candle fill markers** (`+N` teal = a bull-limit hit, `-N` orange = a sell-limit hit,
+  at the price+candle it filled), a bottom **"pulled / min"** strip (red = wall size cancelled),
+  **absorption/iceberg** (aggressor-colored), **sweeps**, **trapped traders**, trade bubbles (gated to wall hits),
+  exhaustion-model overlay (NQ), and a market-state panel (gamma + vol). Walls/fills arrive over a **real-time push
+  stream** (long-poll `/api/monitor/iceberg-flow/wait`) with a 0.25s file-poll fallback.
 - **InSyncMarketState** — gamma/options levels: call wall, put wall, zero-gamma flip, GEX walls, max pain.
 
 ## Requirements
@@ -26,5 +28,10 @@ Builds both in Release and copies the DLLs into `...\Scripts\Indicators\InSync\`
 
 ## Notes
 - The indicators are display-only off `:9100` + the chart feed; no credentials, nothing outbound.
-- Backend that feeds them (`:9100` monitor API, the MBO iceberg/trap detector) lives elsewhere in
-  this repo / on the live box — these are just the chart-side renderers.
+- `detector/iceberg_flow.py` — the MBO order-by-order detector that produces the walls/fills/flow. It tails the
+  live Rithmic MBO JSONL, reconstructs the per-order book, and (a) writes `D:\data\heartbeat\iceberg_flow.json`
+  and (b) PUBLISHES on ZMQ `tcp://127.0.0.1:5862` for the real-time stream. Runs as service `InsyncIcebergFlow`
+  on the live box (out of `C:\Users\benbr\mbo_analysis\`). Kept here for version-control/backup.
+- The **real-time stream** also needs the long-poll endpoint `/api/monitor/iceberg-flow/wait` — that lives in the
+  `:9100` monitor API (`InsyncAPP_ben_merge/services/backtest/app/api/monitor.py`, service `MiraMonitorApi`), NOT in
+  this repo. Without it (or if the detector isn't publishing) the indicator auto-falls back to the 0.25s file-poll.
